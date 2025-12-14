@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(dir /S /B \"C:\\Users\\NHATTHANG\\FptUniversity\\SEP490\\service-backtrack\\Backtrack.Core\\Backtrack.Core.Application\\Users\")",
+      "Bash(dir /S /B \"C:\\Users\\NHATTHANG\\FptUniversity\\SEP490\\service-backtrack\\Backtrack.Core\\Backtrack.Core.Contract\\Users\")",
+      "Bash(dir /S /B \"C:\\Users\\NHATTHANG\\FptUniversity\\SEP490\\service-backtrack\\Backtrack.Core\\Backtrack.Core.WebApi\\Controllers\")",
+      "Bash(dotnet add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

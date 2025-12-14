@@ -1,0 +1,14 @@
+{
+  "name": "backtrack-gateway-examples",
+  "version": "1.0.0",
+  "description": "Example scripts for testing BackTrack API Gateway",
+  "type": "module",
+  "scripts": {
+    "get-token": "node get-firebase-token.js"
+  },
+  "dependencies": {
+    "firebase": "^10.7.1"
+  },
+  "author": "BackTrack Team",
+  "license": "MIT"
+}

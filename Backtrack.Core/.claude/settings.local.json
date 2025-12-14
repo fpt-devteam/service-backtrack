@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build)",
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(dotnet ef migrations remove:*)",
+      "Bash(cat:*)",
+      "Bash(Get-Content \"C:\\Users\\NHATTHANG\\FptUniversity\\service-perfect-cv\\src\\service-cv-management\\Backtrack.Core.WebApi\\Extensions\\AuthenticationExtensions.cs\")",
+      "Read(//c/Users/NHATTHANG/FptUniversity/service-perfect-cv/tests/Backtrack.Core.Application.Tests/AI/**)",
+      "Bash(dotnet build:*)",
+      "Bash(find:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
