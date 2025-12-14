@@ -41,11 +41,53 @@ BackTrack is a platform for posting and finding lost items. Users can create pos
 | Service | Technology | Port | Purpose | Status |
 |---------|-----------|------|---------|--------|
 | **API Gateway** | .NET 8, YARP | 5000 | Auth, routing, correlation | ✅ Complete |
-| **Core Service** | .NET 8 | 8080 | Posts, search, matching | 📝 Planned |
+| **Core Service** | .NET 8, Clean Architecture | 8080 | Posts, search, matching | 🚧 In Progress |
 | **Chat Service** | Node.js | 3000 | Real-time messaging | 📝 Planned |
 | **Notifications** | .NET 8 | 7000 | Push notifications (FCM) | 📝 Planned |
 
 Each service has its own database and can be deployed independently.
+
+## Technology Stack
+
+| Layer | Technology |
+|-------|------------|
+| **API Gateway** | .NET 8, YARP 2.2.0, Firebase Admin SDK |
+| **Backend Services** | .NET 8 (Clean Architecture, CQRS, MediatR), Node.js 18+ |
+| **Databases** | PostgreSQL, MongoDB |
+| **Authentication** | Firebase Authentication |
+| **Real-time** | SignalR / Socket.io |
+| **Notifications** | Firebase Cloud Messaging (FCM) |
+| **Containerization** | Docker, Docker Compose |
+
+### Core Service Architecture
+
+The Core Service follows Clean Architecture with CQRS pattern:
+
+- **Contract Layer**: Request/Response DTOs with FluentValidation
+- **Application Layer**: Commands, Queries, and MediatR Handlers
+- **Domain Layer**: Entities, Value Objects, Domain Logic
+- **Infrastructure Layer**: Database, Repositories, External Services
+- **WebApi Layer**: Controllers, Middleware, Configuration
+
+## Project Structure
+
+```
+service-backtrack/
+├── Backtrack.ApiGateway/              # API Gateway service
+│   ├── Middleware/                    # Auth & correlation middlewares
+│   └── examples/                      # Auth client, token helpers
+├── Backtrack.Core/                    # Core service (Clean Architecture)
+│   ├── Backtrack.Core.WebApi/         # Controllers, Middleware
+│   ├── Backtrack.Core.Application/    # Commands, Queries, Handlers
+│   ├── Backtrack.Core.Contract/       # Request/Response DTOs
+│   ├── Backtrack.Core.Domain/         # Entities, Value Objects
+│   └── Backtrack.Core.Infrastructure/ # Database, Repositories
+├── BackTrack.Chat/                    # Chat service (planned)
+├── BackTrack.Notifications/           # Notifications service (planned)
+├── docker-compose.yml                 # Orchestration
+├── .env.example                       # Environment template
+└── README.md
+```
 
 ## Quick Start
 
@@ -70,16 +112,12 @@ cp .env.example .env
 ### 2. Firebase Setup
 
 1. Create Firebase project at [Firebase Console](https://console.firebase.google.com/)
-2. Enable Authentication methods:
-   - Email/Password
-   - Google Sign-In
-3. Create test users in Firebase Console > Authentication > Users
-4. Download service account:
-   - Project Settings > Service Accounts
-   - Generate New Private Key
-   - Save as `firebase-service-account.json` in project root (DO NOT commit!)
+2. Enable Authentication methods (Email/Password, Google Sign-In)
+3. Download service account:
+   - Project Settings > Service Accounts > Generate New Private Key
+   - Save as `firebase-service-account.json` in project root (**DO NOT commit!**)
 
-### 3. Run with Docker Compose (Recommended)
+### 3. Run with Docker Compose
 
 ```bash
 # Start all services
@@ -95,8 +133,6 @@ docker-compose down
 Services will be available at:
 - API Gateway: http://localhost:5000
 - Core Service: http://localhost:8080
-- Chat Service: http://localhost:3000
-- Notifications: http://localhost:7000
 
 ### 4. Run Locally (Development)
 
@@ -106,86 +142,9 @@ cd Backtrack.ApiGateway
 export GOOGLE_APPLICATION_CREDENTIALS="../firebase-service-account.json"
 dotnet run
 
-# Terminal 2: Core Service (when implemented)
-# cd BackTrack.Core
-# dotnet run --urls "http://localhost:8080"
-
-# Terminal 3: Chat Service (when implemented)
-# cd BackTrack.Chat
-# npm run dev
-
-# Terminal 4: Notifications Service (when implemented)
-# cd BackTrack.Notifications
-# dotnet run --urls "http://localhost:7000"
-```
-
-## Authentication & Testing
-
-### Get Firebase Token
-
-**Option 1: HTML Auth Client**
-```bash
-# Open with VS Code Live Server
-open Backtrack.ApiGateway/examples/test-client.html
-# Login with Email/Password or Google
-# Copy token to clipboard
-```
-
-**Option 2: Node.js CLI**
-```bash
-cd Backtrack.ApiGateway/examples
-npm install
-node get-firebase-token.js your-email@example.com your-password
-```
-
-### Test with Postman
-
-1. Create Postman environment:
-   - `GATEWAY_URL`: `http://localhost:5000`
-   - `FIREBASE_TOKEN`: `<your-token>`
-
-2. Test endpoints:
-   ```
-   GET  {{GATEWAY_URL}}/health                    # Health check
-   GET  {{GATEWAY_URL}}/api/core/posts            # List posts
-   POST {{GATEWAY_URL}}/api/core/posts            # Create post
-   GET  {{GATEWAY_URL}}/api/chat/conversations    # Conversations
-   ```
-
-3. Add to all authenticated requests:
-   - Header: `Authorization: Bearer {{FIREBASE_TOKEN}}`
-
-## API Routes
-
-| Route | Service | Auth | Description |
-|-------|---------|------|-------------|
-| `GET /health` | Gateway | No | Health check |
-| `GET /public/**` | Various | No | Public endpoints |
-| `/api/core/**` | Core | Yes | Posts, search, matching |
-| `/api/chat/**` | Chat | Yes | Real-time messaging |
-| `/api/notify/**` | Notifications | Yes | Push notifications |
-
-Gateway validates Firebase tokens and injects user headers (`X-User-Id`, `X-User-Email`, etc.) to downstream services.
-
-## Project Structure
-
-```
-service-backtrack/
-├── Backtrack.ApiGateway/           # API Gateway service
-│   ├── Middleware/                 # Auth & correlation middlewares
-│   ├── examples/                   # Auth client, token helpers
-│   ├── Dockerfile
-│   └── README.md                   # Gateway documentation
-├── BackTrack.Core/                 # Core service (planned)
-│   └── README.md
-├── BackTrack.Chat/                 # Chat service (planned)
-│   └── README.md
-├── BackTrack.Notifications/        # Notifications service (planned)
-│   └── README.md
-├── docker-compose.yml              # Orchestration
-├── .env.example                    # Environment template
-├── .gitignore
-└── README.md                       # This file
+# Terminal 2: Core Service
+cd Backtrack.Core/Backtrack.Core.WebApi
+dotnet run --urls "http://localhost:8080"
 ```
 
 ## Configuration
@@ -199,150 +158,17 @@ Create `.env` file (see `.env.example`):
 FIREBASE_PROJECT_ID=your-firebase-project-id
 
 # Database connections
-CORE_DB_CONNECTION=Host=localhost;Database=backtrack_core;...
+CORE_DB_CONNECTION=Host=localhost;Database=backtrack_core;Username=postgres;Password=yourpassword
 CHAT_DB_CONNECTION=mongodb://localhost:27017/backtrack_chat
-NOTIFY_DB_CONNECTION=Host=localhost;Database=backtrack_notifications;...
+NOTIFY_DB_CONNECTION=Host=localhost;Database=backtrack_notifications;Username=postgres;Password=yourpassword
 ```
 
-### Service-Specific Configuration
+### Service Configuration
 
-Each service has its own configuration file:
+Each service has its own `appsettings.json`:
 - API Gateway: `Backtrack.ApiGateway/appsettings.json`
-- Core Service: `BackTrack.Core/appsettings.json`
-- Chat Service: `BackTrack.Chat/.env`
-- Notifications: `BackTrack.Notifications/appsettings.json`
-
-See individual service READMEs for details.
-
-## Development Workflow
-
-1. **Start Services**: Run docker-compose or individual services locally
-2. **Get Token**: Use auth client or CLI to get Firebase token
-3. **Test APIs**: Use Postman with Firebase token in headers
-4. **Check Logs**: View correlation IDs across services
-5. **Iterate**: Make changes, services auto-reload in dev mode
-
-## Service Documentation
-
-- [API Gateway](Backtrack.ApiGateway/README.md) - Firebase auth, routing, YARP configuration
-- [Auth Client Guide](Backtrack.ApiGateway/examples/README.md) - Token generation, Postman setup
-- Core Service - (To be implemented)
-- Chat Service - (To be implemented)
-- Notifications Service - (To be implemented)
-
-## Technology Stack
-
-| Layer | Technology |
-|-------|------------|
-| **API Gateway** | .NET 8, YARP 2.2.0, Firebase Admin SDK 3.0.1 |
-| **Backend Services** | .NET 8, Node.js 18+ |
-| **Databases** | PostgreSQL, MongoDB |
-| **Authentication** | Firebase Authentication |
-| **Real-time** | SignalR / Socket.io |
-| **Notifications** | Firebase Cloud Messaging (FCM) |
-| **Containerization** | Docker, Docker Compose |
-
-## Common Issues
-
-### Firebase Authentication Failed
-- Check `firebase-service-account.json` exists and is valid
-- Verify `FIREBASE_PROJECT_ID` in `.env` matches Firebase project
-- Ensure Firebase Authentication is enabled in console
-
-### Service Not Available (503)
-- Check if service is running: `docker-compose ps` or check terminal
-- Verify port configuration matches service defaults
-- Check service URLs in gateway configuration
-
-### Token Expired (401)
-- Firebase tokens expire after 1 hour
-- Get fresh token from auth client or CLI
-- Verify `Authorization: Bearer <token>` header format
-
-### Database Connection Failed
-- Check database is running
-- Verify connection strings in `.env`
-- Ensure database exists and credentials are correct
-
-## Security Best Practices
-
-✅ Never commit `firebase-service-account.json`
-✅ Never commit `.env` file
-✅ Use environment variables for sensitive config
-✅ Tokens expire after 1 hour (automatic via Firebase)
-✅ Gateway validates all tokens before routing
-✅ Each service has isolated database
-✅ HTTPS in production (configure reverse proxy)
-
-## Deployment
-
-### Local Development
-```bash
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
-```
-
-### Production
-```bash
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
-
-Configure production environment:
-- Use HTTPS (nginx/Traefik reverse proxy)
-- Set production database URLs
-- Configure proper Firebase service account
-- Enable monitoring and logging
-- Set up CI/CD pipeline
-
-## Roadmap
-
-### Phase 1: Foundation (Current)
-- ✅ API Gateway with Firebase auth
-- ✅ Correlation ID tracking
-- ✅ Auth client for token generation
-- ✅ Docker Compose setup
-
-### Phase 2: Core Features
-- ⬜ Core Service (Posts CRUD, Search, Matching)
-- ⬜ Database setup (PostgreSQL)
-- ⬜ API documentation (Swagger)
-
-### Phase 3: Real-time Features
-- ⬜ Chat Service (SignalR/Socket.io)
-- ⬜ MongoDB setup
-- ⬜ Real-time notifications
-
-### Phase 4: Notifications
-- ⬜ Notifications Service (FCM)
-- ⬜ Push notification registration
-- ⬜ Notification templates
-
-### Phase 5: Production
-- ⬜ Rate limiting
-- ⬜ Caching layer (Redis)
-- ⬜ Centralized logging (ELK/Seq)
-- ⬜ Monitoring (Prometheus/Grafana)
-- ⬜ CI/CD pipeline
-- ⬜ Load testing
-
-## Contributing
-
-1. Create feature branch: `git checkout -b feature/your-feature`
-2. Implement changes
-3. Test locally with all services
-4. Create pull request
-
-## License
-
-[Your License Here]
-
-## Support
-
-For issues and questions:
-- Check service-specific READMEs
-- Review common issues section
-- Check logs with correlation IDs
-- Review Firebase console for auth issues
+- Core Service: `Backtrack.Core/Backtrack.Core.WebApi/appsettings.json`
 
 ---
 
-**Current Status:** API Gateway ✅ | Core Service 📝 | Chat Service 📝 | Notifications 📝
+**Current Status:** API Gateway ✅ | Core Service 🚧 | Chat Service 📝 | Notifications 📝
