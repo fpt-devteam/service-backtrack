@@ -52,5 +52,15 @@ namespace Backtrack.Core.Application.Common.Exceptions
             Code: "InvalidAuthId",
             Message: "The provided authentication ID is invalid.",
             HttpStatusCode.BadRequest);
+
+        public static readonly Error InvalidEmail = new(
+            Code: "InvalidEmail",
+            Message: "Email is required.",
+            HttpStatusCode.BadRequest);
+
+        public static readonly Error InvalidDisplayName = new(
+            Code: "InvalidDisplayName",
+            Message: "Display name encoding is invalid.",
+            HttpStatusCode.BadRequest);
     }
 }

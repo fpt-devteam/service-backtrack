@@ -13,6 +13,8 @@ public class FirebaseAuthMiddleware
     private const string AuthHeaderName = "Authorization";
     private const string AuthIdHeaderName = "X-Auth-Id";
     private const string AuthProviderHeaderName = "X-Auth-Provider";
+    private const string AuthEmailHeaderName = "X-Auth-Email";
+    private const string AuthNameHeaderName = "X-Auth-Name";
 
     public FirebaseAuthMiddleware(
         RequestDelegate next,
@@ -67,8 +69,35 @@ public class FirebaseAuthMiddleware
                 return;
             }
 
+            // Extract user information from token claims
+            var email = decodedToken.Claims.TryGetValue("email", out var emailClaim)
+                ? emailClaim.ToString()
+                : string.Empty;
+
+            // Validate that email exists in token
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                _logger.LogWarning("Email missing in Firebase token for user: {UserId}", authId);
+                context.Response.StatusCode = AuthErrors.MissingEmailInToken.HttpStatusCode.GetHashCode();
+                await context.Response.WriteAsJsonAsync(AuthErrors.MissingEmailInToken);
+                return;
+            }
+
+            var displayName = decodedToken.Claims.TryGetValue("name", out var nameClaim)
+                ? nameClaim.ToString()
+                : string.Empty;
+
+            // Set headers with user information
             context.Request.Headers[AuthIdHeaderName] = authId;
             context.Request.Headers[AuthProviderHeaderName] = "firebase";
+            context.Request.Headers[AuthEmailHeaderName] = email;
+
+            if (!string.IsNullOrWhiteSpace(displayName))
+            {
+                // Encode display name to Base64 to handle special characters
+                var encodedName = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(displayName));
+                context.Request.Headers[AuthNameHeaderName] = encodedName;
+            }
 
             await _next(context);
         }

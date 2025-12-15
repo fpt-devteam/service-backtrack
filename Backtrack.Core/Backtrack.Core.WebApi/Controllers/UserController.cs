@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Backtrack.Core.Application.Common.Exceptions;
 using Backtrack.Core.Application.Users.Commands.CreateUser;
 using Backtrack.Core.Application.Users.Queries.GetMe;
-using Backtrack.Core.Contract.Users.Requests;
 using Backtrack.Core.Contract.Users.Responses;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Extensions;
@@ -23,13 +22,40 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateUserAsync(CancellationToken cancellationToken)
     {
+        // Extract user information from headers
+        var userId = Request.Headers[HeaderNames.AuthId].ToString();
+        var email = Request.Headers[HeaderNames.AuthEmail].ToString();
+        var encodedDisplayName = Request.Headers[HeaderNames.AuthName].ToString();
+
+        // Validate required headers
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new DomainException(UserErrors.InvalidAuthId);
+
+        if (string.IsNullOrWhiteSpace(email))
+            throw new DomainException(UserErrors.InvalidEmail);
+
+        // Decode display name from Base64
+        var displayName = string.Empty;
+        if (!string.IsNullOrWhiteSpace(encodedDisplayName))
+        {
+            try
+            {
+                var decodedBytes = Convert.FromBase64String(encodedDisplayName);
+                displayName = System.Text.Encoding.UTF8.GetString(decodedBytes);
+            }
+            catch (FormatException)
+            {
+                throw new DomainException(UserErrors.InvalidDisplayName);
+            }
+        }
+
         var command = new CreateUserCommand
         {
-            UserId = request.UserId,
-            Email = request.Email,
-            DisplayName = request.DisplayName
+            UserId = userId,
+            Email = email,
+            DisplayName = displayName
         };
 
         var result = await _mediator.Send(command, cancellationToken);

@@ -19,4 +19,9 @@ public static class AuthErrors
         Code: "InvalidAuthHeaderFormat",
         Message: "Invalid Authorization header format. Expected: Bearer <token>",
         HttpStatusCode.Unauthorized);
+
+    public static readonly Error MissingEmailInToken = new(
+        Code: "MissingEmailInToken",
+        Message: "Missing email in token",
+        HttpStatusCode.Unauthorized);
 }
