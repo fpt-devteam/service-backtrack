@@ -1,0 +1,19 @@
+﻿using Backtrack.Core.Domain.Common;
+using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Domain.ValueObjects;
+
+namespace Backtrack.Core.Domain.Entities
+{
+    public sealed class Post : Entity<Guid>
+    {
+        public required PostType PostType { get; set; }
+        public required string ItemName { get; set; }
+        public required string Description { get; set; }
+        public string[] Material { get; set; } = Array.Empty<string>();
+        public string[] Brands { get; set; } = Array.Empty<string>();
+        public string[] Colors { get; set; } = Array.Empty<string>();
+        public string[] ImageUrls { get; set; } = Array.Empty<string>();
+        public GeoPoint? Location { get; set; }
+        public required DateTimeOffset EventTime { get; set; }
+    }
+}

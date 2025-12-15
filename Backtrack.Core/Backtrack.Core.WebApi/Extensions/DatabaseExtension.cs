@@ -1,7 +1,6 @@
 using Backtrack.Core.Infrastructure.Data;
 using Backtrack.Core.WebApi.Configurations;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace Backtrack.Core.WebApi.Extensions
 {
@@ -13,12 +12,8 @@ namespace Backtrack.Core.WebApi.Extensions
 
             var connString = configuration.GetConnectionString("DefaultConnection");
 
-            var dsb = new NpgsqlDataSourceBuilder(connString);
-            dsb.EnableDynamicJson();
-            var dataSource = dsb.Build();
-
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(dataSource));
+                options.UseNpgsql(connString, o => o.UseNetTopologySuite()));
         }
     }
 }

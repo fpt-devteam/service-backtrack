@@ -18,10 +18,9 @@ namespace Backtrack.Core.WebApi
 
             builder.Services.AddDatabase(builder.Configuration);
             builder.Services.AddConfiguredCors(builder.Configuration);
-            builder.Services.AddConfiguredModelState(builder.Configuration);
+            builder.Services.AddServiceConfigurations(builder.Configuration);
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddJsonNamingConfiguration();
-            builder.Services.AddServiceConfigurations(builder.Configuration);
             builder.Services.AddConfiguredSwagger();
             builder.Services.AddHealthChecks();
 

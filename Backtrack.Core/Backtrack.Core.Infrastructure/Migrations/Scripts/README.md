@@ -86,6 +86,39 @@ Applies pending migrations to the database.
 
 ---
 
+### 5. `05_truncate_all_data.ps1` - Truncate All Data
+Removes all data from all tables while preserving schema and migrations.
+
+**Usage:**
+```powershell
+.\05_truncate_all_data.ps1
+```
+
+**What it does:**
+1. Prompts for database connection details
+2. Truncates ALL data from ALL tables in public schema
+3. Resets all auto-increment sequences to 1
+4. Verifies row counts after truncation
+5. Keeps table structure intact
+6. Preserves migration history
+
+**⚠️ WARNING:**
+- Deletes ALL data from ALL tables
+- Cannot be undone
+- Keeps database schema intact
+- Requires typing 'TRUNCATE ALL DATA' to confirm
+
+**When to use:**
+- Clean database for fresh data import
+- Reset test/development database without recreating schema
+- Clear all data but maintain structure
+
+**Difference from script 03:**
+- Script 03: Drops tables + deletes migrations (complete reset)
+- Script 05: Empties tables + keeps migrations (data reset only)
+
+---
+
 ## Quick Start Workflow
 
 ### First Time Setup
@@ -125,6 +158,15 @@ dotnet ef database update PreviousMigrationName
 # Then create fresh migration
 .\01_add_migration.ps1 InitialCreate
 .\04_apply_migrations.ps1
+```
+
+### Clear Data Only (Keep Schema)
+```powershell
+# Remove all data but keep tables and migrations
+.\05_truncate_all_data.ps1
+
+# Database is now empty but ready for new data
+# No need to reapply migrations!
 ```
 
 ---
@@ -268,7 +310,10 @@ dotnet ef migrations script --startup-project ..\Backtrack.Core.WebApi --output 
 .\01_add_migration.ps1 FeatureName
 .\04_apply_migrations.ps1
 
-# Can reset when needed
+# Clear data only (keeps schema)
+.\05_truncate_all_data.ps1
+
+# Full reset when needed (drops everything)
 .\03_reset_database_and_migrations.ps1
 ```
 

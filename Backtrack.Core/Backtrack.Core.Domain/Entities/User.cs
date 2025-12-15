@@ -3,7 +3,7 @@ using Backtrack.Core.Domain.Constants;
 
 namespace Backtrack.Core.Domain.Entities
 {
-    public class User : Entity<string>
+    public sealed class User : Entity<string>
     {
         public required string Email { get; set; }
         public string? DisplayName { get; set; }

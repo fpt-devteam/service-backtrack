@@ -50,3 +50,8 @@ Thumbs.db
 *.user
 *.userosscache
 *.sln.docstates
+
+#env
+.env
+*.env
+**/appsettings.Development.json

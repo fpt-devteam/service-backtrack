@@ -1,11 +1,11 @@
-using Backtrack.Core.Contract.Users.Responses;
+using Backtrack.Core.Application.Users.Common;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
 
 namespace Backtrack.Core.Application.Users.Commands.CreateUser;
 
-public sealed class CreateUserHandler : IRequestHandler<CreateUserCommand, UserResponse>
+public sealed class CreateUserHandler : IRequestHandler<CreateUserCommand, UserResult>
 {
     private readonly IUserRepository _userRepository;
 
@@ -14,13 +14,13 @@ public sealed class CreateUserHandler : IRequestHandler<CreateUserCommand, UserR
         _userRepository = userRepository;
     }
 
-    public async Task<UserResponse> Handle(CreateUserCommand request, CancellationToken cancellationToken)
+    public async Task<UserResult> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
-        var existingUser = await _userRepository.GetByIdAsync(request.Request.UserId);
+        var existingUser = await _userRepository.GetByIdAsync(request.UserId);
 
         if (existingUser != null)
         {
-            return new UserResponse
+            return new UserResult
             {
                 Id = existingUser.Id,
                 Email = existingUser.Email,
@@ -30,9 +30,9 @@ public sealed class CreateUserHandler : IRequestHandler<CreateUserCommand, UserR
 
         var newUser = new User
         {
-            Id = request.Request.UserId,
-            Email = request.Request.Email,
-            DisplayName = request.Request.DisplayName,
+            Id = request.UserId,
+            Email = request.Email,
+            DisplayName = request.DisplayName,
             Status = UserStatus.Active,
             Role = UserRole.User,
             CreatedAt = DateTimeOffset.UtcNow
@@ -41,7 +41,7 @@ public sealed class CreateUserHandler : IRequestHandler<CreateUserCommand, UserR
         await _userRepository.CreateAsync(newUser);
         await _userRepository.SaveChangesAsync();
 
-        return new UserResponse
+        return new UserResult
         {
             Id = newUser.Id,
             Email = newUser.Email,

@@ -7,17 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Constants\**" />
-    <Compile Remove="DTOs\**" />
-    <EmbeddedResource Remove="Constants\**" />
-    <EmbeddedResource Remove="DTOs\**" />
-    <None Remove="Constants\**" />
-    <None Remove="DTOs\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Backtrack.Core.Domain\Backtrack.Core.Domain.csproj" />
-    <ProjectReference Include="..\Backtrack.Core.Contract\Backtrack.Core.Contract.csproj" />
   </ItemGroup>
 
   <ItemGroup>

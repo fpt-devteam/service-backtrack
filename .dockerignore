@@ -1,0 +1,59 @@
+# Build output
+**/bin/
+**/obj/
+
+# NuGet packages
+**/packages/
+**/.nuget/
+
+# Visual Studio
+**/.vs/
+**/.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+**/[Dd]ebug/
+**/[Rr]elease/
+**/x64/
+**/x86/
+**/[Bb]uild/
+**/bld/
+
+# Test results
+**/[Tt]est[Rr]esult*/
+**/[Bb]uild[Ll]og.*
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Environment files (keep local env files out)
+**/*.env.local
+**/*.env.development.local
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+**/.dockerignore
+**/Dockerfile*
+**/docker-compose*
+
+# Documentation
+**/*.md
+!README.md
+
+# IDE
+**/.idea/
+**/.vs/
+**/.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

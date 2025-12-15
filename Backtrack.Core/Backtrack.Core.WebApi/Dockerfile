@@ -2,29 +2,46 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy csproj files (from project root via railway setting)
-COPY src/service-cv-management/Backtrack.Core.Domain/Backtrack.Core.Domain.csproj Backtrack.Core.Domain/
-COPY src/service-cv-management/Backtrack.Core.Application/Backtrack.Core.Application.csproj Backtrack.Core.Application/
-COPY src/service-cv-management/Backtrack.Core.Infrastructure/Backtrack.Core.Infrastructure.csproj Backtrack.Core.Infrastructure/
-COPY src/service-cv-management/Backtrack.Core.WebApi/Backtrack.Core.WebApi.csproj Backtrack.Core.WebApi/
+# Copy csproj files for all projects (layer caching optimization)
+COPY ["Backtrack.Core.Domain/Backtrack.Core.Domain.csproj", "Backtrack.Core.Domain/"]
+COPY ["Backtrack.Core.Contract/Backtrack.Core.Contract.csproj", "Backtrack.Core.Contract/"]
+COPY ["Backtrack.Core.Application/Backtrack.Core.Application.csproj", "Backtrack.Core.Application/"]
+COPY ["Backtrack.Core.Infrastructure/Backtrack.Core.Infrastructure.csproj", "Backtrack.Core.Infrastructure/"]
+COPY ["Backtrack.Core.WebApi/Backtrack.Core.WebApi.csproj", "Backtrack.Core.WebApi/"]
 
 # Restore dependencies
-RUN dotnet restore Backtrack.Core.WebApi/Backtrack.Core.WebApi.csproj
+RUN dotnet restore "Backtrack.Core.WebApi/Backtrack.Core.WebApi.csproj"
 
-# Copy all the source code from service-cv-management
-COPY ./src/service-cv-management/ ./
+# Copy all source code
+COPY . .
 
-# Build and publish
-RUN dotnet publish Backtrack.Core.WebApi/Backtrack.Core.WebApi.csproj \
-  -c Release -o /app/publish /p:UseAppHost=false
+# Build and publish the application
+WORKDIR "/src/Backtrack.Core.WebApi"
+RUN dotnet publish "Backtrack.Core.WebApi.csproj" \
+    -c Release \
+    -o /app/publish \
+    /p:UseAppHost=false \
+    --no-restore
 
 # ===================== Runtime stage =====================
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
+# Install PostgreSQL client tools (required for PostGIS)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libgdiplus \
+    libc6-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy published files from build stage
 COPY --from=build /app/publish .
 
-# Listen on port 8080 (Railway automatically maps this)
+# Create a non-root user for security
+RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Configure the application
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
 EXPOSE 8080
 

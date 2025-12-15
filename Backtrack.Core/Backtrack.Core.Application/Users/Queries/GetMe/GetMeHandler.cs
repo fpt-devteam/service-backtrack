@@ -1,11 +1,10 @@
 using Backtrack.Core.Application.Common.Exceptions;
-using Backtrack.Core.Contract.Users.Responses;
-using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Application.Users.Common;
 using MediatR;
 
 namespace Backtrack.Core.Application.Users.Queries.GetMe;
 
-public sealed class GetMeHandler : IRequestHandler<GetMeQuery, UserResponse>
+public sealed class GetMeHandler : IRequestHandler<GetMeQuery, UserResult>
 {
     private readonly IUserRepository _userRepository;
 
@@ -14,12 +13,16 @@ public sealed class GetMeHandler : IRequestHandler<GetMeQuery, UserResponse>
         _userRepository = userRepository;
     }
 
-    public async Task<UserResponse> Handle(GetMeQuery request, CancellationToken cancellationToken)
+    public async Task<UserResult> Handle(GetMeQuery request, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByIdAsync(request.UserId)
-            ?? throw new DomainException(UserErrors.NotFound);
+        var user = await _userRepository.GetByIdAsync(request.UserId);
 
-        return new UserResponse
+        if (user == null)
+        {
+            throw new DomainException(UserErrors.NotFound);
+        }
+
+        return new UserResult
         {
             Id = user.Id,
             Email = user.Email,

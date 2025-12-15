@@ -2,83 +2,41 @@ version: '3.8'
 
 services:
   # API Gateway - Single entry point for all client requests
-  api-gateway:
+  backtrack-api-gateway:
     build:
       context: .
-      dockerfile: Backtrack.ApiGateway/Dockerfile
-    container_name: backtrack-gateway
+      dockerfile: dockerfiles/Dockerfile.backtrack-api-gateway
+    container_name: backtrack-api-gateway
     ports:
       - "5000:5000"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - Firebase__ProjectId=${FIREBASE_PROJECT_ID}
-      - Firebase__ServiceAccountPath=/app/firebase-credentials.json
-      - Firebase__ForwardAuthHeader=false
+    env_file:
+      - ./env/backtrack-api-gateway.docker.env
     volumes:
-      # Mount Firebase service account (DO NOT commit this file!)
-      - ./firebase-service-account.json:/app/firebase-credentials.json:ro
+      - C:\Users\NHATTHANG\FptUniversity\SEP490\backtrack-sep490-firebase-adminsdk-fbsvc-d625f3f3d9.json:/secret/firebase-credentials.json:ro
     networks:
       - backtrack-network
     depends_on:
-      - backtrack-core
-      - backtrack-chat
-      - backtrack-notifications
+      - backtrack-core-api
+    #   - backtrack-chat
+    #   - backtrack-notifications
     restart: unless-stopped
 
   # BackTrack Core Service - Posts, Search, Matching
-  backtrack-core:
-    image: backtrack-core:latest
-    container_name: backtrack-core
+  backtrack-core-api:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.backtrack-core-api
+    container_name: backtrack-core-api
     ports:
       - "8080:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=${CORE_DB_CONNECTION}
+    env_file:
+      - ./env/backtrack-core-api.docker.env
     networks:
       - backtrack-network
     restart: unless-stopped
-    # Uncomment if you want to build locally instead of using pre-built image
-    # build:
-    #   context: .
-    #   dockerfile: BackTrack.Core/Dockerfile
-
-    # BackTrack Chat Service - Real-time messaging
-  backtrack-chat:
-    image: backtrack-chat:latest
-    container_name: backtrack-chat
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - MONGODB_URI=${CHAT_DB_CONNECTION}
-    networks:
-      - backtrack-network
-    restart: unless-stopped
-    # Uncomment if you want to build locally
-    # build:
-    #   context: ./BackTrack.Chat
-    #   dockerfile: Dockerfile
-
-    # BackTrack Notifications Service - Push notifications
-  backtrack-notifications:
-    image: backtrack-notifications:latest
-    container_name: backtrack-notifications
-    ports:
-      - "7000:7000"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=${NOTIFY_DB_CONNECTION}
-      - Firebase__ProjectId=${FIREBASE_PROJECT_ID}
-    networks:
-      - backtrack-network
-    restart: unless-stopped
-    # Uncomment if you want to build locally
-    # build:
-    #   context: .
-    #   dockerfile: BackTrack.Notifications/Dockerfile
 
   backtrack-core-db:
-    image: postgres:16-alpine
+    image: postgis/postgis:16-3.4
     container_name: backtrack-core-db
     hostname: backtrack-core-db
     ports:

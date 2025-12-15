@@ -4,6 +4,7 @@ using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -20,7 +21,88 @@ namespace Backtrack.Core.Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.Post", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.PrimitiveCollection<string[]>("Brands")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("brands");
+
+                    b.PrimitiveCollection<string[]>("Colors")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("colors");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTimeOffset>("EventTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("event_time");
+
+                    b.PrimitiveCollection<string[]>("ImageUrls")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("image_urls");
+
+                    b.Property<string>("ItemName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("item_name");
+
+                    b.Property<Point>("Location")
+                        .HasColumnType("geography(point, 4326)")
+                        .HasColumnName("location");
+
+                    b.PrimitiveCollection<string[]>("Material")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("material");
+
+                    b.Property<string>("PostType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("post_type");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventTime")
+                        .HasDatabaseName("ix_posts_event_time");
+
+                    b.HasIndex("Location")
+                        .HasDatabaseName("ix_posts_location");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "gist");
+
+                    b.HasIndex("PostType")
+                        .HasDatabaseName("ix_posts_post_type");
+
+                    b.ToTable("posts", (string)null);
+                });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.User", b =>
                 {

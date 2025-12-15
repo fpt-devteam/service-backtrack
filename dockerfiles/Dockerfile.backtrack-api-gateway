@@ -7,7 +7,7 @@ COPY ["Backtrack.ApiGateway/Backtrack.ApiGateway.csproj", "Backtrack.ApiGateway/
 RUN dotnet restore "Backtrack.ApiGateway/Backtrack.ApiGateway.csproj"
 
 # Copy everything else and build
-COPY . .
+COPY Backtrack.ApiGateway/. Backtrack.ApiGateway/
 WORKDIR "/src/Backtrack.ApiGateway"
 RUN dotnet build "Backtrack.ApiGateway.csproj" -c Release -o /app/build
 
@@ -18,13 +18,12 @@ RUN dotnet publish "Backtrack.ApiGateway.csproj" -c Release -o /app/publish /p:U
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
+EXPOSE 5000
 
 # Copy published app
 COPY --from=publish /app/publish .
 
 # Set environment variables
-ENV ASPNETCORE_URLS=http://+:80
+ENV ASPNETCORE_URLS=http://+:5000
 
 ENTRYPOINT ["dotnet", "Backtrack.ApiGateway.dll"]

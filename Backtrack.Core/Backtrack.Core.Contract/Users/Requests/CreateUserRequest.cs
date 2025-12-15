@@ -1,27 +1,12 @@
-using FluentValidation;
+using System.ComponentModel.DataAnnotations;
 
 namespace Backtrack.Core.Contract.Users.Requests;
 
 public sealed record CreateUserRequest
 {
+    [Required]
     public required string UserId { get; init; }
+    [Required]
     public required string Email { get; init; }
     public string? DisplayName { get; init; }
-}
-
-public sealed class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
-{
-    public CreateUserRequestValidator()
-    {
-        RuleFor(x => x.UserId)
-            .NotEmpty().WithMessage("UserId is required");
-
-        RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required")
-            .EmailAddress().WithMessage("Email must be a valid email address");
-
-        RuleFor(x => x.DisplayName)
-            .MaximumLength(100).WithMessage("DisplayName must not exceed 100 characters")
-            .When(x => !string.IsNullOrEmpty(x.DisplayName));
-    }
 }
