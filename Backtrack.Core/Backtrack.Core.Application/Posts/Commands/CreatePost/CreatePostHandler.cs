@@ -18,13 +18,11 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
 
     public async Task<PostResult> Handle(CreatePostCommand request, CancellationToken cancellationToken)
     {
-        // Parse PostType
         if (!Enum.TryParse<PostType>(request.PostType, out var postType))
         {
             throw new ValidationException(PostErrors.InvalidPostType);
         }
 
-        // Create location point if provided
         GeoPoint? location = null;
         if (request.Location != null)
         {

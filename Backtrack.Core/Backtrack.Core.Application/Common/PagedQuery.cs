@@ -1,4 +1,6 @@
+using Backtrack.Core.Application.Common.Exceptions;
 using MediatR;
+using System.ComponentModel.DataAnnotations;
 
 namespace Backtrack.Core.Application.Common;
 
@@ -9,8 +11,7 @@ public sealed record PagedQuery
 
     public static PagedQuery FromPage(int page, int pageSize)
     {
-        if (page < 1) throw new ArgumentOutOfRangeException(nameof(page));
-        if (pageSize < 1) throw new ArgumentOutOfRangeException(nameof(pageSize));
+        if (page < 1 || pageSize < 1) throw new Exceptions.ValidationException(PaginationErrors.InvalidPagedQuery);
 
         return new PagedQuery
         {

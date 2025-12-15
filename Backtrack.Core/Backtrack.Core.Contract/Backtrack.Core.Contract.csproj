@@ -8,5 +8,6 @@
 
   <ItemGroup>
     <Folder Include="Common\" />
+    <Folder Include="Users\Requests\" />
   </ItemGroup>
 </Project>

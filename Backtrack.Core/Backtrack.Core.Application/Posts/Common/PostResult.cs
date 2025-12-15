@@ -13,7 +13,6 @@ public sealed record PostResult
     public LocationResult? Location { get; init; }
     public required DateTimeOffset EventTime { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
-    public double? DistanceInKm { get; init; }
 }
 
 public sealed record LocationResult

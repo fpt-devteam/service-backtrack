@@ -6,7 +6,6 @@ public sealed record ApiResponse<T>
     public T? Data { get; init; }
     public ApiError? Error { get; init; }
     public required string CorrelationId { get; init; }
-    public required DateTimeOffset Timestamp { get; init; }
 
     public static ApiResponse<T> SuccessResponse(T data, string correlationId)
     {
@@ -15,8 +14,7 @@ public sealed record ApiResponse<T>
             Success = true,
             Data = data,
             Error = null,
-            CorrelationId = correlationId,
-            Timestamp = DateTimeOffset.UtcNow
+            CorrelationId = correlationId
         };
     }
 
@@ -27,8 +25,7 @@ public sealed record ApiResponse<T>
             Success = false,
             Data = default,
             Error = error,
-            CorrelationId = correlationId,
-            Timestamp = DateTimeOffset.UtcNow
+            CorrelationId = correlationId
         };
     }
 }

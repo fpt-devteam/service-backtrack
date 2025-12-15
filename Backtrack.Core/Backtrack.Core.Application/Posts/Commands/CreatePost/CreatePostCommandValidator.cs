@@ -1,3 +1,4 @@
+using Backtrack.Core.Domain.Constants;
 using FluentValidation;
 
 namespace Backtrack.Core.Application.Posts.Commands.CreatePost;
@@ -8,7 +9,9 @@ public sealed class CreatePostCommandValidator : AbstractValidator<CreatePostCom
     {
         RuleFor(x => x.PostType)
             .NotEmpty().WithMessage("PostType is required")
-            .Must(x => x == "Lost" || x == "Found").WithMessage("PostType must be either 'Lost' or 'Found'");
+            .Must(x => x.Equals(PostType.Lost.ToString(), StringComparison.OrdinalIgnoreCase) ||
+                   x.Equals(PostType.Found.ToString(), StringComparison.OrdinalIgnoreCase))
+            .WithMessage("PostType must be either 'Lost' or 'Found'");
 
         RuleFor(x => x.ItemName)
             .NotEmpty().WithMessage("ItemName is required")

@@ -64,8 +64,7 @@ public class PostController : ControllerBase
                 }
                 : null,
             EventTime = result.EventTime,
-            CreatedAt = result.CreatedAt,
-            DistanceInKm = result.DistanceInKm
+            CreatedAt = result.CreatedAt
         };
 
         return this.ApiCreated(response);
@@ -112,8 +111,7 @@ public class PostController : ControllerBase
                     }
                     : null,
                 EventTime = item.EventTime,
-                CreatedAt = item.CreatedAt,
-                DistanceInKm = item.DistanceInKm
+                CreatedAt = item.CreatedAt
             }),
             page: page,
             pageSize: pageSize,

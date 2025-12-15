@@ -63,7 +63,8 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 {
                     Code = "ValidationError",
                     Message = "One or more validation errors occurred.",
-                    StatusCode = StatusCodes.Status400BadRequest
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Details = errors
                 },
                 correlationId
             );

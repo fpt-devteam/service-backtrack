@@ -34,12 +34,6 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
 
         var postResults = items.Select(post =>
         {
-            double? distanceInKm = null;
-            //if (searchPoint != null && post.Location != null)
-            //{
-            //    distanceInKm = searchPoint.DistanceToInKilometers(post.Location);
-            //}
-
             return new PostResult
             {
                 Id = post.Id,
@@ -58,8 +52,7 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
                     }
                     : null,
                 EventTime = post.EventTime,
-                CreatedAt = post.CreatedAt,
-                DistanceInKm = distanceInKm
+                CreatedAt = post.CreatedAt
             };
         }).ToList();
 
