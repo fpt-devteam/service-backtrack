@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Common.Interfaces;
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 
 namespace Backtrack.Core.Application.Posts
@@ -8,7 +9,7 @@ namespace Backtrack.Core.Application.Posts
         Task<(IEnumerable<Post> Items, int TotalCount)> GetPagedAsync(
             int offset,
             int limit,
-            string? postType = null,
+            PostType? postType = null,
             string? searchTerm = null,
             double? latitude = null,
             double? longitude = null,

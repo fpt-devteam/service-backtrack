@@ -56,7 +56,8 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(x => x.ErrorMessage).ToArray());
 
-            logger.LogInformation("Validation exception occurred. CorrelationId={CorrelationId} ErrorMessage={ErrorMessage} Errors={Errors}", correlationId, errorMessage, errors);
+            logger.LogWarning(vex, "Validation exception occurred. CorrelationId={CorrelationId} ErrorMessage={ErrorMessage} Errors={Errors} StackTrace={StackTrace}",
+                correlationId, errorMessage, errors, vex.StackTrace);
 
             response = ApiResponse<object>.ErrorResponse(
                 new ApiError
@@ -76,7 +77,8 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 
         if (exception is Application.Common.Exceptions.ValidationException validationException)
         {
-            logger.LogInformation("Validation exception occurred. CorrelationId={CorrelationId} ErrorMessage={ErrorMessage}", correlationId, errorMessage);
+            logger.LogWarning(validationException, "Validation exception occurred. CorrelationId={CorrelationId} ErrorMessage={ErrorMessage} StackTrace={StackTrace}",
+                correlationId, errorMessage, validationException.StackTrace);
 
             context.Response.StatusCode = (int)validationException.Error.HttpStatusCode;
 
@@ -96,8 +98,8 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 
         if (exception is DomainException domainException)
         {
-            logger.LogInformation("Domain exception occurred. CorrelationId={CorrelationId} ErrorCode={ErrorCode} ErrorMessage={ErrorMessage}",
-                correlationId, domainException.Error.Code, domainException.Error.Message);
+            logger.LogWarning(domainException, "Domain exception occurred. CorrelationId={CorrelationId} ErrorCode={ErrorCode} ErrorMessage={ErrorMessage} StackTrace={StackTrace}",
+                correlationId, domainException.Error.Code, domainException.Error.Message, domainException.StackTrace);
 
             context.Response.StatusCode = (int)domainException.Error.HttpStatusCode;
 
@@ -115,7 +117,8 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             return;
         }
 
-        logger.LogError(exception, "Unexpected exception occurred: {Message} CorrelationId={CorrelationId}", errorMessage, correlationId);
+        logger.LogError(exception, "Unexpected exception occurred: {Message} CorrelationId={CorrelationId} StackTrace={StackTrace}",
+            errorMessage, correlationId, exception.StackTrace);
 
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 

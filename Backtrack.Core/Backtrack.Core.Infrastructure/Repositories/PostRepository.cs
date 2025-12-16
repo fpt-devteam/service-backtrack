@@ -14,7 +14,7 @@ namespace Backtrack.Core.Infrastructure.Repositories
         public async Task<(IEnumerable<Post> Items, int TotalCount)> GetPagedAsync(
             int offset,
             int limit,
-            string? postType = null,
+            PostType? postType = null,
             string? searchTerm = null,
             double? latitude = null,
             double? longitude = null,
@@ -23,9 +23,9 @@ namespace Backtrack.Core.Infrastructure.Repositories
         {
             var query = _dbSet.AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(postType) && Enum.TryParse<PostType>(postType, out var postTypeEnum))
+            if (postType is not null)
             {
-                query = query.Where(p => p.PostType == postTypeEnum);
+                query = query.Where(p => p.PostType == postType);
             }
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -61,7 +61,7 @@ namespace Backtrack.Core.Infrastructure.Repositories
             var totalCount = await query.CountAsync(cancellationToken);
 
             var items = await query
-                .OrderByDescending(p => p.EventTime)
+                .OrderByDescending(p => p.CreatedAt)
                 .Skip(offset)
                 .Take(limit)
                 .ToListAsync(cancellationToken);

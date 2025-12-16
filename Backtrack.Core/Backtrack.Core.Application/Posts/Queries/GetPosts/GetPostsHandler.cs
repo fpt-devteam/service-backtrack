@@ -1,5 +1,7 @@
 using Backtrack.Core.Application.Common;
+using Backtrack.Core.Application.Common.Exceptions;
 using Backtrack.Core.Application.Posts.Common;
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 
@@ -14,22 +16,22 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
         _postRepository = postRepository;
     }
 
-    public async Task<PagedResult<PostResult>> Handle(GetPostsQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<PostResult>> Handle(GetPostsQuery query, CancellationToken cancellationToken)
     {
         var (items, totalCount) = await _postRepository.GetPagedAsync(
-            offset: request.PagedQuery.Offset,
-            limit: request.PagedQuery.Limit,
-            postType: request.PostType,
-            searchTerm: request.SearchTerm,
-            latitude: request.Latitude,
-            longitude: request.Longitude,
-            radiusInKm: request.RadiusInKm,
+            offset: query.PagedQuery.Offset,
+            limit: query.PagedQuery.Limit,
+            postType: query.PostType,
+            searchTerm: query.SearchTerm,
+            latitude: query.Latitude,
+            longitude: query.Longitude,
+            radiusInKm: query.RadiusInKm,
             cancellationToken: cancellationToken);
 
         GeoPoint? searchPoint = null;
-        if (request.Latitude.HasValue && request.Longitude.HasValue)
+        if (query.Latitude.HasValue && query.Longitude.HasValue)
         {
-            searchPoint = new GeoPoint(request.Latitude.Value, request.Longitude.Value);
+            searchPoint = new GeoPoint(query.Latitude.Value, query.Longitude.Value);
         }
 
         var postResults = items.Select(post =>
@@ -40,9 +42,6 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
                 PostType = post.PostType.ToString(),
                 ItemName = post.ItemName,
                 Description = post.Description,
-                Material = post.Material,
-                Brands = post.Brands,
-                Colors = post.Colors,
                 ImageUrls = post.ImageUrls,
                 Location = post.Location != null
                     ? new LocationResult
@@ -51,6 +50,8 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
                         Longitude = post.Location.Longitude
                     }
                     : null,
+                ExternalPlaceId = post.ExternalPlaceId,
+                DisplayAddress = post.DisplayAddress,
                 EventTime = post.EventTime,
                 CreatedAt = post.CreatedAt
             };

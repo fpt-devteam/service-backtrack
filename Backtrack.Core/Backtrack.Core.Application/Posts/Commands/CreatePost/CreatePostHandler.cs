@@ -16,31 +16,25 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
         _postRepository = postRepository;
     }
 
-    public async Task<PostResult> Handle(CreatePostCommand request, CancellationToken cancellationToken)
+    public async Task<PostResult> Handle(CreatePostCommand command, CancellationToken cancellationToken)
     {
-        if (!Enum.TryParse<PostType>(request.PostType, out var postType))
-        {
-            throw new ValidationException(PostErrors.InvalidPostType);
-        }
-
         GeoPoint? location = null;
-        if (request.Location != null)
+        if (command.Location is not null)
         {
-            location = new GeoPoint(request.Location.Latitude, request.Location.Longitude);
+            location = new GeoPoint(command.Location.Latitude, command.Location.Longitude);
         }
 
         var post = new Post
         {
             Id = Guid.NewGuid(),
-            PostType = postType,
-            ItemName = request.ItemName,
-            Description = request.Description,
-            Material = request.Material,
-            Brands = request.Brands,
-            Colors = request.Colors,
-            ImageUrls = request.ImageUrls,
+            PostType = command.PostType,
+            ItemName = command.ItemName,
+            Description = command.Description,
+            ImageUrls = command.ImageUrls,
             Location = location,
-            EventTime = request.EventTime,
+            ExternalPlaceId = command.ExternalPlaceId,
+            DisplayAddress = command.DisplayAddress,
+            EventTime = command.EventTime,
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -53,9 +47,6 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,
-            Material = post.Material,
-            Brands = post.Brands,
-            Colors = post.Colors,
             ImageUrls = post.ImageUrls,
             Location = post.Location != null
                 ? new LocationResult
@@ -64,6 +55,8 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
                     Longitude = post.Location.Longitude
                 }
                 : null,
+            ExternalPlaceId = post.ExternalPlaceId,
+            DisplayAddress = post.DisplayAddress,
             EventTime = post.EventTime,
             CreatedAt = post.CreatedAt
         };

@@ -10,11 +10,10 @@ public sealed record CreatePostRequest
     public required string ItemName { get; init; }
     [Required]
     public required string Description { get; init; }
-    public string[] Material { get; init; } = Array.Empty<string>();
-    public string[] Brands { get; init; } = Array.Empty<string>();
-    public string[] Colors { get; init; } = Array.Empty<string>();
     public string[] ImageUrls { get; init; } = Array.Empty<string>();
     public LocationRequest? Location { get; init; }
+    public string? ExternalPlaceId { get; init; }
+    public string? DisplayAddress { get; init; }
     [Required]
     public required DateTimeOffset EventTime { get; init; }
 }

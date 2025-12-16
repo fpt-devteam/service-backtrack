@@ -9,11 +9,10 @@ namespace Backtrack.Core.Domain.Entities
         public required PostType PostType { get; set; }
         public required string ItemName { get; set; }
         public required string Description { get; set; }
-        public string[] Material { get; set; } = Array.Empty<string>();
-        public string[] Brands { get; set; } = Array.Empty<string>();
-        public string[] Colors { get; set; } = Array.Empty<string>();
         public string[] ImageUrls { get; set; } = Array.Empty<string>();
         public GeoPoint? Location { get; set; }
+        public string? ExternalPlaceId { get; set; }
+        public string? DisplayAddress { get; set; }
         public required DateTimeOffset EventTime { get; set; }
     }
 }

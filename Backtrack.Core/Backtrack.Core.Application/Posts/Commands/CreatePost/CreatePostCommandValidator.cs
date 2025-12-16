@@ -7,12 +7,6 @@ public sealed class CreatePostCommandValidator : AbstractValidator<CreatePostCom
 {
     public CreatePostCommandValidator()
     {
-        RuleFor(x => x.PostType)
-            .NotEmpty().WithMessage("PostType is required")
-            .Must(x => x.Equals(PostType.Lost.ToString(), StringComparison.OrdinalIgnoreCase) ||
-                   x.Equals(PostType.Found.ToString(), StringComparison.OrdinalIgnoreCase))
-            .WithMessage("PostType must be either 'Lost' or 'Found'");
-
         RuleFor(x => x.ItemName)
             .NotEmpty().WithMessage("ItemName is required")
             .MaximumLength(500).WithMessage("ItemName must not exceed 500 characters");
@@ -31,5 +25,24 @@ public sealed class CreatePostCommandValidator : AbstractValidator<CreatePostCom
         RuleFor(x => x.Location!.Longitude)
             .InclusiveBetween(-180, 180).WithMessage("Longitude must be between -180 and 180")
             .When(x => x.Location != null);
+
+        // Ensure all location fields are either all null or all not null
+        RuleFor(x => x.ExternalPlaceId)
+            .NotEmpty().WithMessage("ExternalPlaceId is required when Location is provided")
+            .When(x => x.Location != null);
+
+        RuleFor(x => x.ExternalPlaceId)
+            .Must(BeNull).WithMessage("ExternalPlaceId must be null when Location is not provided")
+            .When(x => x.Location == null);
+
+        RuleFor(x => x.DisplayAddress)
+            .NotEmpty().WithMessage("DisplayAddress is required when Location is provided")
+            .When(x => x.Location != null);
+
+        RuleFor(x => x.DisplayAddress)
+            .Must(BeNull).WithMessage("DisplayAddress must be null when Location is not provided")
+            .When(x => x.Location == null);
     }
+
+    private static bool BeNull(string? value) => string.IsNullOrWhiteSpace(value);
 }

@@ -35,21 +35,6 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasMaxLength(2000)
                 .IsRequired();
 
-            builder.Property(p => p.Material)
-                .HasColumnName("material")
-                .HasColumnType("text[]")
-                .IsRequired();
-
-            builder.Property(p => p.Brands)
-                .HasColumnName("brands")
-                .HasColumnType("text[]")
-                .IsRequired();
-
-            builder.Property(p => p.Colors)
-                .HasColumnName("colors")
-                .HasColumnType("text[]")
-                .IsRequired();
-
             builder.Property(p => p.ImageUrls)
                 .HasColumnName("image_urls")
                 .HasColumnType("text[]")
@@ -75,6 +60,14 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasColumnName("location")
                 .HasColumnType("geography(point, 4326)")
                 .HasConversion(geoPointToPointConverter, geoPointComparer);
+
+            builder.Property(p => p.ExternalPlaceId)
+                .HasColumnName("external_place_id")
+                .HasMaxLength(500);
+
+            builder.Property(p => p.DisplayAddress)
+                .HasColumnName("display_address")
+                .HasMaxLength(1000);
 
             builder.Property(p => p.EventTime)
                 .HasColumnName("event_time")
