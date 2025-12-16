@@ -2,7 +2,7 @@
 using Json.Schema.Generation;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Backtrack.Core.Application.Common.Interfaces;
+using Backtrack.Core.Application.Common.Interfaces.Helpers;
 
 namespace Backtrack.Core.Infrastructure.Helpers
 {

@@ -1,6 +1,8 @@
 ﻿using Backtrack.Core.Domain.Common;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Backtrack.Core.Domain.Entities
 {
@@ -13,6 +15,8 @@ namespace Backtrack.Core.Domain.Entities
         public GeoPoint? Location { get; set; }
         public string? ExternalPlaceId { get; set; }
         public string? DisplayAddress { get; set; }
+        public float[]? ContentEmbedding { get; set; }
+        public required string ContentHash { get; set; }
         public required DateTimeOffset EventTime { get; set; }
     }
 }

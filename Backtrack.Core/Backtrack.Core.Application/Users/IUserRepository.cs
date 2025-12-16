@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Common.Interfaces;
+using Backtrack.Core.Application.Common.Interfaces.Repositories;
 using Backtrack.Core.Domain.Entities;
 
 namespace Backtrack.Core.Application.Users

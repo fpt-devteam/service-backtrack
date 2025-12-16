@@ -36,7 +36,9 @@ services:
     restart: unless-stopped
 
   backtrack-core-db:
-    image: postgis/postgis:16-3.4
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.postgres-postgis-pgvector
     container_name: backtrack-core-db
     hostname: backtrack-core-db
     ports:
@@ -46,26 +48,9 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres123
     volumes:
-      - backtrack-core-db-data:/var/lib/postgresql/backtrack-core-db-data
+      - backtrack-core-db-data:/var/lib/postgresql/data
     networks:
       - backtrack-network
-
-  # Qdrant Vector Database - For semantic search and item matching
-  backtrack-core-vector-db:
-    image: qdrant/qdrant:latest
-    container_name: backtrack-core-vector-db
-    hostname: backtrack-core-vector-db
-    ports:
-      - "6333:6333" # HTTP API
-      - "6334:6334" # gRPC API
-    environment:
-      - QDRANT__SERVICE__HTTP_PORT=6333
-      - QDRANT__SERVICE__GRPC_PORT=6334
-    volumes:
-      - backtrack-core-vector-db-data:/qdrant/storage
-    networks:
-      - backtrack-network
-    restart: unless-stopped
 
 networks:
   backtrack-network:
@@ -73,4 +58,3 @@ networks:
 
 volumes:
   backtrack-core-db-data:
-  backtrack-core-vector-db-data:

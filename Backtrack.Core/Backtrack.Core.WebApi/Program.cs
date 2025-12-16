@@ -17,6 +17,7 @@ namespace Backtrack.Core.WebApi
                 .AddEnvironmentVariables();
 
             builder.Services.AddDatabase(builder.Configuration);
+            builder.Services.AddGemini(builder.Configuration);
             builder.Services.AddConfiguredCors(builder.Configuration);
             builder.Services.AddServiceConfigurations(builder.Configuration);
             builder.Services.AddEndpointsApiExplorer();

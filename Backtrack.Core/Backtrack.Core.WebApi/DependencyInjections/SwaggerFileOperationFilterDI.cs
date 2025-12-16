@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace Backtrack.Core.WebApi.Extensions
 {
-    public class SwaggerFileOperationFilter : IOperationFilter
+    public class SwaggerFileOperationFilterDI : IOperationFilter
     {
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {

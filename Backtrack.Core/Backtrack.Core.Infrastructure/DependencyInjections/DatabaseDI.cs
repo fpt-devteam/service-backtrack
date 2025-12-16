@@ -1,10 +1,12 @@
 using Backtrack.Core.Infrastructure.Data;
 using Backtrack.Core.WebApi.Configurations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Backtrack.Core.WebApi.Extensions
 {
-    public static class Database
+    public static class DatabaseDI
     {
         public static void AddDatabase(this IServiceCollection services, IConfiguration configuration)
         {
@@ -13,7 +15,11 @@ namespace Backtrack.Core.WebApi.Extensions
             var connString = configuration.GetConnectionString("DefaultConnection");
 
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(connString, o => o.UseNetTopologySuite()));
+                options.UseNpgsql(connString, o =>
+                {
+                    o.UseNetTopologySuite();
+                    o.UseVector();
+                }));
         }
     }
 }

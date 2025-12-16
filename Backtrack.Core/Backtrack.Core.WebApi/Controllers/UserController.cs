@@ -5,7 +5,6 @@ using Backtrack.Core.Application.Users.Commands.CreateUser;
 using Backtrack.Core.Application.Users.Queries.GetMe;
 using Backtrack.Core.Contract.Users.Responses;
 using Backtrack.Core.WebApi.Constants;
-using Backtrack.Core.WebApi.Extensions;
 using MediatR;
 
 namespace Backtrack.Core.WebApi.Controllers;

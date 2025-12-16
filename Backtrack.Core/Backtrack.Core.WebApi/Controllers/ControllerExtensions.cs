@@ -2,7 +2,7 @@ using Backtrack.Core.Contract.Common;
 using Backtrack.Core.WebApi.Constants;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Backtrack.Core.WebApi.Extensions;
+namespace Backtrack.Core.WebApi.Controllers;
 
 public static class ControllerExtensions
 {

@@ -3,7 +3,6 @@ using Backtrack.Core.Application.Posts.Commands.CreatePost;
 using Backtrack.Core.Application.Posts.Queries.GetPosts;
 using Backtrack.Core.Contract.Posts.Requests;
 using Backtrack.Core.Contract.Posts.Responses;
-using Backtrack.Core.WebApi.Extensions;
 using MediatR;
 using Backtrack.Core.Application.Posts.Common;
 using Backtrack.Core.Application.Common;

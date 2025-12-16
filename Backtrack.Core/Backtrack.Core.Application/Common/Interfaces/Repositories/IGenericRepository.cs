@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Backtrack.Core.Application.Common.Interfaces
+namespace Backtrack.Core.Application.Common.Interfaces.Repositories
 {
     public interface IGenericRepository<TEntity, TKey> where TEntity : class
     {

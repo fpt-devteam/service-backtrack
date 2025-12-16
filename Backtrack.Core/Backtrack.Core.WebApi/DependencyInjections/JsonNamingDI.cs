@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Backtrack.Core.WebApi.Extensions
 {
-    public static class JsonNamingExtensions
+    public static class JsonNamingDI
     {
         public static void AddJsonNamingConfiguration(this IServiceCollection services)
         {

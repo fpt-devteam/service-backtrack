@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
+using Pgvector;
 
 namespace Backtrack.Core.Infrastructure.Data.Configurations
 {
@@ -69,6 +70,28 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasColumnName("display_address")
                 .HasMaxLength(1000);
 
+            // Vector converter for embeddings
+            var embeddingToVectorConverter = new ValueConverter<float[]?, Vector?>(
+                toDb => toDb == null ? null : new Vector(toDb),
+                fromDb => fromDb == null ? null : fromDb.ToArray()
+            );
+
+            var embeddingComparer = new ValueComparer<float[]?>(
+                (a, b) => (a == null && b == null) || (a != null && b != null && a.SequenceEqual(b)),
+                v => v == null ? 0 : v.GetHashCode(),
+                v => v == null ? null : v.ToArray()
+            );
+
+            builder.Property(p => p.ContentEmbedding)
+                .HasColumnName("content_embedding")
+                .HasColumnType("vector(768)")
+                .HasConversion(embeddingToVectorConverter, embeddingComparer);
+
+            builder.Property(p => p.ContentHash)
+                .HasColumnName("content_hash")
+                .HasMaxLength(64)
+                .IsRequired();
+
             builder.Property(p => p.EventTime)
                 .HasColumnName("event_time")
                 .IsRequired();
@@ -94,6 +117,12 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
             builder.HasIndex(p => p.Location)
                 .HasDatabaseName("ix_posts_location")
                 .HasMethod("gist");
+
+            // Vector index for content embedding using HNSW for efficient similarity search
+            builder.HasIndex(p => p.ContentEmbedding)
+                .HasDatabaseName("ix_posts_content_embedding")
+                .HasMethod("hnsw")
+                .HasOperators("vector_cosine_ops");
 
             // Global query filter for soft delete
             builder.HasQueryFilter(p => p.DeletedAt == null);

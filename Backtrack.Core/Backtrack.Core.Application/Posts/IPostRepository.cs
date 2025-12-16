@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Common.Interfaces;
+using Backtrack.Core.Application.Common.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 

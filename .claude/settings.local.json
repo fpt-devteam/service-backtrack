@@ -10,7 +10,8 @@
       "Bash(dir /S /B \"C:\\Users\\NHATTHANG\\FptUniversity\\SEP490\\service-backtrack\\Backtrack.Core\\Backtrack.Core.Contract\\Posts\")",
       "Bash(dir /S /B \"C:\\Users\\NHATTHANG\\FptUniversity\\SEP490\\service-backtrack\\Backtrack.Core\\Backtrack.Core.Application\\Posts\")",
       "Bash(powershell:*)",
-      "Bash(dotnet ef migrations add:*)"
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(move IObjectHasher.cs IHasher.cs)"
     ],
     "deny": [],
     "ask": []

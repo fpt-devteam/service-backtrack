@@ -1,10 +1,10 @@
-namespace Backtrack.Core.Application.Common.Interfaces
+namespace Backtrack.Core.Application.Common.Interfaces.Helpers
 {
     /// <summary>
-    /// Interface for generating hash values from objects.
+    /// Interface for generating hash values from objects and strings.
     /// Used for content hashing, caching, and data integrity verification.
     /// </summary>
-    public interface IObjectHasher
+    public interface IHasher
     {
         /// <summary>
         /// Generates a hash string from any object.
@@ -28,5 +28,13 @@ namespace Backtrack.Core.Application.Common.Interfaces
         /// <param name="objects">The objects to hash together</param>
         /// <returns>A hash string representing all objects combined</returns>
         string HashMultiple(params object[] objects);
+
+        /// <summary>
+        /// Generates a hash string from a list of strings.
+        /// Strings are joined with newline separator before hashing.
+        /// </summary>
+        /// <param name="strings">The list of strings to hash</param>
+        /// <returns>A hash string representing all strings combined</returns>
+        string HashStrings(params string[] strings);
     }
 }

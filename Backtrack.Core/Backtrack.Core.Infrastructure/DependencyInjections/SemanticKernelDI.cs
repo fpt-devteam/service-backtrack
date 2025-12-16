@@ -1,3 +1,4 @@
+using Backtrack.Core.Infrastructure.Configurations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -6,7 +7,7 @@ using Microsoft.SemanticKernel;
 
 namespace Backtrack.Core.Infrastructure.DependencyInjections;
 
-public static class SemanticKernelInstaller
+public static class SemanticKernelDI
 {
 
     public static IServiceCollection AddSemanticKernelInfra(this IServiceCollection services, IConfiguration config)

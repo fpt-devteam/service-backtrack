@@ -1,12 +1,13 @@
 using Azure;
 using Azure.AI.DocumentIntelligence;
+using Backtrack.Core.Infrastructure.Configurations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Backtrack.Core.Infrastructure.DependencyInjections;
 
-public static class AzureAIFoundryInstaller
+public static class AzureAIFoundryDI
 {
     public static IServiceCollection AddAzureAIFoundry(this IServiceCollection services, IConfiguration config)
     {

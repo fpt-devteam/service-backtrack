@@ -1,4 +1,4 @@
-﻿namespace Backtrack.Core.Infrastructure.DependencyInjections;
+﻿namespace Backtrack.Core.Infrastructure.Configurations;
 
 public sealed class AzureAIFoundrySettings
 {

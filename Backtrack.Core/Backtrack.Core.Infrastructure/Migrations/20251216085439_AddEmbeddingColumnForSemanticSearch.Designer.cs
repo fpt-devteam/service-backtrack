@@ -3,6 +3,7 @@ using System;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -13,9 +14,11 @@ using Pgvector;
 namespace Backtrack.Core.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251216085439_AddEmbeddingColumnForSemanticSearch")]
+    partial class AddEmbeddingColumnForSemanticSearch
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,16 +34,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
-
-                    b.Property<Vector>("ContentEmbedding")
-                        .HasColumnType("vector(1536)")
-                        .HasColumnName("content_embedding");
-
-                    b.Property<string>("ContentHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("content_hash");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -60,6 +53,10 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("display_address");
+
+                    b.Property<Vector>("Embedding")
+                        .HasColumnType("vector(1536)")
+                        .HasColumnName("embedding");
 
                     b.Property<DateTimeOffset>("EventTime")
                         .HasColumnType("timestamp with time zone")
@@ -96,11 +93,11 @@ namespace Backtrack.Core.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContentEmbedding")
-                        .HasDatabaseName("ix_posts_content_embedding");
+                    b.HasIndex("Embedding")
+                        .HasDatabaseName("ix_posts_embedding");
 
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("ContentEmbedding"), "hnsw");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("ContentEmbedding"), new[] { "vector_cosine_ops" });
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Embedding"), "hnsw");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Embedding"), new[] { "vector_cosine_ops" });
 
                     b.HasIndex("EventTime")
                         .HasDatabaseName("ix_posts_event_time");

@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Backtrack.Core.Application.Common.Interfaces;
+namespace Backtrack.Core.Application.Common.Interfaces.Helpers;
 
 public interface IJsonHelper
 {

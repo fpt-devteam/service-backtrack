@@ -3,7 +3,7 @@ using Microsoft.OpenApi.Models;
 
 namespace Backtrack.Core.WebApi.Extensions
 {
-    public static class SwaggerExtensions
+    public static class SwaggerDI
     {
         public static IServiceCollection AddConfiguredSwagger(this IServiceCollection services)
         {
@@ -21,7 +21,7 @@ namespace Backtrack.Core.WebApi.Extensions
                 });
 
                 // Configure file upload operation filter
-                c.OperationFilter<SwaggerFileOperationFilter>();
+                c.OperationFilter<SwaggerFileOperationFilterDI>();
 
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {

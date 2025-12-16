@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Common.Interfaces;
+using Backtrack.Core.Application.Common.Interfaces.Repositories;
 using Backtrack.Core.Domain.Common;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;

@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Common.Interfaces;
+using Backtrack.Core.Application.Common.Interfaces.Helpers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -6,14 +6,14 @@ using System.Text.Json;
 namespace Backtrack.Core.Infrastructure.Helpers
 {
     /// <summary>
-    /// SHA256-based implementation of object hashing.
-    /// Provides deterministic, cryptographically secure hashes for objects.
+    /// SHA256-based implementation of hashing.
+    /// Provides deterministic, cryptographically secure hashes for objects and strings.
     /// </summary>
-    public class SHA256ObjectHasher : IObjectHasher
+    public class SHA256Hasher : IHasher
     {
         private readonly JsonSerializerOptions _jsonOptions;
 
-        public SHA256ObjectHasher()
+        public SHA256Hasher()
         {
             // Configure JSON serialization for consistent hashing
             _jsonOptions = new JsonSerializerOptions
@@ -88,6 +88,21 @@ namespace Backtrack.Core.Infrastructure.Helpers
             }
 
             return Hash(combinedJson.ToString());
+        }
+
+        /// <summary>
+        /// Generates a SHA256 hash from a list of strings.
+        /// Strings are joined with newline separator before hashing.
+        /// </summary>
+        /// <param name="strings">The list of strings to hash</param>
+        /// <returns>A 64-character hexadecimal SHA256 hash string</returns>
+        public string HashStrings(params string[] strings)
+        {
+            if (strings == null || strings.Length == 0)
+                return Hash(string.Empty);
+
+            var combined = string.Join("\n", strings);
+            return Hash(combined);
         }
 
         /// <summary>

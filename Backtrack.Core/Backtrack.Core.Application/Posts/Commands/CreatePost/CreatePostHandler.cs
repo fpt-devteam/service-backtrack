@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Common.Exceptions;
+using Backtrack.Core.Application.Common.Interfaces.Helpers;
 using Backtrack.Core.Application.Posts.Common;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
@@ -10,10 +11,12 @@ namespace Backtrack.Core.Application.Posts.Commands.CreatePost;
 public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostResult>
 {
     private readonly IPostRepository _postRepository;
+    private readonly IHasher _hasher;
 
-    public CreatePostHandler(IPostRepository postRepository)
+    public CreatePostHandler(IPostRepository postRepository, IHasher hasher)
     {
         _postRepository = postRepository;
+        _hasher = hasher;
     }
 
     public async Task<PostResult> Handle(CreatePostCommand command, CancellationToken cancellationToken)
@@ -34,6 +37,8 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
             Location = location,
             ExternalPlaceId = command.ExternalPlaceId,
             DisplayAddress = command.DisplayAddress,
+            ContentEmbedding = null, // Will be generated asynchronously
+            ContentHash = _hasher.HashStrings(command.ItemName, command.Description),
             EventTime = command.EventTime,
             CreatedAt = DateTimeOffset.UtcNow
         };

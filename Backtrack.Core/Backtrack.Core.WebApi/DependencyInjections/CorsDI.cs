@@ -2,7 +2,7 @@ using Backtrack.Core.WebApi.Configurations;
 
 namespace Backtrack.Core.WebApi.Extensions
 {
-    public static class CorsExtensions
+    public static class CorsDI
     {
         public static IServiceCollection AddConfiguredCors(this IServiceCollection services, IConfiguration configuration)
         {
