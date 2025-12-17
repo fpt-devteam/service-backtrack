@@ -1,5 +1,7 @@
 using Backtrack.Core.Application.Common.Exceptions;
+using Backtrack.Core.Application.Common.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Common.Interfaces.Helpers;
+using Backtrack.Core.Application.Posts.Commands.UpdatePostContentEmbedding;
 using Backtrack.Core.Application.Posts.Common;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
@@ -12,11 +14,16 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
 {
     private readonly IPostRepository _postRepository;
     private readonly IHasher _hasher;
+    private readonly IBackgroundJobService _backgroundJobService;
 
-    public CreatePostHandler(IPostRepository postRepository, IHasher hasher)
+    public CreatePostHandler(
+        IPostRepository postRepository,
+        IHasher hasher,
+        IBackgroundJobService backgroundJobService)
     {
         _postRepository = postRepository;
         _hasher = hasher;
+        _backgroundJobService = backgroundJobService;
     }
 
     public async Task<PostResult> Handle(CreatePostCommand command, CancellationToken cancellationToken)
@@ -38,6 +45,7 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
             ExternalPlaceId = command.ExternalPlaceId,
             DisplayAddress = command.DisplayAddress,
             ContentEmbedding = null, // Will be generated asynchronously
+            ContentEmbeddingStatus = ContentEmbeddingStatus.Pending,
             ContentHash = _hasher.HashStrings(command.ItemName, command.Description),
             EventTime = command.EventTime,
             CreatedAt = DateTimeOffset.UtcNow
@@ -45,6 +53,10 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
 
         await _postRepository.CreateAsync(post);
         await _postRepository.SaveChangesAsync();
+
+        // Enqueue background job to generate content embedding
+        _backgroundJobService.EnqueueJob(
+            new UpdatePostContentEmbeddingCommand(post.Id));
 
         return new PostResult
         {

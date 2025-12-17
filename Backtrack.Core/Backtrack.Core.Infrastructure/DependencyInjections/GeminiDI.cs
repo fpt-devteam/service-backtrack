@@ -10,11 +10,11 @@ namespace Backtrack.Core.WebApi.Extensions
     {
         public static void AddGemini(this IServiceCollection services, IConfiguration configuration)
         {
-            services.Configure<GeminiSettings>(configuration.GetSection("Gemini"));
+            services.Configure<GeminiSettings>(configuration.GetSection("GeminiSettings"));
 
             services.AddHttpClient<IEmbeddingService, GeminiEmbeddingService>((serviceProvider, client) =>
             {
-                var geminiSettings = configuration.GetSection("Gemini").Get<GeminiSettings>();
+                var geminiSettings = configuration.GetSection("GeminiSettings").Get<GeminiSettings>();
                 if (geminiSettings != null)
                 {
                     client.Timeout = TimeSpan.FromSeconds(geminiSettings.TimeoutSeconds);

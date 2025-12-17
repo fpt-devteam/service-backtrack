@@ -3,6 +3,7 @@ using Backtrack.Core.Application.Common.Exceptions;
 using Backtrack.Core.Application.Posts.Commands.CreatePost;
 using Backtrack.Core.Application.Posts.Common;
 using Backtrack.Core.Application.Posts.Queries.GetPosts;
+using Backtrack.Core.Application.Posts.Queries.SearchPostsBySemantic;
 using Backtrack.Core.Contract.Posts.Requests;
 using Backtrack.Core.Contract.Posts.Responses;
 using Backtrack.Core.Domain.Constants;
@@ -48,6 +49,24 @@ namespace Backtrack.Core.WebApi.Mappings
             );
         }
 
+        public static SearchPostsBySemanticQuery ToQuery(this SearchPostsBySemanticRequest request)
+        {
+            PostType? postType = null;
+            if (!string.IsNullOrWhiteSpace(request.PostType))
+            {
+                postType = ParsePostType(request.PostType);
+            }
+
+            return new SearchPostsBySemanticQuery(
+                SearchText: request.SearchText,
+                PagedQuery: PagedQuery.FromPage(request.Page, request.PageSize),
+                PostType: postType,
+                Latitude: request.Latitude,
+                Longitude: request.Longitude,
+                RadiusInKm: request.RadiusInKm
+            );
+        }
+
         // ==================== Result to Response ====================
 
         public static PostResponse ToResponse(this PostResult result)
@@ -64,6 +83,24 @@ namespace Backtrack.Core.WebApi.Mappings
                 DisplayAddress = result.DisplayAddress,
                 EventTime = result.EventTime,
                 CreatedAt = result.CreatedAt
+            };
+        }
+
+        public static PostSemanticSearchResponse ToResponse(this PostSemanticSearchResult result)
+        {
+            return new PostSemanticSearchResponse
+            {
+                Id = result.Id,
+                PostType = result.PostType,
+                ItemName = result.ItemName,
+                Description = result.Description,
+                ImageUrls = result.ImageUrls,
+                Location = result.Location?.ToResponse(),
+                ExternalPlaceId = result.ExternalPlaceId,
+                DisplayAddress = result.DisplayAddress,
+                EventTime = result.EventTime,
+                CreatedAt = result.CreatedAt,
+                SimilarityScore = result.SimilarityScore
             };
         }
 

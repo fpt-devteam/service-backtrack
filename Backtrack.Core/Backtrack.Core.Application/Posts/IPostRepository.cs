@@ -15,5 +15,15 @@ namespace Backtrack.Core.Application.Posts
             double? longitude = null,
             double? radiusInKm = null,
             CancellationToken cancellationToken = default);
+
+        Task<(IEnumerable<(Post Post, double SimilarityScore)> Items, int TotalCount)> SearchBySemanticAsync(
+            float[] queryEmbedding,
+            int offset,
+            int limit,
+            PostType? postType = null,
+            double? latitude = null,
+            double? longitude = null,
+            double? radiusInKm = null,
+            CancellationToken cancellationToken = default);
     }
 }

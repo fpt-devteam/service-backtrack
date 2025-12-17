@@ -44,10 +44,10 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
             var geoPointToPointConverter = new ValueConverter<GeoPoint?, Point?>(
                 toDb => toDb == null
                     ? null
-                    : new Point(toDb.Longitude, toDb.Latitude) { SRID = 4326 }, 
+                    : new Point(toDb.Longitude, toDb.Latitude) { SRID = 4326 },
                 fromDb => fromDb == null
                     ? null
-                    : new GeoPoint(fromDb.Y, fromDb.X) 
+                    : new GeoPoint(fromDb.Y, fromDb.X)
             );
 
             var geoPointComparer = new ValueComparer<GeoPoint?>(
@@ -90,6 +90,11 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
             builder.Property(p => p.ContentHash)
                 .HasColumnName("content_hash")
                 .HasMaxLength(64)
+                .IsRequired();
+
+            builder.Property(p => p.ContentEmbeddingStatus)
+                .HasColumnName("content_embedding_status")
+                .HasConversion<string>()
                 .IsRequired();
 
             builder.Property(p => p.EventTime)

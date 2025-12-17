@@ -9,6 +9,12 @@ namespace Backtrack.Core.WebApi
     {
         public static async Task Main(string[] args)
         {
+            var envFilePath = Path.Combine(Directory.GetCurrentDirectory(), "backtrack-core.local.env");
+            if (File.Exists(envFilePath))
+            {
+                DotNetEnv.Env.Load(envFilePath);
+            }
+
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
             builder.Configuration
@@ -20,6 +26,7 @@ namespace Backtrack.Core.WebApi
             builder.Services.AddGemini(builder.Configuration);
             builder.Services.AddConfiguredCors(builder.Configuration);
             builder.Services.AddServiceConfigurations(builder.Configuration);
+            builder.Services.AddHangfire(builder.Configuration);
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddJsonNamingConfiguration();
             builder.Services.AddConfiguredSwagger();
@@ -35,6 +42,7 @@ namespace Backtrack.Core.WebApi
             app.UseSwagger();
             app.UseSwaggerUI();
             app.UseCors("AppCorsPolicy");
+            app.UseHangfireDashboardIfEnabled(builder.Configuration);
             app.UseHttpsRedirection();
             app.MapControllers();
 

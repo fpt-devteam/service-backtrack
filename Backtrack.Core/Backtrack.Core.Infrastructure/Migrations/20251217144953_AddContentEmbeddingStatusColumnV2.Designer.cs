@@ -3,6 +3,7 @@ using System;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -13,9 +14,11 @@ using Pgvector;
 namespace Backtrack.Core.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251217144953_AddContentEmbeddingStatusColumnV2")]
+    partial class AddContentEmbeddingStatusColumnV2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,9 +39,8 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("vector(768)")
                         .HasColumnName("content_embedding");
 
-                    b.Property<string>("ContentEmbeddingStatus")
-                        .IsRequired()
-                        .HasColumnType("text")
+                    b.Property<int>("ContentEmbeddingStatus")
+                        .HasColumnType("integer")
                         .HasColumnName("content_embedding_status");
 
                     b.Property<string>("ContentHash")

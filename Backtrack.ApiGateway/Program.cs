@@ -2,6 +2,13 @@ using Backtrack.ApiGateway.Middleware;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 
+// Load .env file if it exists
+var envFilePath = Path.Combine(Directory.GetCurrentDirectory(), "backtrack-api-gateway.local.env");
+if (File.Exists(envFilePath))
+{
+    DotNetEnv.Env.Load(envFilePath);
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();

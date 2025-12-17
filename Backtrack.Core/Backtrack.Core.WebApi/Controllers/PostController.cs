@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Backtrack.Core.Application.Posts.Commands.CreatePost;
 using Backtrack.Core.Application.Posts.Queries.GetPosts;
+using Backtrack.Core.Application.Posts.Queries.SearchPostsBySemantic;
 using Backtrack.Core.Contract.Posts.Requests;
 using Backtrack.Core.Contract.Posts.Responses;
 using MediatR;
@@ -39,6 +40,22 @@ public class PostController : ControllerBase
         var result = await _mediator.Send(query, cancellationToken);
 
         var response = PagedResponse<PostResponse>.Create(
+            items: result.Items.Select(item => item.ToResponse()),
+            page: request.Page,
+            pageSize: request.PageSize,
+            totalCount: result.Total
+        );
+
+        return this.ApiOk(response);
+    }
+
+    [HttpGet("search/semantic")]
+    public async Task<IActionResult> SearchPostsBySemanticAsync([FromQuery] SearchPostsBySemanticRequest request, CancellationToken cancellationToken = default)
+    {
+        var query = request.ToQuery();
+        var result = await _mediator.Send(query, cancellationToken);
+
+        var response = PagedResponse<PostSemanticSearchResponse>.Create(
             items: result.Items.Select(item => item.ToResponse()),
             page: request.Page,
             pageSize: request.PageSize,

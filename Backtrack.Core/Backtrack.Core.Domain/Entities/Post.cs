@@ -16,6 +16,7 @@ namespace Backtrack.Core.Domain.Entities
         public string? ExternalPlaceId { get; set; }
         public string? DisplayAddress { get; set; }
         public float[]? ContentEmbedding { get; set; }
+        public required ContentEmbeddingStatus ContentEmbeddingStatus { get; set; }
         public required string ContentHash { get; set; }
         public required DateTimeOffset EventTime { get; set; }
     }

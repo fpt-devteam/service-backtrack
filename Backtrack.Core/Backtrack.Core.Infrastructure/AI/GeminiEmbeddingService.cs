@@ -24,7 +24,7 @@ namespace Backtrack.Core.Infrastructure.AI
             _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
 
             if (string.IsNullOrWhiteSpace(_settings.ApiKey))
-                throw new InvalidOperationException("Gemini API key is not configured. Please set 'Gemini:ApiKey' in configuration.");
+                throw new InvalidOperationException("Gemini API key is not configured. Please set 'GeminiSettings__ApiKey' in configuration.");
         }
 
         public async Task<float[]> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default)
