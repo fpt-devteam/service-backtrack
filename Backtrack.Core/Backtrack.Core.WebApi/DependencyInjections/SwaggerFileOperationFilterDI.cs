@@ -3,7 +3,7 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 
-namespace Backtrack.Core.WebApi.Extensions
+namespace Backtrack.Core.WebApi.DependencyInjections
 {
     public class SwaggerFileOperationFilterDI : IOperationFilter
     {

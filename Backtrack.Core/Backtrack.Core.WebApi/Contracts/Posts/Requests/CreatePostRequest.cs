@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Backtrack.Core.Contract.Posts.Requests;
+namespace Backtrack.Core.WebApi.Contracts.Posts.Requests;
 
 public sealed record CreatePostRequest
 {

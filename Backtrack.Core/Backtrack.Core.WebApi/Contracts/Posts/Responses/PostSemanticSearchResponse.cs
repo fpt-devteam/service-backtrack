@@ -1,4 +1,4 @@
-namespace Backtrack.Core.Contract.Posts.Responses;
+namespace Backtrack.Core.WebApi.Contracts.Posts.Responses;
 
 public sealed record PostSemanticSearchResponse
 {

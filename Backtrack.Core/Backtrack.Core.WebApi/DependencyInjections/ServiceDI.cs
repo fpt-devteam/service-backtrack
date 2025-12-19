@@ -13,7 +13,7 @@ using Backtrack.Core.Infrastructure.Repositories.Common;
 using FluentValidation;
 using MediatR;
 
-namespace Backtrack.Core.WebApi.Extensions;
+namespace Backtrack.Core.WebApi.DependencyInjections;
 
 public static class ServiceDI
 {

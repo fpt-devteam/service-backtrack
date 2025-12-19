@@ -1,7 +1,7 @@
 using System.Reflection;
 using Microsoft.OpenApi.Models;
 
-namespace Backtrack.Core.WebApi.Extensions
+namespace Backtrack.Core.WebApi.DependencyInjections
 {
     public static class SwaggerDI
     {

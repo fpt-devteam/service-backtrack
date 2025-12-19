@@ -1,4 +1,4 @@
-namespace Backtrack.Core.WebApi.Configurations
+namespace Backtrack.Core.Infrastructure.Configurations
 {
     /// <summary>
     /// Configuration settings for Google Gemini API.

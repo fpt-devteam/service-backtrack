@@ -1,6 +1,7 @@
 using Backtrack.Core.Infrastructure.Data;
-using Backtrack.Core.WebApi.Extensions;
-using Backtrack.Core.WebApi.Middleware;
+using Backtrack.Core.Infrastructure.DependencyInjections;
+using Backtrack.Core.WebApi.DependencyInjections;
+using Backtrack.Core.WebApi.Middlewares;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backtrack.Core.WebApi
@@ -28,7 +29,7 @@ namespace Backtrack.Core.WebApi
             builder.Services.AddServiceConfigurations(builder.Configuration);
             builder.Services.AddHangfire(builder.Configuration);
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddJsonNamingConfiguration();
+            builder.Services.AddJsonOptions();
             builder.Services.AddConfiguredSwagger();
             builder.Services.AddHealthChecks();
 

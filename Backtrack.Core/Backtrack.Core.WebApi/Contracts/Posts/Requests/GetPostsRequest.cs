@@ -1,6 +1,7 @@
-using Backtrack.Core.Contract.Common;
 
-namespace Backtrack.Core.Contract.Posts.Requests;
+using Backtrack.Core.WebApi.Contracts.Common;
+
+namespace Backtrack.Core.WebApi.Contracts.Posts.Requests;
 
 public sealed record GetPostsRequest : PagedRequest
 {

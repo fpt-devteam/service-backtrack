@@ -1,4 +1,4 @@
-namespace Backtrack.Core.Contract.Users.Responses;
+namespace Backtrack.Core.WebApi.Contracts.Users.Responses;
 
 public sealed record UserResponse
 {

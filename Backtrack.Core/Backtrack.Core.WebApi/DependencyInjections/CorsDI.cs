@@ -1,6 +1,6 @@
 using Backtrack.Core.WebApi.Configurations;
 
-namespace Backtrack.Core.WebApi.Extensions
+namespace Backtrack.Core.WebApi.DependencyInjections
 {
     public static class CorsDI
     {

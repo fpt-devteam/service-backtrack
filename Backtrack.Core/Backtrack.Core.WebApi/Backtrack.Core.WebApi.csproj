@@ -80,7 +80,10 @@
     <ProjectReference Include="..\Backtrack.Core.Application\Backtrack.Core.Application.csproj" />
     <ProjectReference Include="..\Backtrack.Core.Domain\Backtrack.Core.Domain.csproj" />
     <ProjectReference Include="..\Backtrack.Core.Infrastructure\Backtrack.Core.Infrastructure.csproj" />
-    <ProjectReference Include="..\Backtrack.Core.Contract\Backtrack.Core.Contract.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Contracts\Users\Requests\" />
   </ItemGroup>
 
 </Project>

@@ -1,14 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Backtrack.Core.Application.Posts.Commands.CreatePost;
-using Backtrack.Core.Application.Posts.Queries.GetPosts;
-using Backtrack.Core.Application.Posts.Queries.SearchPostsBySemantic;
-using Backtrack.Core.Contract.Posts.Requests;
-using Backtrack.Core.Contract.Posts.Responses;
 using MediatR;
-using Backtrack.Core.Application.Posts.Common;
-using Backtrack.Core.Application.Common;
-using Backtrack.Core.Contract.Common;
 using Backtrack.Core.WebApi.Mappings;
+using Backtrack.Core.WebApi.Contracts.Posts.Requests;
+using Backtrack.Core.WebApi.Contracts.Posts.Responses;
+using Backtrack.Core.WebApi.Contracts.Common;
 
 namespace Backtrack.Core.WebApi.Controllers;
 

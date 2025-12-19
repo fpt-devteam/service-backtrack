@@ -1,4 +1,4 @@
-namespace Backtrack.Core.Contract.Common;
+namespace Backtrack.Core.WebApi.Contracts.Common;
 
 public record PagedResponse<T>
 {

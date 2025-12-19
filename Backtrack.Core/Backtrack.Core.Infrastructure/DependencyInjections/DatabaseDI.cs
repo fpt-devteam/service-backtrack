@@ -1,10 +1,10 @@
+using Backtrack.Core.Infrastructure.Configurations;
 using Backtrack.Core.Infrastructure.Data;
-using Backtrack.Core.WebApi.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Backtrack.Core.WebApi.Extensions
+namespace Backtrack.Core.Infrastructure.DependencyInjections
 {
     public static class DatabaseDI
     {
