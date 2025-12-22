@@ -6,7 +6,7 @@ export type ItemResponse = {
     description?: string;
     imageUrls?: string[];
     ownerId: string;
-    qrCode: QrCodeResponse;
+    qrCode?: QrCodeResponse;
     createdAt: string;
     updatedAt: string | null;
 };

@@ -5,3 +5,8 @@ export type ItemWithQrResult = {
     item: InstanceType<typeof Item>;
     qrCode: InstanceType<typeof QrCode>;
 };
+
+export type ListItemsResult = {
+    items: InstanceType<typeof Item>[];
+    totalCount: number;
+};

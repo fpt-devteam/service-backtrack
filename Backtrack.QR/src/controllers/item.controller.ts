@@ -6,8 +6,41 @@ import { toItemResponse } from '../contracts/item/item.mapper.js';
 import * as logger from '@/src/utils/logger.js';
 import type { CreateItemRequest } from '@/src/contracts/item/item.request.js';
 import { HEADER_AUTH_ID } from '@/src/utils/headers.js';
+import { createPagedResponse, sanitizePage, sanitizePageSize } from '@/src/contracts/common/pagination.js';
 
-export const getById = async (req: Request, res: Response) => {
+export const getAllAsync = async (req: Request, res: Response) => {
+    const ownerId = req.headers[HEADER_AUTH_ID] as string;
+    const page = sanitizePage(req.query.page);
+    const pageSize = sanitizePageSize(req.query.pageSize);
+
+    const result = await ItemService.getAllAsync(ownerId, page, pageSize);
+
+    if (isSuccess(result)) {
+        const { items, totalCount } = result.value;
+        const pagedResponse = createPagedResponse(
+            items.map((item) =>
+                toItemResponse(item)),
+            page,
+            pageSize,
+            totalCount
+        );
+
+        res.json(ok(pagedResponse));
+    } else {
+        const status = getHttpStatus(result.error);
+        logger.warn('Failed to get items', {
+            ownerId,
+            error: result.error,
+        });
+        res.status(status).json(fail(
+            result.error.code,
+            result.error.message,
+            result.error.details
+        ));
+    }
+};
+
+export const getByIdAsync = async (req: Request, res: Response) => {
     const { id } = req.params;
     const result = await ItemService.getByIdAsync(id);
 
@@ -24,7 +57,7 @@ export const getById = async (req: Request, res: Response) => {
     }
 };
 
-export const create = async (req: Request, res: Response) => {
+export const createAsync = async (req: Request, res: Response) => {
     const request: CreateItemRequest = req.body;
     const correlationId = req.correlationId || 'unknown';
     const ownerId = req.headers[HEADER_AUTH_ID] as string;

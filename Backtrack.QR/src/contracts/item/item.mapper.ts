@@ -8,14 +8,14 @@ import { toQrCodeResponse } from '@/src/contracts/qr-code/qr-code.mapper.js';
  */
 export const toItemResponse = (
     item: InstanceType<typeof Item>,
-    qrCode: InstanceType<typeof QrCode>
+    qrCode?: InstanceType<typeof QrCode>
 ): ItemResponse => ({
     id: item._id.toString(),
     name: item.name,
     description: item.description,
     imageUrls: item.imageUrls,
     ownerId: item.ownerId,
-    qrCode: toQrCodeResponse(qrCode),
+    qrCode: qrCode ? toQrCodeResponse(qrCode) : undefined,
     createdAt: item.createAt.toISOString(),
     updatedAt: item.updateAt?.toISOString() || null
 });

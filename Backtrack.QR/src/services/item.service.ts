@@ -6,7 +6,8 @@ import { Result, success, failure, isFailure } from '@/src/utils/result.js';
 import { generatePublicCode } from '@/src/utils/qr-code-generator.js';
 import { ItemErrors } from '@/src/errors/catalog/item.error.js';
 import mongoose from 'mongoose';
-import type { ItemWithQrResult } from '@/src/database/view/item.view.js';
+import type { ItemWithQrResult, ListItemsResult } from '@/src/database/view/item.view.js';
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE, sanitizePage, sanitizePageSize } from '@/src/contracts/common/pagination.js';
 
 const MAX_RETRIES = 5;
 
@@ -47,6 +48,20 @@ export const getByIdAsync = async (
         item: itemResult.value,
         qrCode: qrCodeResult.value
     });
+};
+
+export const getAllAsync = async (
+    ownerId: string,
+    page: number,
+    pageSize: number
+): Promise<Result<ListItemsResult>> => {
+    const result = await ItemRepo.getAll(ownerId, page, pageSize);
+
+    if (isFailure(result)) {
+        return result;
+    }
+
+    return success(result.value);
 };
 
 /**
