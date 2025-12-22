@@ -2,6 +2,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
+    "baseUrl": ".",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ES2022",
@@ -11,10 +12,9 @@
     "strict": true,
     "sourceMap": true,
     "skipLibCheck": true,
-    "ignoreDeprecations": "5.0",
     "paths": {
-      "@/*": [
-        "./*"
+      "@/src/*": [
+        "./src/*"
       ]
     }
   }
