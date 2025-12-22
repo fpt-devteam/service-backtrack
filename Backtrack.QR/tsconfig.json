@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "types": [
+      "node"
+    ],
+    "strict": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "ignoreDeprecations": "5.0",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
+  }
+}
