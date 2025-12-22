@@ -10,13 +10,15 @@ namespace Backtrack.Core.WebApi
     {
         public static async Task Main(string[] args)
         {
-            var envFilePath = Path.Combine(Directory.GetCurrentDirectory(), "backtrack-core.local.env");
-            if (File.Exists(envFilePath))
-            {
-                DotNetEnv.Env.Load(envFilePath);
-            }
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+            if (builder.Environment.IsDevelopment())
+            {
+                var envFilePath = Path.Combine(Directory.GetCurrentDirectory(), "backtrack-core.local.env");
+                if (File.Exists(envFilePath))
+                    DotNetEnv.Env.Load(envFilePath);
+            }
 
             builder.Configuration
                 .AddJsonFile("appsettings.json", false, true)
