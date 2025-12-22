@@ -17,7 +17,7 @@ services:
       - backtrack-network
     depends_on:
       - backtrack-core-api
-    #   - backtrack-chat
+      - backtrack-chat-api
     #   - backtrack-notifications
     restart: unless-stopped
 
@@ -33,6 +33,22 @@ services:
       - ./env/backtrack-core-api.docker.env
     networks:
       - backtrack-network
+    restart: unless-stopped
+
+  # BackTrack Chat Service - Real-time messaging
+  backtrack-chat-api:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.backtrack-chat
+    container_name: backtrack-chat-api
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./env/backtrack-chat.docker.env
+    networks:
+      - backtrack-network
+    depends_on:
+      - backtrack-chat-db
     restart: unless-stopped
 
   backtrack-core-db:
@@ -52,9 +68,25 @@ services:
     networks:
       - backtrack-network
 
+  backtrack-chat-db:
+    image: mongo:7-jammy
+    container_name: backtrack-chat-db
+    hostname: backtrack-chat-db
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=backtrack-chat
+    volumes:
+      - backtrack-chat-db-data:/data/db
+    networks:
+      - backtrack-network
+    restart: unless-stopped
+
 networks:
   backtrack-network:
     driver: bridge
 
 volumes:
   backtrack-core-db-data:
+  backtrack-chat-db-data:
+

@@ -14,7 +14,14 @@
       "Bash(move IObjectHasher.cs IHasher.cs)",
       "Bash(dir /S /B \"C:\\Users\\NHATTHANG\\FptUniversity\\SEP490\\service-backtrack\")",
       "Bash(findstr:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(rm:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npm run lint)",
+      "Bash(test:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm type-check:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <link rel="stylesheet" href="/stylesheets/chat.css">
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Sidebar - Danh sách conversations -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Conversations</h2>
+                <button id="new-conversation-btn" class="btn-new">+</button>
+            </div>
+            
+            <div class="user-info">
+                <div class="user-avatar">U</div>
+                <div class="user-details">
+                    <span class="user-name" id="current-user-name">Loading...</span>
+                    <span class="user-status" style="cursor: pointer;" onclick="logout()">Đăng xuất</span>
+                </div>
+            </div>
+
+            <div class="conversation-list" id="conversation-list">
+                <!-- Conversations sẽ được load động -->
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-main">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="conversation-avatar" id="conversation-avatar">?</div>
+                    <div class="conversation-details">
+                        <h3 id="conversation-name">Chọn một conversation</h3>
+                        <span class="conversation-type" id="conversation-type"></span>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button id="conversation-info-btn" class="btn-icon">ℹ️</button>
+                </div>
+            </div>
+
+            <div class="messages-container" id="messages-container">
+                <div class="welcome-message">
+                    <h2>Chào mừng đến Chat App</h2>
+                    <p>Chọn một conversation hoặc tạo mới để bắt đầu trò chuyện</p>
+                </div>
+            </div>
+
+            <div class="message-input-container">
+                <form id="message-form" class="message-form">
+                    <button type="button" class="btn-icon" id="attach-btn">📎</button>
+                    <input 
+                        type="text" 
+                        id="message-input" 
+                        placeholder="Nhập tin nhắn..." 
+                        autocomplete="off"
+                        disabled
+                    >
+                    <button type="submit" class="btn-send" id="send-btn" disabled>
+                        Gửi
+                    </button>
+                </form>
+            </div>
+        </main>
+
+        <!-- Sidebar phải - Thông tin conversation (ẩn mặc định) -->
+        <aside class="info-sidebar" id="info-sidebar">
+            <div class="info-header">
+                <h3>Thông tin</h3>
+                <button id="close-info-btn" class="btn-icon">✕</button>
+            </div>
+            <div class="info-content" id="info-content">
+                <!-- Thông tin chi tiết conversation -->
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modal tạo conversation mới -->
+    <div id="new-conversation-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Tạo Conversation Mới</h3>
+                <button class="btn-icon" id="close-modal-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Loại conversation</label>
+                    <select id="conversation-type-select">
+                        <option value="SINGLE">Trò chuyện riêng</option>
+                        <option value="GROUP">Nhóm</option>
+                    </select>
+                </div>
+                <div class="form-group" id="group-name-group" style="display: none;">
+                    <label>Tên nhóm</label>
+                    <input type="text" id="group-name-input" placeholder="Nhập tên nhóm...">
+                </div>
+                <div class="form-group">
+                    <label>Chọn người tham gia</label>
+                    <div id="users-list" class="users-list">
+                        <!-- Danh sách users sẽ được load động -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancel-modal-btn">Hủy</button>
+                <button class="btn-primary" id="create-conversation-btn">Tạo</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/scripts/http.js"></script>
+    <script src="/scripts/chat.js"></script>
+</body>
+</html>
