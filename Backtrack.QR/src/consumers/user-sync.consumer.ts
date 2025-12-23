@@ -63,26 +63,21 @@ async function handleUserCreated(event: UserCreatedEvent): Promise<void> {
     logger.info(`Handling UserCreated event for user ${event.Id}`);
 
     // Check if user already exists (idempotency)
-    const existingResult = await userRepository.getById(event.Id);
+    const existingUser = await userRepository.getByIdAsync(event.Id);
 
-    if (existingResult.success && existingResult.value) {
+    if (existingUser) {
         logger.warn(`User ${event.Id} already exists. Skipping creation.`);
         return;
     }
 
     // Create user
-    const createResult = await userRepository.create({
+    await userRepository.createAsync({
         _id: event.Id,
         email: event.Email,
         displayName: event.DisplayName,
         createdAt: new Date(event.CreatedAt),
         syncedAt: new Date()
     });
-
-    if (!createResult.success) {
-        logger.error(`Failed to create user ${event.Id}:`, createResult.error);
-        throw new Error(`Failed to create user: ${createResult.error.message}`);
-    }
 
     logger.info(`Successfully synced user ${event.Id} (created)`);
 }
@@ -91,23 +86,18 @@ async function handleUserUpdated(event: UserUpdatedEvent): Promise<void> {
     logger.info(`Handling UserUpdated event for user ${event.Id}`);
 
     // Check if user exists
-    const existingResult = await userRepository.getById(event.Id);
+    const existingUser = await userRepository.getByIdAsync(event.Id);
 
-    if (!existingResult.success || !existingResult.value) {
+    if (!existingUser) {
         // User doesn't exist yet (out-of-order message), create it
         logger.warn(`User ${event.Id} not found. Creating user from update event.`);
-        const createResult = await userRepository.create({
+        await userRepository.createAsync({
             _id: event.Id,
             email: event.Email || '',
             displayName: event.DisplayName,
             createdAt: new Date(event.UpdatedAt),
             syncedAt: new Date()
         });
-
-        if (!createResult.success) {
-            logger.error(`Failed to create user from update event ${event.Id}:`, createResult.error);
-            throw new Error(`Failed to create user: ${createResult.error.message}`);
-        }
         return;
     }
 
@@ -120,12 +110,7 @@ async function handleUserUpdated(event: UserUpdatedEvent): Promise<void> {
     if (event.Email) updateData.email = event.Email;
     if (event.DisplayName !== undefined) updateData.displayName = event.DisplayName;
 
-    const updateResult = await userRepository.update(event.Id, updateData);
-
-    if (!updateResult.success) {
-        logger.error(`Failed to update user ${event.Id}:`, updateResult.error);
-        throw new Error(`Failed to update user: ${updateResult.error.message}`);
-    }
+    await userRepository.updateAsync(event.Id, updateData);
 
     logger.info(`Successfully synced user ${event.Id} (updated)`);
 }

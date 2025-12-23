@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import * as ItemController from '@/src/controllers/item.controller.js';
+import asyncHandler from "express-async-handler";
+
+import * as itemController from '@/src/controllers/item.controller.js';
 
 const router = Router();
 
-router.get('/', ItemController.getAllAsync);
-
-router.get('/:id', ItemController.getByIdAsync);
-
-router.post('/', ItemController.createAsync);
+router.get('/', asyncHandler(itemController.getAllAsync));
+router.get('/:id', asyncHandler(itemController.getByIdAsync));
+router.post('/', asyncHandler(itemController.createAsync));
 export default router;

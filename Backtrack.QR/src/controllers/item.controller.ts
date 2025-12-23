@@ -34,8 +34,7 @@ export const getAllAsync = async (req: Request, res: Response) => {
         });
         res.status(status).json(fail(
             result.error.code,
-            result.error.message,
-            result.error.details
+            result.error.message
         ));
     }
 };
@@ -51,8 +50,7 @@ export const getByIdAsync = async (req: Request, res: Response) => {
         const status = getHttpStatus(result.error);
         res.status(status).json(fail(
             result.error.code,
-            result.error.message,
-            result.error.details
+            result.error.message
         ));
     }
 };
@@ -76,8 +74,7 @@ export const createAsync = async (req: Request, res: Response) => {
         });
         res.status(status).json(fail(
             result.error.code,
-            result.error.message,
-            result.error.details
+            result.error.message
         ));
     }
 };
