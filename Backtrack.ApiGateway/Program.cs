@@ -13,7 +13,7 @@ if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development
     }
     else
     {
-        throw new FileNotFoundException($"Env file not found at {envFilePath}");
+        Console.WriteLine($"Env file not found at {envFilePath}");
     }
 }
 
