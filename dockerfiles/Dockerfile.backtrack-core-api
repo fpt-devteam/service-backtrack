@@ -4,7 +4,6 @@ WORKDIR /src
 
 # Copy csproj files for all projects (layer caching optimization)
 COPY ["Backtrack.Core/Backtrack.Core.Domain/Backtrack.Core.Domain.csproj", "Backtrack.Core.Domain/"]
-COPY ["Backtrack.Core/Backtrack.Core.Contract/Backtrack.Core.Contract.csproj", "Backtrack.Core.Contract/"]
 COPY ["Backtrack.Core/Backtrack.Core.Application/Backtrack.Core.Application.csproj", "Backtrack.Core.Application/"]
 COPY ["Backtrack.Core/Backtrack.Core.Infrastructure/Backtrack.Core.Infrastructure.csproj", "Backtrack.Core.Infrastructure/"]
 COPY ["Backtrack.Core/Backtrack.Core.WebApi/Backtrack.Core.WebApi.csproj", "Backtrack.Core.WebApi/"]

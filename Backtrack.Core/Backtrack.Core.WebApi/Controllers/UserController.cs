@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Backtrack.Core.Application.Common.Exceptions;
 using Backtrack.Core.Application.Users.Commands.CreateUser;
 using Backtrack.Core.Application.Users.Queries.GetMe;
-using Backtrack.Core.Contract.Users.Responses;
 using Backtrack.Core.WebApi.Constants;
+using Backtrack.Core.WebApi.Utils;
 using MediatR;
+using Backtrack.Core.WebApi.Contracts.Users.Responses;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -23,32 +23,17 @@ public class UserController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateUserAsync(CancellationToken cancellationToken)
     {
-        // Extract user information from headers
         var userId = Request.Headers[HeaderNames.AuthId].ToString();
         var email = Request.Headers[HeaderNames.AuthEmail].ToString();
         var encodedDisplayName = Request.Headers[HeaderNames.AuthName].ToString();
 
-        // Validate required headers
         if (string.IsNullOrWhiteSpace(userId))
-            throw new DomainException(UserErrors.InvalidAuthId);
+            throw new InvalidOperationException($"Required header '{HeaderNames.AuthId}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
 
         if (string.IsNullOrWhiteSpace(email))
-            throw new DomainException(UserErrors.InvalidEmail);
+            throw new InvalidOperationException($"Required header '{HeaderNames.AuthEmail}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
 
-        // Decode display name from Base64
-        var displayName = string.Empty;
-        if (!string.IsNullOrWhiteSpace(encodedDisplayName))
-        {
-            try
-            {
-                var decodedBytes = Convert.FromBase64String(encodedDisplayName);
-                displayName = System.Text.Encoding.UTF8.GetString(decodedBytes);
-            }
-            catch (FormatException)
-            {
-                throw new DomainException(UserErrors.InvalidDisplayName);
-            }
-        }
+        var displayName = Base64Util.DecodeToUtf8(encodedDisplayName);
 
         var command = new CreateUserCommand
         {
@@ -74,8 +59,9 @@ public class UserController : ControllerBase
     public async Task<IActionResult> GetMeAsync(CancellationToken cancellationToken)
     {
         var userId = Request.Headers[HeaderNames.AuthId].ToString();
+
         if (string.IsNullOrWhiteSpace(userId))
-            throw new DomainException(UserErrors.NotFound);
+            throw new InvalidOperationException($"Required header '{HeaderNames.AuthId}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
 
         var query = new GetMeQuery(userId);
         var result = await _mediator.Send(query, cancellationToken);

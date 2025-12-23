@@ -1,12 +1,13 @@
 ﻿using Backtrack.Core.Application.Common;
 using Backtrack.Core.Application.Common.Exceptions;
+using Backtrack.Core.Application.Common.Exceptions.Errors;
 using Backtrack.Core.Application.Posts.Commands.CreatePost;
 using Backtrack.Core.Application.Posts.Common;
 using Backtrack.Core.Application.Posts.Queries.GetPosts;
 using Backtrack.Core.Application.Posts.Queries.SearchPostsBySemantic;
-using Backtrack.Core.Contract.Posts.Requests;
-using Backtrack.Core.Contract.Posts.Responses;
 using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.WebApi.Contracts.Posts.Requests;
+using Backtrack.Core.WebApi.Contracts.Posts.Responses;
 
 namespace Backtrack.Core.WebApi.Mappings
 {

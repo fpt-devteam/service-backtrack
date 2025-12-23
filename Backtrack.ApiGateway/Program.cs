@@ -1,15 +1,14 @@
 using Backtrack.ApiGateway.Middleware;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-
-// Load .env file if it exists
-var envFilePath = Path.Combine(Directory.GetCurrentDirectory(), "backtrack-api-gateway.local.env");
-if (File.Exists(envFilePath))
-{
-    DotNetEnv.Env.Load(envFilePath);
-}
-
 var builder = WebApplication.CreateBuilder(args);
+
+if (builder.Environment.IsDevelopment())
+{
+    var envFilePath = Path.Combine(Directory.GetCurrentDirectory(), "backtrack-api-gateway.local.env");
+    if (File.Exists(envFilePath))
+        DotNetEnv.Env.Load(envFilePath);
+}
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -36,7 +35,7 @@ app.UseMiddleware<FirebaseAuthMiddleware>();
 
 app.MapReverseProxy();
 
-app.Run();
+await app.RunAsync();
 
 static void InitializeFirebase(IConfiguration configuration, IWebHostEnvironment environment, IServiceCollection services, ILogger logger)
 {

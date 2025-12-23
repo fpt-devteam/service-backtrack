@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Common.Exceptions;
+using Backtrack.Core.Application.Common.Exceptions.Errors;
 using MediatR;
 using System.ComponentModel.DataAnnotations;
 

@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Common.Exceptions;
+using Backtrack.Core.Application.Common.Exceptions.Errors;
 using Backtrack.Core.Application.Users.Common;
 using MediatR;
 
@@ -19,7 +20,7 @@ public sealed class GetMeHandler : IRequestHandler<GetMeQuery, UserResult>
 
         if (user == null)
         {
-            throw new DomainException(UserErrors.NotFound);
+            throw new NotFoundException(UserErrors.NotFound);
         }
 
         return new UserResult

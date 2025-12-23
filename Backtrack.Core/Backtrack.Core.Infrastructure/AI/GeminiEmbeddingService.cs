@@ -1,5 +1,5 @@
 ﻿using Backtrack.Core.Application.Common.Interfaces.AI;
-using Backtrack.Core.WebApi.Configurations;
+using Backtrack.Core.Infrastructure.Configurations;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Json;
 using System.Text.Json;

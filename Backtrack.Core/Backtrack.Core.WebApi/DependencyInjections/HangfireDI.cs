@@ -1,10 +1,11 @@
 using Backtrack.Core.Application.Common.Interfaces.BackgroundJobs;
 using Backtrack.Core.Infrastructure.BackgroundJobs;
 using Backtrack.Core.WebApi.Configurations;
+using Backtrack.Core.WebApi.DependencyInjections;
 using Hangfire;
 using Hangfire.PostgreSql;
 
-namespace Backtrack.Core.WebApi.Extensions
+namespace Backtrack.Core.WebApi.DependencyInjections
 {
     public static class HangfireDI
     {

@@ -1,12 +1,9 @@
-﻿namespace Backtrack.Core.Application.Common.Exceptions
-{
-    public class ValidationException : Exception
-    {
-        public Error Error { get; }
+﻿using Backtrack.Core.Application.Common.Exceptions.Errors;
 
-        public ValidationException(Error error) : base(error.Message)
-        {
-            Error = error;
-        }
+namespace Backtrack.Core.Application.Common.Exceptions
+{
+    public sealed class ValidationException : DomainException
+    {
+        public ValidationException(Error error) : base(error) { }
     }
 }
