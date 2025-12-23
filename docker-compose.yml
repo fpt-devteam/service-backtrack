@@ -15,9 +15,9 @@ services:
     networks:
       - backtrack-network
     depends_on:
-      - backtrack-core-api
+      # - backtrack-core-api
       - backtrack-chat-api
-      - backtrack-qr-api
+      # - backtrack-qr-api
     #   - backtrack-chat
     #   - backtrack-notifications
     restart: unless-stopped
