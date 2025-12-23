@@ -1,10 +1,10 @@
 using Backtrack.Core.Application.Common.Interfaces.AI;
 using Backtrack.Core.Infrastructure.AI;
-using Backtrack.Core.WebApi.Configurations;
+using Backtrack.Core.Infrastructure.Configurations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Backtrack.Core.WebApi.Extensions
+namespace Backtrack.Core.Infrastructure.DependencyInjections
 {
     public static class GeminiDI
     {

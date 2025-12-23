@@ -1,14 +1,27 @@
 using Backtrack.Core.Application.Common.Exceptions;
-using Backtrack.Core.Contract.Common;
-using Backtrack.Core.WebApi.Constants;
 using FluentValidation;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Http.Json;
 using System.Diagnostics;
 using System.Text.Json;
+using Backtrack.Core.WebApi.Utils;
+using Backtrack.Core.WebApi.Contracts.Common;
 
-namespace Backtrack.Core.WebApi.Middleware;
+namespace Backtrack.Core.WebApi.Middlewares;
 
-public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger, IOptions<JsonOptions> jsonOptions)
 {
+    private static readonly Dictionary<Type, int> StatusMap = new()
+    {
+        [typeof(NotFoundException)] = StatusCodes.Status404NotFound,
+        [typeof(ConflictException)] = StatusCodes.Status409Conflict,
+        [typeof(UnauthorizedException)] = StatusCodes.Status401Unauthorized,
+        [typeof(Application.Common.Exceptions.ValidationException)] = StatusCodes.Status400BadRequest,
+        [typeof(FluentValidation.ValidationException)] = StatusCodes.Status400BadRequest,
+    };
+
+    private readonly JsonSerializerOptions _json = jsonOptions.Value.SerializerOptions;
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -28,110 +41,65 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         }
     }
 
-    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private async Task HandleExceptionAsync(HttpContext context, Exception ex)
     {
         context.Response.ContentType = "application/json";
 
-        string correlationId = context.Request.Headers.TryGetValue(HeaderNames.CorrelationId, out var values)
-            ? values.ToString()
-            : context.TraceIdentifier;
+        var correlationId = HttpContextUtil.GetCorrelationId(context);
+        var status = ResolveStatusCode(ex) ?? StatusCodes.Status500InternalServerError;
 
-        var camelOption = new JsonSerializerOptions
+        if (status >= 500)
+            logger.LogError(ex, "Unexpected exception. CorrelationId={CorrelationId}", correlationId);
+        else
+            logger.LogWarning(ex, "Handled exception. CorrelationId={CorrelationId}", correlationId);
+
+        var apiError = BuildApiError(ex, status);
+
+        context.Response.StatusCode = status;
+        await context.Response.WriteAsJsonAsync(
+            ApiResponse<object>.ErrorResponse(apiError, correlationId),
+            _json
+        );
+
+    }
+
+    private static ApiError BuildApiError(Exception ex, int status)
+    {
+        if (ex is FluentValidation.ValidationException fvex)
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-
-        string errorMessage = exception.Message;
-        if (exception.InnerException != null)
-        {
-            errorMessage += $" Inner exception: {exception.InnerException.Message}";
-        }
-
-        ApiResponse<object> response;
-        if (exception is FluentValidation.ValidationException vex)
-        {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-
-            var errors = vex.Errors
+            var details = fvex.Errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(x => x.ErrorMessage).ToArray());
 
-            logger.LogWarning(vex, "Validation exception occurred. CorrelationId={CorrelationId} ErrorMessage={ErrorMessage} Errors={Errors} StackTrace={StackTrace}",
-                correlationId, errorMessage, errors, vex.StackTrace);
-
-            response = ApiResponse<object>.ErrorResponse(
-                new ApiError
-                {
-                    Code = "ValidationError",
-                    Message = "One or more validation errors occurred.",
-                    StatusCode = StatusCodes.Status400BadRequest,
-                    Details = errors
-                },
-                correlationId
-            );
-
-            await context.Response.WriteAsJsonAsync(response, camelOption);
-
-            return;
-        }
-
-        if (exception is Application.Common.Exceptions.ValidationException validationException)
-        {
-            logger.LogWarning(validationException, "Validation exception occurred. CorrelationId={CorrelationId} ErrorMessage={ErrorMessage} StackTrace={StackTrace}",
-                correlationId, errorMessage, validationException.StackTrace);
-
-            context.Response.StatusCode = (int)validationException.Error.HttpStatusCode;
-
-            response = ApiResponse<object>.ErrorResponse(
-                new ApiError
-                {
-                    Code = validationException.Error.Code,
-                    Message = validationException.Error.Message,
-                    StatusCode = (int)validationException.Error.HttpStatusCode
-                },
-                correlationId
-            );
-
-            await context.Response.WriteAsJsonAsync(response, camelOption);
-            return;
-        }
-
-        if (exception is DomainException domainException)
-        {
-            logger.LogWarning(domainException, "Domain exception occurred. CorrelationId={CorrelationId} ErrorCode={ErrorCode} ErrorMessage={ErrorMessage} StackTrace={StackTrace}",
-                correlationId, domainException.Error.Code, domainException.Error.Message, domainException.StackTrace);
-
-            context.Response.StatusCode = (int)domainException.Error.HttpStatusCode;
-
-            response = ApiResponse<object>.ErrorResponse(
-                new ApiError
-                {
-                    Code = domainException.Error.Code,
-                    Message = domainException.Error.Message,
-                    StatusCode = (int)domainException.Error.HttpStatusCode
-                },
-                correlationId
-            );
-
-            await context.Response.WriteAsJsonAsync(response, camelOption);
-            return;
-        }
-
-        logger.LogError(exception, "Unexpected exception occurred: {Message} CorrelationId={CorrelationId} StackTrace={StackTrace}",
-            errorMessage, correlationId, exception.StackTrace);
-
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-
-        response = ApiResponse<object>.ErrorResponse(
-            new ApiError
+            return new ApiError
             {
-                Code = "InternalServerError",
-                Message = "An internal server error occurred.",
-                StatusCode = StatusCodes.Status500InternalServerError
-            },
-            correlationId
-        );
+                Code = "ValidationError",
+                Message = "One or more validation errors occurred.",
+                Details = details
+            };
+        }
 
-        await context.Response.WriteAsJsonAsync(response, camelOption);
+        if (ex is DomainException dex)
+        {
+            return new ApiError
+            {
+                Code = dex.Error.Code,
+                Message = dex.Error.Message,
+                Details = null
+            };
+        }
+
+        return new ApiError
+        {
+            Code = "InternalServerError",
+            Message = "An internal server error occurred.",
+            Details = null
+        };
+    }
+
+    private static int? ResolveStatusCode(Exception ex)
+    {
+        if (StatusMap.TryGetValue(ex.GetType(), out var exact)) return exact;
+        return null;
     }
 }

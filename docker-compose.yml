@@ -1,8 +1,7 @@
-version: '3.8'
-
 services:
   # API Gateway - Single entry point for all client requests
   backtrack-api-gateway:
+    image: backtrack-api-gateway:latest
     build:
       context: .
       dockerfile: dockerfiles/Dockerfile.backtrack-api-gateway
@@ -17,12 +16,14 @@ services:
       - backtrack-network
     depends_on:
       - backtrack-core-api
+      - backtrack-qr-api
     #   - backtrack-chat
     #   - backtrack-notifications
     restart: unless-stopped
 
   # BackTrack Core Service - Posts, Search, Matching
   backtrack-core-api:
+    image: backtrack-core-api:latest
     build:
       context: .
       dockerfile: dockerfiles/Dockerfile.backtrack-core-api
@@ -35,7 +36,23 @@ services:
       - backtrack-network
     restart: unless-stopped
 
+  # BackTrack QR Service - Item and QR Code Management
+  backtrack-qr-api:
+    image: backtrack-qr-api:latest
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.backtrack-qr-api
+    container_name: backtrack-qr-api
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./env/backtrack-qr-api.docker.env
+    networks:
+      - backtrack-network
+    restart: unless-stopped
+
   backtrack-core-db:
+    image: backtrack-core-db:latest
     build:
       context: .
       dockerfile: dockerfiles/Dockerfile.postgres-postgis-pgvector

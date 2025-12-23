@@ -1,6 +1,7 @@
 using System.Net;
+using Backtrack.ApiGateway.Common;
 using Backtrack.ApiGateway.Errors;
-using Backtrack.Core.Application.Exceptions;
+using Backtrack.ApiGateway.Exceptions;
 using FirebaseAdmin.Auth;
 
 namespace Backtrack.ApiGateway.Middleware;
@@ -44,16 +45,14 @@ public class FirebaseAuthMiddleware
         if (!context.Request.Headers.TryGetValue(AuthHeaderName, out var authHeader) ||
             string.IsNullOrWhiteSpace(authHeader))
         {
-            context.Response.StatusCode = AuthErrors.MissingAuthHeaders.HttpStatusCode.GetHashCode();
-            await context.Response.WriteAsJsonAsync(AuthErrors.MissingAuthHeaders);
+            await WriteErrorResponse(context, AuthErrors.MissingAuthHeaders, StatusCodes.Status401Unauthorized);
             return;
         }
 
         var token = ExtractBearerToken(authHeader!);
         if (string.IsNullOrWhiteSpace(token))
         {
-            context.Response.StatusCode = AuthErrors.InvalidAuthHeaderFormat.HttpStatusCode.GetHashCode();
-            await context.Response.WriteAsJsonAsync(AuthErrors.InvalidAuthHeaderFormat);
+            await WriteErrorResponse(context, AuthErrors.InvalidAuthHeaderFormat, StatusCodes.Status401Unauthorized);
             return;
         }
 
@@ -64,22 +63,18 @@ public class FirebaseAuthMiddleware
             var authId = decodedToken.Uid;
             if (string.IsNullOrWhiteSpace(authId))
             {
-                context.Response.StatusCode = AuthErrors.InvalidAuthToken.HttpStatusCode.GetHashCode();
-                await context.Response.WriteAsJsonAsync(AuthErrors.InvalidAuthToken);
+                await WriteErrorResponse(context, AuthErrors.InvalidAuthToken, StatusCodes.Status401Unauthorized);
                 return;
             }
 
-            // Extract user information from token claims
             var email = decodedToken.Claims.TryGetValue("email", out var emailClaim)
                 ? emailClaim.ToString()
                 : string.Empty;
 
-            // Validate that email exists in token
             if (string.IsNullOrWhiteSpace(email))
             {
                 _logger.LogWarning("Email missing in Firebase token for user: {UserId}", authId);
-                context.Response.StatusCode = AuthErrors.MissingEmailInToken.HttpStatusCode.GetHashCode();
-                await context.Response.WriteAsJsonAsync(AuthErrors.MissingEmailInToken);
+                await WriteErrorResponse(context, AuthErrors.MissingEmailInToken, StatusCodes.Status401Unauthorized);
                 return;
             }
 
@@ -87,14 +82,12 @@ public class FirebaseAuthMiddleware
                 ? nameClaim.ToString()
                 : string.Empty;
 
-            // Set headers with user information
             context.Request.Headers[AuthIdHeaderName] = authId;
             context.Request.Headers[AuthProviderHeaderName] = "firebase";
             context.Request.Headers[AuthEmailHeaderName] = email;
 
             if (!string.IsNullOrWhiteSpace(displayName))
             {
-                // Encode display name to Base64 to handle special characters
                 var encodedName = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(displayName));
                 context.Request.Headers[AuthNameHeaderName] = encodedName;
             }
@@ -104,17 +97,15 @@ public class FirebaseAuthMiddleware
         catch (FirebaseAuthException ex)
         {
             _logger.LogError(ex, "Firebase token validation failed for path: {Path}", path);
-            context.Response.StatusCode = AuthErrors.InvalidAuthToken.HttpStatusCode.GetHashCode();
-            await context.Response.WriteAsJsonAsync(AuthErrors.InvalidAuthToken);
+            await WriteErrorResponse(context, AuthErrors.InvalidAuthToken, StatusCodes.Status401Unauthorized);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error during authentication for path: {Path}", path);
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await context.Response.WriteAsJsonAsync(new Error(
+            var internalError = new Error(
                 Code: "AuthenticationError",
-                Message: "An unexpected error occurred during authentication.",
-                HttpStatusCode.InternalServerError));
+                Message: "An unexpected error occurred during authentication.");
+            await WriteErrorResponse(context, internalError, StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -133,5 +124,25 @@ public class FirebaseAuthMiddleware
             return authHeader.Substring(bearerPrefix.Length).Trim();
         }
         return null;
+    }
+
+    private static async Task WriteErrorResponse(HttpContext context, Error error, int statusCode)
+    {
+        var correlationId = context.Request.Headers.TryGetValue("X-Correlation-Id", out var correlationIdValue)
+            ? correlationIdValue.ToString()
+            : context.TraceIdentifier;
+
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/json";
+
+        var apiError = new ApiError
+        {
+            Code = error.Code,
+            Message = error.Message,
+            Details = null
+        };
+
+        var response = ApiResponse<object>.ErrorResponse(apiError, correlationId);
+        await context.Response.WriteAsJsonAsync(response);
     }
 }

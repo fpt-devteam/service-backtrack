@@ -1,6 +1,7 @@
 using Backtrack.Core.Infrastructure.Data;
-using Backtrack.Core.WebApi.Extensions;
-using Backtrack.Core.WebApi.Middleware;
+using Backtrack.Core.Infrastructure.DependencyInjections;
+using Backtrack.Core.WebApi.DependencyInjections;
+using Backtrack.Core.WebApi.Middlewares;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backtrack.Core.WebApi
@@ -9,13 +10,15 @@ namespace Backtrack.Core.WebApi
     {
         public static async Task Main(string[] args)
         {
-            var envFilePath = Path.Combine(Directory.GetCurrentDirectory(), "backtrack-core.local.env");
-            if (File.Exists(envFilePath))
-            {
-                DotNetEnv.Env.Load(envFilePath);
-            }
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+            if (builder.Environment.IsDevelopment())
+            {
+                var envFilePath = Path.Combine(Directory.GetCurrentDirectory(), "backtrack-core.local.env");
+                if (File.Exists(envFilePath))
+                    DotNetEnv.Env.Load(envFilePath);
+            }
 
             builder.Configuration
                 .AddJsonFile("appsettings.json", false, true)
@@ -28,7 +31,7 @@ namespace Backtrack.Core.WebApi
             builder.Services.AddServiceConfigurations(builder.Configuration);
             builder.Services.AddHangfire(builder.Configuration);
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddJsonNamingConfiguration();
+            builder.Services.AddJsonOptions();
             builder.Services.AddConfiguredSwagger();
             builder.Services.AddHealthChecks();
 

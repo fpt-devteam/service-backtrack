@@ -1,6 +1,6 @@
-using Backtrack.Core.WebApi.Middleware;
+using Backtrack.Core.WebApi.Middlewares;
 
-namespace Backtrack.Core.WebApi.Extensions
+namespace Backtrack.Core.WebApi.DependencyInjections
 {
     public static class ExceptionHandlingMiddlewareDI
     {

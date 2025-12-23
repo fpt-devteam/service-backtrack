@@ -1,4 +1,4 @@
-namespace Backtrack.Core.WebApi.Configurations
+namespace Backtrack.Core.Infrastructure.Configurations
 {
     public class DatabaseSettings
     {

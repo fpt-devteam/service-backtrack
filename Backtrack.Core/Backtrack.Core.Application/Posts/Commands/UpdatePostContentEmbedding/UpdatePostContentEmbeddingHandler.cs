@@ -1,4 +1,5 @@
 ﻿using Backtrack.Core.Application.Common.Exceptions;
+using Backtrack.Core.Application.Common.Exceptions.Errors;
 using Backtrack.Core.Application.Common.Interfaces.AI;
 using Backtrack.Core.Application.Common.Interfaces.Helpers;
 using Backtrack.Core.Domain.Constants;
@@ -25,7 +26,7 @@ public sealed class UpdatePostContentEmbeddingHandler : IRequestHandler<UpdatePo
 
     public async Task<Unit> Handle(UpdatePostContentEmbeddingCommand request, CancellationToken cancellationToken)
     {
-        Post post = await _postRepository.GetByIdAsync(request.PostId) ?? throw new DomainException(PostErrors.NotFound);
+        Post post = await _postRepository.GetByIdAsync(request.PostId) ?? throw new NotFoundException(PostErrors.NotFound);
 
         string newContentHash = _hasher.HashStrings(post.ItemName, post.Description);
 
