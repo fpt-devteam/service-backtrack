@@ -1,3 +1,5 @@
+using Backtrack.Core.Application.Common.Interfaces.Messaging;
+using Backtrack.Core.Application.Events.Integration;
 using Backtrack.Core.Application.Users.Common;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
@@ -8,10 +10,12 @@ namespace Backtrack.Core.Application.Users.Commands.CreateUser;
 public sealed class CreateUserHandler : IRequestHandler<CreateUserCommand, UserResult>
 {
     private readonly IUserRepository _userRepository;
+    private readonly IEventPublisher _eventPublisher;
 
-    public CreateUserHandler(IUserRepository userRepository)
+    public CreateUserHandler(IUserRepository userRepository, IEventPublisher eventPublisher)
     {
         _userRepository = userRepository;
+        _eventPublisher = eventPublisher;
     }
 
     public async Task<UserResult> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -40,6 +44,16 @@ public sealed class CreateUserHandler : IRequestHandler<CreateUserCommand, UserR
 
         await _userRepository.CreateAsync(newUser);
         await _userRepository.SaveChangesAsync();
+
+        // Publish user created event
+        await _eventPublisher.PublishUserCreatedAsync(new UserCreatedIntegrationEvent
+        {
+            Id = newUser.Id,
+            Email = newUser.Email,
+            DisplayName = newUser.DisplayName,
+            CreatedAt = newUser.CreatedAt,
+            EventTimestamp = DateTimeOffset.UtcNow
+        });
 
         return new UserResult
         {

@@ -7,7 +7,12 @@ services:
       dockerfile: dockerfiles/Dockerfile.backtrack-api-gateway
     container_name: backtrack-api-gateway
     ports:
-      - "5000:5000"
+      - "8080:8080"
+    environment:
+      - Firebase__ServiceAccountPath=/secret/firebase-credentials.json
+      - ReverseProxy__Clusters__core-cluster__Destinations__core-destination__Address=http://backtrack-core-api:2000
+      - ReverseProxy__Clusters__chat-cluster__Destinations__chat-destination__Address=http://backtrack-chat-api:3000
+      - ReverseProxy__Clusters__qr-cluster__Destinations__qr-destination__Address=http://backtrack-qr-api:4000
     env_file:
       - ./env/backtrack-api-gateway.docker.env
     volumes:
@@ -30,7 +35,9 @@ services:
       dockerfile: dockerfiles/Dockerfile.backtrack-core-api
     container_name: backtrack-core-api
     ports:
-      - "8080:8080"
+      - "2000:2000"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=backtrack-core-db;Port=5432;Database=backtrack-core-db;Username=postgres;Password=postgres123
     env_file:
       - ./env/backtrack-core-api.docker.env
     networks:
@@ -62,6 +69,8 @@ services:
     container_name: backtrack-qr-api
     ports:
       - "4000:4000"
+    environment:
+      - RABBITMQ_URL=amqp://backtrack:backtrack123@backtrack-message-broker:5672/
     env_file:
       - ./env/backtrack-qr-api.docker.env
     networks:
@@ -86,6 +95,29 @@ services:
     networks:
       - backtrack-network
 
+  backtrack-message-broker:
+    image: rabbitmq:3.13-management-alpine
+    container_name: backtrack-message-broker
+    hostname: backtrack-message-broker
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=backtrack
+      - RABBITMQ_DEFAULT_PASS=backtrack123
+      - RABBITMQ_DEFAULT_VHOST=/
+    volumes:
+      - backtrack-message-broker-data:/var/lib/rabbitmq
+    networks:
+      - backtrack-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
   backtrack-chat-db:
     image: mongo:7-jammy
     container_name: backtrack-chat-db
@@ -106,5 +138,6 @@ networks:
 
 volumes:
   backtrack-core-db-data:
+  backtrack-message-broker-data:
   backtrack-chat-db-data:
 

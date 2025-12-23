@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Backtrack.Core.Application.Users.Commands.CreateUser;
+using Backtrack.Core.Application.Users.Commands.UpdateUser;
 using Backtrack.Core.Application.Users.Queries.GetMe;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
@@ -54,7 +55,6 @@ public class UserController : ControllerBase
         return this.ApiCreated(response);
     }
 
-    [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> GetMeAsync(CancellationToken cancellationToken)
     {
@@ -75,4 +75,37 @@ public class UserController : ControllerBase
 
         return this.ApiOk(response);
     }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateUserAsync([FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
+    {
+        var userId = Request.Headers[HeaderNames.AuthId].ToString();
+
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new InvalidOperationException($"Required header '{HeaderNames.AuthId}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
+
+        var command = new UpdateUserCommand
+        {
+            UserId = userId,
+            Email = request.Email,
+            DisplayName = request.DisplayName
+        };
+
+        var result = await _mediator.Send(command, cancellationToken);
+
+        var response = new UserResponse
+        {
+            Id = result.Id,
+            Email = result.Email,
+            DisplayName = result.DisplayName
+        };
+
+        return this.ApiOk(response);
+    }
+}
+
+public class UpdateUserRequest
+{
+    public string? Email { get; set; }
+    public string? DisplayName { get; set; }
 }
