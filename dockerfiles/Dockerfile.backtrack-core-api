@@ -2,6 +2,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
+COPY NuGet.Docker.config /src/NuGet.Config
+
 # Copy csproj files for all projects (layer caching optimization)
 COPY ["Backtrack.Core/Backtrack.Core.Domain/Backtrack.Core.Domain.csproj", "Backtrack.Core.Domain/"]
 COPY ["Backtrack.Core/Backtrack.Core.Application/Backtrack.Core.Application.csproj", "Backtrack.Core.Application/"]
@@ -9,7 +11,7 @@ COPY ["Backtrack.Core/Backtrack.Core.Infrastructure/Backtrack.Core.Infrastructur
 COPY ["Backtrack.Core/Backtrack.Core.WebApi/Backtrack.Core.WebApi.csproj", "Backtrack.Core.WebApi/"]
 
 # Restore dependencies
-RUN dotnet restore "Backtrack.Core.WebApi/Backtrack.Core.WebApi.csproj"
+RUN dotnet restore "Backtrack.Core.WebApi/Backtrack.Core.WebApi.csproj" --configfile /src/NuGet.Config
 
 # Copy all source code
 COPY Backtrack.Core/. .
@@ -20,7 +22,9 @@ RUN dotnet publish "Backtrack.Core.WebApi.csproj" \
     -c Release \
     -o /app/publish \
     /p:UseAppHost=false \
-    --no-restore
+    /p:RestoreConfigFile=/src/NuGet.Config \
+    /p:RestoreFallbackFolders=
+
 
 # ===================== Runtime stage =====================
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
