@@ -9,10 +9,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - Firebase__ServiceAccountPath = /secret/firebase-credentials.json
-      - ReverseProxy__Clusters__core-cluster__Destinations__core-destination__Address = http://backtrack-core-api:2000
-      - ReverseProxy__Clusters__chat-cluster__Destinations__chat-destination__Address = http://backtrack-chat-api:3000
-      - ReverseProxy__Clusters__qr-cluster__Destinations__qr-destination__Address = http://backtrack-qr-api:4000
+      - Firebase__ServiceAccountPath=/secret/firebase-credentials.json
+      - ReverseProxy__Clusters__core-cluster__Destinations__core-destination__Address=http://backtrack-core-api:2000
+      - ReverseProxy__Clusters__chat-cluster__Destinations__chat-destination__Address=http://backtrack-chat-api:3000
+      - ReverseProxy__Clusters__qr-cluster__Destinations__qr-destination__Address=http://backtrack-qr-api:4000
     env_file:
       - ./env/backtrack-api-gateway.docker.env
     volumes:
