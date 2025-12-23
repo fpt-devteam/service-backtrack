@@ -22,7 +22,9 @@
       "Bash(docker logs:*)",
       "Bash(docker exec:*)",
       "Bash(docker-compose stop:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(tree:*)",
+      "Bash(del \"C:\\\\Users\\\\NHATTHANG\\\\FptUniversity\\\\SEP490\\\\service-backtrack\\\\Backtrack.Core\\\\Backtrack.Core.Application\\\\Events\\\\Integration\\\\UserDeletedIntegrationEvent.cs\")"
     ],
     "deny": [],
     "ask": []

@@ -1,14 +1,23 @@
 using Backtrack.ApiGateway.Middleware;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-var builder = WebApplication.CreateBuilder(args);
 
-if (builder.Environment.IsDevelopment())
+if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
 {
-    var envFilePath = Path.Combine(Directory.GetCurrentDirectory(), "backtrack-api-gateway.local.env");
+    var repoRoot = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), ".."));
+    var envFilePath = Path.Combine(repoRoot, "env", "backtrack-api-gateway.docker.env");
     if (File.Exists(envFilePath))
+    {
         DotNetEnv.Env.Load(envFilePath);
+        Console.WriteLine($"Loaded env from: {envFilePath}");
+    }
+    else
+    {
+        throw new FileNotFoundException($"Env file not found at {envFilePath}");
+    }
 }
+
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -43,6 +52,9 @@ static void InitializeFirebase(IConfiguration configuration, IWebHostEnvironment
     {
         var firebaseConfigPath = configuration["Firebase:ServiceAccountPath"];
         var projectId = configuration["Firebase:ProjectId"];
+
+        Console.WriteLine($"Firebase Project ID: {projectId}");
+        Console.WriteLine($"Firebase Config Path: {firebaseConfigPath}");
 
         if (!string.IsNullOrWhiteSpace(firebaseConfigPath) && File.Exists(firebaseConfigPath))
         {

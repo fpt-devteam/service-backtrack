@@ -43,7 +43,10 @@
     <PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.2.2" />
     <PackageReference Include="Polly" Version="8.6.3" />
     <PackageReference Include="Azure.AI.DocumentIntelligence" Version="1.0.0" />
-    
+    <PackageReference Include="DotNetCore.CAP" Version="8.2.0" />
+    <PackageReference Include="DotNetCore.CAP.PostgreSql" Version="8.2.0" />
+    <PackageReference Include="DotNetCore.CAP.RabbitMQ" Version="8.2.0" />
+
   </ItemGroup>
 
 </Project>

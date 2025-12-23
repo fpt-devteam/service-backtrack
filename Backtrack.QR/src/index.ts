@@ -1,28 +1,20 @@
 import dotenv from 'dotenv';
-import { app } from '@/src/server.js';
-import { connectToDatabase } from '@/src/database/connect.js';
+import path from "node:path";
+import fs from "node:fs";
+
+const envPath = path.resolve(process.cwd(), "../env/backtrack-qr-api.docker.env");
+
+console.log("cwd =", process.cwd());
+console.log("dotenv path resolved =", envPath);
+console.log("exists =", fs.existsSync(envPath));
 
 dotenv.config({
-    path: './backtrack-qr.local.env'
+    path: envPath,
 });
 
-const startServer = async () => {
-    try {
-        await connectToDatabase();
+const { env } = await import('@/src/configs/env.js');
+console.log("DATABASE_URI loaded?", Boolean(process.env.DATABASE_URI));
+console.log("PORT loaded?", Boolean(process.env.PORT));
+console.log("PORT, env.PORT =", env.PORT);
 
-        const server = app.listen(process.env.PORT, () => {
-            console.log(`Server running on port ${process.env.PORT}`);
-        });
-
-        server.on("error", (err: Error) => {
-            console.error("Server error:", err);
-            process.exit(1);
-        });
-
-    } catch (error) {
-        console.error("Failed to start server:", error);
-        process.exit(1);
-    }
-};
-
-startServer();
+await import("./main.js");

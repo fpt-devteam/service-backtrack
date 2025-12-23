@@ -4,7 +4,6 @@
  */
 
 import winston from 'winston';
-
 /**
  * Custom format for console output
  */

@@ -1,13 +1,12 @@
 import { Item } from '@/src/database/models/item.model.js';
 import { QrCode } from '@/src/database/models/qr-code.models.js';
-import * as ItemRepo from '@/src/repositories/item.repository.js';
-import * as QrCodeRepo from '@/src/repositories/qr-code.repository.js';
+import * as itemRepo from '@/src/repositories/item.repository.js';
+import * as qrCodeRepo from '@/src/repositories/qr-code.repository.js';
 import { Result, success, failure, isFailure } from '@/src/utils/result.js';
 import { generatePublicCode } from '@/src/utils/qr-code-generator.js';
 import { ItemErrors } from '@/src/errors/catalog/item.error.js';
 import mongoose from 'mongoose';
 import type { ItemWithQrResult, ListItemsResult } from '@/src/database/view/item.view.js';
-import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE, sanitizePage, sanitizePageSize } from '@/src/contracts/common/pagination.js';
 
 const MAX_RETRIES = 5;
 
@@ -18,7 +17,7 @@ const isValidItemName = (name: string): boolean => {
 export const getByIdAsync = async (
     id: string
 ): Promise<Result<ItemWithQrResult>> => {
-    const itemResult = await ItemRepo.getById(id);
+    const itemResult = await itemRepo.getById(id);
 
     if (isFailure(itemResult)) {
         return itemResult;
@@ -29,7 +28,7 @@ export const getByIdAsync = async (
     }
 
     // Get the associated QR code
-    const qrCodeResult = await QrCodeRepo.getByItemId(id);
+    const qrCodeResult = await qrCodeRepo.getByItemId(id);
 
     if (isFailure(qrCodeResult)) {
         return qrCodeResult;
@@ -55,7 +54,7 @@ export const getAllAsync = async (
     page: number,
     pageSize: number
 ): Promise<Result<ListItemsResult>> => {
-    const result = await ItemRepo.getAll(ownerId, page, pageSize);
+    const result = await itemRepo.getAll(ownerId, page, pageSize);
 
     if (isFailure(result)) {
         return result;
@@ -92,7 +91,7 @@ export const createAsync = async (
             ownerId
         });
 
-        const itemResult = await ItemRepo.create(item);
+        const itemResult = await itemRepo.create(item);
         if (isFailure(itemResult)) {
             await session.abortTransaction();
             return itemResult;
@@ -105,7 +104,7 @@ export const createAsync = async (
 
         while (codeExists && attempts < MAX_RETRIES) {
             publicCode = generatePublicCode();
-            const existsResult = await QrCodeRepo.existsByPublicCode(publicCode);
+            const existsResult = await qrCodeRepo.existsByPublicCode(publicCode);
 
             if (isFailure(existsResult)) {
                 await session.abortTransaction();
@@ -135,7 +134,7 @@ export const createAsync = async (
             linkedAt: new Date()
         });
 
-        const qrResult = await QrCodeRepo.create(qrCode);
+        const qrResult = await qrCodeRepo.create(qrCode);
         if (isFailure(qrResult)) {
             await session.abortTransaction();
             return qrResult;
