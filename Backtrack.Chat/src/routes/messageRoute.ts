@@ -1,5 +1,5 @@
 import express from 'express';
-import MessageController from '../controllers/messageController';
+import MessageController from '../controllers/MessageController';
 
 /**
  * Message routes using class-based controller with @AsyncHandler decorator

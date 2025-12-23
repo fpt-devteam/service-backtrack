@@ -1,59 +1,40 @@
-# Build output
-**/bin/
-**/obj/
+# Dependencies - exclude from all directories
+**/node_modules/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
 
-# NuGet packages
-**/packages/
-**/.nuget/
+# Build outputs
+**/dist/
+**/build/
+**/*.tsbuildinfo
 
-# Visual Studio
-**/.vs/
-**/.vscode/
-*.user
-*.suo
-*.userosscache
-*.sln.docstates
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
 
-# Build results
-**/[Dd]ebug/
-**/[Rr]elease/
-**/x64/
-**/x86/
-**/[Bb]uild/
-**/bld/
-
-# Test results
-**/[Tt]est[Rr]esult*/
-**/[Bb]uild[Ll]og.*
-
-# .NET Core
-project.lock.json
-project.fragment.lock.json
-artifacts/
-
-# Environment files (keep local env files out)
-**/*.env.local
-**/*.env.development.local
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
 
 # Git
 .git/
 .gitignore
-.gitattributes
 
-# Docker
-**/.dockerignore
-**/Dockerfile*
-**/docker-compose*
+# Testing
+coverage/
+.nyc_output/
 
-# Documentation
-**/*.md
-!README.md
+# Logs
+logs/
+*.log
 
-# IDE
-**/.idea/
-**/.vs/
-**/.vscode/
-
-# OS
-.DS_Store
-Thumbs.db
+# Misc
+.editorconfig
+.prettierrc

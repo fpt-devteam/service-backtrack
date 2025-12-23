@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # API Gateway - Single entry point for all client requests
   backtrack-api-gateway:
@@ -12,7 +10,7 @@ services:
     env_file:
       - ./env/backtrack-api-gateway.docker.env
     volumes:
-      - C:\Users\NHATTHANG\FptUniversity\SEP490\backtrack-sep490-firebase-adminsdk-fbsvc-d625f3f3d9.json:/secret/firebase-credentials.json:ro
+      - /mnt/c/data/fpt/doan/backtrack-sep490-firebase-adminsdk-fbsvc-d625f3f3d9.json:/secret/firebase-credentials.json:ro
     networks:
       - backtrack-network
     depends_on:
@@ -39,7 +37,7 @@ services:
   backtrack-chat-api:
     build:
       context: .
-      dockerfile: dockerfiles/Dockerfile.backtrack-chat
+      dockerfile: dockerfiles/Dockerfile.backtrack-chat-api
     container_name: backtrack-chat-api
     ports:
       - "3000:3000"
