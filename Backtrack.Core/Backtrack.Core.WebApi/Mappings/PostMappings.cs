@@ -4,6 +4,7 @@ using Backtrack.Core.Application.Common.Exceptions.Errors;
 using Backtrack.Core.Application.Posts.Commands.CreatePost;
 using Backtrack.Core.Application.Posts.Common;
 using Backtrack.Core.Application.Posts.Queries.GetPosts;
+using Backtrack.Core.Application.Posts.Queries.GetSimilarPosts;
 using Backtrack.Core.Application.Posts.Queries.SearchPostsBySemantic;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.WebApi.Contracts.Posts.Requests;
@@ -15,15 +16,17 @@ namespace Backtrack.Core.WebApi.Mappings
     {
         // ==================== Request to Command/Query ====================
 
-        public static CreatePostCommand ToCommand(this CreatePostRequest request)
+        public static CreatePostCommand ToCommand(this CreatePostRequest request, string authorId)
         {
             var postType = ParsePostType(request.PostType);
 
             return new CreatePostCommand
             {
+                AuthorId = authorId,
                 PostType = postType,
                 ItemName = request.ItemName,
                 Description = request.Description,
+                DistinctiveMarks = request.DistinctiveMarks,
                 ImageUrls = request.ImageUrls,
                 Location = request.Location?.ToDto(),
                 ExternalPlaceId = request.ExternalPlaceId,
@@ -40,14 +43,16 @@ namespace Backtrack.Core.WebApi.Mappings
                 postType = ParsePostType(request.PostType);
             }
 
-            return new GetPostsQuery(
-                PagedQuery.FromPage(request.Page, request.PageSize),
-                postType,
-                request.SearchTerm,
-                request.Latitude,
-                request.Longitude,
-                request.RadiusInKm
-            );
+            return new GetPostsQuery
+            {
+                PagedQuery = PagedQuery.FromPage(request.Page, request.PageSize),
+                PostType = postType,
+                AuthorId = request.AuthorId,
+                SearchTerm = request.SearchTerm,
+                Latitude = request.Latitude,
+                Longitude = request.Longitude,
+                RadiusInKm = request.RadiusInKm
+            };
         }
 
         public static SearchPostsBySemanticQuery ToQuery(this SearchPostsBySemanticRequest request)
@@ -66,6 +71,15 @@ namespace Backtrack.Core.WebApi.Mappings
                 Longitude: request.Longitude,
                 RadiusInKm: request.RadiusInKm
             );
+        }
+
+        public static GetSimilarPostsQuery ToQuery(this GetSimilarPostsRequest request)
+        {
+            return new GetSimilarPostsQuery
+            {
+                PostId = request.PostId,
+                Limit = request.Limit
+            };
         }
 
         // ==================== Result to Response ====================
@@ -102,6 +116,29 @@ namespace Backtrack.Core.WebApi.Mappings
                 EventTime = result.EventTime,
                 CreatedAt = result.CreatedAt,
                 SimilarityScore = result.SimilarityScore
+            };
+        }
+
+        public static GetSimilarPostsResponse ToResponse(this GetSimilarPostsResult result)
+        {
+            return new GetSimilarPostsResponse
+            {
+                EmbeddingStatus = result.EmbeddingStatus,
+                IsReady = result.IsReady,
+                SimilarPosts = result.SimilarPosts.Select(item => new SimilarPostResponse
+                {
+                    Id = item.Id,
+                    PostType = item.PostType,
+                    ItemName = item.ItemName,
+                    Description = item.Description,
+                    ImageUrls = item.ImageUrls,
+                    Location = item.Location?.ToResponse(),
+                    ExternalPlaceId = item.ExternalPlaceId,
+                    DisplayAddress = item.DisplayAddress,
+                    EventTime = item.EventTime,
+                    CreatedAt = item.CreatedAt,
+                    SimilarityScore = item.SimilarityScore
+                })
             };
         }
 

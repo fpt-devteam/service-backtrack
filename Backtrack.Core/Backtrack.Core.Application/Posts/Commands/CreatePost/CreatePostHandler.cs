@@ -37,16 +37,20 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
         var post = new Post
         {
             Id = Guid.NewGuid(),
+            AuthorId = command.AuthorId,
             PostType = command.PostType,
             ItemName = command.ItemName,
             Description = command.Description,
+            DistinctiveMarks = command.DistinctiveMarks,
             ImageUrls = command.ImageUrls,
             Location = location,
             ExternalPlaceId = command.ExternalPlaceId,
             DisplayAddress = command.DisplayAddress,
             ContentEmbedding = null, // Will be generated asynchronously
             ContentEmbeddingStatus = ContentEmbeddingStatus.Pending,
-            ContentHash = _hasher.HashStrings(command.ItemName, command.Description),
+            ContentHash = command.DistinctiveMarks != null
+                ? _hasher.HashStrings(command.ItemName, command.Description, command.DistinctiveMarks)
+                : _hasher.HashStrings(command.ItemName, command.Description),
             EventTime = command.EventTime,
             CreatedAt = DateTimeOffset.UtcNow
         };

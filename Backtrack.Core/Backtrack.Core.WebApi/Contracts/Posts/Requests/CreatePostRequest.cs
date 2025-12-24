@@ -6,14 +6,24 @@ public sealed record CreatePostRequest
 {
     [Required]
     public required string PostType { get; init; }
+
     [Required]
     public required string ItemName { get; init; }
+
     [Required]
     public required string Description { get; init; }
+
+    /// <summary>
+    /// Distinctive identifying marks or features (e.g., brand, size, pattern, stickers, scratches).
+    /// Used to improve matching accuracy between lost and found items.
+    /// </summary>
+    public string? DistinctiveMarks { get; init; }
+
     public string[] ImageUrls { get; init; } = Array.Empty<string>();
     public LocationRequest? Location { get; init; }
     public string? ExternalPlaceId { get; init; }
     public string? DisplayAddress { get; init; }
+
     [Required]
     public required DateTimeOffset EventTime { get; init; }
 }

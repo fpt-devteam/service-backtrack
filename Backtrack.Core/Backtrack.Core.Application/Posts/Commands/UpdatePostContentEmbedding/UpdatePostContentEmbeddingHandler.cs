@@ -28,7 +28,10 @@ public sealed class UpdatePostContentEmbeddingHandler : IRequestHandler<UpdatePo
     {
         Post post = await _postRepository.GetByIdAsync(request.PostId) ?? throw new NotFoundException(PostErrors.NotFound);
 
-        string newContentHash = _hasher.HashStrings(post.ItemName, post.Description);
+        // Include DistinctiveMarks in hash calculation
+        string newContentHash = post.DistinctiveMarks != null
+            ? _hasher.HashStrings(post.ItemName, post.Description, post.DistinctiveMarks)
+            : _hasher.HashStrings(post.ItemName, post.Description);
 
         // Skip if content hasn't changed and embedding already exists with Ready status
         if (post.ContentHash == newContentHash && post.ContentEmbedding is not null && post.ContentEmbeddingStatus == ContentEmbeddingStatus.Ready)
@@ -44,12 +47,22 @@ public sealed class UpdatePostContentEmbeddingHandler : IRequestHandler<UpdatePo
         try
         {
             // Generate rich embedding with structured context
-            // Format: Post type + item name (repeated for emphasis) + description
-            var contentForEmbedding = $@"Post Type: {post.PostType}
-Item: {post.ItemName}
-Description: {post.Description}
+            // NOTE: PostType is excluded to improve cross-type matching (Lost/Found)
+            // Format: Item name + description + distinctive marks
+            var contentForEmbedding = $@"Item: {post.ItemName}
+Description: {post.Description}";
 
-This is a {post.PostType.ToString().ToLower()} post about {post.ItemName.ToLower()}.";
+            // Add distinctive marks if present
+            if (!string.IsNullOrWhiteSpace(post.DistinctiveMarks))
+            {
+                contentForEmbedding += $@"
+Distinctive marks: {post.DistinctiveMarks}";
+            }
+
+            // Add context for better embeddings
+            contentForEmbedding += $@"
+
+This item is {post.ItemName.ToLower()}.";
 
             var newEmbedding = await _embeddingService.GenerateEmbeddingAsync(contentForEmbedding, cancellationToken);
 

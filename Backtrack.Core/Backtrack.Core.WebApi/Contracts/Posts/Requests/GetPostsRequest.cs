@@ -10,4 +10,5 @@ public sealed record GetPostsRequest : PagedRequest
     public double? Latitude { get; init; }
     public double? Longitude { get; init; }
     public double? RadiusInKm { get; init; }
+    public string? AuthorId { get; init; }
 }

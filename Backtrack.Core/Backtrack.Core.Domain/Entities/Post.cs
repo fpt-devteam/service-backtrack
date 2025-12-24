@@ -8,9 +8,11 @@ namespace Backtrack.Core.Domain.Entities
 {
     public sealed class Post : Entity<Guid>
     {
+        public required string AuthorId { get; set; }
         public required PostType PostType { get; set; }
         public required string ItemName { get; set; }
         public required string Description { get; set; }
+        public string? DistinctiveMarks { get; set; }
         public string[] ImageUrls { get; set; } = Array.Empty<string>();
         public GeoPoint? Location { get; set; }
         public string? ExternalPlaceId { get; set; }
@@ -19,5 +21,7 @@ namespace Backtrack.Core.Domain.Entities
         public required ContentEmbeddingStatus ContentEmbeddingStatus { get; set; }
         public required string ContentHash { get; set; }
         public required DateTimeOffset EventTime { get; set; }
+
+        public User Author { get; set; } = default!;
     }
 }

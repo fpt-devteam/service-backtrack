@@ -26,6 +26,7 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
             latitude: query.Latitude,
             longitude: query.Longitude,
             radiusInKm: query.RadiusInKm,
+            authorId: query.AuthorId,
             cancellationToken: cancellationToken);
 
         GeoPoint? searchPoint = null;

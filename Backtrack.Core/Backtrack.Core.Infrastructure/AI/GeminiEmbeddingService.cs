@@ -57,22 +57,25 @@ namespace Backtrack.Core.Infrastructure.AI
                 }).ToList()
             };
 
-            try
-            {
-                var response = await _httpClient.PostAsJsonAsync(url, request, cancellationToken);
-                response.EnsureSuccessStatusCode();
+            
+            var response = await _httpClient.PostAsJsonAsync(url, request, cancellationToken);
+            response.EnsureSuccessStatusCode();
 
-                var result = await response.Content.ReadFromJsonAsync<GeminiBatchEmbeddingResponse>(cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<GeminiBatchEmbeddingResponse>(cancellationToken);
+            if (result == null)
+                throw new  InvalidOperationException("Failed to parse response from Gemini API.");
+            if (!IsResultSameDimension(result.Embeddings.Select(e => e.Values).ToList()))
+                throw new InvalidOperationException("Inconsistent embedding dimensions returned from Gemini API.");
 
-                if (result?.Embeddings == null || result.Embeddings.Count == 0)
-                    throw new InvalidOperationException("No embeddings returned from Gemini API.");
+            if (result?.Embeddings == null || result.Embeddings.Count == 0)
+                throw new InvalidOperationException("No embeddings returned from Gemini API.");
 
-                return result.Embeddings.Select(e => e.Values).ToList();
-            }
-            catch (HttpRequestException ex)
-            {
-                throw new InvalidOperationException($"Failed to generate embeddings from Gemini API: {ex.Message}", ex);
-            }
+            return result.Embeddings.Select(e => e.Values).ToList();
+        }
+
+        private bool IsResultSameDimension(IList<float[]> embeddings)
+        {
+            return embeddings.All(e => e.Length == EmbeddingDimension);
         }
 
         // Response DTOs for Gemini API

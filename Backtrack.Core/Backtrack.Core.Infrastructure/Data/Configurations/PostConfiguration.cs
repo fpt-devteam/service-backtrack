@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Pgvector;
+using System.Collections;
 
 namespace Backtrack.Core.Infrastructure.Data.Configurations
 {
@@ -40,6 +41,20 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasColumnName("image_urls")
                 .HasColumnType("text[]")
                 .IsRequired();
+
+            builder.Property(p => p.AuthorId)
+                .HasColumnName("author_id")
+                .HasColumnType("text")
+                .IsRequired();
+
+            builder.HasOne(p => p.Author)
+                .WithMany()
+                .HasForeignKey(p => p.AuthorId)
+                .HasConstraintName("fk_posts_author_id_users_id")
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.HasIndex(p => p.AuthorId)
+                .HasDatabaseName("ix_posts_author_id");
 
             var geoPointToPointConverter = new ValueConverter<GeoPoint?, Point?>(
                 toDb => toDb == null
@@ -77,9 +92,12 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
             );
 
             var embeddingComparer = new ValueComparer<float[]?>(
-                (a, b) => (a == null && b == null) || (a != null && b != null && a.SequenceEqual(b)),
-                v => v == null ? 0 : v.GetHashCode(),
-                v => v == null ? null : v.ToArray()
+                (a, b) =>
+                    a == b || (a != null && b != null && a.SequenceEqual(b)),
+                v =>
+                    v == null ? 0 : StructuralComparisons.StructuralEqualityComparer.GetHashCode(v),
+                v =>
+                    v == null ? null : v.ToArray()
             );
 
             builder.Property(p => p.ContentEmbedding)

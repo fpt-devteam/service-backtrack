@@ -53,9 +53,6 @@ static void InitializeFirebase(IConfiguration configuration, IWebHostEnvironment
         var firebaseConfigPath = configuration["Firebase:ServiceAccountPath"];
         var projectId = configuration["Firebase:ProjectId"];
 
-        Console.WriteLine($"Firebase Project ID: {projectId}");
-        Console.WriteLine($"Firebase Config Path: {firebaseConfigPath}");
-
         if (!string.IsNullOrWhiteSpace(firebaseConfigPath) && File.Exists(firebaseConfigPath))
         {
             FirebaseApp.Create(new AppOptions

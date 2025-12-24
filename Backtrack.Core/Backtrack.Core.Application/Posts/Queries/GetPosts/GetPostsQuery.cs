@@ -5,10 +5,13 @@ using MediatR;
 
 namespace Backtrack.Core.Application.Posts.Queries.GetPosts;
 
-public sealed record GetPostsQuery(
-    PagedQuery PagedQuery,
-    PostType? PostType,
-    string? SearchTerm,
-    double? Latitude,
-    double? Longitude,
-    double? RadiusInKm) : IRequest<PagedResult<PostResult>>;
+public sealed record GetPostsQuery : IRequest<PagedResult<PostResult>>
+{
+    public required PagedQuery PagedQuery { get; init; }
+    public PostType? PostType { get; init; }
+    public string? AuthorId { get; init; }
+    public string? SearchTerm { get; init; }
+    public double? Latitude { get; init; }
+    public double? Longitude { get; init; }
+    public double? RadiusInKm { get; init; }
+}

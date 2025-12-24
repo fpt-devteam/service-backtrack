@@ -14,6 +14,7 @@ namespace Backtrack.Core.Application.Posts
             double? latitude = null,
             double? longitude = null,
             double? radiusInKm = null,
+            string? authorId = null,
             CancellationToken cancellationToken = default);
 
         Task<(IEnumerable<(Post Post, double SimilarityScore)> Items, int TotalCount)> SearchBySemanticAsync(
@@ -24,6 +25,16 @@ namespace Backtrack.Core.Application.Posts
             double? latitude = null,
             double? longitude = null,
             double? radiusInKm = null,
+            CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<(Post Post, double SimilarityScore)>> GetSimilarPostsAsync(
+            Guid postId,
+            PostType postType,
+            float[] embedding,
+            double? latitude,
+            double? longitude,
+            double radiusInKm,
+            int limit = 20,
             CancellationToken cancellationToken = default);
     }
 }
