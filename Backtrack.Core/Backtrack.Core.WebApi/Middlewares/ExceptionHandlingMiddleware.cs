@@ -51,7 +51,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         if (status >= 500)
             logger.LogError(ex, "Unexpected exception. CorrelationId={CorrelationId}", correlationId);
         else
-            logger.LogWarning(ex, "Handled exception. CorrelationId={CorrelationId}", correlationId);
+            logger.LogWarning(ex.Message, "Handled exception. CorrelationId={CorrelationId}", correlationId);
 
         var apiError = BuildApiError(ex, status);
 

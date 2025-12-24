@@ -2,7 +2,9 @@
 using Backtrack.Core.Application.Common.Exceptions;
 using Backtrack.Core.Application.Common.Exceptions.Errors;
 using Backtrack.Core.Application.Posts.Commands.CreatePost;
+using Backtrack.Core.Application.Posts.Commands.DeletePost;
 using Backtrack.Core.Application.Posts.Common;
+using Backtrack.Core.Application.Posts.Queries.GetPostById;
 using Backtrack.Core.Application.Posts.Queries.GetPosts;
 using Backtrack.Core.Application.Posts.Queries.GetSimilarPosts;
 using Backtrack.Core.Application.Posts.Queries.SearchPostsBySemantic;
@@ -79,6 +81,22 @@ namespace Backtrack.Core.WebApi.Mappings
             {
                 PostId = request.PostId,
                 Limit = request.Limit
+            };
+        }
+
+        public static GetPostByIdQuery ToQuery(Guid postId)
+        {
+            return new GetPostByIdQuery
+            {
+                PostId = postId
+            };
+        }
+
+        public static DeletePostCommand ToCommand(Guid postId)
+        {
+            return new DeletePostCommand
+            {
+                PostId = postId
             };
         }
 

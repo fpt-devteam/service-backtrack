@@ -40,5 +40,8 @@ public static class ServiceDI
 
         // Helpers
         services.AddSingleton<IHasher, SHA256Hasher>();
+
+        // Request logging middleware
+        services.AddTransient<RequestLoggingMiddleware>();
     }
 }

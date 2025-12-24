@@ -47,6 +47,18 @@ public class PostController : ControllerBase
         return this.ApiOk(response);
     }
 
+    [HttpGet("{postId:guid}")]
+    public async Task<IActionResult> GetPostByIdAsync(
+        [FromRoute] Guid postId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = PostMappings.ToQuery(postId);
+        var result = await _mediator.Send(query, cancellationToken);
+        var response = result.ToResponse();
+
+        return this.ApiOk(response);
+    }
+
     [HttpGet("search/semantic")]
     public async Task<IActionResult> SearchPostsBySemanticAsync([FromQuery] SearchPostsBySemanticRequest request, CancellationToken cancellationToken = default)
     {
@@ -87,5 +99,16 @@ public class PostController : ControllerBase
         var response = result.ToResponse();
 
         return this.ApiOk(response);
+    }
+
+    [HttpDelete("{postId:guid}")]
+    public async Task<IActionResult> DeletePostAsync(
+        [FromRoute] Guid postId,
+        CancellationToken cancellationToken = default)
+    {
+        var command = PostMappings.ToCommand(postId);
+        await _mediator.Send(command, cancellationToken);
+
+        return NoContent();
     }
 }

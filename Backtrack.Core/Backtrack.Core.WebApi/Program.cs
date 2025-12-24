@@ -48,7 +48,9 @@ public class Program
 
         await MigrateDatabaseAsync(app);
 
+        app.UseMiddleware<RequestLoggingMiddleware>();
         app.UseMiddleware<ExceptionHandlingMiddleware>();
+
         app.MapHealthChecks("/health");
 
         app.UseSwagger();
