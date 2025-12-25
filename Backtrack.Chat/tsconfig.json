@@ -22,13 +22,11 @@
   "ts-node": {
     "swc": true,
     "require": [
-      "tsconfig-paths/register",
-      "./config.ts"
+      "tsconfig-paths/register"
     ]
   },
   "include": [
     "src/**/*.ts",
-    "config.ts",
     "eslint.config.ts"
   ],
   "exclude": [

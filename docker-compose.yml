@@ -22,7 +22,7 @@ services:
     depends_on:
       # - backtrack-core-api
       - backtrack-chat-api
-      # - backtrack-qr-api
+      - backtrack-qr-api
     #   - backtrack-chat
     #   - backtrack-notifications
     restart: unless-stopped
@@ -52,8 +52,10 @@ services:
     container_name: backtrack-chat-api
     ports:
       - "3000:3000"
+    environment:
+      - MONGO_CONNECTION_STRING=mongodb://mongo:mongo123@backtrack-chat-db:27017/backtrack-chat?authSource=admin
     env_file:
-      - ./env/backtrack-chat.docker.env
+      - ./env/backtrack-chat-api.docker.env
     networks:
       - backtrack-network
     depends_on:
@@ -126,6 +128,8 @@ services:
       - "27017:27017"
     environment:
       - MONGO_INITDB_DATABASE=backtrack-chat
+      - MONGO_INITDB_ROOT_USERNAME=mongo
+      - MONGO_INITDB_ROOT_PASSWORD=mongo123
     volumes:
       - backtrack-chat-db-data:/data/db
     networks:

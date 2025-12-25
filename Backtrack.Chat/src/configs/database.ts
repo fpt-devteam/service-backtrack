@@ -10,6 +10,8 @@ export const connectDatabase = async () => {
       'MONGODB_CONNECTIONSTRING is not defined in environment variables',
     );
   }
+  logger.warn(` Connecting to MongoDB... ${connectionString}`);
+
   
   try {
     await mongoose.connect(connectionString);
@@ -17,6 +19,7 @@ export const connectDatabase = async () => {
   } catch (error) {
     logger.err('❌ Database connection failed:');
     logger.err(error);
+    logger.err(error instanceof Error ? error.message : String(error));
     logger.warn('⚠️  Server will continue without database connection');
     logger.warn('⚠️  Check MongoDB Atlas IP whitelist or connection string');
   }
