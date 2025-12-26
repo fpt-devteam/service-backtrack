@@ -1,6 +1,6 @@
 import morgan from 'morgan';
-import path from 'path';
 import helmet from 'helmet';
+import cors from 'cors';
 import express, { Request, Response, Express } from 'express';
 import messageRoute from '@src/routes/messageRoute';
 import conversationRoute from '@src/routes/conversationRoute';
@@ -11,6 +11,7 @@ import ENV from '@src/common/constants/ENV';
 const app: Express = express();
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
@@ -22,25 +23,27 @@ if (ENV.NodeEnv === 'development') {
 // Add correlationId to every request
 app.use(correlationIdMiddleware);
 
+// Health check endpoint
+app.get('/health', (_: Request, res: Response) => {
+  res.json({ status: 'healthy' });
+});
+
 // API Routes
-app.use('/api/conversations', conversationRoute);
-app.use('/api/conversations', messageRoute);
+app.use('/conversations', conversationRoute);
+app.use('/messages', messageRoute);
+
+// 404 handler
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    error: {
+      code: 'NotFound',
+      message: `Cannot ${req.method} ${req.path}`,
+    },
+  });
+});
+
+// Error handler must be last
 app.use(errorHandler);
-
-// Static files
-const viewsDir = path.join(__dirname, 'views');
-const staticDir = path.join(__dirname, 'public');
-
-app.set('views', viewsDir);
-app.use(express.static(staticDir));
-
-// Page Routes
-app.get('/', (_: Request, res: Response) => res.redirect('/login'));
-app.get('/login', (_: Request, res: Response) =>
-  res.sendFile('login.html', { root: viewsDir }),
-);
-app.get('/chat', (_: Request, res: Response) =>
-  res.sendFile('chat.html', { root: viewsDir }),
-);
 
 export default app;

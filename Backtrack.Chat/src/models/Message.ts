@@ -10,7 +10,7 @@ export interface IMessage extends Document {
   conversationId: string;
   sender: {
     id: string,
-    name: string,
+    displayName?: string,
     avatarUrl: string | null,
   };
   content: string;
@@ -25,7 +25,7 @@ const MessageSchema = new Schema<IMessage>({
   conversationId: { type: String, required: true, ref: 'Conversation' },
   sender: {
     id: { type: String, required: true },
-    name: { type: String, required: true },
+    displayName: { type: String, required: true },
     avatarUrl: { type: String, default: null },
   },
   content: { type: String, required: true },

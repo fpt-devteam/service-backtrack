@@ -8,7 +8,6 @@ import ConversationController from '../controllers/ConversationController';
  */
 const router = express.Router();
 
-// Bind 'this' context to the controller instance
 router.get(
   '/',
   ConversationController.getAllConversations.bind(ConversationController),

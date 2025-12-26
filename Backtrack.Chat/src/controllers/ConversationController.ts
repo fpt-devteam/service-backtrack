@@ -2,19 +2,20 @@ import { Request, Response } from 'express';
 import { AsyncHandler } from '@src/decorators/AsyncHandler';
 import ConversationService from '@src/services/ConversationService';
 import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES';
-import { AppError, BadRequestError } from '@src/common/errors';
+import { AppError } from '@src/common/errors';
 import { ConversationType } from '@src/models/Conversation';
+import { HEADER_AUTH_ID } from '@src/utils/headers';
 
 class ConversationControllerClass {
   @AsyncHandler
   public async getAllConversations(req: Request, res: Response) {
-    const userId = req.headers['x-user-id'] as string;
+    const userId = req.headers[HEADER_AUTH_ID] as string;
     const correlationId = req.headers['x-correlation-id'] as string;
 
     if (!userId) {
       throw new AppError(
         'MissingUserId',
-        'User ID is required in x-user-id header',
+        'User ID is required in X-Auth-Id header',
         HTTP_STATUS_CODES.BadRequest,
       );
     }
@@ -45,28 +46,23 @@ class ConversationControllerClass {
 
   @AsyncHandler
   public async createConversation(req: Request, res: Response) {
-    const userId = req.headers['x-user-id'] as string;
-    const username = req.headers['x-username'] as string;
+    const userId = req.headers[HEADER_AUTH_ID] as string;
     const correlationId = req.headers['x-correlation-id'] as string;
-    const { type, participantsReq, name } = req.body as {
+    const { type, participantIds, name } = req.body as {
       type: ConversationType,
-      participantsReq: {
-        id: string,
-        username: string,
-        avatarUrl?: string | null,
-      }[],
+      participantIds: string[],
       name?: string,
     };
 
-    if (!userId || !username) {
+    if (!userId) {
       throw new AppError(
         'MissingUserInfo',
-        'User ID and username are required in headers',
+        'User ID is required in X-Auth-Id header',
         HTTP_STATUS_CODES.BadRequest,
       );
     }
 
-    if (!type || !participantsReq || !Array.isArray(participantsReq)) {
+    if (!type || !participantIds || !Array.isArray(participantIds)) {
       throw new AppError(
         'MissingConversationInfo',
         'Type and participantIds are required',
@@ -75,7 +71,7 @@ class ConversationControllerClass {
     }
 
     // Validate input
-    if (type === ConversationType.SINGLE && participantsReq.length !== 1) {
+    if (type === ConversationType.SINGLE && participantIds.length !== 1) {
       throw new AppError(
         'InvalidParticipants',
         'Single conversations must have exactly one participant besides the creator',
@@ -92,9 +88,9 @@ class ConversationControllerClass {
     }
 
     const conversation = await ConversationService.createConversation(
-      { id: userId, username },
+      userId,
       type,
-      participantsReq,
+      participantIds,
       name,
     );
 

@@ -9,11 +9,11 @@ import MessageController from '../controllers/MessageController';
 const router = express.Router();
 
 router.post(
-  '/:conversationId/messages',
+  '/:conversationId',
   MessageController.sendMessage.bind(MessageController),
 );
 router.get(
-  '/:conversationId/messages',
+  '/:conversationId',
   MessageController.getMessages.bind(MessageController),
 );
 

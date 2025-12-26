@@ -1,21 +1,21 @@
-/**
- * Express API route paths.
- */
+// /**
+//  * Express API route paths.
+//  */
 
-const PATHS = {
-  Api: {
-    Base: '/api',
-    Conversations: '/api/conversations',
-  },
-  Views: {
-    Home: '/',
-    Login: '/login',
-    Chat: '/chat',
-    Users: '/users',
-  },
-} as const;
+// const PATHS = {
+//   Api: {
+//     Base: '/api',
+//     Conversations: '/api/conversations',
+//   },
+//   Views: {
+//     Home: '/',
+//     Login: '/login',
+//     Chat: '/chat',
+//     Users: '/users',
+//   },
+// } as const;
 
 
-// **** Export **** //
+// // **** Export **** //
 
-export default PATHS;
+// export default PATHS;

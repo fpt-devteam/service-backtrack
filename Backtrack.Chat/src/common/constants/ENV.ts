@@ -1,30 +1,47 @@
-import jetEnv, { num } from 'jet-env';
-
 /******************************************************************************
                                  Setup
 ******************************************************************************/
 
-const ENV = jetEnv({
-  NodeEnv: String,
-  Port: num,
-  MongodbConnectionstring: String,
-  // Pagination
-  DefaultPageLimit: num,
-  MaxPageLimit: num,
-});
+function getEnv(key: string, defaultValue?: string): string {
+  const value = process.env[key];
+  if (!value && defaultValue === undefined) {
+    throw new Error(`Environment variable ${key} is not defined`);
+  }
+  return value ?? defaultValue ?? '';
+}
 
+function getEnvNumber(key: string, defaultValue?: number): number {
+  const value = process.env[key];
+  if (!value) {
+    if (defaultValue === undefined) {
+      throw new Error(`Environment variable ${key} is not defined`);
+    }
+    return defaultValue;
+  }
+  const num = parseInt(value, 10);
+  if (isNaN(num)) {
+    throw new Error(`Environment variable ${key} must be a number`);
+  }
+  return num;
+}
 
 /******************************************************************************
                           Structured Export
 ******************************************************************************/
 
 export default {
-  NodeEnv: ENV.NodeEnv as string,
-  Port: ENV.Port,
-  MongodbConnectionstring: ENV.MongodbConnectionstring as string,
+  NodeEnv: getEnv('NODE_ENV', 'development'),
+  Port: getEnvNumber('PORT', 3000),
+  MongodbConnectionstring: getEnv('MONGODB_CONNECTIONSTRING'),
 
   Pagination: {
-    DefaultLimit: ENV.DefaultPageLimit,
-    MaxLimit: ENV.MaxPageLimit,
+    DefaultLimit: getEnvNumber('DEFAULT_PAGE_LIMIT', 20),
+    MaxLimit: getEnvNumber('MAX_PAGE_LIMIT', 100),
+  },
+
+  RabbitMQ: {
+    Url: getEnv('RABBITMQ_URL'),
+    Exchange: getEnv('RABBITMQ_EXCHANGE'),
+    UserSyncQueue: getEnv('RABBITMQ_USER_SYNC_QUEUE'),
   },
 } as const;

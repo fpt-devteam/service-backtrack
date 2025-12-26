@@ -30,6 +30,7 @@
     "eslint.config.ts"
   ],
   "exclude": [
-    "src/public/*"
+    "src/public/*",
+    "src/views/*"
   ]
 }

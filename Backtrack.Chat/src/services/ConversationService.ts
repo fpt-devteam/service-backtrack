@@ -2,13 +2,13 @@ import {
   conversationRepository,
   participantRepository,
 } from '@src/repositories';
+import userRepository from '@src/repositories/UserRepository';
 import { NotFoundError, BadRequestError } from '@src/common/errors';
 import { ConversationType } from '@src/models/Conversation';
 import { ParticipantRole } from '@src/models/ConversationParticipants';
 
-class ConversationService {
+export class ConversationService {
   public async getAllConversationsByUserId(userId: string) {
-
     const participants = await participantRepository.findByUserId(userId);
     const conversationIds = participants.map((p) => p.conversationId);
     const conversations = await conversationRepository.findByIds(
@@ -28,7 +28,7 @@ class ConversationService {
             (p) => p.user.id !== userId,
           );
           displayName = otherParticipant
-            ? otherParticipant.user.username
+            ? otherParticipant.user.displayName
             : 'Unknown';
         }
 
@@ -62,16 +62,29 @@ class ConversationService {
   }
 
   public async createConversation(
-    creator: { id: string, username: string, avatarUrl?: string | null },
+    creatorId: string,
     type: ConversationType,
-    participants: { id: string, username: string, avatarUrl?: string | null }[],
+    participantIds: string[],
     name?: string,
   ) {
+    const creator = await userRepository.getByIdAsync(creatorId);
+    if (!creator) {
+      throw new NotFoundError('Creator user not found');
+    }
+
+    const participantUsers = await userRepository.findByIds(participantIds);
+
+    if (participantUsers.length !== participantIds.length) {
+      const foundIds = participantUsers.map((u) => u._id);
+      const missingIds = participantIds.filter((id) => !foundIds.includes(id));
+      throw new NotFoundError(`Users not found: ${missingIds.join(', ')}`);
+    }
+
     if (type === ConversationType.SINGLE) {
       const existingId =
         await participantRepository.findExistingSingleConversation(
-          creator.id,
-          participants[0].id,
+          creatorId,
+          participantIds[0],
         );
 
       if (existingId) {
@@ -81,15 +94,34 @@ class ConversationService {
 
     const conversation = await conversationRepository.create({
       type,
-      name: name ?? null,
-      createdBy: creator,
+      name: name ?? participantUsers[0]?.displayName ?? null,
+      createdBy: {
+        id: creator._id,
+        displayName: creator.displayName ?? 'Unknown',
+        avatarUrl: creator.avatarUrl ?? null,
+      },
     });
 
+    // Build participant documents
     const participantDocs = [
-      { user: creator, role: ParticipantRole.ADMIN },
-      ...participants
-        .filter((p) => p.id !== creator.id)
-        .map((p) => ({ user: p, role: ParticipantRole.MEMBER })),
+      {
+        user: {
+          id: creator._id,
+          displayName: creator.displayName ?? 'Unknown',
+          avatarUrl: creator.avatarUrl ?? null,
+        },
+        role: ParticipantRole.ADMIN,
+      },
+      ...participantUsers
+        .filter((p) => p._id !== creatorId)
+        .map((p) => ({
+          user: {
+            id: p._id,
+            displayName: p.displayName ?? 'Unknown',
+            avatarUrl: p.avatarUrl ?? null,
+          },
+          role: ParticipantRole.MEMBER,
+        })),
     ];
 
     await participantRepository.addParticipants(
@@ -102,3 +134,4 @@ class ConversationService {
 }
 
 export default new ConversationService();
+

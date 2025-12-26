@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import MessageService from '@src/services/MessageService';
 import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES';
-import { AppError, BadRequestError } from '@src/common/errors';
+import { AppError } from '@src/common/errors';
 import { getSocketInstance } from '../socket';
 import { AsyncHandler } from '@src/decorators/AsyncHandler';
+import { HEADER_AUTH_ID } from '@src/utils/headers';
 
 /**
  * Message controller using class-based approach with @AsyncHandler decorator
@@ -11,9 +12,7 @@ import { AsyncHandler } from '@src/decorators/AsyncHandler';
 class MessageController {
   @AsyncHandler
   public async sendMessage(req: Request, res: Response) {
-    const senderId = req.headers['x-user-id'] as string;
-    const sendername = req.headers['x-username'] as string;
-    const correlationId = req.headers['x-correlation-id'] as string;
+    const senderId = req.headers[HEADER_AUTH_ID] as string;
     const { conversationId } = req.params;
     const { content } = req.body as { content: string };
 
@@ -35,7 +34,7 @@ class MessageController {
 
     const message = await MessageService.sendMessage(
       senderId,
-      sendername,
+      // sendername,
       conversationId,
       content,
     );
@@ -54,14 +53,12 @@ class MessageController {
     return res.status(HTTP_STATUS_CODES.Created).json({
       success: true,
       data: message,
-      correlationId,
     });
   }
 
   @AsyncHandler
   public async getMessages(req: Request, res: Response) {
-    const userId = req.headers['x-user-id'] as string;
-    const correlationId = req.headers['x-correlation-id'] as string;
+    const userId = req.headers[HEADER_AUTH_ID] as string;
     const { conversationId } = req.params;
     const { cursor, limit } = req.query;
 
@@ -89,7 +86,6 @@ class MessageController {
           hasMore: result.hasMore,
         },
       },
-      correlationId,
     });
   }
 }

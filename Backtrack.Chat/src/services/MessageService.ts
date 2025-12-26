@@ -2,6 +2,7 @@ import {
   messageRepository,
   conversationRepository,
   participantRepository,
+  userRepository,
 } from '@src/repositories';
 import {
   NotFoundError,
@@ -13,7 +14,7 @@ import { MessageType } from '@src/models/Message';
 class MessageService {
   public async sendMessage(
     senderId: string,
-    sendername: string,
+    // sendername: string,
     conversationId: string,
     content: string,
   ) {
@@ -21,13 +22,11 @@ class MessageService {
       throw new BadRequestError('Message content cannot be empty');
     }
 
-    // Check if conversation exists (cached)
     const conversation = await conversationRepository.findById(conversationId);
     if (!conversation) {
       throw new NotFoundError('Conversation not found');
     }
 
-    // Check if sender is a participant (cached - critical for performance)
     const isParticipant = await participantRepository.isParticipant(
       conversationId,
       senderId,
@@ -37,10 +36,16 @@ class MessageService {
       throw new ForbiddenError('You are not a member of this conversation');
     }
 
+    const sender = await userRepository.getByIdAsync?.(senderId);
+    if (!sender) {
+      throw new NotFoundError('Sender user not found');
+    }
     // Create message
     const message = await messageRepository.create({
       conversationId,
-      sender: { id: senderId, name: sendername, avatarUrl: null },
+      sender: { id: senderId, 
+        displayName: sender.displayName ?? 'Unknown',
+        avatarUrl: sender.avatarUrl ?? null },
       content,
       type: MessageType.TEXT,
     });

@@ -28,7 +28,7 @@ const ConversationSchema = new Schema<IConversation>(
     },
     createdBy: {
       id: { type: String, required: true },
-      username: { type: String, required: true },
+      displayName: { type: String, required: true },
       avatarUrl: { type: String, default: null },
     },
     deletedAt: {

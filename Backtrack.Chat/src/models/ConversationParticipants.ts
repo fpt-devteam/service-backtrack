@@ -19,7 +19,7 @@ const ConversationParticipantSchema = new Schema<IConversationParticipant>({
   conversationId: { type: String, required: true, ref: 'Conversation' },
   user: {
     id: { type: String, required: true },
-    username: { type: String, required: true },
+    displayName: { type: String, required: true },
     avatarUrl: { type: String, default: null },
   },
   role: { type: String, enum: Object.values(ParticipantRole), required: true },

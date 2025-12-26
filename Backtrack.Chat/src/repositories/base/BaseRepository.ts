@@ -1,5 +1,5 @@
 import type { Document, Model, UpdateQuery, FilterQuery } from 'mongoose';
-import logger from 'jet-logger';
+import logger from '@src/utils/logger';
 import ENV from '@src/common/constants/ENV';
 import {
   IBaseRepository,
@@ -40,8 +40,8 @@ implements IBaseRepository<T>
         .lean();
       return result as T | null;
     } catch (error) {
-      logger.err(`Error finding by ID ${id}:`);
-      logger.err(error);
+      logger.error(`Error finding by ID ${id}:`);
+      logger.error(error);
       throw error;
     }
   }
@@ -56,8 +56,8 @@ implements IBaseRepository<T>
         .lean();
       return result as T | null;
     } catch (error) {
-      logger.err('Error finding one:');
-      logger.err(error);
+      logger.error('Error finding one:');
+      logger.error(error);
       throw error;
     }
   }
@@ -72,8 +72,8 @@ implements IBaseRepository<T>
         .lean();
       return results as T[];
     } catch (error) {
-      logger.err('Error finding:');
-      logger.err(error);
+      logger.error('Error finding:');
+      logger.error(error);
       throw error;
     }
   }
@@ -134,8 +134,8 @@ implements IBaseRepository<T>
         hasMore,
       };
     } catch (error) {
-      logger.err('Error finding with pagination:');
-      logger.err(error);
+      logger.error('Error finding with pagination:');
+      logger.error(error);
       throw error;
     }
   }
@@ -150,8 +150,8 @@ implements IBaseRepository<T>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       return (result as any).toObject() as T;
     } catch (error) {
-      logger.err('Error creating:');
-      logger.err(error);
+      logger.error('Error creating:');
+      logger.error(error);
       throw error;
     }
   }
@@ -166,8 +166,8 @@ implements IBaseRepository<T>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       return results.map((r: any) => r.toObject() as T);
     } catch (error) {
-      logger.err('Error creating many:');
-      logger.err(error);
+      logger.error('Error creating many:');
+      logger.error(error);
       throw error;
     }
   }
@@ -190,8 +190,8 @@ implements IBaseRepository<T>
 
       return result as T | null;
     } catch (error) {
-      logger.err(`Error updating ${id}:`);
-      logger.err(error);
+      logger.error(`Error updating ${id}:`);
+      logger.error(error);
       throw error;
     }
   }
@@ -210,8 +210,8 @@ implements IBaseRepository<T>
       );
       return result.modifiedCount;
     } catch (error) {
-      logger.err('Error updating many:');
-      logger.err(error);
+      logger.error('Error updating many:');
+      logger.error(error);
       throw error;
     }
   }
@@ -225,8 +225,8 @@ implements IBaseRepository<T>
 
       return result.deletedCount > 0;
     } catch (error) {
-      logger.err(`Error deleting ${id}:`);
-      logger.err(error);
+      logger.error(`Error deleting ${id}:`);
+      logger.error(error);
       throw error;
     }
   }
@@ -243,8 +243,8 @@ implements IBaseRepository<T>
 
       return result.modifiedCount > 0;
     } catch (error) {
-      logger.err(`Error soft deleting ${id}:`);
-      logger.err(error);
+      logger.error(`Error soft deleting ${id}:`);
+      logger.error(error);
       throw error;
     }
   }
@@ -259,8 +259,8 @@ implements IBaseRepository<T>
       );
       return result !== null;
     } catch (error) {
-      logger.err('Error checking exists:');
-      logger.err(error);
+      logger.error('Error checking exists:');
+      logger.error(error);
       throw error;
     }
   }
@@ -275,8 +275,8 @@ implements IBaseRepository<T>
       );
       return count;
     } catch (error) {
-      logger.err('Error counting:');
-      logger.err(error);
+      logger.error('Error counting:');
+      logger.error(error);
       throw error;
     }
   }
