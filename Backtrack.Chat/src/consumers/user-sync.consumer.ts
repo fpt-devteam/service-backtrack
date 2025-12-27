@@ -5,14 +5,14 @@ import {
   UserUpdatedEvent,
 } from '@src/contracts/events/user-events';
 import { EventTopics } from '@src/contracts/events/event-topics';
-import userRepository from '@src/repositories/UserRepository';
-import { env } from '@src/configs/env';
+import { userRepository } from '@src/repositories';
+import ENV from '@src/common/constants/ENV';
 import logger from '@src/utils/logger';
 
 export async function startUserSyncConsumer(): Promise<void> {
   try {
-    const EXCHANGE_NAME = env.RABBITMQ_EXCHANGE;
-    const QUEUE_NAME = env.RABBITMQ_USER_SYNC_QUEUE;
+    const EXCHANGE_NAME = ENV.RabbitMQ.Exchange;
+    const QUEUE_NAME = ENV.RabbitMQ.UserSyncQueue;
 
     const channel = await createChannel();
 
@@ -40,9 +40,11 @@ export async function startUserSyncConsumer(): Promise<void> {
         logger.info(`Received message with routing key: ${routingKey}`);
 
         if (routingKey === EventTopics.User.Created) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const event: UserCreatedEvent = JSON.parse(content);
           await handleUserCreated(event);
         } else if (routingKey === EventTopics.User.Updated) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const event: UserUpdatedEvent = JSON.parse(content);
           await handleUserUpdated(event);
         } else {
@@ -106,7 +108,7 @@ async function handleUserUpdated(event: UserUpdatedEvent): Promise<void> {
     );
     await userRepository.createAsync({
       _id: event.Id,
-      email: event.Email || '',
+      email: event.Email ?? '',
       displayName: event.DisplayName,
       avatarUrl: event.AvatarUrl,
       createdAt: new Date(event.UpdatedAt),
@@ -117,18 +119,20 @@ async function handleUserUpdated(event: UserUpdatedEvent): Promise<void> {
 
   // Update user
   const updateData: {
-    email?: string;
-    displayName?: string;
-    avatarUrl?: string | null;
-    updatedAt: Date;
-    syncedAt: Date;
+    email?: string,
+    displayName?: string,
+    avatarUrl?: string | null,
+    updatedAt: Date,
+    syncedAt: Date,
   } = {
     updatedAt: new Date(event.UpdatedAt),
     syncedAt: new Date(),
   };
 
   if (event.Email) updateData.email = event.Email;
-  if (event.DisplayName !== undefined) updateData.displayName = event.DisplayName;
+  if (
+    event.DisplayName !== undefined
+  ) updateData.displayName = event.DisplayName;
   if (event.AvatarUrl !== undefined) updateData.avatarUrl = event.AvatarUrl;
 
   await userRepository.updateAsync(event.Id, updateData);

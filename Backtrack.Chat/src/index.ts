@@ -1,5 +1,5 @@
 // MUST be first - load environment variables before anything else
-import './config/env-loader';
+import './configs/env-loader';
 
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';

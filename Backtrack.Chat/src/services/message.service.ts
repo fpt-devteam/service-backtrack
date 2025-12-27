@@ -9,7 +9,7 @@ import {
   ForbiddenError,
   BadRequestError,
 } from '@src/common/errors';
-import { MessageType } from '@src/models/Message';
+import { MessageType } from '@src/models/message.model';
 
 class MessageService {
   public async sendMessage(
@@ -36,16 +36,16 @@ class MessageService {
       throw new ForbiddenError('You are not a member of this conversation');
     }
 
+    // Verify sender exists
     const sender = await userRepository.getByIdAsync?.(senderId);
     if (!sender) {
       throw new NotFoundError('Sender user not found');
     }
-    // Create message
+
+    // Create message with simplified schema (senderId only)
     const message = await messageRepository.create({
       conversationId,
-      sender: { id: senderId, 
-        displayName: sender.displayName ?? 'Unknown',
-        avatarUrl: sender.avatarUrl ?? null },
+      senderId,
       content,
       type: MessageType.TEXT,
     });

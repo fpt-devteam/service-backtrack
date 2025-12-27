@@ -1,4 +1,4 @@
-import { AppError } from './AppError';
+import { AppError } from './app-error';
 import HTTP_STATUS_CODES from '../constants/HTTP_STATUS_CODES';
 
 export const ErrorCodes = {

@@ -1,10 +1,10 @@
-import Message, { IMessage } from '@src/models/Message';
-import { BaseRepository } from './base/BaseRepository';
+import Message, { IMessage } from '@src/models/message.model';
+import { BaseRepository } from './base/base.repository';
 import {
   IBaseRepository,
   PaginationOptions,
   PaginatedResult,
-} from './base/IBaseRepository';
+} from './base/ibase.repository';
 
 export interface IMessageRepository extends IBaseRepository<IMessage> {
   findByConversationId(
@@ -22,7 +22,7 @@ export interface IMessageRepository extends IBaseRepository<IMessage> {
   softDeleteByConversationId(conversationId: string): Promise<number>;
 }
 
-class MessageRepository
+export class MessageRepository
   extends BaseRepository<IMessage>
   implements IMessageRepository
 {
@@ -86,4 +86,3 @@ class MessageRepository
   }
 }
 
-export default new MessageRepository();

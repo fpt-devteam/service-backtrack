@@ -5,7 +5,7 @@ import {
   IBaseRepository,
   PaginatedResult,
   PaginationOptions,
-} from './IBaseRepository';
+} from './ibase.repository';
 
 /**
  * Base repository implementation with common CRUD operations
@@ -125,7 +125,10 @@ implements IBaseRepository<T>
 
       // Get next cursor from last item
       const nextCursor = hasMore && data.length > 0
-        ? String((data[data.length - 1] as unknown as Record<string, unknown>)[sortField])
+        ? String(
+          (
+            data[data.length - 1] as unknown as Record<string, unknown>
+          )[sortField])
         : null;
 
       return {
@@ -145,10 +148,8 @@ implements IBaseRepository<T>
    */
   public async create(data: Partial<T>): Promise<T> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-      const result = await this.model.create(data as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      return (result as any).toObject() as T;
+      const result = await this.model.create(data);
+      return (result).toObject() as T;
     } catch (error) {
       logger.error('Error creating:');
       logger.error(error);
@@ -161,8 +162,7 @@ implements IBaseRepository<T>
    */
   public async createMany(data: Partial<T>[]): Promise<T[]> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-      const results = await this.model.insertMany(data as any[]);
+      const results = await this.model.insertMany(data);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       return results.map((r: any) => r.toObject() as T);
     } catch (error) {
@@ -176,13 +176,13 @@ implements IBaseRepository<T>
    * Update document by ID
    */
   public async update(
-    id: string,
+    filter: FilterQuery<T>,
     data: Partial<T>,
   ): Promise<T | null> {
     try {
       const result = await this.model
         .findOneAndUpdate(
-          this.addSoftDeleteFilter({ _id: id } as FilterQuery<T>),
+          this.addSoftDeleteFilter(filter),
           data as UpdateQuery<T>,
           { new: true },
         )
@@ -190,7 +190,6 @@ implements IBaseRepository<T>
 
       return result as T | null;
     } catch (error) {
-      logger.error(`Error updating ${id}:`);
       logger.error(error);
       throw error;
     }

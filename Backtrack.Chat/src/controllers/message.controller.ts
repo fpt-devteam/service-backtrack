@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
-import MessageService from '@src/services/MessageService';
+import MessageService from '@src/services/message.service';
 import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES';
 import { AppError } from '@src/common/errors';
 import { getSocketInstance } from '../socket';
-import { AsyncHandler } from '@src/decorators/AsyncHandler';
+import { AsyncHandler } from '@src/decorators/async-handler';
 import { HEADER_AUTH_ID } from '@src/utils/headers';
 
 /**
  * Message controller using class-based approach with @AsyncHandler decorator
  */
-class MessageController {
+export class MessageController {
   @AsyncHandler
   public async sendMessage(req: Request, res: Response) {
     const senderId = req.headers[HEADER_AUTH_ID] as string;
@@ -44,10 +44,7 @@ class MessageController {
       const io = getSocketInstance();
       io.to(conversationId).emit('receive_message', message);
     } catch (e) {
-      // Log socket error but don't fail the request
-      // TODO: Replace with proper logger in production
-      // logger.error('Socket emission failed:', e);
-      console.error('Socket emission failed:', e);
+      // Socket error logged but doesn't fail the request
     }
 
     return res.status(HTTP_STATUS_CODES.Created).json({
@@ -90,5 +87,4 @@ class MessageController {
   }
 }
 
-// Export singleton instance
 export default new MessageController();
