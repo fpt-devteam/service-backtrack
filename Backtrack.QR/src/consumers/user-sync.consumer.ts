@@ -3,8 +3,9 @@ import { createChannel } from '@/src/messaging/rabbitmq-connection.js';
 import * as logger from '@/src/utils/logger.js';
 import { UserCreatedEvent, UserUpdatedEvent } from '@/src/contracts/events/user-events.js';
 import { EventTopics } from '@/src/contracts/events/event-topics.js';
-import * as userRepository from '@/src/repositories/user.repository.js';
+import { userRepository } from '@/src/repositories/user.repository.js';
 import { env } from '@/src/configs/env.js';
+import { IUser } from '@/src/database/models/user.model.js';
 
 export async function startUserSyncConsumer(): Promise<void> {
     try {
@@ -63,7 +64,7 @@ async function handleUserCreated(event: UserCreatedEvent): Promise<void> {
     logger.info(`Handling UserCreated event for user ${event.Id}`);
 
     // Check if user already exists (idempotency)
-    const existingUser = await userRepository.getByIdAsync(event.Id);
+    const existingUser = await userRepository.findById(event.Id);
 
     if (existingUser) {
         logger.warn(`User ${event.Id} already exists. Skipping creation.`);
@@ -71,7 +72,7 @@ async function handleUserCreated(event: UserCreatedEvent): Promise<void> {
     }
 
     // Create user
-    await userRepository.createAsync({
+    await userRepository.create({
         _id: event.Id,
         email: event.Email,
         displayName: event.DisplayName,
@@ -86,12 +87,12 @@ async function handleUserUpdated(event: UserUpdatedEvent): Promise<void> {
     logger.info(`Handling UserUpdated event for user ${event.Id}`);
 
     // Check if user exists
-    const existingUser = await userRepository.getByIdAsync(event.Id);
+    const existingUser = await userRepository.findById(event.Id);
 
     if (!existingUser) {
         // User doesn't exist yet (out-of-order message), create it
         logger.warn(`User ${event.Id} not found. Creating user from update event.`);
-        await userRepository.createAsync({
+        await userRepository.create({
             _id: event.Id,
             email: event.Email || '',
             displayName: event.DisplayName,
@@ -102,7 +103,7 @@ async function handleUserUpdated(event: UserUpdatedEvent): Promise<void> {
     }
 
     // Update user
-    const updateData: any = {
+    const updateData: Partial<IUser> = {
         updatedAt: new Date(event.UpdatedAt),
         syncedAt: new Date()
     };
@@ -110,7 +111,8 @@ async function handleUserUpdated(event: UserUpdatedEvent): Promise<void> {
     if (event.Email) updateData.email = event.Email;
     if (event.DisplayName !== undefined) updateData.displayName = event.DisplayName;
 
-    await userRepository.updateAsync(event.Id, updateData);
+    await userRepository.update(event.Id, { $set: updateData });
 
     logger.info(`Successfully synced user ${event.Id} (updated)`);
 }
+    

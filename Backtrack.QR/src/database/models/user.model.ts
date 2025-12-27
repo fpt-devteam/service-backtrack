@@ -1,13 +1,28 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { HydratedDocument, Schema } from "mongoose";
 
-const UserSchema = new Schema({
-  _id: { type: String, required: true },
-  email: { type: String, required: true, index: true },
-  displayName: { type: String, default: null },
-  createdAt: { type: Date, required: true },
-  updatedAt: { type: Date, default: null },
-  deletedAt: { type: Date, default: null },
-  syncedAt: { type: Date, default: Date.now },
-});
+export interface IUser {
+    _id: string;
+    email: string;
+    displayName?: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt?: Date | null;
+    syncedAt: Date;
+}
 
-export const User = mongoose.model("User", UserSchema);
+export type UserDocument = HydratedDocument<IUser>;
+
+const UserSchema = new Schema<IUser>(
+    {
+        _id: { type: String, required: true },
+        email: { type: String, required: true, index: true },
+        displayName: { type: String, default: null },
+        deletedAt: { type: Date, default: null },
+        syncedAt: { type: Date, default: Date.now },
+    },
+    {
+        timestamps: true, // Automatically adds createdAt and updatedAt
+    }
+);
+
+export const User = mongoose.model<IUser>('User', UserSchema);

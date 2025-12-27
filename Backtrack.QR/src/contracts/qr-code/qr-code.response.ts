@@ -1,9 +1,33 @@
-export type QrCodeResponse = {
+export type ItemResponse = {
+    name: string;
+    description: string;
+    imageUrls: string[];
+};
+
+export type UserResponse = {
     id: string;
-    publicCode: string;
-    status: string;
-    itemId?: string | null;
+    email: string;
+    displayName?: string | null;
+};
+
+export type QrCodeResponse = {
+    qrCode: {
+        id: string;
+        publicCode: string;
+        linkedAt?: string | null;
+        createdAt: string;
+    };
+    item?: ItemResponse | null;
     ownerId: string;
-    linkedAt?: string | null;
-    createdAt: string;
+};
+
+export type QrCodeWithOwnerResponse = {
+    qrCode: {
+        id: string;
+        publicCode: string;
+        linkedAt?: string | null;
+        createdAt: string;
+    };
+    item?: ItemResponse | null;
+    owner: UserResponse;
 };

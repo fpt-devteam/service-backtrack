@@ -1,43 +1,7 @@
-import { User } from '@/src/database/models/user.model.js';
+import { IUser, User } from '@/src/database/models/user.model.js';
+import { createBaseRepo } from './common/base.repository.js';
 
-export const createAsync = async (
-    userData: {
-        _id: string;
-        email: string;
-        displayName?: string;
-        createdAt: Date;
-        syncedAt?: Date;
-    }
-): Promise<InstanceType<typeof User>> => {
-    const user = new User(userData);
-    const saved = await user.save();
-    return saved;
+const userBaseRepo = createBaseRepo<IUser, string>(User, (id) => id);
+export const userRepository = {
+    ...userBaseRepo
 };
-
-export const updateAsync = async (
-    id: string,
-    userData: {
-        email?: string;
-        displayName?: string;
-        updatedAt?: Date;
-        syncedAt?: Date;
-    }
-): Promise<InstanceType<typeof User> | null> =>
-    await User.findByIdAndUpdate(
-        id,
-        { $set: userData },
-        { new: true, runValidators: true }
-    );
-
-export const softDeleteAsync = async (
-    id: string
-): Promise<InstanceType<typeof User> | null> =>
-    await User.findByIdAndUpdate(
-        id,
-        { $set: { deletedAt: new Date(), syncedAt: new Date() } },
-        { new: true }
-    );
-
-export const getByIdAsync = async (
-    id: string
-): Promise<InstanceType<typeof User> | null> => await User.findOne({ _id: id, deletedAt: null });
