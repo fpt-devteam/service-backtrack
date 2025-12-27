@@ -21,7 +21,9 @@
       "Bash(npm run lint)",
       "Bash(test:*)",
       "Bash(pnpm build:*)",
-      "Bash(pnpm type-check:*)"
+      "Bash(pnpm type-check:*)",
+      "Bash(tree:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
