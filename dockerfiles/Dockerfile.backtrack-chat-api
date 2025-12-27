@@ -39,7 +39,6 @@ RUN pnpm install --prod --frozen-lockfile && \
 
 # Copy built application from build stage
 COPY --from=build --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=build --chown=nodejs:nodejs /app/config.js ./config.js
 
 # Copy public folder for static files
 COPY --from=build --chown=nodejs:nodejs /app/src/public ./dist/public

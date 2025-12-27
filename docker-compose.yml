@@ -53,7 +53,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - MONGO_CONNECTION_STRING=mongodb://mongo:mongo123@backtrack-chat-db:27017/backtrack-chat?authSource=admin
+      - MONGODB_CONNECTIONSTRING=mongodb://mongo:mongo123@backtrack-chat-db:27017/backtrack-chat?authSource=admin
+      - RABBITMQ_URL=amqp://backtrack:backtrack123@backtrack-message-broker:5672/
     env_file:
       - ./env/backtrack-chat-api.docker.env
     networks:
