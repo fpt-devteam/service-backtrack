@@ -1,0 +1,117 @@
+import { ConsumeMessage } from 'amqplib';
+import { createChannel } from '@/src/infrastructure/messaging/rabbitmq-connection.js';
+import * as logger from '@/src/shared/utils/logger.js';
+import { UserCreatedEvent, UserUpdatedEvent } from '@/src/shared/contracts/events/user-events.js';
+import { EventTopics } from '@/src/shared/contracts/events/event-topics.js';
+import { userRepository } from '@/src/infrastructure/repositories/user.repository.js';
+import { env } from '@/src/shared/configs/env.js';
+import { IUser } from '@/src/infrastructure/database/models/user.model.js';
+
+export async function startUserSyncConsumer(): Promise<void> {
+    try {
+        const EXCHANGE_NAME = env.RABBITMQ_EXCHANGE;
+        const QUEUE_NAME = env.RABBITMQ_USER_SYNC_QUEUE;
+
+        const channel = await createChannel();
+
+        // Assert exchange and queue
+        await channel.assertExchange(EXCHANGE_NAME, 'topic', { durable: true });
+        await channel.assertQueue(QUEUE_NAME, { durable: true });
+
+        // Bind queue to exchange with routing key pattern
+        await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, 'user.#');
+
+        logger.info(`User sync consumer started. Listening to queue: ${QUEUE_NAME}`);
+
+        // Start consuming messages
+        await channel.consume(QUEUE_NAME, async (msg: ConsumeMessage | null) => {
+            if (!msg) {
+                return;
+            }
+
+            const routingKey = msg.fields.routingKey;
+            const content = msg.content.toString();
+
+            try {
+                logger.info(`Received message with routing key: ${routingKey}`);
+
+                if (routingKey === EventTopics.User.Created) {
+                    const event: UserCreatedEvent = JSON.parse(content);
+                    await handleUserCreated(event);
+                } else if (routingKey === EventTopics.User.Updated) {
+                    const event: UserUpdatedEvent = JSON.parse(content);
+                    await handleUserUpdated(event);
+                } else {
+                    logger.warn(`Unknown routing key: ${routingKey}`);
+                }
+
+                // Acknowledge successful processing
+                channel.ack(msg);
+                logger.info(`Successfully processed message with routing key: ${routingKey}`);
+            } catch (error) {
+                logger.error(`Error processing message with routing key ${routingKey}:`, { error: String(error) });
+                // Negative acknowledge with requeue for transient errors
+                channel.nack(msg, false, true);
+            }
+        });
+    } catch (error) {
+        logger.error('Failed to start user sync consumer:', { error: String(error) });
+        throw error;
+    }
+}
+
+async function handleUserCreated(event: UserCreatedEvent): Promise<void> {
+    logger.info(`Handling UserCreated event for user ${event.Id}`);
+
+    // Check if user already exists (idempotency)
+    const existingUser = await userRepository.findById(event.Id);
+
+    if (existingUser) {
+        logger.warn(`User ${event.Id} already exists. Skipping creation.`);
+        return;
+    }
+
+    // Create user
+    await userRepository.create({
+        _id: event.Id,
+        email: event.Email,
+        displayName: event.DisplayName,
+        createdAt: new Date(event.CreatedAt),
+        syncedAt: new Date()
+    });
+
+    logger.info(`Successfully synced user ${event.Id} (created)`);
+}
+
+async function handleUserUpdated(event: UserUpdatedEvent): Promise<void> {
+    logger.info(`Handling UserUpdated event for user ${event.Id}`);
+
+    // Check if user exists
+    const existingUser = await userRepository.findById(event.Id);
+
+    if (!existingUser) {
+        // User doesn't exist yet (out-of-order message), create it
+        logger.warn(`User ${event.Id} not found. Creating user from update event.`);
+        await userRepository.create({
+            _id: event.Id,
+            email: event.Email || '',
+            displayName: event.DisplayName,
+            createdAt: new Date(event.UpdatedAt),
+            syncedAt: new Date()
+        });
+        return;
+    }
+
+    // Update user
+    const updateData: Partial<IUser> = {
+        updatedAt: new Date(event.UpdatedAt),
+        syncedAt: new Date()
+    };
+
+    if (event.Email) updateData.email = event.Email;
+    if (event.DisplayName !== undefined) updateData.displayName = event.DisplayName;
+
+    await userRepository.update(event.Id, { $set: updateData });
+
+    logger.info(`Successfully synced user ${event.Id} (updated)`);
+}

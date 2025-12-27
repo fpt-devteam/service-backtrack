@@ -16,7 +16,7 @@ services:
     env_file:
       - ./env/backtrack-api-gateway.docker.env
     volumes:
-      - /mnt/c/data/fpt/doan/backtrack-sep490-firebase-adminsdk-fbsvc-d625f3f3d9.json:/secret/firebase-credentials.json:ro
+      - C:\Users\NHATTHANG\FptUniversity\SEP490\backtrack-sep490-firebase-adminsdk-fbsvc-d625f3f3d9.json:/secret/firebase-credentials.json:ro
     networks:
       - backtrack-network
     depends_on:

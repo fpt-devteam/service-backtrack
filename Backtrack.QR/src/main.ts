@@ -1,8 +1,8 @@
 import { app } from "@/src/server.js";
-import { connectToDatabase } from "@/src/database/connect.js";
-import { startConsumers, stopConsumers } from "@/src/messaging/consumer-manager.js";
-import * as logger from "@/src/utils/logger.js";
-import { env } from "@/src/configs/env.js";
+import { connectToDatabase } from "@/src/infrastructure/database/connect.js";
+import { startConsumers, stopConsumers } from "@/src/infrastructure/messaging/consumer-manager.js";
+import * as logger from "@/src/shared/utils/logger.js";
+import { env } from "@/src/shared/configs/env.js";
 
 const startServer = async () => {
     try {
