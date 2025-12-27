@@ -497,7 +497,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                 ContentHash = reader.GetString(12),
                 ContentEmbeddingStatus =
                     (ContentEmbeddingStatus)Enum.Parse(typeof(ContentEmbeddingStatus), reader.GetString(13)),
-                AuthorId = reader.GetString(14)
+                AuthorId = reader.GetString(15)
             };
 
             var similarity = reader.GetDouble(14);
