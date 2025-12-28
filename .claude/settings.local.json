@@ -22,7 +22,8 @@
       "Bash(test:*)",
       "Bash(pnpm build:*)",
       "Bash(pnpm type-check:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

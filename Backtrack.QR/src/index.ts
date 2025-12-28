@@ -7,5 +7,5 @@ dotenv.config({
     path: envPath,
 });
 
-await import('@/src/configs/env.js');
+await import('@/src/shared/configs/env.js');
 await import("./main.js");

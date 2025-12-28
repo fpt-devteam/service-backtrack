@@ -1,8 +1,8 @@
 import express from 'express';
-import { correlationMiddleware } from './middlewares/correlation.middleware.js';
-import { errorMiddleware } from './middlewares/error.middleware.js';
-import { loggingMiddleware } from './middlewares/logging.middleware.js';
-import qrCodeRoute from './routes/qr-code.route.js';
+import { correlationMiddleware } from './presentation/middlewares/correlation.middleware.js';
+import { errorMiddleware } from './presentation/middlewares/error.middleware.js';
+import { loggingMiddleware } from './presentation/middlewares/logging.middleware.js';
+import qrCodeRoute from './presentation/routes/qr-code.route.js';
 
 export const app = express();
 
