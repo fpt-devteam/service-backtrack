@@ -5,26 +5,43 @@ import {
   userRepository,
 } from '@src/repositories';
 import {
-  NotFoundError,
-  ForbiddenError,
-  BadRequestError,
+  ErrorCodes,
 } from '@src/common/errors';
-import { MessageType } from '@src/models/message.model';
+import { MessageType, IMessage } from '@src/models/message.model';
+import { PaginationOptions } from '@src/contracts/requests/pagination.request';
+import {
+  PaginatedResponse } from '@src/contracts/responses/pagination.response';
+import { MessageResponse } from '@src/contracts/responses/message.response';
 
 class MessageService {
+
+  private toMessageResponse(message: IMessage): MessageResponse {
+    return {
+      id: message._id.toString(),
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      conversationId: message.conversationId.toString(),
+      senderId: message.senderId,
+      type: message.type,
+      content: message.content,
+      status: message.status,
+      createdAt: message.createdAt.toISOString(),
+      updatedAt: message.updatedAt.toISOString(),
+    };
+  }
+
   public async sendMessage(
     senderId: string,
-    // sendername: string,
     conversationId: string,
     content: string,
-  ) {
+    typeContent?: MessageType,
+  ): Promise<MessageResponse> {
     if (!content.trim()) {
-      throw new BadRequestError('Message content cannot be empty');
+      throw ErrorCodes.EmptyMessageContent;
     }
 
     const conversation = await conversationRepository.findById(conversationId);
     if (!conversation) {
-      throw new NotFoundError('Conversation not found');
+      throw ErrorCodes.ConversationNotFound;
     }
 
     const isParticipant = await participantRepository.isParticipant(
@@ -33,55 +50,96 @@ class MessageService {
     );
 
     if (!isParticipant) {
-      throw new ForbiddenError('You are not a member of this conversation');
+      throw ErrorCodes.NotParticipant;
     }
 
-    // Verify sender exists
     const sender = await userRepository.getByIdAsync?.(senderId);
     if (!sender) {
-      throw new NotFoundError('Sender user not found');
+      throw ErrorCodes.SenderNotFound;
     }
 
-    // Create message with simplified schema (senderId only)
     const message = await messageRepository.create({
       conversationId,
       senderId,
       content,
-      type: MessageType.TEXT,
+      type: typeContent ?? MessageType.TEXT,
     });
 
-    return message;
+    await this.updateConversationMetadata(
+      conversationId,
+      senderId,
+      content,
+      message.createdAt,
+    );
+
+    return this.toMessageResponse(message);
+  }
+
+  private async updateConversationMetadata(
+    conversationId: string,
+    senderId: string,
+    content: string,
+    timestamp: Date,
+  ): Promise<void> {
+    await conversationRepository.updateLastMessage(
+      conversationId,
+      content,
+      timestamp,
+    );
+
+    const participants = await participantRepository.findByConversationId(
+      conversationId,
+    );
+
+    const updatePromises = participants.map((p) => {
+      if (p.memberId === senderId) {
+        return participantRepository.updateTimestamp(
+          conversationId, p.memberId);
+      } else {
+        return participantRepository.incrementUnreadCount(
+          conversationId,
+          p.memberId,
+        );
+      }
+    });
+
+    await Promise.all(updatePromises);
   }
 
   public async getMessagesByConversationId(
     conversationId: string,
     userId: string,
-    cursor?: string,
-    limit?: number,
-  ) {
-    // Check if conversation exists (cached)
+    options: PaginationOptions,
+  ): Promise<PaginatedResponse<MessageResponse[]>> {
     const conversation = await conversationRepository.findById(conversationId);
     if (!conversation) {
-      throw new NotFoundError('Conversation not found');
+      throw ErrorCodes.ConversationNotFound;
     }
 
-    // Check if user is a participant (cached)
     const isParticipant = await participantRepository.isParticipant(
       conversationId,
       userId,
     );
 
     if (!isParticipant) {
-      throw new ForbiddenError('You are not a member of this conversation');
+      throw ErrorCodes.NotParticipant;
     }
 
-    // Get paginated messages
     const result = await messageRepository.findByConversationId(
       conversationId,
-      { cursor, limit, sortField: 'timestamp', sortOrder: 'asc' },
+      {
+        cursor: options.cursor,
+        limit: options.limit,
+        sortField: 'timestamp',
+        sortOrder: 'asc',
+      },
     );
 
-    return result;
+    return {
+      items: result.data.map((msg) => this.toMessageResponse(msg)),
+      hasMore: result.hasMore,
+      nextCursor: result.nextCursor,
+    };
   }
 
   public async getMessageCount(conversationId: string): Promise<number> {

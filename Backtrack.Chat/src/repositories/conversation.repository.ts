@@ -3,7 +3,6 @@ import Conversation, {
 } from '@src/models/conversation.model';
 import { BaseRepository } from './base/base.repository';
 import { IBaseRepository } from './base/ibase.repository';
-import { Type } from 'typescript';
 import { Types } from 'mongoose';
 
 export interface IConversationRepository 

@@ -1,14 +1,12 @@
 import { Request, Response } from 'express';
 import MessageService from '@src/services/message.service';
 import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES';
-import { AppError } from '@src/common/errors';
+import { ErrorCodes } from '@src/common/errors';
 import { getSocketInstance } from '../socket';
 import { AsyncHandler } from '@src/decorators/async-handler';
 import { HEADER_AUTH_ID } from '@src/utils/headers';
+import logger from '@src/utils/logger';
 
-/**
- * Message controller using class-based approach with @AsyncHandler decorator
- */
 export class MessageController {
   @AsyncHandler
   public async sendMessage(req: Request, res: Response) {
@@ -17,19 +15,11 @@ export class MessageController {
     const { content } = req.body as { content: string };
 
     if (!senderId) {
-      throw new AppError(
-        'MissingUserId',
-        'User ID is required in x-user-id header',
-        HTTP_STATUS_CODES.BadRequest,
-      );
+      throw ErrorCodes.MissingUserId;
     }
 
     if (!content) {
-      throw new AppError(
-        'MissingContent',
-        'Content is required',
-        HTTP_STATUS_CODES.BadRequest,
-      );
+      throw ErrorCodes.MissingContent;
     }
 
     const message = await MessageService.sendMessage(
@@ -45,6 +35,8 @@ export class MessageController {
       io.to(conversationId).emit('receive_message', message);
     } catch (e) {
       // Socket error logged but doesn't fail the request
+      logger.warn('Socket error while emitting receive_message:', e);
+      
     }
 
     return res.status(HTTP_STATUS_CODES.Created).json({
@@ -60,29 +52,21 @@ export class MessageController {
     const { cursor, limit } = req.query;
 
     if (!userId) {
-      throw new AppError(
-        'MissingUserId',
-        'User ID is required in x-user-id header',
-        HTTP_STATUS_CODES.BadRequest,
-      );
+      throw ErrorCodes.MissingUserId;
     }
 
     const result = await MessageService.getMessagesByConversationId(
       conversationId,
       userId,
-      cursor as string | undefined,
-      limit ? parseInt(limit as string, 10) : undefined,
+      {
+        cursor: cursor as string | undefined,
+        limit: limit ? parseInt(limit as string, 10) : undefined,
+      },
     );
 
     return res.status(HTTP_STATUS_CODES.Ok).json({
       success: true,
-      data: {
-        data: result.data,
-        pagination: {
-          nextCursor: result.nextCursor,
-          hasMore: result.hasMore,
-        },
-      },
+      data: result,
     });
   }
 }
