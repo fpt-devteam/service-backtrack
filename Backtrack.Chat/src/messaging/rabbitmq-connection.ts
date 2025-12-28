@@ -38,7 +38,7 @@ export async function connectToRabbitMQ(retryCount = 0): Promise<Connection> {
     return connection;
   } catch (error) {
     logger.error(
-      `Failed to connect to RabbitMQ (attempt ${retryCount + 1}/${MAX_RETRIES}):`,
+      `Failed to connect RabbitMQ (attempt ${retryCount + 1}/${MAX_RETRIES}):`,
       error,
     );
 

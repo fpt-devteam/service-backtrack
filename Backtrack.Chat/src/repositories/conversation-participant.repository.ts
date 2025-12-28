@@ -44,6 +44,10 @@ export interface IConversationParticipantRepository
     userId: string,
     lastReadMessageId?: string,
   ): Promise<boolean>;
+  updateTimestamp(
+    conversationId: string,
+    userId: string,
+  ): Promise<boolean>;
   setNickname(
     conversationId: string,
     userId: string,
@@ -177,6 +181,7 @@ export class ConversationParticipantRepository
       }),
       {
         $inc: { unreadCount: amount ?? 1 },
+        $set: { updatedAt: new Date() },
       },
     );
 
@@ -263,6 +268,21 @@ export class ConversationParticipantRepository
         memberId: userId,
       }),
       { $set: { deletedAt: new Date() } },
+    );
+
+    return result.modifiedCount > 0;
+  }
+
+  public async updateTimestamp(
+    conversationId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const result = await this.model.updateOne(
+      this.addSoftDeleteFilter({
+        conversationId,
+        memberId: userId,
+      }),
+      { $set: { updatedAt: new Date() } },
     );
 
     return result.modifiedCount > 0;

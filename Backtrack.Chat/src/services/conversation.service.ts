@@ -3,8 +3,7 @@ import {
   participantRepository,
   userRepository,
 } from '@src/repositories';
-import { AppError } from '@src/common/errors';
-import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES';
+import { ErrorCodes } from '@src/common/errors';
 import {
   CreateConversationInput,
 } from '@src/contracts/requests/conversation.request';
@@ -12,7 +11,7 @@ import { PaginationOptions } from '@src/repositories/base/ibase.repository';
 import {
   ConversationResponse,
 } from '@src/contracts/responses/conversation.response';
-import { 
+import {
   PaginatedResponse } from '@src/contracts/responses/pagination.response';
 import { Types } from 'mongoose';
 
@@ -126,11 +125,7 @@ export class ConversationService {
     ]);
 
     if (!conversation) {
-      throw new AppError(
-        'ConversationNotFound',
-        'Conversation not found',
-        HTTP_STATUS_CODES.NotFound,
-      );
+      throw ErrorCodes.ConversationNotFound;
     }
 
     return {
@@ -145,18 +140,10 @@ export class ConversationService {
     const creator = await userRepository.getByIdAsync?.(request.creatorId);
     const partner = await userRepository.getByIdAsync?.(request.partnerId);
     if (!creator) {
-      throw new AppError(
-        'UserNotFound',
-        'User not found',
-        HTTP_STATUS_CODES.BadRequest,
-      );
+      throw ErrorCodes.UserNotFound;
     }
     if (!partner) {
-      throw new AppError(
-        'PartnerNotFound',
-        'Partner user not found',
-        HTTP_STATUS_CODES.BadRequest,
-      );
+      throw ErrorCodes.PartnerNotFound;
     }
 
     const existingConversationId = await participantRepository.
@@ -166,11 +153,7 @@ export class ConversationService {
       );
 
     if (existingConversationId) {
-      throw new AppError(
-        'ConversationAlreadyExists',
-        'Conversation already exists between these users',
-        HTTP_STATUS_CODES.BadRequest,
-      );
+      throw ErrorCodes.ConversationAlreadyExists;
     }
 
     const conversation = await conversationRepository.create({});

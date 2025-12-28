@@ -19,17 +19,24 @@ startConsumers().catch((error: unknown) => {
   logger.warn('Server will continue without message consumers');
 });
 
-// Create HTTP server with Socket.IO
 const httpServer = http.createServer(app);
 const io = new SocketIOServer(httpServer, {
-  cors: { origin: '*' },
+  path: '/hub', 
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+  transports: ['websocket', 'polling'],
 });
 
 setSocketInstance(io);
 
-// Socket.IO event handlers
 io.on('connection', (socket) => {
   logger.info(`User connected: ${socket.id}`);
+
+  logger.info(`Transport: ${socket.conn.transport.name}`);
+  logger.info(`Client handshake: ${JSON.stringify(socket.handshake.auth)}`);
 
   socket.on('join_conversation', (conversationId: string) => {
     if (conversationId?.length > 0) {
@@ -49,6 +56,10 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     logger.info(`User disconnected: ${socket.id}`);
+  });
+
+  socket.on('error', (error) => {
+    logger.error(`Socket error for ${socket.id}:`, error);
   });
 });
 

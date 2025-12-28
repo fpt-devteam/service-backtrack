@@ -6,10 +6,8 @@ export async function startConsumers(): Promise<void> {
   try {
     logger.info('Starting message consumers...');
 
-    // Connect to RabbitMQ
     await connectToRabbitMQ();
 
-    // Start all consumers
     await startUserSyncConsumer();
 
     logger.info('All message consumers started successfully');
@@ -23,7 +21,6 @@ export async function stopConsumers(): Promise<void> {
   try {
     logger.info('Stopping message consumers...');
 
-    // Close RabbitMQ connection (will also close all channels and consumers)
     await closeConnection();
 
     logger.info('All message consumers stopped successfully');

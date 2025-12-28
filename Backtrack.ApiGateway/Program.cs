@@ -23,6 +23,17 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
+// Add CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
@@ -33,13 +44,16 @@ builder.Services.AddHealthChecks();
 var app = builder.Build();
 
 // Configure middleware pipeline (order matters!)
-// 1. Correlation ID - track all requests
+// 1. CORS - must be first to handle preflight requests
+app.UseCors();
+
+// 2. Correlation ID - track all requests
 app.UseMiddleware<CorrelationIdMiddleware>();
 
-// 2. Health check endpoint (before auth)
+// 3. Health check endpoint (before auth)
 app.MapHealthChecks("/health");
 
-// 3. Firebase Authentication - validates tokens and injects user headers
+// 4. Firebase Authentication - validates tokens and injects user headers
 app.UseMiddleware<FirebaseAuthMiddleware>();
 
 app.MapReverseProxy();

@@ -4,8 +4,7 @@ import cors from 'cors';
 import express, { Request, Response, Express } from 'express';
 import messageRoute from '@src/routes/message.route';
 import conversationRoute from '@src/routes/conversation.route';
-import { errorHandler } from '@src/middlewares/errorHandler';
-import { correlationIdMiddleware } from '@src/middlewares/correlationId';
+import { errorHandler } from '@src/middlewares/error-handler';
 import ENV from '@src/common/constants/ENV';
 
 const app: Express = express();
@@ -19,9 +18,6 @@ app.use(helmet());
 if (ENV.NodeEnv === 'development') {
   app.use(morgan('dev'));
 }
-
-// Add correlationId to every request
-app.use(correlationIdMiddleware);
 
 // Health check endpoint
 app.get('/health', (_: Request, res: Response) => {

@@ -21,7 +21,7 @@ export const errorHandler = (
     const response = {
       success: false,
       error: {
-        code: err.constructor.name,
+        code: err.code,
         message: err.message,
 
       },
