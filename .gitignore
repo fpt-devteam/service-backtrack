@@ -203,5 +203,5 @@ vite.config.ts.timestamp-*
 .vite/
 
 
-test-client.html
-test-chat.html
+test-auth-client.html
+test-chat-client.html
