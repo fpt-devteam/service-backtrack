@@ -9,7 +9,7 @@ const EnvSchema = z.object({
     RABBITMQ_URL: z.string().url("RABBITMQ_URL must be a valid URL"),
     RABBITMQ_EXCHANGE: z.string().min(1, "RABBITMQ_EXCHANGE is required"),
     RABBITMQ_USER_SYNC_QUEUE: z.string().min(1, "RABBITMQ_USER_SYNC_QUEUE is required"),
-
+    APP_URL: z.string().url("APP_URL must be a valid URL"),
     LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 
