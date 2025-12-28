@@ -28,6 +28,7 @@ services:
     ports:
       - "2000:2000"
     environment:
+      - RabbitMQ__HostName=backtrack-message-broker
       - ConnectionStrings__DefaultConnection=Host=backtrack-core-db;Port=5432;Database=backtrack-core-db;Username=postgres;Password=postgres123
     env_file:
       - ./env/backtrack-core-api.docker.env
