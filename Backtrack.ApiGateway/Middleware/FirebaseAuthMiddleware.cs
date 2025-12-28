@@ -28,7 +28,8 @@ public class FirebaseAuthMiddleware
         _publicPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "/health",
-            "/public"
+            "/api/qr/qr-code/public-code",
+            "/api/qr/health",
         };
     }
 

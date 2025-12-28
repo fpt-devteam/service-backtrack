@@ -64,22 +64,26 @@ static void InitializeFirebase(IConfiguration configuration, IWebHostEnvironment
 {
     try
     {
-        var firebaseConfigPath = configuration["Firebase:ServiceAccountPath"];
+        var jsonBase64 = configuration["Firebase:ServiceAccountJsonBase64"];
         var projectId = configuration["Firebase:ProjectId"];
 
-        if (!string.IsNullOrWhiteSpace(firebaseConfigPath) && File.Exists(firebaseConfigPath))
+        if (!string.IsNullOrWhiteSpace(jsonBase64))
         {
+            var jsonBytes = Convert.FromBase64String(jsonBase64);
+            using var ms = new MemoryStream(jsonBytes);
+
             FirebaseApp.Create(new AppOptions
             {
-                Credential = GoogleCredential.FromFile(firebaseConfigPath),
+                Credential = GoogleCredential.FromStream(ms),
                 ProjectId = projectId
             });
-            logger.LogInformation("Firebase initialized from file {Path}", firebaseConfigPath);
 
+            logger.LogInformation("Firebase initialized from ServiceAccountJsonBase64 env/config.");
         }
         else
         {
-            throw new FileNotFoundException("Firebase service account file not found.", firebaseConfigPath);
+            throw new InvalidOperationException(
+            "Firebase credentials not found. Set Firebase:ServiceAccountJsonBase64.");
         }
     }
     catch (Exception ex)

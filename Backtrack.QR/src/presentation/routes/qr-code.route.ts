@@ -6,7 +6,7 @@ import * as qrCodeController from '@/src/presentation/controllers/qr-code.contro
 const router = Router();
 
 // Public endpoint - no auth required
-router.get('/public/qr-code/:publicCode', asyncHandler(qrCodeController.getByPublicCodeAsync));
+router.get('/qr-code/public-code/:publicCode', asyncHandler(qrCodeController.getByPublicCodeAsync));
 
 // Protected endpoints - auth required
 router.post('/qr-codes', asyncHandler(qrCodeController.createAsync));
