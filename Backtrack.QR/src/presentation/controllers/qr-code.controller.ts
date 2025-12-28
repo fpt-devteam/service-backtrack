@@ -116,3 +116,27 @@ export const updateItemAsync = async (req: Request, res: Response) => {
         res.status(status).json(fail(result.error.code, result.error.message));
     }
 };
+
+/**
+ * Generate QR code image for a given public code
+ * GET /qr-codes/:publicCode/image
+ */
+export const generateQrImageAsync = async (req: Request, res: Response) => {
+    const { publicCode } = req.params;
+    const correlationId = req.correlationId || 'unknown';
+
+    const result = await qrCodeService.generateQrImage(publicCode);
+
+    if (isSuccess(result)) {
+        res.setHeader('Content-Type', 'image/png');
+        res.send(result.value.qrCodeImage);
+    } else {
+        const status = getHttpStatus(result.error);
+        logger.warn('Failed to generate QR code image', {
+            publicCode,
+            error: result.error,
+            correlationId
+        });
+        res.status(status).json(fail(result.error.code, result.error.message));
+    }
+};

@@ -10,6 +10,9 @@ import type { CreateQrCodeRequest, UpdateItemRequest } from '@/src/shared/contra
 import type { QrCodeResponse, QrCodeWithOwnerResponse } from '@/src/shared/contracts/qr-code/qr-code.response.js';
 import { toQrCodeResponse, toQrCodeWithOwnerResponse } from '@/src/shared/contracts/qr-code/qr-code.mapper.js';
 import { createPagedResponse, type PagedResponse } from '@/src/shared/contracts/common/pagination.js';
+import QRCode from 'qrcode';
+import { PUBLIC_QR_CODE_URL_PREFIX, QR_ERROR_CORRECTION_LEVEL, QR_MARGIN, QR_TYPE, QR_WIDTH } from '@/src/shared/configs/constants.js';
+import { env } from '@/src/shared/configs/env.js';
 
 const MAX_RETRIES = 5;
 
@@ -117,4 +120,36 @@ export const updateItemAsync = async (
     }
 
     return success(toQrCodeResponse(updated));
+};
+
+export const generateQrImage = async (
+    publicCode: string
+): Promise<Result<{ qrCodeImage: Buffer }>> => {
+    try {
+        const { qrCode } = await qrCodeRepository.getByPublicCodeAsync(publicCode);
+        if (!qrCode) {
+            return failure(QrCodeErrors.NotFound);
+        }
+
+        const qrUrl = `${env.APP_URL}/${PUBLIC_QR_CODE_URL_PREFIX}/${publicCode}`;
+        const qrCodeImage = await QRCode.toBuffer(qrUrl, {
+            width: QR_WIDTH,
+            margin: QR_MARGIN,
+            errorCorrectionLevel: QR_ERROR_CORRECTION_LEVEL,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF',
+            },
+            type: QR_TYPE
+        });
+
+        return success({ qrCodeImage });
+    } catch (error) {
+        return failure({
+            kind: "Internal",
+            code: "QrImageGenerationFailed",
+            message: "Failed to generate QR code image",
+            cause: error
+        });
+    }
 };
