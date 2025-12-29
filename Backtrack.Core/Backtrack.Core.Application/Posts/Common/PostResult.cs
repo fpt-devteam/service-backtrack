@@ -3,6 +3,7 @@ namespace Backtrack.Core.Application.Posts.Common;
 public sealed record PostResult
 {
     public required Guid Id { get; init; }
+    public required string AuthorId { get; init; }
     public required string PostType { get; init; }
     public required string ItemName { get; init; }
     public required string Description { get; init; }

@@ -26,6 +26,7 @@ public sealed class GetPostByIdHandler : IRequestHandler<GetPostByIdQuery, PostR
         return new PostResult
         {
             Id = post.Id,
+            AuthorId = post.AuthorId,
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,

@@ -107,6 +107,7 @@ namespace Backtrack.Core.WebApi.Mappings
             return new PostResponse
             {
                 Id = result.Id,
+                AuthorId = result.AuthorId,
                 PostType = result.PostType,
                 ItemName = result.ItemName,
                 Description = result.Description,
