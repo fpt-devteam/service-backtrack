@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace Backtrack.Core.Domain.Constants
 {
-    public enum UserRole
+    public enum UserGlobalRole
     {
-        Admin = 1,
-        User = 2,
+        Customer = 1,
+        PlatformSuperAdmin = 2,
     }
 }

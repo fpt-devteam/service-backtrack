@@ -58,6 +58,30 @@ namespace Backtrack.Core.Infrastructure.Repositories.Common
             return true;
         }
 
+        public virtual async Task<TEntity> UpsertAsync(TKey id, TEntity entity)
+        {
+            var existingEntity = await _dbSet.FirstOrDefaultAsync(e =>
+                Equals(e.Id, id) &&
+                e.DeletedAt == null);
+
+            if (existingEntity != null)
+            {
+                // Update existing entity
+                entity.UpdatedAt = DateTimeOffset.UtcNow;
+                entity.CreatedAt = existingEntity.CreatedAt;
+                _context.Entry(existingEntity).CurrentValues.SetValues(entity);
+                _context.Entry(existingEntity).Property(x => x.DeletedAt).IsModified = false;
+                return existingEntity;
+            }
+            else
+            {
+                // Create new entity
+                entity.CreatedAt = DateTimeOffset.UtcNow;
+                await _dbSet.AddAsync(entity);
+                return entity;
+            }
+        }
+
         public virtual async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

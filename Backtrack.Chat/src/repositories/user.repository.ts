@@ -1,4 +1,4 @@
-import { User } from '@src/models/user.model';
+import { User, UserGlobalRoleType } from '@src/models/user.model';
 
 class UserRepository {
   /**
@@ -35,6 +35,51 @@ class UserRepository {
       { $set: userData },
       { new: true, runValidators: true },
     );
+  }
+
+  /**
+   * Upsert user (create if not exists, update if exists)
+   */
+  public async upsertAsync(userData: {
+    _id: string,
+    email?: string,
+    displayName?: string,
+    avatarUrl?: string | null,
+    globalRole: UserGlobalRoleType,
+    createdAt?: Date,
+    syncedAt?: Date,
+  }) {
+    const existingUser = await this.getByIdAsync(userData._id);
+
+    if (existingUser) {
+      // Update existing user
+      return await User.findByIdAndUpdate(
+        userData._id,
+        {
+          $set: {
+            ...(userData.email !== undefined && { email: userData.email }),
+            ...(userData.displayName !== undefined && { displayName: userData.displayName }),
+            ...(userData.avatarUrl !== undefined && { avatarUrl: userData.avatarUrl }),
+            ...(userData.globalRole !== undefined && { globalRole: userData.globalRole }),
+            updatedAt: new Date(),
+            syncedAt: userData.syncedAt || new Date(),
+          },
+        },
+        { new: true, runValidators: true },
+      );
+    } else {
+      // Create new user
+      const user = new User({
+        _id: userData._id,
+        email: userData.email,
+        displayName: userData.displayName,
+        avatarUrl: userData.avatarUrl,
+        globalRole: userData.globalRole,
+        createdAt: userData.createdAt || new Date(),
+        syncedAt: userData.syncedAt || new Date(),
+      });
+      return await user.save();
+    }
   }
 
   /**

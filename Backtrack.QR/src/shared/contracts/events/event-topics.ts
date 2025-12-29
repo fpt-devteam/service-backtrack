@@ -1,6 +1,5 @@
 export const EventTopics = {
     User: {
-        Created: 'user.created',
-        Updated: 'user.updated',
+        Upserted: 'user.upserted',
     },
 } as const;

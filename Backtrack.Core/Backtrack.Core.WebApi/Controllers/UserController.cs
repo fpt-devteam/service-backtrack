@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Backtrack.Core.Application.Users.Commands.CreateUser;
-using Backtrack.Core.Application.Users.Commands.UpdateUser;
+using Backtrack.Core.Application.Users.Commands.UpsertUser;
 using Backtrack.Core.Application.Users.Queries.GetMe;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
@@ -31,12 +30,12 @@ public class UserController : ControllerBase
         if (string.IsNullOrWhiteSpace(userId))
             throw new InvalidOperationException($"Required header '{HeaderNames.AuthId}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
 
-        if (string.IsNullOrWhiteSpace(email))
-            throw new InvalidOperationException($"Required header '{HeaderNames.AuthEmail}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
+        // if (string.IsNullOrWhiteSpace(email))
+        // throw new InvalidOperationException($"Required header '{HeaderNames.AuthEmail}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
 
         var displayName = Base64Util.DecodeToUtf8(encodedDisplayName);
 
-        var command = new CreateUserCommand
+        var command = new UpsertUserCommand
         {
             UserId = userId,
             Email = email,
@@ -49,7 +48,8 @@ public class UserController : ControllerBase
         {
             Id = result.Id,
             Email = result.Email,
-            DisplayName = result.DisplayName
+            DisplayName = result.DisplayName,
+            GlobalRole = result.GlobalRole
         };
 
         return this.ApiCreated(response);
@@ -70,21 +70,22 @@ public class UserController : ControllerBase
         {
             Id = result.Id,
             Email = result.Email,
-            DisplayName = result.DisplayName
+            DisplayName = result.DisplayName,
+            GlobalRole = result.GlobalRole
         };
 
         return this.ApiOk(response);
     }
 
     [HttpPut]
-    public async Task<IActionResult> UpdateUserAsync([FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> UpsertUserAsync([FromBody] UpsertUserRequest request, CancellationToken cancellationToken)
     {
         var userId = Request.Headers[HeaderNames.AuthId].ToString();
 
         if (string.IsNullOrWhiteSpace(userId))
             throw new InvalidOperationException($"Required header '{HeaderNames.AuthId}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
 
-        var command = new UpdateUserCommand
+        var command = new UpsertUserCommand
         {
             UserId = userId,
             Email = request.Email,
@@ -97,14 +98,15 @@ public class UserController : ControllerBase
         {
             Id = result.Id,
             Email = result.Email,
-            DisplayName = result.DisplayName
+            DisplayName = result.DisplayName,
+            GlobalRole = result.GlobalRole
         };
 
         return this.ApiOk(response);
     }
 }
 
-public class UpdateUserRequest
+public class UpsertUserRequest
 {
     public string? Email { get; set; }
     public string? DisplayName { get; set; }

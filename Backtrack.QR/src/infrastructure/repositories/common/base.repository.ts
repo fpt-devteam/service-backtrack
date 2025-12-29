@@ -2,7 +2,7 @@ import { Model, ClientSession, UpdateQuery } from "mongoose";
 
 type SoftDeletable = { deletedAt?: Date | null };
 type HasId<TId> = { _id: TId };
-type RepoFilter<T> = Record<string, any>;
+type MongoFilter<T> = Partial<T & { _id: unknown; deletedAt: Date | null }>;
 
 export const createBaseRepo = <T extends SoftDeletable & HasId<TId>, TId>(
     model: Model<T>,
@@ -16,13 +16,15 @@ export const createBaseRepo = <T extends SoftDeletable & HasId<TId>, TId>(
 
     const findById = async (id: string | TId, session?: ClientSession): Promise<T | null> => {
         const normalized = normalizeId(id);
-        const q = model.findOne({ _id: normalized, deletedAt: null } as any).lean<T>();
+        const filter = { _id: normalized, deletedAt: null } as MongoFilter<T>;
+        const q = model.findOne(filter).lean<T>();
         if (session) q.session(session);
         return (await q.exec()) as T | null;
     };
 
-    const findOne = async (filter: RepoFilter<T>, session?: ClientSession): Promise<T | null> => {
-        const q = model.findOne({ ...filter, deletedAt: null } as any).lean<T>();
+    const findOne = async (filter: MongoFilter<T>, session?: ClientSession): Promise<T | null> => {
+        const combinedFilter: MongoFilter<T> = { ...filter, deletedAt: null };
+        const q = model.findOne(combinedFilter).lean<T>();
         if (session) q.session(session);
         return (await q.exec()) as T | null;
     };
@@ -33,8 +35,9 @@ export const createBaseRepo = <T extends SoftDeletable & HasId<TId>, TId>(
         session?: ClientSession
     ): Promise<T | null> => {
         const normalized = normalizeId(id);
+        const filter = { _id: normalized, deletedAt: null } as MongoFilter<T>;
         const q = model
-            .findOneAndUpdate({ _id: normalized, deletedAt: null } as any, updateData, {
+            .findOneAndUpdate(filter, updateData, {
                 new: true,
                 runValidators: true,
             })
@@ -44,8 +47,9 @@ export const createBaseRepo = <T extends SoftDeletable & HasId<TId>, TId>(
         return (await q.exec()) as T | null;
     };
 
-    const exists = async (filter: RepoFilter<T>, session?: ClientSession): Promise<boolean> => {
-        const q = model.exists({ ...filter, deletedAt: null } as any);
+    const exists = async (filter: MongoFilter<T>, session?: ClientSession): Promise<boolean> => {
+        const combinedFilter: MongoFilter<T> = { ...filter, deletedAt: null };
+        const q = model.exists(combinedFilter);
         if (session) q.session(session);
         return !!(await q);
     };

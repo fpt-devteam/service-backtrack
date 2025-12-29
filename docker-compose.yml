@@ -51,8 +51,6 @@ services:
       - ./env/backtrack-chat-api.docker.env
     networks:
       - backtrack-network
-    depends_on:
-      - backtrack-chat-db
     restart: unless-stopped
 
   # BackTrack QR Service - Item and QR Code Management

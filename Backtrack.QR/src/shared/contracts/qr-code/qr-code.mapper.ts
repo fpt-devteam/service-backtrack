@@ -19,7 +19,7 @@ export const toQrCodeWithOwnerResponse = (qrCode: IQrCode, owner: IUser): QrCode
     } : null,
     owner: {
         id: owner._id.toString(),
-        email: owner.email,
+        email: owner.email || '',
         displayName: owner.displayName || null,
     }
 });

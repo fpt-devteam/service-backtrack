@@ -1,17 +1,8 @@
-export interface UserCreatedEvent {
-  Id: string;
-  Email: string;
-  DisplayName?: string;
-  AvatarUrl?: string | null;
-  CreatedAt: string;
-  EventTimestamp: string;
-}
-
-export interface UserUpdatedEvent {
+export interface UserUpsertedEvent {
   Id: string;
   Email?: string;
   DisplayName?: string;
-  AvatarUrl?: string | null;
-  UpdatedAt: string;
+  GlobalRole: string;
+  CreatedAt: string;
   EventTimestamp: string;
 }

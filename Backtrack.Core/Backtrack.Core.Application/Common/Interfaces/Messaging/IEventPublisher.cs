@@ -4,6 +4,5 @@ namespace Backtrack.Core.Application.Common.Interfaces.Messaging;
 
 public interface IEventPublisher
 {
-    Task PublishUserCreatedAsync(UserCreatedIntegrationEvent @event);
-    Task PublishUserUpdatedAsync(UserUpdatedIntegrationEvent @event);
+    Task PublishUserUpsertedAsync(UserUpsertedIntegrationEvent @event);
 }

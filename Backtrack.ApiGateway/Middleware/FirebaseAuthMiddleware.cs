@@ -72,12 +72,12 @@ public class FirebaseAuthMiddleware
                 ? emailClaim.ToString()
                 : string.Empty;
 
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                _logger.LogWarning("Email missing in Firebase token for user: {UserId}", authId);
-                await WriteErrorResponse(context, AuthErrors.MissingEmailInToken, StatusCodes.Status401Unauthorized);
-                return;
-            }
+            // if (string.IsNullOrWhiteSpace(email))
+            // {
+            //     _logger.LogWarning("Email missing in Firebase token for user: {UserId}", authId);
+            //     await WriteErrorResponse(context, AuthErrors.MissingEmailInToken, StatusCodes.Status401Unauthorized);
+            //     return;
+            // }
 
             var displayName = decodedToken.Claims.TryGetValue("name", out var nameClaim)
                 ? nameClaim.ToString()

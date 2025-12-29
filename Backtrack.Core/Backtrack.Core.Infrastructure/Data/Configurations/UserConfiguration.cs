@@ -21,11 +21,9 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
 
             builder.Property(u => u.Email)
                 .HasColumnName("email")
-                .HasMaxLength(255)
-                .IsRequired();
+                .HasMaxLength(255);
 
             builder.HasIndex(u => u.Email)
-                .IsUnique()
                 .HasDatabaseName("ix_users_email");
 
             builder.Property(u => u.DisplayName)
@@ -37,8 +35,8 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasConversion<string>()
                 .IsRequired();
 
-            builder.Property(u => u.Role)
-                .HasColumnName("role")
+            builder.Property(u => u.GlobalRole)
+                .HasColumnName("global_role")
                 .HasConversion<string>()
                 .IsRequired();
 

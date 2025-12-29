@@ -14,13 +14,8 @@ public sealed class CapEventPublisher : IEventPublisher
         _capPublisher = capPublisher;
     }
 
-    public async Task PublishUserCreatedAsync(UserCreatedIntegrationEvent @event)
+    public async Task PublishUserUpsertedAsync(UserUpsertedIntegrationEvent @event)
     {
-        await _capPublisher.PublishAsync(EventTopics.User.Created, @event);
-    }
-
-    public async Task PublishUserUpdatedAsync(UserUpdatedIntegrationEvent @event)
-    {
-        await _capPublisher.PublishAsync(EventTopics.User.Updated, @event);
+        await _capPublisher.PublishAsync(EventTopics.User.Upserted, @event);
     }
 }

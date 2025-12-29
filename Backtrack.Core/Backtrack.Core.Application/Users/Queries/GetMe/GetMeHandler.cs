@@ -27,7 +27,8 @@ public sealed class GetMeHandler : IRequestHandler<GetMeQuery, UserResult>
         {
             Id = user.Id,
             Email = user.Email,
-            DisplayName = user.DisplayName
+            DisplayName = user.DisplayName,
+            GlobalRole = user.GlobalRole
         };
     }
 }
