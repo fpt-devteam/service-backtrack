@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IConversation extends Document {
   lastMessageAt?: Date;      
   lastMessageContent?: string | null; 
+  senderId?: string;
   customAvatarUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -15,6 +16,7 @@ const ConversationSchema = new Schema<IConversation>(
       type: Date,
       default: null,
     },
+    senderId: { type: String, required: false, ref: 'User' },
     lastMessageAt: { type: Date, default: null },
     lastMessageContent: { type: String, default: null, maxlength: 200 },
     customAvatarUrl: { type: String, default: null },

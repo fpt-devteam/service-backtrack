@@ -85,6 +85,7 @@ class MessageService {
       conversationId,
       content,
       timestamp,
+      senderId,
     );
 
     const participants = await participantRepository.findByConversationId(
@@ -111,8 +112,9 @@ class MessageService {
     userId: string,
     options: PaginationOptions,
   ): Promise<PaginatedResponse<MessageResponse[]>> {
+    const { limit = 10, cursor } = options;
     const conversation = await conversationRepository.findById(conversationId);
-    if (!conversation) {
+    if (!conversation || conversation.deletedAt) {
       throw ErrorCodes.ConversationNotFound;
     }
 
@@ -125,20 +127,33 @@ class MessageService {
       throw ErrorCodes.NotParticipant;
     }
 
-    const result = await messageRepository.findByConversationId(
+    const messages = await messageRepository.findMessagesPaginated(
       conversationId,
-      {
-        cursor: options.cursor,
-        limit: options.limit,
-        sortField: 'timestamp',
-        sortOrder: 'asc',
-      },
+      limit,
+      cursor,
     );
 
+    const hasMore = messages.length > limit;
+    const items = hasMore ? messages.slice(0, limit) : messages;
+
+    if (items.length === 0) {
+      return {
+        items: [],
+        hasMore: false,
+        nextCursor: null,
+      };
+    }
+
+    const messageResponses = items.map(msg => this.toMessageResponse(msg));
+
+    const nextCursor = hasMore && items.length > 0
+      ? items[items.length - 1].createdAt.toISOString()
+      : null;
+
     return {
-      items: result.data.map((msg) => this.toMessageResponse(msg)),
-      hasMore: result.hasMore,
-      nextCursor: result.nextCursor,
+      items: messageResponses,
+      hasMore,
+      nextCursor,
     };
   }
 

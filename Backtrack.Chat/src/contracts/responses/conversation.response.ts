@@ -6,6 +6,7 @@ export interface ConversationResponse {
     avatar: string,      
   };
   lastMessage: {
+    senderId: string,
     lastContent: string,        
     timestamp: string,      
   };
