@@ -78,4 +78,9 @@ export const ErrorCodes = {
     'An unexpected error occurred',
     HTTP_STATUS_CODES.InternalServerError,
   ),
+  CannotCreateConversationWithYourself: new AppError(
+    'CannotCreateConversationWithYourself',
+    'Cannot create a conversation with yourself',
+    HTTP_STATUS_CODES.BadRequest,
+  ),
 };

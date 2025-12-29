@@ -40,7 +40,7 @@ export class ConversationService {
     }
     const conversationIds = items.map(p =>  (
       p.conversationId as unknown as Types.ObjectId).toHexString());
-    
+
     const conversations = await conversationRepository.findByIds(
       conversationIds,
     );
@@ -69,7 +69,7 @@ export class ConversationService {
     )];
 
     const partnerUsers = await userRepository.findByIds(partnerIds);
-    
+
     const partnerUsersMap = new Map(
       partnerUsers.map(u => [u._id, u]),
     );
@@ -81,7 +81,7 @@ export class ConversationService {
         ).toHexString();
         const conversation = conversationsMap.get(conversationId);
         const partnerParticipant = partnerParticipantsMap.get(conversationId);
-        const partnerUser = partnerParticipant 
+        const partnerUser = partnerParticipant
           ? partnerUsersMap.get(partnerParticipant.memberId)
           : null;
 
@@ -105,7 +105,7 @@ export class ConversationService {
           updatedAt: myParticipant.updatedAt,
         };
       });
-    const nextCursor = hasMore 
+    const nextCursor = hasMore
       ? items[items.length - 1].updatedAt.toISOString()
       : null;
 
@@ -137,13 +137,17 @@ export class ConversationService {
   public async createConversation(
     request: CreateConversationInput,
   ) {
-    const creator = await userRepository.getByIdAsync?.(request.creatorId);
-    const partner = await userRepository.getByIdAsync?.(request.partnerId);
+    const creator = await userRepository.getByIdAsync(request.creatorId);
+    const partner = await userRepository.getByIdAsync(request.partnerId);
     if (!creator) {
       throw ErrorCodes.UserNotFound;
     }
     if (!partner) {
       throw ErrorCodes.PartnerNotFound;
+    }
+
+    if (creator._id.toString() === partner._id.toString()) {
+      throw ErrorCodes.CannotCreateConversationWithYourself;
     }
 
     const existingConversationId = await participantRepository.
