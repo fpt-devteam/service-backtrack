@@ -5,13 +5,18 @@ import {
   PaginationOptions,
   PaginatedResult,
 } from './base/ibase.repository';
+import { Types } from 'mongoose';
 
 export interface IMessageRepository extends IBaseRepository<IMessage> {
   findByConversationId(
     conversationId: string,
     options: PaginationOptions
   ): Promise<PaginatedResult<IMessage>>;
-
+  findMessagesPaginated(
+    conversationId: string,
+    limit: number,
+    cursor?: string,
+  ): Promise<IMessage[]>;
   countByConversationId(conversationId: string): Promise<number>;
 
   findBySenderId(
@@ -28,6 +33,26 @@ export class MessageRepository
 {
   public constructor() {
     super(Message);
+  }
+
+  public async findMessagesPaginated(
+    conversationId: string,
+    limit: number,
+    cursor?: string,
+  ): Promise<IMessage[]> {
+    const query: Record<string, unknown> = {
+      conversationId: new Types.ObjectId(conversationId),
+      deletedAt: null,
+      ...(cursor && { createdAt: { $lt: new Date(cursor) } }),
+    };
+    const messages = await this.model
+      .find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit + 1)  
+      .lean()
+      .exec();
+
+    return messages as unknown as IMessage[];
   }
 
   /**

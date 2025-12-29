@@ -58,11 +58,14 @@ class UserRepository {
         {
           $set: {
             ...(userData.email !== undefined && { email: userData.email }),
-            ...(userData.displayName !== undefined && { displayName: userData.displayName }),
-            ...(userData.avatarUrl !== undefined && { avatarUrl: userData.avatarUrl }),
-            ...(userData.globalRole !== undefined && { globalRole: userData.globalRole }),
+            ...(userData.displayName !== undefined && 
+              { displayName: userData.displayName }),
+            ...(userData.avatarUrl !== undefined && 
+              { avatarUrl: userData.avatarUrl }),
+            ...(userData.globalRole !== undefined && 
+              { globalRole: userData.globalRole }),
             updatedAt: new Date(),
-            syncedAt: userData.syncedAt || new Date(),
+            syncedAt: userData.syncedAt ?? new Date(),
           },
         },
         { new: true, runValidators: true },
@@ -74,9 +77,10 @@ class UserRepository {
         email: userData.email,
         displayName: userData.displayName,
         avatarUrl: userData.avatarUrl,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         globalRole: userData.globalRole,
-        createdAt: userData.createdAt || new Date(),
-        syncedAt: userData.syncedAt || new Date(),
+        createdAt: userData.createdAt ?? new Date(),
+        syncedAt: userData.syncedAt ?? new Date(),
       });
       return await user.save();
     }

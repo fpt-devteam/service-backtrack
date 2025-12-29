@@ -38,8 +38,9 @@ export class ConversationControllerClass {
   @AsyncHandler
   public async getConversationById(req: Request, res: Response) {
     const { id } = req.params;
-
-    const conversation = await ConversationService.getConversationById(id);
+    const userId = req.headers[HEADER_AUTH_ID] as string;
+    const conversation = 
+    await ConversationService.getConversationById(id, userId);
 
     return res.status(HTTP_STATUS_CODES.Ok).json({
       success: true,

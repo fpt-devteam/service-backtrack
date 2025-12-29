@@ -13,100 +13,48 @@ import {
 } from '@src/contracts/responses/conversation.response';
 import {
   PaginatedResponse } from '@src/contracts/responses/pagination.response';
-import { Types } from 'mongoose';
+import { 
+  ConversationAggregationResult,
+} from '@src/repositories/conversation.repository';
 
 export class ConversationService {
   public async getAllConversationsByUserId(
     userId: string,
     options: PaginationOptions = {},
   ): Promise<PaginatedResponse<ConversationResponse[]>> {
-    const { limit = 20, cursor } = options;
+    const { limit = 10, cursor } = options;
 
-    const participants = await participantRepository.findByUserIdPaginated(
+    const conversations: ConversationAggregationResult[] = 
+    await conversationRepository.findConversationsPaginated(
       userId,
-      limit + 1,
+      limit,
       cursor,
     );
 
-    const hasMore = participants.length > limit;
-    const items = hasMore ? participants.slice(0, limit) : participants;
+    const hasMore = conversations.length > limit;
+    const items = hasMore ? conversations.slice(0, limit) : conversations;
 
     if (items.length === 0) {
-      return {
-        items: [],
-        hasMore: false,
-        nextCursor: null,
-      };
+      return { items: [], hasMore: false, nextCursor: null };
     }
-    const conversationIds = items.map(p =>  (
-      p.conversationId as unknown as Types.ObjectId).toHexString());
+    const conversationResponses: ConversationResponse[] = items.map(conv => ({
+      conversationId: conv.conversationId.toString(),
+      partner: {
+        id: conv.partner.id,
+        displayName: conv.partner.displayName,
+        avatar: conv.partner.avatar,
+      },
+      lastMessage: {
+        lastContent: conv.lastMessageContent ?? '',
+        timestamp: conv.lastMessageAt?.toISOString() ?? '',
+        senderId: conv.senderId ?? '',
+      },
+      unreadCount: conv.myParticipant?.unreadCount ?? 0,
+      updatedAt: conv.myParticipant?.updatedAt,
+    }));
 
-    const conversations = await conversationRepository.findByIds(
-      conversationIds,
-    );
-
-    const conversationsMap = new Map(
-      conversations.map(c => [c._id.toString(), c]),
-    );
-
-    const partnerParticipants = await participantRepository
-      .findPartnerParticipantsByConversationIds(
-        conversationIds,
-        userId,
-      );
-
-    const partnerParticipantsMap = new Map(
-      partnerParticipants.map(p => [
-        typeof p.conversationId === 'string'
-          ? p.conversationId
-          : (p.conversationId as unknown as Types.ObjectId).toHexString(),
-        p,
-      ]),
-    );
-
-    const partnerIds = [...new Set(
-      partnerParticipants.map(p => p.memberId),
-    )];
-
-    const partnerUsers = await userRepository.findByIds(partnerIds);
-
-    const partnerUsersMap = new Map(
-      partnerUsers.map(u => [u._id, u]),
-    );
-
-    const conversationResponses: ConversationResponse[] = items.map(
-      myParticipant => {
-        const conversationId = (
-          myParticipant.conversationId as unknown as Types.ObjectId
-        ).toHexString();
-        const conversation = conversationsMap.get(conversationId);
-        const partnerParticipant = partnerParticipantsMap.get(conversationId);
-        const partnerUser = partnerParticipant
-          ? partnerUsersMap.get(partnerParticipant.memberId)
-          : null;
-
-        const partnerDisplayName =
-        partnerParticipant?.partnerDisplayName ??
-        partnerUser?.displayName ??
-        'Unknown';
-
-        return {
-          conversationId,
-          partner: {
-            id: partnerParticipant?.memberId ?? '',
-            displayName: partnerDisplayName,
-            avatar: partnerUser?.avatarUrl ?? '',
-          },
-          lastMessage: {
-            lastContent: conversation?.lastMessageContent ?? '',
-            timestamp: conversation?.lastMessageAt?.toISOString() ?? '',
-          },
-          unreadCount: myParticipant.unreadCount ?? 0,
-          updatedAt: myParticipant.updatedAt,
-        };
-      });
-    const nextCursor = hasMore
-      ? items[items.length - 1].updatedAt.toISOString()
+    const nextCursor = hasMore && items.length > 0
+      ? items[items.length - 1].lastMessageAt?.toISOString() ?? null
       : null;
 
     return {
@@ -118,19 +66,32 @@ export class ConversationService {
 
   public async getConversationById(
     conversationId: string,
-  ) {
-    const [conversation, participants] = await Promise.all([
-      conversationRepository.findById(conversationId),
-      participantRepository.findByConversationId(conversationId),
-    ]);
+    userId: string,
+  ): Promise<ConversationResponse> {
+    const result = await conversationRepository.findConversationByIdWithDetails(
+      conversationId,
+      userId,
+    );
 
-    if (!conversation) {
+    if (!result) {
       throw ErrorCodes.ConversationNotFound;
     }
 
     return {
-      ...conversation,
-      participants,
+      conversationId: result.conversationId.toString(),
+      partner: {
+        id: result.partner.id,
+        displayName: result.partner.displayName,
+        avatar: result.partner.avatar,
+      },
+      lastMessage: {
+        lastContent: result.lastMessageContent ?? '',
+        timestamp: result.lastMessageAt?.toISOString() ?? '',
+        senderId: result.senderId ?? '',
+
+      },
+      unreadCount: result.myParticipant?.unreadCount ?? 0,
+      updatedAt: result.myParticipant?.updatedAt,
     };
   }
 
@@ -146,7 +107,7 @@ export class ConversationService {
       throw ErrorCodes.PartnerNotFound;
     }
 
-    if (creator._id.toString() === partner._id.toString()) {
+    if (creator._id === partner._id) {
       throw ErrorCodes.CannotCreateConversationWithYourself;
     }
 
@@ -157,7 +118,7 @@ export class ConversationService {
       );
 
     if (existingConversationId) {
-      throw ErrorCodes.ConversationAlreadyExists;
+      return existingConversationId;
     }
 
     const conversation = await conversationRepository.create({});
