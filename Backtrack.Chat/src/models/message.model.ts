@@ -1,22 +1,22 @@
 import { Schema, model, Document } from 'mongoose';
 
 export enum MessageType {
-    TEXT = 'text',
-    IMAGE = 'image',
-    FILE = 'file',
-    VIDEO = 'video',
-    }
+  TEXT = 'text',
+  IMAGE = 'image',
+  FILE = 'file',
+  VIDEO = 'video',
+}
 
 export enum MessageStatus {
-  SENDING = 'sending',   
-  SENT = 'sent',         
-  FAILED = 'failed',     
+  SENDING = 'sending',
+  SENT = 'sent',
+  FAILED = 'failed',
 }
 export interface IMessageAttachment {
   type: 'image' | 'video' | 'file';
   url: string;
   fileName?: string;
-  fileSize?: number; 
+  fileSize?: number;
   mimeType?: string;
   thumbnail?: string; // Cho video/image
   duration?: number; //video (seconds)
@@ -25,7 +25,7 @@ export interface IMessageAttachment {
 }
 export interface IMessage extends Document {
   conversationId: Schema.Types.ObjectId | string;
-  senderId: string; 
+  senderId: string;
 
   type: MessageType;
   content: string;
@@ -39,10 +39,11 @@ export interface IMessage extends Document {
 }
 
 const MessageSchema = new Schema<IMessage>({
-  conversationId: { 
+  conversationId: {
     type: Schema.Types.ObjectId,
     required: true,
-    ref: 'Conversation' },
+    ref: 'Conversation'
+  },
   senderId: { type: String, required: true, ref: 'User' },
 
   type: { type: String, enum: Object.values(MessageType), required: true },
@@ -69,8 +70,8 @@ const MessageSchema = new Schema<IMessage>({
     default: MessageStatus.SENT,
   },
 }
-, 
-{ timestamps: true },
+  ,
+  { timestamps: true },
 );
 
 // Index for cursor-based pagination with soft delete filtering

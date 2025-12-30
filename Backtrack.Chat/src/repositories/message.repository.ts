@@ -29,8 +29,7 @@ export interface IMessageRepository extends IBaseRepository<IMessage> {
 
 export class MessageRepository
   extends BaseRepository<IMessage>
-  implements IMessageRepository
-{
+  implements IMessageRepository {
   public constructor() {
     super(Message);
   }
@@ -48,7 +47,7 @@ export class MessageRepository
     const messages = await this.model
       .find(query)
       .sort({ createdAt: -1 })
-      .limit(limit + 1)  
+      .limit(limit + 1)
       .lean()
       .exec();
 

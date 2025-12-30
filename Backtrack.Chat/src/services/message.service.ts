@@ -10,7 +10,8 @@ import {
 import { MessageType, IMessage } from '@src/models/message.model';
 import { PaginationOptions } from '@src/contracts/requests/pagination.request';
 import {
-  PaginatedResponse } from '@src/contracts/responses/pagination.response';
+  PaginatedResponse
+} from '@src/contracts/responses/pagination.response';
 import { MessageResponse } from '@src/contracts/responses/message.response';
 
 class MessageService {
@@ -132,22 +133,11 @@ class MessageService {
       limit,
       cursor,
     );
+    const messageResponses = messages.map((msg) => this.toMessageResponse(msg));
 
     const hasMore = messages.length > limit;
-    const items = hasMore ? messages.slice(0, limit) : messages;
-
-    if (items.length === 0) {
-      return {
-        items: [],
-        hasMore: false,
-        nextCursor: null,
-      };
-    }
-
-    const messageResponses = items.map(msg => this.toMessageResponse(msg));
-
-    const nextCursor = hasMore && items.length > 0
-      ? items[items.length - 1].createdAt.toISOString()
+    const nextCursor = hasMore && messages.length > 0
+      ? messages[messages.length - 1].createdAt.toISOString()
       : null;
 
     return {
