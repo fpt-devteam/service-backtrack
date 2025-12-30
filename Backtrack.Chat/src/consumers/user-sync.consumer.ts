@@ -21,7 +21,7 @@ export async function startUserSyncConsumer(): Promise<void> {
 async function setupChannel(): Promise<Channel> {
   try {
     const channel = await createChannel();
-    await channel.assertExchange(EXCHANGE_NAME, 'topic', { durable: true });
+    // await channel.assertExchange(EXCHANGE_NAME, 'topic', { durable: true });
     await channel.assertQueue(QUEUE_NAME, { durable: true });
     await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, BINDING_PATTERN);
     logger.info(`User sync consumer started. Listening to queue: ${QUEUE_NAME}`);
