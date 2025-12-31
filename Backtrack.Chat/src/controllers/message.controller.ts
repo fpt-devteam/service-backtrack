@@ -36,7 +36,6 @@ export class MessageController {
     } catch (e) {
       // Socket error logged but doesn't fail the request
       logger.warn('Socket error while emitting receive_message:', e);
-      
     }
 
     return res.status(HTTP_STATUS_CODES.Created).json({

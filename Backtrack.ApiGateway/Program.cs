@@ -42,6 +42,7 @@ InitializeFirebase(builder.Configuration, builder.Environment, builder.Services,
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
+app.UseWebSockets();
 
 // Configure middleware pipeline (order matters!)
 // 1. CORS - must be first to handle preflight requests
