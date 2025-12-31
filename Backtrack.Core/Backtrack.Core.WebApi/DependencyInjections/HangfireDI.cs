@@ -20,7 +20,7 @@ namespace Backtrack.Core.WebApi.DependencyInjections
                 .GetSection("Hangfire")
                 .Get<HangfireSettings>() ?? new HangfireSettings();
 
-            var connectionString = configuration.GetConnectionString("DefaultConnection")
+            var connectionString = configuration.GetConnectionString("PostgresDB")
                 ?? throw new InvalidOperationException("Database connection string not found");
 
             // Configure Hangfire to use PostgreSQL storage

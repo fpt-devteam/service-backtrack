@@ -11,12 +11,13 @@ namespace Backtrack.Core.Infrastructure.DependencyInjections
     {
         public static void AddDatabase(this IServiceCollection services, IConfiguration configuration)
         {
-            services.Configure<DatabaseSettings>(configuration.GetSection("ConnectionStrings"));
+            services.Configure<ConnectionStringSettings>(configuration.GetSection("ConnectionStrings"));
 
-            var connString = configuration.GetConnectionString("DefaultConnection");
+            var connString = configuration.GetConnectionString("PostgresDB");
+            Console.WriteLine($"Postgres Connection String: {connString}");
 
             var dataSourceBuilder = new NpgsqlDataSourceBuilder(connString);
-            dataSourceBuilder.UseVector(); 
+            dataSourceBuilder.UseVector();
             var dataSource = dataSourceBuilder.Build();
 
             services.AddDbContext<ApplicationDbContext>(options =>

@@ -1,5 +1,4 @@
 services:
-  # API Gateway - Single entry point for all client requests
   backtrack-api-gateway:
     image: backtrack-api-gateway:latest
     build:
@@ -18,7 +17,6 @@ services:
       - backtrack-network
     restart: unless-stopped
 
-  # BackTrack Core Service - Posts, Search, Matching
   backtrack-core-api:
     image: backtrack-core-api:latest
     build:
@@ -28,15 +26,15 @@ services:
     ports:
       - "2000:2000"
     environment:
-      - RabbitMQ__HostName=backtrack-message-broker
-      - ConnectionStrings__DefaultConnection=Host=backtrack-core-db;Port=5432;Database=backtrack-core-db;Username=postgres;Password=postgres123
+      - ConnectionStrings__RabbitMQ=amqp://backtrack:backtrack123@backtrack-message-broker:5672/
+      - ConnectionStrings__PostgresDB=Host=backtrack-core-db;Port=5432;Database=backtrack-core-db;Username=postgres;Password=postgres123
+
     env_file:
       - ./env/backtrack-core-api.docker.env
     networks:
       - backtrack-network
-    restart: unless-stopped
+    # restart: unless-stopped
 
-  # BackTrack Chat Service - Real-time messaging
   backtrack-chat-api:
     build:
       context: .
@@ -53,7 +51,6 @@ services:
       - backtrack-network
     restart: unless-stopped
 
-  # BackTrack QR Service - Item and QR Code Management
   backtrack-qr-api:
     image: backtrack-qr-api:latest
     build:
