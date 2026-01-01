@@ -32,12 +32,14 @@ export class ConversationService {
     );
 
     const hasMore = conversations.length > limit;
-    const items = hasMore ? conversations.slice(0, limit) : conversations;
+    const nextCursor = hasMore && conversations.length > 0
+      ? conversations[conversations.length - 1].lastMessageAt?.toISOString() 
+      ?? null
+      : null;
+    if (hasMore) conversations.pop();
 
-    if (items.length === 0) {
-      return { items: [], hasMore: false, nextCursor: null };
-    }
-    const conversationResponses: ConversationResponse[] = items.map(conv => ({
+    const conversationResponses: ConversationResponse[] = 
+    conversations.map(conv => ({
       conversationId: conv.conversationId.toString(),
       partner: {
         id: conv.partner.id,
@@ -52,11 +54,6 @@ export class ConversationService {
       unreadCount: conv.myParticipant?.unreadCount ?? 0,
       updatedAt: conv.myParticipant?.updatedAt,
     }));
-
-    const nextCursor = hasMore && items.length > 0
-      ? items[items.length - 1].lastMessageAt?.toISOString() ?? null
-      : null;
-
     return {
       items: conversationResponses,
       hasMore,
@@ -124,11 +121,13 @@ export class ConversationService {
     const conversation = await conversationRepository.create({});
 
     const buildNickname = (
-      keyName?: string,
+      keyName: string,
       displayName?: string | null,
     ): string => {
-      const name = displayName ?? 'Unknown';
-      return keyName ? `${keyName} - ${name}` : name;
+      if (!displayName) {
+        return keyName;
+      }
+      return `${keyName} - ${displayName}`;
     };
 
     const participantsReq: Record<string, string> = {
@@ -149,6 +148,7 @@ export class ConversationService {
 
     return conversation._id.toString();
   }
+
 }
 
 export default new ConversationService();

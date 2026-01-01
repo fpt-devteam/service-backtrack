@@ -42,7 +42,7 @@ const MessageSchema = new Schema<IMessage>({
   conversationId: {
     type: Schema.Types.ObjectId,
     required: true,
-    ref: 'Conversation'
+    ref: 'Conversation',
   },
   senderId: { type: String, required: true, ref: 'User' },
 
@@ -69,9 +69,8 @@ const MessageSchema = new Schema<IMessage>({
     enum: Object.values(MessageStatus),
     default: MessageStatus.SENT,
   },
-}
-  ,
-  { timestamps: true },
+},
+{ timestamps: true },
 );
 
 // Index for cursor-based pagination with soft delete filtering

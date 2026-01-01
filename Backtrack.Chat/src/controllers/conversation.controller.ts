@@ -6,18 +6,19 @@ import { ErrorCodes } from '@src/common/errors';
 import { HEADER_AUTH_ID } from '@src/utils/headers';
 import {
   CreateConversationInput,
+  ModifyConversationParticipantNicknameInput,
 } from '@src/contracts/requests/conversation.request';
+import ConversationParticipantService
+  from '@src/services/conversation.participant.service';
 
 export class ConversationControllerClass {
   @AsyncHandler
   public async getAllConversations(req: Request, res: Response) {
     const userId = req.headers[HEADER_AUTH_ID] as string;
     const { limit, cursor } = req.query;
-
     if (!userId) {
       throw ErrorCodes.MissingUserId;
     }
-
     const paginationOptions = {
       limit: limit ? parseInt(limit as string, 10) : undefined,
       cursor: cursor as string | undefined,
@@ -39,6 +40,9 @@ export class ConversationControllerClass {
   public async getConversationById(req: Request, res: Response) {
     const { id } = req.params;
     const userId = req.headers[HEADER_AUTH_ID] as string;
+    if (!userId) {
+      throw ErrorCodes.MissingUserId;
+    }
     const conversation = 
     await ConversationService.getConversationById(id, userId);
 
@@ -57,13 +61,11 @@ export class ConversationControllerClass {
       partnerKeyName,
       customAvatarUrl,
     } = req.body as Omit<CreateConversationInput, 'creatorId'>;
-
     if (!userId) {
       throw ErrorCodes.MissingUserId;
     }
-
     if (!partnerId) {
-      throw ErrorCodes.MissingPartnerInfo;
+      throw ErrorCodes.MissingPartnerId;
     }
 
     const conversationInput: CreateConversationInput = {
@@ -81,6 +83,38 @@ export class ConversationControllerClass {
     return res.status(HTTP_STATUS_CODES.Created).json({
       success: true,
       data: { conversationId },
+    });
+  }
+
+  @AsyncHandler
+  public async modifyConversationParticipantNickname(
+    req: Request,
+    res: Response,
+  ) {
+    const userId = req.headers[HEADER_AUTH_ID] as string;
+    const { id } = req.params;
+    const { targetUserId, newNickname } =
+      req.body as ModifyConversationParticipantNicknameInput;
+    if (!userId) {
+      throw ErrorCodes.MissingUserId;
+    }
+    if (!targetUserId) {
+      throw ErrorCodes.MissingPartnerId;
+    }
+
+    if (!newNickname) {
+      throw ErrorCodes.MissingContent;
+    }
+
+    await ConversationParticipantService.modifyNickname(
+      id,
+      userId,
+      targetUserId,
+      newNickname,
+    );
+
+    return res.status(HTTP_STATUS_CODES.Ok).json({
+      success: true,
     });
   }
 }

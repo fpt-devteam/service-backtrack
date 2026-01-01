@@ -24,17 +24,14 @@ export class MessageController {
 
     const message = await MessageService.sendMessage(
       senderId,
-      // sendername,
       conversationId,
       content,
     );
 
-    // Emit socket event to all clients in the conversation room
     try {
       const io = getSocketInstance();
       io.to(conversationId).emit('receive_message', message);
     } catch (e) {
-      // Socket error logged but doesn't fail the request
       logger.warn('Socket error while emitting receive_message:', e);
     }
 

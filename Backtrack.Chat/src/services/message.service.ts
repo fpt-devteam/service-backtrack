@@ -10,7 +10,7 @@ import {
 import { MessageType, IMessage } from '@src/models/message.model';
 import { PaginationOptions } from '@src/contracts/requests/pagination.request';
 import {
-  PaginatedResponse
+  PaginatedResponse,
 } from '@src/contracts/responses/pagination.response';
 import { MessageResponse } from '@src/contracts/responses/message.response';
 
@@ -37,7 +37,7 @@ class MessageService {
     typeContent?: MessageType,
   ): Promise<MessageResponse> {
     if (!content.trim()) {
-      throw ErrorCodes.EmptyMessageContent;
+      throw ErrorCodes.MissingContent;
     }
 
     const conversation = await conversationRepository.findById(conversationId);
@@ -133,13 +133,12 @@ class MessageService {
       limit,
       cursor,
     );
-    const messageResponses = messages.map((msg) => this.toMessageResponse(msg));
-
-    const hasMore = messages.length > limit;
+    const hasMore = messages.length > limit; 
     const nextCursor = hasMore && messages.length > 0
       ? messages[messages.length - 1].createdAt.toISOString()
       : null;
-
+    if (hasMore) messages.pop();
+    const messageResponses = messages.map((msg) => this.toMessageResponse(msg));
     return {
       items: messageResponses,
       hasMore,

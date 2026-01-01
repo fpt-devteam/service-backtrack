@@ -1,13 +1,6 @@
 import express from 'express';
 import ConversationController from '@src/controllers/conversation.controller';
 
-/**
- * Conversation routes
- *
- * GET    /api/chat/conversations      - Get all conversations for current user (paginated)
- * POST   /api/chat/conversations      - Create a new conversation
- * GET    /api/chat/conversations/:id  - Get conversation by ID
- */
 const router = express.Router();
 
 // Get all conversations (with pagination support)
@@ -28,6 +21,14 @@ router.post(
 router.get(
   '/:id',
   ConversationController.getConversationById.bind(ConversationController),
+);
+
+// Modify participant nickname in a conversation
+// Body: { targetUserId, newNickname }
+router.put(
+  '/:id/nickname',
+  ConversationController.modifyConversationParticipantNickname.bind(
+    ConversationController),
 );
 
 export default router;

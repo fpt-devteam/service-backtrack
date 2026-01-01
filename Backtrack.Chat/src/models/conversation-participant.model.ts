@@ -3,7 +3,7 @@ export interface IConversationParticipant extends Document {
   conversationId: Schema.Types.ObjectId | string;
   memberId: string;
   
-  partnerDisplayName?: string | null;
+  nickName?: string | null;
 
   lastReadAt?: Date | null;       
   lastReadMessageId?: Schema.Types.ObjectId | string | null; 
@@ -23,7 +23,7 @@ const ConversationParticipantSchema = new Schema<IConversationParticipant>(
     },
     memberId: { type: String, required: true, ref: 'User' },
 
-    partnerDisplayName: { type: String, default: null },
+    nickName: { type: String, default: null },
     
 
     lastReadAt: { type: Date, default: null },

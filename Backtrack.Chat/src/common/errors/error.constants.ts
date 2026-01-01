@@ -2,32 +2,27 @@ import { AppError } from './app-error';
 import HTTP_STATUS_CODES from '../constants/HTTP_STATUS_CODES';
 
 export const ErrorCodes = {
-  // Validation Errors
-  InvalidPagedQuery: new AppError(
-    'InvalidPagedQuery',
-    'Limit and offset must be greater than 0',
-    HTTP_STATUS_CODES.BadRequest,
-  ),
-  EmptyMessageContent: new AppError(
-    'EmptyMessageContent',
-    'Message content cannot be empty',
-    HTTP_STATUS_CODES.BadRequest,
-  ),
+
 
   // Missing Required Fields
   MissingUserId: new AppError(
     'MissingUserId',
     'User ID is required in X-Auth-Id header',
-    HTTP_STATUS_CODES.BadRequest,
+    HTTP_STATUS_CODES.Forbidden,
   ),
   MissingContent: new AppError(
     'MissingContent',
     'Content is required',
     HTTP_STATUS_CODES.BadRequest,
   ),
-  MissingPartnerInfo: new AppError(
-    'MissingPartnerInfo',
+  MissingPartnerId: new AppError(
+    'MissingPartnerId',
     'partnerId is required',
+    HTTP_STATUS_CODES.BadRequest,
+  ),
+  MissingConversationId: new AppError(
+    'MissingConversationId',
+    'conversationId is required',
     HTTP_STATUS_CODES.BadRequest,
   ),
 
@@ -53,19 +48,13 @@ export const ErrorCodes = {
     HTTP_STATUS_CODES.NotFound,
   ),
 
-  // Forbidden Errors
   NotParticipant: new AppError(
     'NotParticipant',
     'You are not a member of this conversation',
-    HTTP_STATUS_CODES.Forbidden,
+    HTTP_STATUS_CODES.NotFound,
   ),
 
   // Conflict Errors
-  ConversationAlreadyExists: new AppError(
-    'ConversationAlreadyExists',
-    'Conversation already exists between these users',
-    HTTP_STATUS_CODES.Conflict,
-  ),
   ConflictError: new AppError(
     'ConflictError',
     'Resource conflict occurred',
