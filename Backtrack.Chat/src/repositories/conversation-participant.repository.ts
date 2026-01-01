@@ -221,7 +221,7 @@ export class ConversationParticipantRepository
       }),
       {
         $set: {
-          partnerDisplayName: nickname,
+          nickName: nickname,
         },
       },
     );
@@ -232,10 +232,14 @@ export class ConversationParticipantRepository
     conversationId: string,
     userId: string,
   ): Promise<boolean> {
-    return await this.exists({
-      conversationId: conversationId,
-      memberId: userId,
-    });
+    const result = await this.model.findOne(
+      this.addSoftDeleteFilter({
+        conversationId,
+        memberId: userId,
+      }),
+    ).lean();
+
+    return result !== null;
   }
 
   public async addParticipants(
@@ -249,7 +253,7 @@ export class ConversationParticipantRepository
     const docs = Object.keys(participantsReq).map(participantId => ({
       conversationId: conversationId,
       memberId: participantId,
-      partnerDisplayName: participantsReq[participantId],
+      nickName: participantsReq[participantId],
     })) as IConversationParticipant[];
 
     return await this.createMany(docs);

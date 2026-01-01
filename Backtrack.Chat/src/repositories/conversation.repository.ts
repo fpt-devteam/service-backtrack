@@ -24,7 +24,6 @@ export interface ConversationAggregationResult {
 
 export interface IConversationRepository
   extends IBaseRepository<IConversation> {
-  findByIds(ids: string[]): Promise<IConversation[]>;
   create(data: Partial<IConversation>): Promise<IConversation>;
   updateLastMessage(
     conversationId: string,
@@ -33,7 +32,6 @@ export interface IConversationRepository
     senderId: string,
   ): Promise<boolean>;
   softDelete(conversationId: string): Promise<boolean>;
-  existsConversation(conversationId: string): Promise<boolean>;
   findConversationsPaginated(
     userId: string,
     limit: number,
@@ -51,10 +49,6 @@ export class ConversationRepository
 {
   public constructor() {
     super(Conversation);
-  }
-  public async existsConversation(conversationId: string): Promise<boolean> {
-    const count = await this.count({ _id: conversationId });
-    return count > 0;
   }
 
   public async updateLastMessage(
@@ -76,17 +70,6 @@ export class ConversationRepository
     );
 
     return result.modifiedCount > 0;
-  }
-
-  public async findByIds(
-    ids: (string | Types.ObjectId)[]): Promise<IConversation[]> {
-    if (ids.length === 0) {
-      return [];
-    }
-
-    const conversations = await this.find({ _id: { $in: ids } });
-
-    return conversations as unknown as IConversation[];
   }
 
   public async findConversationsPaginated(
@@ -172,7 +155,7 @@ export class ConversationRepository
             id: '$partnerParticipant.memberId',
             displayName: {
               $ifNull: [
-                '$partnerParticipant.partnerDisplayName',
+                '$partnerParticipant.nickName',
                 { $first: '$partnerUser.displayName' },
                 'Unknown',
               ],
@@ -270,7 +253,7 @@ export class ConversationRepository
             id: '$partnerParticipant.memberId',
             displayName: {
               $ifNull: [
-                '$partnerParticipant.partnerDisplayName',
+                '$partnerParticipant.nickName',
                 { $first: '$partnerUser.displayName' },
                 'Unknown',
               ],
