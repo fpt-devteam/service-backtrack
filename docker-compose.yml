@@ -28,7 +28,6 @@ services:
     environment:
       - ConnectionStrings__RabbitMQ=amqp://backtrack:backtrack123@backtrack-message-broker:5672/
       - ConnectionStrings__PostgresDB=Host=backtrack-core-db;Port=5432;Database=backtrack-core-db;Username=postgres;Password=postgres123
-
     env_file:
       - ./env/backtrack-core-api.docker.env
     networks:
@@ -61,6 +60,7 @@ services:
       - "4000:4000"
     environment:
       - RABBITMQ_URL=amqp://backtrack:backtrack123@backtrack-message-broker:5672/
+      - DATABASE_URI=mongodb://mongo:mongo123@backtrack-qr-db:27017/backtrack-qr-db?authSource=admin
     env_file:
       - ./env/backtrack-qr-api.docker.env
     networks:
@@ -84,6 +84,22 @@ services:
       - backtrack-core-db-data:/var/lib/postgresql/data
     networks:
       - backtrack-network
+  
+  backtrack-qr-db:
+    image: mongo:7-jammy
+    container_name: backtrack-qr-db
+    hostname: backtrack-qr-db
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=backtrack-qr-db
+      - MONGO_INITDB_ROOT_USERNAME=mongo
+      - MONGO_INITDB_ROOT_PASSWORD=mongo123
+    volumes:
+      - backtrack-qr-db-data:/data/db
+    networks:
+      - backtrack-network
+    restart: unless-stopped
 
   backtrack-message-broker:
     image: rabbitmq:3.13-management-alpine
@@ -132,4 +148,5 @@ volumes:
   backtrack-core-db-data:
   backtrack-message-broker-data:
   backtrack-chat-db-data:
+  backtrack-qr-db-data:
 
