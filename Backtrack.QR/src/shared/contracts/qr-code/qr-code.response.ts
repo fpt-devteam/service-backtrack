@@ -1,3 +1,4 @@
+
 export type ItemResponse = {
     name: string;
     description: string;
@@ -19,6 +20,18 @@ export type QrCodeResponse = {
     };
     item?: ItemResponse | null;
     ownerId: string;
+};
+
+export type QrCodeStatusResponse = {
+    status: boolean;
+    qrCode?: {
+        id: string;
+        publicCode: string;
+        linkedAt?: string | null;
+        createdAt: string;
+    };
+    item?: ItemResponse | null;
+    ownerId?: string;
 };
 
 export type QrCodeWithOwnerResponse = {

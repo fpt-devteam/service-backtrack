@@ -61,7 +61,7 @@ const updateItemAsync = async (
   }
 ): Promise<IQrCode | null> => {
   const updated = await QrCodeModel.findOneAndUpdate(
-    { _id: qrCodeId, deletedAt: null },
+    { _id: qrCodeId, deletedAt: null},
     {
       $set: {
         ...(itemData.name !== undefined && { 'item.name': itemData.name }),
@@ -77,10 +77,34 @@ const updateItemAsync = async (
   return updated as IQrCode | null;
 };
 
+const activateQrCodeAsync = async (
+  qrCodeId: mongoose.Types.ObjectId,
+  item: Item
+): Promise<IQrCode | null> => {
+  const updated = await QrCodeModel.findOneAndUpdate(
+    { _id: qrCodeId, deletedAt: null },
+    {
+      $set: {
+        item: {
+          name: item.name,
+          description: item.description,
+          imageUrls: item.imageUrls || [],
+        },
+        linkedAt: new Date(),
+        updatedAt: new Date(),
+      }
+    },
+    { new: true, runValidators: true }
+  ).lean().exec();
+
+  return updated as IQrCode | null;
+};
+
 export const qrCodeRepository = {
   ...baseRepo,
   existsByPublicCodeAsync,
   getAllAsync,
   getByPublicCodeAsync,
   updateItemAsync,
+  activateQrCodeAsync,
 };
