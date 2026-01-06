@@ -1,4 +1,4 @@
-import { QrCodeModel } from '@/src/infrastructure/database/models/qr-code.models.js';
+import { Item, QrCodeModel } from '@/src/infrastructure/database/models/qr-code.models.js';
 import { qrCodeRepository } from '@/src/infrastructure/repositories/qr-code.repository.js';
 import { toObjectIdOrNull } from '@/src/shared/utils/mongoes.object-id.util.js';
 import { generatePublicCode } from '@/src/shared/utils/qr-code-generator.js';
@@ -6,8 +6,8 @@ import { Result, success, failure } from '@/src/shared/utils/result.js';
 import { userRepository } from '@/src/infrastructure/repositories/user.repository.js';
 import { QrCodeErrors } from '@/src/shared/errors/catalog/qr-code.error.js';
 import { UserErrors } from '@/src/shared/errors/catalog/user.error.js';
-import type { CreateQrCodeRequest, UpdateItemRequest } from '@/src/shared/contracts/qr-code/qr-code.request.js';
-import type { QrCodeResponse, QrCodeWithOwnerResponse } from '@/src/shared/contracts/qr-code/qr-code.response.js';
+import type { CreateItemRequest, CreateQrCodeRequest, UpdateItemRequest } from '@/src/shared/contracts/qr-code/qr-code.request.js';
+import type { QrCodeResponse, QrCodeStatusResponse, QrCodeWithOwnerResponse } from '@/src/shared/contracts/qr-code/qr-code.response.js';
 import { toQrCodeResponse, toQrCodeWithOwnerResponse } from '@/src/shared/contracts/qr-code/qr-code.mapper.js';
 import { createPagedResponse, type PagedResponse } from '@/src/shared/contracts/common/pagination.js';
 import QRCode from 'qrcode';
@@ -158,4 +158,53 @@ export const generateQrImage = async (
       cause: error
     });
   }
+};
+
+export const activateQrCodeAsync = async (
+  publicCode: string, userId: string, request: CreateItemRequest
+): Promise<Result<QrCodeResponse>> => {
+  const { qrCode, owner } = await qrCodeRepository.getByPublicCodeAsync(publicCode);
+
+  if (!qrCode || !owner) {
+    return failure(QrCodeErrors.NotFound);
+  }
+  if (qrCode.ownerId !== userId) {
+    return failure(QrCodeErrors.Forbidden);
+  }
+  const item: Item = {
+    name: request.name,
+    description: request.description,
+    imageUrls: request.imageUrls || [],
+  };
+  const updated = await qrCodeRepository.activateQrCodeAsync(qrCode._id, item);
+  if (updated === null) {
+    return failure(QrCodeErrors.NotFound);
+  }
+  return success(toQrCodeResponse(updated))
+};
+
+export const createPhysicalQrCodeAsync = async (
+  ownerId: string
+): Promise<Result<QrCodeResponse>> => {
+  let publicCode = "";
+  for (let attempts = 0; attempts < MAX_RETRIES; attempts++) {
+    publicCode = generatePublicCode();
+    const exists = await qrCodeRepository.existsByPublicCodeAsync(publicCode);
+    if (!exists) break; 
+    if (attempts === MAX_RETRIES - 1) {
+      return failure({
+        kind: "Internal",
+        code: "QrCodeGenerationFailed",
+        message: "Failed to generate unique QR code after maximum retries"
+      });
+    }
+  }
+  const qrCode = new QrCodeModel({
+    publicCode,
+    ownerId,
+    item: null,
+    linkedAt: null,
+  });
+  const created = await qrCodeRepository.create(qrCode);
+  return success(toQrCodeResponse(created));
 };

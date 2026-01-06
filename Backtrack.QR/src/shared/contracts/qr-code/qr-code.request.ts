@@ -11,3 +11,9 @@ export type UpdateItemRequest = {
   description?: string;
   imageUrls?: string[];
 };
+
+export type CreateItemRequest = {
+  name: string;
+  description: string;
+  imageUrls: string[];
+};

@@ -3,7 +3,7 @@ import * as qrCodeService from '@/src/domain/services/qr-code.service.js';
 import { isSuccess } from '@/src/shared/utils/result.js';
 import { ok, fail, getHttpStatus } from '@/src/shared/contracts/common/api-response.js';
 import * as logger from '@/src/shared/utils/logger.js';
-import type { CreateQrCodeRequest, UpdateItemRequest } from '@/src/shared/contracts/qr-code/qr-code.request.js';
+import type { CreateItemRequest, CreateQrCodeRequest, UpdateItemRequest } from '@/src/shared/contracts/qr-code/qr-code.request.js';
 import { HEADER_AUTH_ID } from '@/src/shared/utils/headers.js';
 import { sanitizePage, sanitizePageSize } from '@/src/shared/contracts/common/pagination.js';
 
@@ -134,6 +134,55 @@ export const generateQrImageAsync = async (req: Request, res: Response) => {
         const status = getHttpStatus(result.error);
         logger.warn('Failed to generate QR code image', {
             publicCode,
+            error: result.error,
+            correlationId
+        });
+        res.status(status).json(fail(result.error.code, result.error.message));
+    }
+};
+
+
+/**
+ * Activate QR code with item information
+ * POST /qr-code/:publicCode/activate
+ */
+export const activateQrCodeAsync = async (req: Request, res: Response) => {
+    const { publicCode } = req.params;
+    const request: CreateItemRequest = req.body;
+    const correlationId = req.correlationId || 'unknown';
+    const userId = req.headers[HEADER_AUTH_ID] as string;
+
+    const result = await qrCodeService.activateQrCodeAsync(publicCode, userId, request);
+
+    if (isSuccess(result)) {
+        res.json(ok(result.value));
+    } else {
+        const status = getHttpStatus(result.error);
+        logger.warn('Failed to activate QR code', {
+            publicCode,
+            userId,
+            error: result.error,
+            correlationId
+        });
+        res.status(status).json(fail(result.error.code, result.error.message));
+    }
+};
+
+/**
+ * Create a new physical QR code (inactive, without item)
+ * POST /qr-codes/physical
+ */
+export const createPhysicalQrCodeAsync = async (req: Request, res: Response) => {
+    const correlationId = req.correlationId || 'unknown';
+    const ownerId = req.headers[HEADER_AUTH_ID] as string;
+
+    const result = await qrCodeService.createPhysicalQrCodeAsync(ownerId);
+    if (isSuccess(result)) {
+        res.status(201).json(ok(result.value));
+    } else {
+        const status = getHttpStatus(result.error);
+        logger.warn('Failed to create physical QR code', {
+            ownerId,
             error: result.error,
             correlationId
         });

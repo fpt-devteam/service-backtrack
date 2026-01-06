@@ -11,9 +11,11 @@ router.get('/qr-codes/:publicCode/image', asyncHandler(qrCodeController.generate
 
 // Protected endpoints - auth required
 router.post('/qr-codes', asyncHandler(qrCodeController.createAsync));
+router.post('/qr-codes/physical', asyncHandler(qrCodeController.createPhysicalQrCodeAsync));
 router.get('/qr-codes', asyncHandler(qrCodeController.getAllAsync));
 router.get('/qr-codes/:id', asyncHandler(qrCodeController.getByIdAsync));
 router.put('/qr-codes/:id/item', asyncHandler(qrCodeController.updateItemAsync));
 router.get('/qr-codes/:id/image', asyncHandler(qrCodeController.generateQrImageAsync));
+router.post('/qr-codes/:publicCode/activate', asyncHandler(qrCodeController.activateQrCodeAsync));
 
 export default router;
