@@ -8,7 +8,6 @@ namespace Backtrack.Core.Application.Common.Interfaces.Repositories
         Task<TEntity?> GetByIdAsync(TKey id);
         bool Update(TEntity entity);
         Task<bool> DeleteAsync(TKey id);
-        Task<TEntity> UpsertAsync(TKey id, TEntity entity);
         Task SaveChangesAsync();
     }
 }

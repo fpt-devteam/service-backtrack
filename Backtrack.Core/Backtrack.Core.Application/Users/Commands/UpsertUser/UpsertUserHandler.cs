@@ -30,8 +30,7 @@ public sealed class UpsertUserHandler : IRequestHandler<UpsertUserCommand, UserR
             GlobalRole = UserGlobalRole.Customer
         };
 
-        var upsertedUser = await _userRepository.UpsertAsync(request.UserId, user);
-        await _userRepository.SaveChangesAsync();
+        var upsertedUser = await _userRepository.UpsertAsync(user);
 
         // Publish user upserted event
         await _eventPublisher.PublishUserUpsertedAsync(new UserUpsertedIntegrationEvent

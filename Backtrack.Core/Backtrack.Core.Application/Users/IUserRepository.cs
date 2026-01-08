@@ -5,5 +5,6 @@ namespace Backtrack.Core.Application.Users
 {
     public interface IUserRepository : IGenericRepository<User, string>
     {
+        Task<User> UpsertAsync(User user);
     }
 }
