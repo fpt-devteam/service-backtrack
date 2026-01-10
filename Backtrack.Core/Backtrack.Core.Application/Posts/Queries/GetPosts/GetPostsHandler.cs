@@ -41,6 +41,12 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
             {
                 Id = post.Id,
                 AuthorId = post.AuthorId,
+                Author = new AuthorResult
+                {
+                    Id = post.Author.Id,
+                    DisplayName = post.Author.DisplayName,
+                    AvatarUrl = post.Author.AvatarUrl
+                },
                 PostType = post.PostType.ToString(),
                 ItemName = post.ItemName,
                 Description = post.Description,

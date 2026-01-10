@@ -3,7 +3,7 @@ namespace Backtrack.Core.WebApi.Contracts.Posts.Responses;
 public sealed record PostResponse
 {
     public required Guid Id { get; init; }
-    public required string AuthorId { get; init; }
+    public required AuthorResponse Author { get; init; }
     public required string PostType { get; init; }
     public required string ItemName { get; init; }
     public required string Description { get; init; }
@@ -13,6 +13,13 @@ public sealed record PostResponse
     public string? DisplayAddress { get; init; }
     public required DateTimeOffset EventTime { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
+}
+
+public sealed record AuthorResponse
+{
+    public required string Id { get; init; }
+    public string? DisplayName { get; init; }
+    public string? AvatarUrl { get; init; }
 }
 
 public sealed record LocationResponse

@@ -1,6 +1,7 @@
 using Backtrack.Core.Application.Common.Exceptions;
 using Backtrack.Core.Application.Common.Exceptions.Errors;
 using Backtrack.Core.Application.Posts.Common;
+using Backtrack.Core.Application.Users;
 using MediatR;
 
 namespace Backtrack.Core.Application.Posts.Queries.GetPostById;
@@ -8,10 +9,12 @@ namespace Backtrack.Core.Application.Posts.Queries.GetPostById;
 public sealed class GetPostByIdHandler : IRequestHandler<GetPostByIdQuery, PostResult>
 {
     private readonly IPostRepository _postRepository;
+    private readonly IUserRepository _userRepository;
 
-    public GetPostByIdHandler(IPostRepository postRepository)
+    public GetPostByIdHandler(IPostRepository postRepository, IUserRepository userRepository)
     {
         _postRepository = postRepository;
+        _userRepository = userRepository;
     }
 
     public async Task<PostResult> Handle(GetPostByIdQuery query, CancellationToken cancellationToken)
@@ -23,10 +26,22 @@ public sealed class GetPostByIdHandler : IRequestHandler<GetPostByIdQuery, PostR
             throw new NotFoundException(PostErrors.NotFound);
         }
 
+        var author = await _userRepository.GetByIdAsync(post.AuthorId);
+        if (author == null)
+        {
+            throw new NotFoundException(UserErrors.NotFound);
+        }
+
         return new PostResult
         {
             Id = post.Id,
             AuthorId = post.AuthorId,
+            Author = new AuthorResult
+            {
+                Id = author.Id,
+                DisplayName = author.DisplayName,
+                AvatarUrl = author.AvatarUrl
+            },
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,

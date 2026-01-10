@@ -107,7 +107,7 @@ namespace Backtrack.Core.WebApi.Mappings
             return new PostResponse
             {
                 Id = result.Id,
-                AuthorId = result.AuthorId,
+                Author = result.Author.ToResponse(),
                 PostType = result.PostType,
                 ItemName = result.ItemName,
                 Description = result.Description,
@@ -117,6 +117,16 @@ namespace Backtrack.Core.WebApi.Mappings
                 DisplayAddress = result.DisplayAddress,
                 EventTime = result.EventTime,
                 CreatedAt = result.CreatedAt
+            };
+        }
+
+        public static AuthorResponse ToResponse(this AuthorResult result)
+        {
+            return new AuthorResponse
+            {
+                Id = result.Id,
+                DisplayName = result.DisplayName,
+                AvatarUrl = result.AvatarUrl
             };
         }
 

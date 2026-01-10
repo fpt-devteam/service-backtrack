@@ -71,6 +71,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
+            .Include(p => p.Author)
             .OrderByDescending(p => p.CreatedAt)
             .Skip(offset)
             .Take(limit)

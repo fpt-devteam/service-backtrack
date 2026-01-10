@@ -1,8 +1,10 @@
 using Backtrack.Core.Application.Common.Exceptions;
+using Backtrack.Core.Application.Common.Exceptions.Errors;
 using Backtrack.Core.Application.Common.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Common.Interfaces.Helpers;
 using Backtrack.Core.Application.Posts.Commands.UpdatePostContentEmbedding;
 using Backtrack.Core.Application.Posts.Common;
+using Backtrack.Core.Application.Users;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
@@ -13,15 +15,18 @@ namespace Backtrack.Core.Application.Posts.Commands.CreatePost;
 public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostResult>
 {
     private readonly IPostRepository _postRepository;
+    private readonly IUserRepository _userRepository;
     private readonly IHasher _hasher;
     private readonly IBackgroundJobService _backgroundJobService;
 
     public CreatePostHandler(
         IPostRepository postRepository,
+        IUserRepository userRepository,
         IHasher hasher,
         IBackgroundJobService backgroundJobService)
     {
         _postRepository = postRepository;
+        _userRepository = userRepository;
         _hasher = hasher;
         _backgroundJobService = backgroundJobService;
     }
@@ -62,10 +67,23 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
         _backgroundJobService.EnqueueJob(
             new UpdatePostContentEmbeddingCommand(post.Id));
 
+        // Fetch author information
+        var author = await _userRepository.GetByIdAsync(post.AuthorId);
+        if (author == null)
+        {
+            throw new NotFoundException(new Error("AuthorNotFound", "Author not found"));
+        }
+
         return new PostResult
         {
             Id = post.Id,
             AuthorId = post.AuthorId,
+            Author = new AuthorResult
+            {
+                Id = author.Id,
+                DisplayName = author.DisplayName,
+                AvatarUrl = author.AvatarUrl
+            },
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,
