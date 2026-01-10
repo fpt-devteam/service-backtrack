@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Backtrack.Core.Application.Users.Commands.UpsertUser;
+using Backtrack.Core.Application.Users.Commands.EnsureUserExist;
 using Backtrack.Core.Application.Users.Queries.GetMe;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
 using MediatR;
 using Backtrack.Core.WebApi.Contracts.Users.Responses;
+using Backtrack.Core.WebApi.Contracts.Users.Requests;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -26,6 +27,7 @@ public class UserController : ControllerBase
         var userId = Request.Headers[HeaderNames.AuthId].ToString();
         var email = Request.Headers[HeaderNames.AuthEmail].ToString();
         var encodedDisplayName = Request.Headers[HeaderNames.AuthName].ToString();
+        var encodedAvatarUrl = Request.Headers[HeaderNames.AuthAvatarUrl].ToString();
 
         if (string.IsNullOrWhiteSpace(userId))
             throw new InvalidOperationException($"Required header '{HeaderNames.AuthId}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
@@ -34,12 +36,14 @@ public class UserController : ControllerBase
         // throw new InvalidOperationException($"Required header '{HeaderNames.AuthEmail}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
 
         var displayName = Base64Util.DecodeToUtf8(encodedDisplayName);
+        var avatarUrl = Base64Util.DecodeToUtf8(encodedAvatarUrl);
 
-        var command = new UpsertUserCommand
+        var command = new EnsureUserExistCommand
         {
             UserId = userId,
             Email = email,
-            DisplayName = displayName
+            DisplayName = displayName,
+            AvatarUrl = avatarUrl
         };
 
         var result = await _mediator.Send(command, cancellationToken);
@@ -49,6 +53,7 @@ public class UserController : ControllerBase
             Id = result.Id,
             Email = result.Email,
             DisplayName = result.DisplayName,
+            AvatarUrl = result.AvatarUrl,
             GlobalRole = result.GlobalRole
         };
 
@@ -71,43 +76,10 @@ public class UserController : ControllerBase
             Id = result.Id,
             Email = result.Email,
             DisplayName = result.DisplayName,
+            AvatarUrl = result.AvatarUrl,
             GlobalRole = result.GlobalRole
         };
 
         return this.ApiOk(response);
     }
-
-    [HttpPut]
-    public async Task<IActionResult> UpsertUserAsync([FromBody] UpsertUserRequest request, CancellationToken cancellationToken)
-    {
-        var userId = Request.Headers[HeaderNames.AuthId].ToString();
-
-        if (string.IsNullOrWhiteSpace(userId))
-            throw new InvalidOperationException($"Required header '{HeaderNames.AuthId}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
-
-        var command = new UpsertUserCommand
-        {
-            UserId = userId,
-            Email = request.Email,
-            DisplayName = request.DisplayName
-        };
-
-        var result = await _mediator.Send(command, cancellationToken);
-
-        var response = new UserResponse
-        {
-            Id = result.Id,
-            Email = result.Email,
-            DisplayName = result.DisplayName,
-            GlobalRole = result.GlobalRole
-        };
-
-        return this.ApiOk(response);
-    }
-}
-
-public class UpsertUserRequest
-{
-    public string? Email { get; set; }
-    public string? DisplayName { get; set; }
 }

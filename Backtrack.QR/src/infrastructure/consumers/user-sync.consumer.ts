@@ -1,7 +1,7 @@
 import { Channel, ConsumeMessage } from 'amqplib';
 import { createChannel } from '@/src/infrastructure/messaging/rabbitmq-connection.js';
 import * as logger from '@/src/shared/utils/logger.js';
-import { UserUpsertedEvent } from '@/src/shared/contracts/events/user-events.js';
+import { UserEnsureExistEvent } from '@/src/shared/contracts/events/user-events.js';
 import { EventTopics } from '@/src/shared/contracts/events/event-topics.js';
 import { userRepository } from '@/src/infrastructure/repositories/user.repository.js';
 import { env } from '@/src/shared/configs/env.js';
@@ -40,9 +40,9 @@ async function processMessage(channel: Channel, msg: ConsumeMessage | null): Pro
   const content = msg.content.toString();
 
   try {
-    if (routingKey === EventTopics.User.Upserted) {
-      const event: UserUpsertedEvent = JSON.parse(content);
-      await handleUserUpsert(event);
+    if (routingKey === EventTopics.User.EnsureExist) {
+      const event: UserEnsureExistEvent = JSON.parse(content);
+      await handleUserEnsureExist(event);
     } else {
       logger.warn(`Unknown routing key: ${routingKey}`);
     }
@@ -53,13 +53,14 @@ async function processMessage(channel: Channel, msg: ConsumeMessage | null): Pro
   }
 }
 
-async function handleUserUpsert(event: UserUpsertedEvent): Promise<void> {
-  await userRepository.upsert(event.Id, {
-    _id: event.Id,
-    email: event.Email,
-    displayName: event.DisplayName,
-    globalRole: parseUserGlobalRole(event.GlobalRole) ?? UserGlobalRole.Customer,
-    createdAt: new Date(event.CreatedAt),
+async function handleUserEnsureExist(user: UserEnsureExistEvent): Promise<void> {
+  await userRepository.ensureExist({
+    _id: user.Id,
+    email: user.Email,
+    displayName: user.DisplayName,
+    avatarUrl: user.AvatarUrl ?? null,
+    globalRole: parseUserGlobalRole(user.GlobalRole) ?? UserGlobalRole.Customer,
+    createdAt: new Date(user.CreatedAt),
     syncedAt: new Date()
   });
 }

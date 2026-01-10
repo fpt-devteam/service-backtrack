@@ -26,7 +26,7 @@ public sealed class UpdatePostContentEmbeddingHandler : IRequestHandler<UpdatePo
 
     public async Task<Unit> Handle(UpdatePostContentEmbeddingCommand request, CancellationToken cancellationToken)
     {
-        Post post = await _postRepository.GetByIdAsync(request.PostId) ?? throw new NotFoundException(PostErrors.NotFound);
+        Post post = await _postRepository.GetByIdAsync(request.PostId, true) ?? throw new NotFoundException(PostErrors.NotFound);
 
         // Include DistinctiveMarks in hash calculation
         string newContentHash = post.DistinctiveMarks != null

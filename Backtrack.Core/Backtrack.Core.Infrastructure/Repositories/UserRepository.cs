@@ -7,9 +7,12 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 namespace Backtrack.Core.Infrastructure.Repositories;
 
-public class UserRepository(ApplicationDbContext context, ILogger<UserRepository> logger) : CrudRepositoryBase<User, string>(context), IUserRepository
+public class UserRepository : CrudRepositoryBase<User, string>, IUserRepository
 {
-    public async Task<User> UpsertAsync(User user)
+    public UserRepository(ApplicationDbContext context) : base(context)
+    {
+    }
+    public async Task<User> EnsureExistAsync(User user)
     {
         try
         {
@@ -20,22 +23,16 @@ public class UserRepository(ApplicationDbContext context, ILogger<UserRepository
         }
         catch (DbUpdateException ex) when (IsDuplicatePk(ex))
         {
-            context.Entry(user).State = EntityState.Detached;
-
-            var existingUser = await context.Set<User>()
-                .SingleAsync(x => x.Id == user.Id);
-
-            existingUser.Email = user.Email ?? existingUser.Email;
-            existingUser.DisplayName = user.DisplayName ?? existingUser.DisplayName;
-            existingUser.Status = user.Status;
-            existingUser.GlobalRole = user.GlobalRole;
-
-            await SaveChangesAsync();
+            _context.Entry(user).State = EntityState.Detached;
+            var existingUser = await GetByIdAsync(user.Id);
+            if (existingUser is null)
+            {
+                throw new InvalidOperationException($"User with Id '{user.Id}' was not found after duplicate key exception.");
+            }
 
             return existingUser;
         }
     }
     private static bool IsDuplicatePk(DbUpdateException ex)
-    => ex.InnerException is PostgresException pg
-    && pg.SqlState == PostgresErrorCodes.UniqueViolation;
+        => ex.InnerException is PostgresException pg && pg.SqlState == PostgresErrorCodes.UniqueViolation;
 }

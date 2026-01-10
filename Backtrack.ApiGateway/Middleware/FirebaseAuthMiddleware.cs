@@ -16,6 +16,10 @@ public class FirebaseAuthMiddleware
     private const string AuthProviderHeaderName = "X-Auth-Provider";
     private const string AuthEmailHeaderName = "X-Auth-Email";
     private const string AuthNameHeaderName = "X-Auth-Name";
+    private const string AuthAvatarUrlHeaderName = "X-Auth-Avatar-Url";
+    private const string CorrelationIdHeaderName = "X-Correlation-Id";
+
+
 
     public FirebaseAuthMiddleware(
         RequestDelegate next,
@@ -84,6 +88,10 @@ public class FirebaseAuthMiddleware
                 ? nameClaim.ToString()
                 : string.Empty;
 
+            var avatarUrl = decodedToken.Claims.TryGetValue("picture", out var pictureClaim)
+                ? pictureClaim.ToString()
+                : string.Empty;
+
             context.Request.Headers[AuthIdHeaderName] = authId;
             context.Request.Headers[AuthProviderHeaderName] = "firebase";
             context.Request.Headers[AuthEmailHeaderName] = email;
@@ -92,6 +100,12 @@ public class FirebaseAuthMiddleware
             {
                 var encodedName = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(displayName));
                 context.Request.Headers[AuthNameHeaderName] = encodedName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(avatarUrl))
+            {
+                var encodedAvatarUrl = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(avatarUrl));
+                context.Request.Headers[AuthAvatarUrlHeaderName] = encodedAvatarUrl;
             }
 
             await _next(context);
@@ -130,7 +144,7 @@ public class FirebaseAuthMiddleware
 
     private static async Task WriteErrorResponse(HttpContext context, Error error, int statusCode)
     {
-        var correlationId = context.Request.Headers.TryGetValue("X-Correlation-Id", out var correlationIdValue)
+        var correlationId = context.Request.Headers.TryGetValue(CorrelationIdHeaderName, out var correlationIdValue)
             ? correlationIdValue.ToString()
             : context.TraceIdentifier;
 

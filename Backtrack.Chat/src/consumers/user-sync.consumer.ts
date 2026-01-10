@@ -1,7 +1,7 @@
 import { Channel, ConsumeMessage } from 'amqplib';
 import { createChannel } from '@src/messaging/rabbitmq-connection';
 import {
-  UserUpsertedEvent,
+  UserEnsureExistEvent,
 } from '@src/contracts/events/user-events';
 import { EventTopics } from '@src/contracts/events/event-topics';
 import { userRepository } from '@src/repositories';
@@ -21,7 +21,6 @@ export async function startUserSyncConsumer(): Promise<void> {
 async function setupChannel(): Promise<Channel> {
   try {
     const channel = await createChannel();
-    // await channel.assertExchange(EXCHANGE_NAME, 'topic', { durable: true });
     await channel.assertQueue(QUEUE_NAME, { durable: true });
     await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, BINDING_PATTERN);
     logger.info(`User sync consumer started. Listening to queue: ${QUEUE_NAME}`);
@@ -40,11 +39,13 @@ async function processMessage(channel: Channel, msg: ConsumeMessage | null): Pro
 
   const routingKey = msg.fields.routingKey;
   const content = msg.content.toString();
+  logger.info(`Received message with routing key: ${routingKey}`);
+  logger.debug(`Message content: ${content}`);
 
   try {
-    if (routingKey === EventTopics.User.Upserted) {
-      const event: UserUpsertedEvent = JSON.parse(content);
-      await handleUserUpsert(event);
+    if (routingKey === EventTopics.User.EnsureExist) {
+      const event: UserEnsureExistEvent = JSON.parse(content);
+      await handleUserEnsureExist(event);
     } else {
       logger.warn(`Unknown routing key: ${routingKey}`);
     }
@@ -55,11 +56,12 @@ async function processMessage(channel: Channel, msg: ConsumeMessage | null): Pro
   }
 }
 
-async function handleUserUpsert(event: UserUpsertedEvent): Promise<void> {
-  await userRepository.upsertAsync({
+async function handleUserEnsureExist(event: UserEnsureExistEvent): Promise<void> {
+  await userRepository.ensureExistAsync({
     _id: event.Id,
     email: event.Email,
     displayName: event.DisplayName,
+    avatarUrl: event.AvatarUrl ?? null,
     globalRole: parseUserGlobalRole(event.GlobalRole) ?? UserGlobalRole.Customer,
     createdAt: new Date(event.CreatedAt),
     syncedAt: new Date(),

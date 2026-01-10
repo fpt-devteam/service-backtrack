@@ -17,6 +17,7 @@ export interface IUser {
   _id: string;
   email?: string | null;
   displayName?: string | null;
+  avatarUrl?: string | null;
   globalRole: UserGlobalRoleType;
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +30,7 @@ const UserSchema = new Schema<IUser>(
     _id: { type: String, required: true },
     email: { type: String, required: false, index: true },
     displayName: { type: String, default: null },
+    avatarUrl: { type: String, default: null },
     globalRole: { type: String, enum: Object.values(UserGlobalRole), default: UserGlobalRole.Customer },
     deletedAt: { type: Date, default: null },
     syncedAt: { type: Date, default: Date.now },

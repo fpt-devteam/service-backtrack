@@ -1,5 +1,5 @@
 export const EventTopics = {
-    User: {
-        Upserted: 'user.upserted',
-    },
+  User: {
+    EnsureExist: 'user.ensure-exist',
+  },
 } as const;

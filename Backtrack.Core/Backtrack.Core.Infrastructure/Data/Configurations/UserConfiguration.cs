@@ -30,6 +30,10 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasColumnName("display_name")
                 .HasMaxLength(255);
 
+            builder.Property(u => u.AvatarUrl)
+                .HasColumnName("avatar_url")
+                .HasMaxLength(500);
+
             builder.Property(u => u.Status)
                 .HasColumnName("status")
                 .HasConversion<string>()

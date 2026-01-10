@@ -7,6 +7,7 @@ namespace Backtrack.Core.Domain.Entities
     {
         public string? Email { get; set; }
         public string? DisplayName { get; set; }
+        public string? AvatarUrl { get; set; }
         public UserStatus Status { get; set; } = UserStatus.Active;
         public UserGlobalRole GlobalRole { get; set; } = UserGlobalRole.Customer;
     }

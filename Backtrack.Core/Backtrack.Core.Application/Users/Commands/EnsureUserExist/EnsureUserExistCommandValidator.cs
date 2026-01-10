@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace Backtrack.Core.Application.Users.Commands.UpsertUser;
+namespace Backtrack.Core.Application.Users.Commands.EnsureUserExist;
 
-public sealed class UpsertUserCommandValidator : AbstractValidator<UpsertUserCommand>
+public sealed class EnsureUserExistCommandValidator : AbstractValidator<EnsureUserExistCommand>
 {
-    public UpsertUserCommandValidator()
+    public EnsureUserExistCommandValidator()
     {
         RuleFor(x => x.UserId)
             .NotEmpty()

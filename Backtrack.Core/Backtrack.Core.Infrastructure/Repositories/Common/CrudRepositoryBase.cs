@@ -25,24 +25,26 @@ namespace Backtrack.Core.Infrastructure.Repositories.Common
             return entity;
         }
 
-        public virtual async Task<TEntity?> GetByIdAsync(TKey id)
+        public virtual async Task<TEntity?> GetByIdAsync(TKey id, bool isTrack = false)
         {
-            return await _dbSet.AsNoTracking()
-                .FirstOrDefaultAsync(e =>
-                    Equals(e.Id, id) &&
-                    e.DeletedAt == null);
+            IQueryable<TEntity> query = _dbSet;
+            if (!isTrack)
+            {
+                query = query.AsNoTracking();
+            }
+
+            return await query.FirstOrDefaultAsync(e =>
+                Equals(e.Id, id) &&
+                e.DeletedAt == null);
         }
 
-        public virtual bool Update(TEntity entity)
+        public virtual void Update(TEntity entity)
         {
+            var entry = _context.Entry(entity);
+            if (entry.State == EntityState.Detached) throw new InvalidOperationException("Entity to update is not being tracked. Ensure the entity is retrieved from the same context instance before updating.");
             entity.UpdatedAt = DateTimeOffset.UtcNow;
-            _context.Attach(entity);
-            _context.Entry(entity).State = EntityState.Modified;
-
-            _context.Entry(entity).Property(x => x.CreatedAt).IsModified = false;
-            _context.Entry(entity).Property(x => x.DeletedAt).IsModified = false;
-
-            return true;
+            entry.Property(x => x.CreatedAt).IsModified = false;
+            entry.Property(x => x.DeletedAt).IsModified = false;
         }
 
         public virtual async Task<bool> DeleteAsync(TKey id)

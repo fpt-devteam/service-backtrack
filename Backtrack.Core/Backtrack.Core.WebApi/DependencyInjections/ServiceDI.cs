@@ -6,7 +6,7 @@ using Backtrack.Core.Application.Posts;
 using Backtrack.Core.Application.Posts.Commands.CreatePost;
 using Backtrack.Core.Application.Posts.Queries.GetPosts;
 using Backtrack.Core.Application.Users;
-using Backtrack.Core.Application.Users.Commands.UpsertUser;
+using Backtrack.Core.Application.Users.Commands.EnsureUserExist;
 using Backtrack.Core.Application.Users.Queries.GetMe;
 using Backtrack.Core.Infrastructure.Helpers;
 using Backtrack.Core.Infrastructure.Messaging;
@@ -22,7 +22,7 @@ public static class ServiceDI
     public static void AddServiceConfigurations(this IServiceCollection services, IConfiguration configuration)
     {
         // MediatR - Register handlers from Application layer
-        services.AddMediatR(typeof(UpsertUserCommand).Assembly);
+        services.AddMediatR(typeof(EnsureUserExistCommand).Assembly);
 
         // Add validation behavior
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
