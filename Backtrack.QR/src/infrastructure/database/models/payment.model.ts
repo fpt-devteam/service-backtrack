@@ -9,13 +9,21 @@ export enum PaymentStatus {
 
 export interface IPayment {
   _id: mongoose.Types.ObjectId;
+
   orderId: mongoose.Types.ObjectId;
   userId: string;
+
   amount: number;
   orderCode: number;
   status: PaymentStatus;
+
+  checkoutUrl: string;
+  expiresAt: Date;
+
+
   transactionId?: string;
   paidAt?: Date;
+
   webhookData?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
@@ -51,6 +59,15 @@ const PaymentSchema = new mongoose.Schema<IPayment>(
       default: PaymentStatus.PENDING,
       required: true,
       index: true
+    },
+
+    checkoutUrl: {
+      type: String,
+      required: true
+    },
+    expiresAt: {
+      type: Date,
+      required: true
     },
     transactionId: {
       type: String,

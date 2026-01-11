@@ -1,0 +1,59 @@
+# Build stage
+FROM node:20-alpine AS build
+WORKDIR /app
+
+# Install pnpm globally
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy package files (pnpm cần pnpm-lock.yaml)
+COPY Backtrack.Notification/package.json Backtrack.Notification/pnpm-lock.yaml ./
+
+# Install ALL dependencies (including dev dependencies for build)
+RUN pnpm install --frozen-lockfile && \
+    pnpm store prune
+
+# Copy application source
+COPY Backtrack.Notification/. .
+
+# Build TypeScript
+RUN pnpm run build
+
+# Runtime stage
+FROM node:20-alpine AS final
+WORKDIR /app
+
+# Install pnpm and dumb-init
+RUN corepack enable && corepack prepare pnpm@latest --activate && \
+    apk add --no-cache dumb-init
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Copy package files
+COPY Backtrack.Notification/package.json Backtrack.Notification/pnpm-lock.yaml ./
+# Install ONLY production dependencies
+RUN pnpm install --prod --frozen-lockfile && \
+    pnpm store prune
+
+# Copy built application from build stage
+COPY --from=build --chown=nodejs:nodejs /app/dist ./dist
+
+# Switch to non-root user
+USER nodejs
+
+# Expose port
+EXPOSE 6000
+
+# Set environment variable
+ENV NODE_ENV=production \
+    PORT=6000
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:6000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start application
+CMD ["node", "-r", "./dist/index.js"]
