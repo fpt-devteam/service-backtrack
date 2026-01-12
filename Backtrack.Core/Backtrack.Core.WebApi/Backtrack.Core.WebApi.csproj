@@ -82,8 +82,4 @@
     <ProjectReference Include="..\Backtrack.Core.Infrastructure\Backtrack.Core.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Contracts\Users\Requests\" />
-  </ItemGroup>
-
 </Project>
