@@ -28,7 +28,6 @@ export const createAsync = async (
         qrCount: pack.qrCount,
         price: pack.price,
     },
-    status: OrderStatus.PAID,
     shippingAddress: request.shippingAddress,
     totalAmount: pack.price,
     };

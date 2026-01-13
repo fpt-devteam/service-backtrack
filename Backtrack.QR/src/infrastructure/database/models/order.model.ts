@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 export enum OrderStatus {
+  PENDING = 'PENDING',
   PAID ='PAID',            
   PROCESSING = 'PROCESSING', 
   SHIPPING = 'SHIPPING',     
@@ -30,6 +31,9 @@ export interface IOrder {
   shippedAt?: Date;
   deliveredAt?: Date;
   shippingFee?: number;
+
+  printedAt?: Date;
+  printedBy?: mongoose.Types.ObjectId;
   
   totalAmount: number;
   createdAt: Date;
@@ -53,7 +57,7 @@ const OrderSchema = new mongoose.Schema<IOrder>(
       required: true,
     },
     cancelReason: { type: String, default: null },
-    status: { type: String, enum: Object.values(OrderStatus), default: OrderStatus.PAID },
+    status: { type: String, enum: Object.values(OrderStatus), default: OrderStatus.PENDING },
     paymentId: { type: String, required: true },
     paidAt: { type: Date, default: null },
     shippingCode: { type: String, default: null },
@@ -65,6 +69,18 @@ const OrderSchema = new mongoose.Schema<IOrder>(
       min: 0,
       default: 0  
     },
+
+    printedAt: {
+      type: Date,
+      default: null,
+    },
+
+    printedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+  
     totalAmount: { 
       type: Number, 
       required: true, 
