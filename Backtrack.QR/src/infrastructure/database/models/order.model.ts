@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 export enum OrderStatus {
+  UNPAID = 'UNPAID',
   PAID ='PAID',            
   PROCESSING = 'PROCESSING', 
   SHIPPING = 'SHIPPING',     
@@ -11,18 +12,18 @@ export enum OrderStatus {
 export interface IOrder {
   _id: mongoose.Types.ObjectId;
   userId: string;
+  orderCode: number;
 
-  packageId: mongoose.Types.ObjectId; 
+  packageId: mongoose.Types.ObjectId;
   packageSnapshot: {
-    name: string;      
-    qrCount: number;  
-    price: number;  
+    name: string;
+    qrCount: number;
+    price: number;
   };
 
   status: OrderStatus;
   cancelReason?: string;
   
-  paymentId: string;
   paidAt?: Date;
   
   shippingCode?: string;
@@ -30,6 +31,9 @@ export interface IOrder {
   shippedAt?: Date;
   deliveredAt?: Date;
   shippingFee?: number;
+
+  printedAt?: Date;
+  printedBy?: mongoose.Types.ObjectId;
   
   totalAmount: number;
   createdAt: Date;
@@ -38,12 +42,13 @@ export interface IOrder {
 const OrderSchema = new mongoose.Schema<IOrder>(
   {
     userId: { type: String, required: true, index: true, ref: 'User' },
-    packageId: { 
-      type: mongoose.Schema.Types.ObjectId, 
+    orderCode: { type: Number, required: true, unique: true, index: true },
+    packageId: {
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'Package',
       required: true
     },
-    
+
     packageSnapshot: {
       type: {
         name: { type: String, required: true },
@@ -53,8 +58,7 @@ const OrderSchema = new mongoose.Schema<IOrder>(
       required: true,
     },
     cancelReason: { type: String, default: null },
-    status: { type: String, enum: Object.values(OrderStatus), default: OrderStatus.PAID },
-    paymentId: { type: String, required: true },
+    status: { type: String, enum: Object.values(OrderStatus), default: OrderStatus.UNPAID },
     paidAt: { type: Date, default: null },
     shippingCode: { type: String, default: null },
     shippingAddress: { type: String, required: true },
@@ -65,6 +69,18 @@ const OrderSchema = new mongoose.Schema<IOrder>(
       min: 0,
       default: 0  
     },
+
+    printedAt: {
+      type: Date,
+      default: null,
+    },
+
+    printedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+  
     totalAmount: { 
       type: Number, 
       required: true, 
