@@ -15,7 +15,7 @@ app.get('/health', (req, res) => {
     res.json({ status: 'healthy' });
 });
 
-app.use('/api/qr', qrCodeRoute);
-app.use('/api/order', orderRoute);
+app.use('/', qrCodeRoute);
+app.use('/', orderRoute);
 
 app.use(errorMiddleware);
