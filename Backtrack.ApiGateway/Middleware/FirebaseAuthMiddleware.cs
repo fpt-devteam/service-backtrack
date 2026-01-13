@@ -35,7 +35,7 @@ public class FirebaseAuthMiddleware
             "/api/qr/qr-code/public-code",
             "/api/qr/health",
             "/api/chat/hub",
-            "/api/qr/order/payment-webhook"
+            "/api/order/payment-webhook"
         };
     }
 

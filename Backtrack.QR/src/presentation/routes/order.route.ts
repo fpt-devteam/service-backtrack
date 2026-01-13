@@ -5,9 +5,9 @@ import * as orderController from "@/src/presentation/controllers/order.controlle
 const router = Router();
 
 // Public endpoint - no auth required (for PayOS webhook)
-router.post('/order/payment-webhook', asyncHandler(orderController.handlePaymentWebhookAsync));
+router.post('/payment-webhook', asyncHandler(orderController.handlePaymentWebhookAsync));
 
 // Protected endpoint - auth required
-router.post('/order/link-payment', asyncHandler(orderController.createLinkPaymentAsync));
+router.post('/link-payment', asyncHandler(orderController.createLinkPaymentAsync));
 
 export default router;

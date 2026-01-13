@@ -16,6 +16,6 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/qr', qrCodeRoute);
-app.use('/api/qr', orderRoute);
+app.use('/api/order', orderRoute);
 
 app.use(errorMiddleware);
