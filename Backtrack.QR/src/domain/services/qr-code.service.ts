@@ -137,7 +137,7 @@ export const generateQrImage = async (
       return failure(QrCodeErrors.NotFound);
     }
 
-    const qrUrl = `${env.APP_URL}/${PUBLIC_QR_CODE_URL_PREFIX}/${publicCode}`;
+    const qrUrl = `${env.WEB_CONSOLE_BACKTRACK}/${PUBLIC_QR_CODE_URL_PREFIX}/${publicCode}`;
     const qrCodeImage = await QRCode.toBuffer(qrUrl, {
       width: QR_WIDTH,
       margin: QR_MARGIN,

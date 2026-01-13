@@ -13,8 +13,8 @@ export const createLinkPaymentAsync = async (packageName: string, amount: number
             orderCode,
             amount,
             description: `${packageName}`,
-            returnUrl: `${env.BASE_URL}/${env.SUCCESS_ENDPOINT}`,
-            cancelUrl: `${env.BASE_URL}/${env.CANCEL_ENDPOINT}`
+            returnUrl: `${env.SERVICE_BACKTRACK}/${env.SUCCESS_ENDPOINT}`,
+            cancelUrl: `${env.SERVICE_BACKTRACK}/${env.CANCEL_ENDPOINT}`
         });
         return success(result);
     } catch (error) {
