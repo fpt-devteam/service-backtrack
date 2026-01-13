@@ -7,6 +7,7 @@ import { OrderResponse } from "@/src/shared/contracts/order/order.response.js";
 import { PackageErrors } from "@/src/shared/errors/catalog/package.error.js";
 import { toObjectIdOrNull } from "@/src/shared/utils/mongoes.object-id.util.js";
 import { failure, Result, success } from "@/src/shared/utils/result.js";
+import { generateOrderCode } from "@/src/shared/utils/order-code.js";
 
 export const createAsync = async (
   request: CreateOrderRequest,
@@ -20,10 +21,12 @@ export const createAsync = async (
     if (!pack) {
         return failure(PackageErrors.NotFound);
     }
+    const orderCode = generateOrderCode(userId);
     const orderData: Partial<IOrder> = {
     userId,
+    orderCode,
     packageId: objectPackageId,
-    packageSnapshot: {  
+    packageSnapshot: {
         name: pack.name,
         qrCount: pack.qrCount,
         price: pack.price,

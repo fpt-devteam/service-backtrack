@@ -5,6 +5,7 @@ export type OrderResponse = {
         qrCount: number;
         price: number;
     };
+    orderCode: number;
     status: string;
     shippingAddress: string;
     totalAmount: number;

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 export enum OrderStatus {
-  PENDING = 'PENDING',
+  UNPAID = 'UNPAID',
   PAID ='PAID',            
   PROCESSING = 'PROCESSING', 
   SHIPPING = 'SHIPPING',     
@@ -12,18 +12,18 @@ export enum OrderStatus {
 export interface IOrder {
   _id: mongoose.Types.ObjectId;
   userId: string;
+  orderCode: number;
 
-  packageId: mongoose.Types.ObjectId; 
+  packageId: mongoose.Types.ObjectId;
   packageSnapshot: {
-    name: string;      
-    qrCount: number;  
-    price: number;  
+    name: string;
+    qrCount: number;
+    price: number;
   };
 
   status: OrderStatus;
   cancelReason?: string;
   
-  paymentId: string;
   paidAt?: Date;
   
   shippingCode?: string;
@@ -42,12 +42,13 @@ export interface IOrder {
 const OrderSchema = new mongoose.Schema<IOrder>(
   {
     userId: { type: String, required: true, index: true, ref: 'User' },
-    packageId: { 
-      type: mongoose.Schema.Types.ObjectId, 
+    orderCode: { type: Number, required: true, unique: true, index: true },
+    packageId: {
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'Package',
       required: true
     },
-    
+
     packageSnapshot: {
       type: {
         name: { type: String, required: true },
@@ -57,8 +58,7 @@ const OrderSchema = new mongoose.Schema<IOrder>(
       required: true,
     },
     cancelReason: { type: String, default: null },
-    status: { type: String, enum: Object.values(OrderStatus), default: OrderStatus.PENDING },
-    paymentId: { type: String, required: true },
+    status: { type: String, enum: Object.values(OrderStatus), default: OrderStatus.UNPAID },
     paidAt: { type: Date, default: null },
     shippingCode: { type: String, default: null },
     shippingAddress: { type: String, required: true },

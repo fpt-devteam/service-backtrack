@@ -3,6 +3,7 @@ import { correlationMiddleware } from './presentation/middlewares/correlation.mi
 import { errorMiddleware } from './presentation/middlewares/error.middleware.js';
 import { loggingMiddleware } from './presentation/middlewares/logging.middleware.js';
 import qrCodeRoute from './presentation/routes/qr-code.route.js';
+import orderRoute from './presentation/routes/order.route.js';
 
 export const app = express();
 
@@ -14,6 +15,7 @@ app.get('/health', (req, res) => {
     res.json({ status: 'healthy' });
 });
 
-app.use('/', qrCodeRoute);
+app.use('/api/qr', qrCodeRoute);
+app.use('/api/qr', orderRoute);
 
 app.use(errorMiddleware);
