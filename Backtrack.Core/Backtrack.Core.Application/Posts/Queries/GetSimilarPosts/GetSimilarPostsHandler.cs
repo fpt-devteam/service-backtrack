@@ -9,7 +9,7 @@ namespace Backtrack.Core.Application.Posts.Queries.GetSimilarPosts;
 public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuery, GetSimilarPostsResult>
 {
     private readonly IPostRepository _postRepository;
-    private const double RadiusInKm = 20.0; // Fixed 20km radius
+    private const double _radiusInKm = 100.0; // Fixed 100km radius
 
     public GetSimilarPostsHandler(IPostRepository postRepository)
     {
@@ -46,7 +46,7 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
             embedding: sourcePost.ContentEmbedding,
             latitude: sourcePost.Location?.Latitude,
             longitude: sourcePost.Location?.Longitude,
-            radiusInKm: RadiusInKm,
+            radiusInKm: _radiusInKm,
             limit: request.Limit,
             cancellationToken: cancellationToken);
 
