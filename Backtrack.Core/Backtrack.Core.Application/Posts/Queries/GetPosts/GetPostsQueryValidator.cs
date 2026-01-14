@@ -25,9 +25,9 @@ namespace Backtrack.Core.Application.Posts.Queries.GetPosts
 
             RuleFor(x => x.RadiusInKm)
                 .GreaterThan(0)
-                .LessThanOrEqualTo(10)
+                .LessThanOrEqualTo(100)
                 .When(x => x.RadiusInKm.HasValue && x.Latitude.HasValue)
-                .WithMessage("RadiusInKm must be greater than 0");
+                .WithMessage("RadiusInKm must be greater than 0 and less than or equal to 100");
 
             RuleFor(x => x)
             .Must(x =>

@@ -5,6 +5,7 @@ using Backtrack.Core.Domain.ValueObjects;
 using Backtrack.Core.Infrastructure.Data;
 using Backtrack.Core.Infrastructure.Repositories.Common;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using Npgsql;
 using NpgsqlTypes;
@@ -13,7 +14,7 @@ using System.Data;
 
 namespace Backtrack.Core.Infrastructure.Repositories;
 
-public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<Post, Guid>(context), IPostRepository
+public class PostRepository(ApplicationDbContext context, ILogger<PostRepository> logger) : CrudRepositoryBase<Post, Guid>(context), IPostRepository
 {
     public async Task<(IEnumerable<Post> Items, int TotalCount)> GetPagedAsync(
         int offset,
@@ -27,6 +28,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         CancellationToken cancellationToken = default)
     {
         var query = _dbSet.AsQueryable();
+
 
         if (postType is not null)
         {

@@ -4,16 +4,19 @@ using Backtrack.Core.Application.Posts.Common;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Backtrack.Core.Application.Posts.Queries.GetPosts;
 
 public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult<PostResult>>
 {
     private readonly IPostRepository _postRepository;
+    private readonly ILogger<GetPostsHandler> _logger;
 
-    public GetPostsHandler(IPostRepository postRepository)
+    public GetPostsHandler(IPostRepository postRepository, ILogger<GetPostsHandler> logger)
     {
         _postRepository = postRepository;
+        _logger = logger;
     }
 
     public async Task<PagedResult<PostResult>> Handle(GetPostsQuery query, CancellationToken cancellationToken)

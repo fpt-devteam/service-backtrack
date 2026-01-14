@@ -13,10 +13,12 @@ namespace Backtrack.Core.WebApi.Controllers;
 public class PostController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ILogger<PostController> _logger;
 
-    public PostController(IMediator mediator)
+    public PostController(IMediator mediator, ILogger<PostController> logger)
     {
         _mediator = mediator;
+        _logger = logger;
     }
 
     [HttpPost]
