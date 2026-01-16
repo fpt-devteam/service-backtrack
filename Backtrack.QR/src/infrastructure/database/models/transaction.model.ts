@@ -10,6 +10,7 @@ export interface ITransaction {
   _id: mongoose.Types.ObjectId;
   orderId: mongoose.Types.ObjectId;
   
+  orderCode: number;
   paymentLinkId: string;
   amount: number;
   status: TransactionStatus;
@@ -29,6 +30,11 @@ const TransactionSchema = new mongoose.Schema<ITransaction>(
       index: true,
     },
 
+    orderCode: {
+      type: Number,
+      required: true,
+      index: true,
+    },
     paymentLinkId: {
       type: String,
       required: true,
@@ -59,6 +65,10 @@ const TransactionSchema = new mongoose.Schema<ITransaction>(
   }
 );
 
+TransactionSchema.index({ orderId: 1, createdAt: -1 });
+TransactionSchema.index({ status: 1, createdAt: -1 }); 
+TransactionSchema.index({ paymentLinkId: 1 }, { unique: true })
+TransactionSchema.index({ orderCode: 1 }, { unique: true })
 export const TransactionModel = mongoose.model<ITransaction>(
   'Transaction',
   TransactionSchema

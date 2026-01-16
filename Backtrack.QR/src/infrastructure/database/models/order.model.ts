@@ -12,7 +12,7 @@ export enum OrderStatus {
 export interface IOrder {
   _id: mongoose.Types.ObjectId;
   userId: string;
-  orderCode: number;
+  code: string;
 
   packageId: mongoose.Types.ObjectId;
   packageSnapshot: {
@@ -42,7 +42,7 @@ export interface IOrder {
 const OrderSchema = new mongoose.Schema<IOrder>(
   {
     userId: { type: String, required: true, index: true, ref: 'User' },
-    orderCode: { type: Number, required: true, unique: true, index: true },
+    code: { type: String, required: true, unique: true, index: true },
     packageId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Package',
@@ -100,6 +100,7 @@ OrderSchema.index({ packageId: 1 });
 OrderSchema.index({ paymentId: 1 });             
 OrderSchema.index({ shippingCode: 1 });         
 OrderSchema.index({ status: 1, paidAt: -1 });    
+OrderSchema.index({ code: 1 }, { unique: true });
 OrderSchema.index({ userId: 1, status: 1, createdAt: -1 }); 
 
 export const OrderModel = mongoose.model<IOrder>('Order', OrderSchema);

@@ -14,21 +14,25 @@ import QRCode from 'qrcode';
 import { PUBLIC_QR_CODE_URL_PREFIX, QR_ERROR_CORRECTION_LEVEL, QR_MARGIN, QR_TYPE, QR_WIDTH } from '@/src/shared/configs/constants.js';
 import { env } from '@/src/shared/configs/env.js';
 import { stripUndefined } from '@/src/shared/utils/object.js';
+import { orderRepository } from '@/src/infrastructure/repositories/order.repository.js';
+import { OrderStatus } from '@/src/infrastructure/database/models/order.model.js';
+import type { QrGenerationRequestedEvent } from '@/src/shared/contracts/events/order-events.js';
+import * as logger from '@/src/shared/utils/logger.js';
+import pLimit from 'p-limit';
 
-const MAX_RETRIES = 5;
 
 export const createAsync = async (
   request: CreateQrCodeRequest,
   ownerId: string
 ): Promise<Result<QrCodeResponse>> => {
   let publicCode = "";
-  for (let attempts = 0; attempts < MAX_RETRIES; attempts++) {
+  for (let attempts = 0; attempts < env.QR_RETRY_ATTEMPTS; attempts++) {
     publicCode = generatePublicCode();
 
     const exists = await qrCodeRepository.existsByPublicCodeAsync(publicCode);
     if (!exists) break;
 
-    if (attempts === MAX_RETRIES - 1) {
+    if (attempts === env.QR_RETRY_ATTEMPTS - 1) {
       return failure({
         kind: "Internal",
         code: "QrCodeGenerationFailed",
@@ -187,11 +191,11 @@ export const createPhysicalQrCodeAsync = async (
   ownerId: string
 ): Promise<Result<QrCodeResponse>> => {
   let publicCode = "";
-  for (let attempts = 0; attempts < MAX_RETRIES; attempts++) {
+  for (let attempts = 0; attempts < env.QR_RETRY_ATTEMPTS; attempts++) {
     publicCode = generatePublicCode();
     const exists = await qrCodeRepository.existsByPublicCodeAsync(publicCode);
-    if (!exists) break; 
-    if (attempts === MAX_RETRIES - 1) {
+    if (!exists) break;
+    if (attempts === env.QR_RETRY_ATTEMPTS - 1) {
       return failure({
         kind: "Internal",
         code: "QrCodeGenerationFailed",
@@ -207,4 +211,163 @@ export const createPhysicalQrCodeAsync = async (
   });
   const created = await qrCodeRepository.create(qrCode);
   return success(toQrCodeResponse(created));
+};
+
+export interface BatchQrGenerationResult {
+  success: boolean;
+  generatedCount: number;
+  failedCount: number;
+  publicCodes: string[];
+}
+
+export const processBatchQrGenerationAsync = async (
+  event: QrGenerationRequestedEvent
+): Promise<BatchQrGenerationResult> => {
+  const { code, userId, qrCount, packageName } = event;
+
+  logger.info('Processing QR generation request', {
+    code,
+    userId,
+    qrCount,
+    packageName,
+  });
+
+  const order = await orderRepository.findByCode(code);
+  if (!order) {
+    logger.error('Order not found for QR generation', { code });
+    throw new Error(`Order not found: ${code}`);
+  }
+
+  if (order.status !== OrderStatus.PAID) {
+    logger.warn('Order is not in PAID status, skipping QR generation', {
+      code,
+      currentStatus: order.status,
+    });
+    return {
+      success: false,
+      generatedCount: 0,
+      failedCount: 0,
+      publicCodes: [],
+    };
+  }
+
+  const result = await generateQrCodesBatchAsync(userId, qrCount, code);
+
+  if (result.generatedCount === qrCount) {
+    logger.info('All QR codes generated successfully', {
+      code,
+      totalGenerated: result.generatedCount,
+    });
+  } else if (result.generatedCount > 0) {
+    logger.warn('Partial QR code generation', {
+      code,
+      successCount: result.generatedCount,
+      failedCount: result.failedCount,
+    });
+  } else {
+    throw new Error(`All QR code generation failed for order ${code}`);
+  }
+
+  return result;
+};
+
+const generateQrCodesBatchAsync = async (
+  userId: string,
+  totalCount: number,
+  code: string
+): Promise<BatchQrGenerationResult> => {
+  const publicCodes: string[] = [];
+  let failedCount = 0;
+
+  const limit = pLimit(env.QR_CONCURRENCY);
+
+  for (let i = 0; i < totalCount; i += env.QR_BATCH_SIZE) {
+    const batchSize = Math.min(env.QR_BATCH_SIZE, totalCount - i);
+
+    const batchPromises = Array.from({ length: batchSize }, (_, j) =>
+      limit(() => createSinglePhysicalQrCodeAsync(userId, code, i + j + 1, totalCount))
+    );
+
+    const results = await Promise.allSettled(batchPromises);
+
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value) {
+        publicCodes.push(result.value);
+      } else {
+        failedCount++;
+      }
+    }
+  }
+
+  return {
+    success: failedCount === 0,
+    generatedCount: publicCodes.length,
+    failedCount,
+    publicCodes,
+  };
+};
+
+const createSinglePhysicalQrCodeAsync = async (
+  userId: string,
+  orderCode: string,
+  index: number,
+  total: number
+): Promise<string | null> => {
+  const maxRetries = env.QR_RETRY_ATTEMPTS;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const publicCode = await generateUniquePublicCodeAsync();
+
+      const qrCode = new QrCodeModel({
+        publicCode,
+        ownerId: userId,
+        item: null,
+        linkedAt: null,
+      });
+
+      await qrCodeRepository.create(qrCode);
+
+      logger.debug(`Generated QR code ${index}/${total}`, {
+        orderCode,
+        publicCode,
+      });
+
+      return publicCode;
+    } catch (error) {
+      const isDuplicateKeyError = error instanceof Error &&
+        error.message.includes('E11000') &&
+        error.message.includes('publicCode');
+
+      if (isDuplicateKeyError && attempt < maxRetries - 1) {
+        logger.warn(`Duplicate publicCode collision, retrying (attempt ${attempt + 1}/${maxRetries})`, {
+          orderCode,
+          index,
+        });
+        continue;
+      }
+
+      logger.error(`Failed to generate QR code ${index}/${total}`, {
+        orderCode,
+        error: String(error),
+        attempt: attempt + 1,
+      });
+      return null;
+    }
+  }
+
+  return null;
+};
+
+const generateUniquePublicCodeAsync = async (): Promise<string> => {
+  for (let attempts = 0; attempts < env.QR_RETRY_ATTEMPTS; attempts++) {
+    const publicCode = generatePublicCode();
+    const exists = await qrCodeRepository.existsByPublicCodeAsync(publicCode);
+
+    if (!exists) {
+      return publicCode;
+    }
+  }
+
+  throw new Error('Failed to generate unique public code after maximum retries');
 };

@@ -1,5 +1,6 @@
 import { connectToRabbitMQ, closeConnection } from './rabbitmq-connection.js';
 import { startUserSyncConsumer } from '@/src/infrastructure/consumers/user-sync.consumer.js';
+import { startQrGenerationConsumer } from '@/src/infrastructure/consumers/qr-generation.consumer.js';
 import * as logger from '@/src/shared/utils/logger.js';
 
 export async function startConsumers(): Promise<void> {
@@ -11,6 +12,7 @@ export async function startConsumers(): Promise<void> {
 
         // Start all consumers
         await startUserSyncConsumer();
+        await startQrGenerationConsumer();
 
         logger.info('All message consumers started successfully');
     } catch (error) {
