@@ -6,7 +6,8 @@ export interface IPackage {
   qrCount: number;        
   price: number;          
   description?: string;
-  isActive: boolean;  
+  isActive: boolean;
+  deleteAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +34,11 @@ const PackageSchema = new mongoose.Schema<IPackage>(
       type: String,
       trim: true,
     },
+    deleteAt: { 
+      type: Date, 
+      default: null,
+      index: true,  
+    },
     isActive: { 
       type: Boolean, 
       default: true,
@@ -44,6 +50,8 @@ const PackageSchema = new mongoose.Schema<IPackage>(
   }
 );
 
+
+PackageSchema.index({ _id: 1, deleteAt: 1 });
 PackageSchema.index({ isActive: 1, displayOrder: 1 });  
 PackageSchema.index({ qrCount: 1 });                    
 PackageSchema.index({ price: 1 });

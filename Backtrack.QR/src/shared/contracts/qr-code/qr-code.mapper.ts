@@ -1,6 +1,7 @@
 import type { QrCodeResponse, QrCodeWithOwnerResponse } from './qr-code.response.js';
 import { IQrCode } from '@/src/infrastructure/database/models/qr-code.models.js';
 import { IUser } from '@/src/infrastructure/database/models/user.model.js';
+import { toVietnamISOString, toVietnamISOStringOrDefault } from '@/src/shared/utils/timezone.js';
 
 /**
  * QR Code Model -> Response
@@ -9,8 +10,8 @@ export const toQrCodeWithOwnerResponse = (qrCode: IQrCode, owner: IUser): QrCode
     qrCode: {
         id: qrCode._id.toString(),
         publicCode: qrCode.publicCode,
-        linkedAt: qrCode.linkedAt?.toISOString() || null,
-        createdAt: qrCode.createdAt?.toISOString() || new Date().toISOString(),
+        linkedAt: toVietnamISOString(qrCode.linkedAt),
+        createdAt: toVietnamISOStringOrDefault(qrCode.createdAt),
     },
     item: qrCode.item ? {
         name: qrCode.item.name,
@@ -29,8 +30,8 @@ export const toQrCodeResponse = (qrCode: IQrCode): QrCodeResponse => ({
     qrCode: {
         id: qrCode._id.toString(),
         publicCode: qrCode.publicCode,
-        linkedAt: qrCode.linkedAt?.toISOString() || null,
-        createdAt: qrCode.createdAt?.toISOString() || new Date().toISOString(),
+        linkedAt: toVietnamISOString(qrCode.linkedAt),
+        createdAt: toVietnamISOStringOrDefault(qrCode.createdAt),
     },
     item: qrCode.item ? {
         name: qrCode.item.name,

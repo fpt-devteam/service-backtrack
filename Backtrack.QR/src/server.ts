@@ -4,6 +4,8 @@ import { errorMiddleware } from './presentation/middlewares/error.middleware.js'
 import { loggingMiddleware } from './presentation/middlewares/logging.middleware.js';
 import qrCodeRoute from './presentation/routes/qr-code.route.js';
 import orderRoute from './presentation/routes/order.route.js';
+import paymentRoute from './presentation/routes/payment.route.js';
+import packageRoute from './presentation/routes/package.route.js';
 
 export const app = express();
 
@@ -17,5 +19,7 @@ app.get('/health', (req, res) => {
 
 app.use('/', qrCodeRoute);
 app.use('/', orderRoute);
+app.use('/', paymentRoute);
+app.use('/', packageRoute);
 
 app.use(errorMiddleware);

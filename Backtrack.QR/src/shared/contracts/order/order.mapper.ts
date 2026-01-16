@@ -1,10 +1,11 @@
 import { IOrder } from "@/src/infrastructure/database/models/order.model.js";
 import { OrderResponse } from "./order.response.js";
+import { toVietnamISOStringOrDefault } from "@/src/shared/utils/timezone.js";
 
 export const toOrderResponse = (order: IOrder): OrderResponse => {
     return {
         id: order._id.toString(),
-        orderCode: order.orderCode,
+        code: order.code,
         packageSnapshot: {
             name: order.packageSnapshot.name,
             qrCount: order.packageSnapshot.qrCount,
@@ -13,6 +14,6 @@ export const toOrderResponse = (order: IOrder): OrderResponse => {
         status: order.status,
         shippingAddress: order.shippingAddress,
         totalAmount: order.totalAmount,
-        createdAt: order.createdAt.toISOString(),
+        createdAt: toVietnamISOStringOrDefault(order.createdAt),
     };
 }

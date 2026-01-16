@@ -28,7 +28,8 @@ const createPaymentLink = async (
     return {
       orderCode: response.orderCode,
       checkoutUrl: response.checkoutUrl,
-      qrCode: response.qrCode
+      qrCode: response.qrCode,
+      paymentLinkId: response.paymentLinkId
     };
 }
 
