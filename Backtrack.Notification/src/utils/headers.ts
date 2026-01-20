@@ -1,5 +1,3 @@
 export const HEADERS = {
-  USER_ID: 'X-User-Id',
-  AUTHORIZATION: 'Authorization',
-  CONTENT_TYPE: 'Content-Type',
-} as const;
+  AUTH_ID: 'x-auth-id',
+} as const
