@@ -1,12 +1,18 @@
-import { ApiResponse, Nullable, Optional } from '@src/types/global.type'
+import { Nullable, Optional, PaginationOptions } from '@src/types/shared.type'
 import {
   NotificationChannelType,
   NotificationStatusType,
   NotificationType,
 } from '@src/types/notification.type'
 
-export type NotificationSendRequest = {
+export type GetNotificationsRequest = PaginationOptions & {
   userId: string
+  channel?: NotificationChannelType
+  status?: NotificationStatusType
+  isRead?: boolean
+}
+
+export type SendRequest = {
   channel: NotificationChannelType
   type: NotificationType
   title: Optional<Nullable<string>>
@@ -14,9 +20,11 @@ export type NotificationSendRequest = {
   data: Optional<Record<string, unknown>>
 }
 
-export type NotificationSendResponse = ApiResponse<{
+export type MarkAllAsReadRequest = {
   userId: string
-  channel: NotificationChannelType
-  status: NotificationStatusType
-  sentAt: Date
-}>
+}
+
+export type MarkMultipleAsReadRequest = {
+  userId: string
+  notificationIds: string[]
+}
