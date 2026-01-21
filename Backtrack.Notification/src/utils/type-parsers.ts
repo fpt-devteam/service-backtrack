@@ -10,17 +10,14 @@ import {
  * @param value - The value to parse
  * @returns NotificationChannelType if valid, undefined otherwise
  */
-export function parseNotificationChannel(
-  value: unknown,
-): NotificationChannelType | undefined {
-  if (typeof value !== 'string') {
-    return undefined
-  }
+export function parseNotificationChannel(value: unknown) {
+  if (typeof value !== 'string') return undefined
 
   const channels = Object.values(NotificationChannel) as string[]
-  return channels.includes(value)
+  const result = channels.includes(value)
     ? (value as NotificationChannelType)
     : undefined
+  return result
 }
 
 /**
@@ -28,17 +25,14 @@ export function parseNotificationChannel(
  * @param value - The value to parse
  * @returns NotificationStatusType if valid, undefined otherwise
  */
-export function parseNotificationStatus(
-  value: unknown,
-): NotificationStatusType | undefined {
-  if (typeof value !== 'string') {
-    return undefined
-  }
+export function parseNotificationStatus(value: unknown) {
+  if (typeof value !== 'string') return undefined
 
   const statuses = Object.values(NotificationStatus) as string[]
-  return statuses.includes(value)
+  const result = statuses.includes(value)
     ? (value as NotificationStatusType)
     : undefined
+  return result
 }
 
 /**
@@ -46,7 +40,7 @@ export function parseNotificationStatus(
  * @param value - The value to parse
  * @returns boolean if valid, undefined otherwise
  */
-export function parseBoolean(value: unknown): boolean | undefined {
+export function parseBoolean(value: unknown) {
   if (value === 'true') return true
   if (value === 'false') return false
   return undefined

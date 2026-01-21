@@ -4,12 +4,7 @@ import {
   MarkMultipleAsReadRequest,
   SendRequest,
 } from '@src/contracts/requests/notification.request'
-import {
-  GetNotificationsResult,
-  MarkAllAsReadResult,
-  MarkMultipleAsReadResult,
-  NotificationItem,
-} from '@src/contracts/responses/notification.response'
+import { NotificationItem } from '@src/contracts/responses/notification.response'
 import { Notification } from '@src/models/notification.model'
 import { Types } from 'mongoose'
 
@@ -78,6 +73,43 @@ class NotificationRepository {
     }
   }
 
+  // Validations
+  public async checkExistingNotifications(
+    notificationIds: string[],
+  ): Promise<boolean> {
+    const objectIds = notificationIds.map((id) => new Types.ObjectId(id))
+
+    const count = await Notification.countDocuments({
+      _id: { $in: objectIds },
+    }).exec()
+
+    return count === notificationIds.length
+  }
+
+  public async checkUserOwnsNotifications(
+    userId: string,
+    notificationIds: string[],
+  ): Promise<boolean> {
+    const objectIds = notificationIds.map((id) => new Types.ObjectId(id))
+
+    const count = await Notification.countDocuments({
+      _id: { $in: objectIds },
+      userId,
+    }).exec()
+
+    return count === notificationIds.length
+  }
+
+  public checkAllNotificationValid(notificationIds: string[]): boolean {
+    for (const id of notificationIds) {
+      if (!Types.ObjectId.isValid(id)) {
+        return false
+      }
+    }
+    return true
+  }
+
+  // Helpers
   private buildFilter(request: GetNotificationsRequest) {
     const {
       userId,
@@ -146,41 +178,6 @@ class NotificationRepository {
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
     }))
-  }
-
-  public async checkExistingNotifications(
-    notificationIds: string[],
-  ): Promise<boolean> {
-    const objectIds = notificationIds.map((id) => new Types.ObjectId(id))
-
-    const count = await Notification.countDocuments({
-      _id: { $in: objectIds },
-    }).exec()
-
-    return count === notificationIds.length
-  }
-
-  public async checkUserOwnsNotifications(
-    userId: string,
-    notificationIds: string[],
-  ): Promise<boolean> {
-    const objectIds = notificationIds.map((id) => new Types.ObjectId(id))
-
-    const count = await Notification.countDocuments({
-      _id: { $in: objectIds },
-      userId,
-    }).exec()
-
-    return count === notificationIds.length
-  }
-
-  public checkAllNotificationValid(notificationIds: string[]): boolean {
-    for (const id of notificationIds) {
-      if (!Types.ObjectId.isValid(id)) {
-        return false
-      }
-    }
-    return true
   }
 }
 

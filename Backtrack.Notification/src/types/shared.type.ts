@@ -8,14 +8,6 @@ export type ApiError = {
   details?: unknown
 }
 
-export type ApiMeta = {
-  requestId?: string
-  pagination?: {
-    limit: number
-    nextCursor?: string
-  }
-}
-
 export type ApiResponse<T> =
   | { success: true; data: T }
   | { success: false; error: ApiError }
