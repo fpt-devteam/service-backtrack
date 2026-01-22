@@ -3,26 +3,26 @@
 ******************************************************************************/
 
 function getEnv(key: string, defaultValue?: string): string {
-  const value = process.env[key];
+  const value = process.env[key]
   if (!value && defaultValue === undefined) {
-    throw new Error(`Environment variable ${key} is not defined`);
+    throw new Error(`Environment variable ${key} is not defined`)
   }
-  return value ?? defaultValue ?? '';
+  return value ?? defaultValue ?? ''
 }
 
 function getEnvNumber(key: string, defaultValue?: number): number {
-  const value = process.env[key];
+  const value = process.env[key]
   if (!value) {
     if (defaultValue === undefined) {
-      throw new Error(`Environment variable ${key} is not defined`);
+      throw new Error(`Environment variable ${key} is not defined`)
     }
-    return defaultValue;
+    return defaultValue
   }
-  const num = parseInt(value, 10);
+  const num = parseInt(value, 10)
   if (isNaN(num)) {
-    throw new Error(`Environment variable ${key} must be a number`);
+    throw new Error(`Environment variable ${key} must be a number`)
   }
-  return num;
+  return num
 }
 
 /******************************************************************************
@@ -31,7 +31,7 @@ function getEnvNumber(key: string, defaultValue?: number): number {
 
 export default {
   NodeEnv: getEnv('NODE_ENV', 'development'),
-  Port: getEnvNumber('PORT', 6000),
+  Port: getEnvNumber('PORT', 5000),
   MongodbConnectionstring: getEnv('MONGODB_CONNECTIONSTRING'),
 
   Pagination: {
@@ -44,4 +44,5 @@ export default {
     Exchange: getEnv('RABBITMQ_EXCHANGE'),
     UserSyncQueue: getEnv('RABBITMQ_USER_SYNC_QUEUE'),
   },
-} as const;
+} as const
+

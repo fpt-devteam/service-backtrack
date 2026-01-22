@@ -1,21 +1,42 @@
 import notificationRepository from '@src/repositories/notification.repository'
 import {
-  GetNotificationsRequest,
-  MarkAllAsReadRequest,
-  MarkMultipleAsReadRequest,
-  SendRequest,
+  NotificationSendRequest,
+  ArchivedStatusUpdateRequest,
+  ReadStatusUpdateRequest,
+  ReadStatusUpdateAllRequest,
+  ArchivedStatusUpdateAllRequest,
 } from '@src/contracts/requests/notification.request'
 import { ErrorCodes } from '@src/common/errors/error.constants'
 
 class NotificationService {
-  public async sendNotification(userId: string, requestData: SendRequest) {
+  public async sendNotification(
+    userId: string,
+    requestData: NotificationSendRequest,
+  ) {
     const notificationData = {
       ...requestData,
       userId,
     }
 
-    // TODO: Send to external service (e.g., email, SMS, push notification)
-    // await externalNotificationService.send(notificationData)
+    const message = {
+      to: 'ExponentPushToken[L7uO_mNAP4deMkwYs3kyxL]',
+      sound: 'default',
+      title: requestData.title,
+      body: requestData.body,
+      data: requestData.data || {},
+    }
+
+    const response = await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Accept-encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    })
+
+    console.log('Send: ', response)
 
     // Save to database
     const notification =
@@ -29,53 +50,108 @@ class NotificationService {
     }
   }
 
-  public async markAllAsRead(userId: string) {
-    const request: MarkAllAsReadRequest = { userId }
-    const result = await notificationRepository.markAllAsReadAsync(request)
-    return result
-  }
+  public async updateArchivedStatusAsync(
+    userId: string,
+    req: ArchivedStatusUpdateRequest,
+  ) {
+    const { notificationIds, isArchived } = req
 
-  public async markMultipleAsRead(userId: string, notificationIds: string[]) {
-    // Validate input
-    if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
+    // Validation: Check if notificationIds is provided
+    if (!notificationIds || notificationIds.length === 0) {
       throw ErrorCodes.MissingNotificationIds
     }
 
-    // Validate all IDs are valid ObjectIds
-    const allValid =
-      notificationRepository.checkAllNotificationValid(notificationIds)
-    if (!allValid) {
+    // Validation: Check if all notificationIds are valid MongoDB ObjectIds
+    if (!notificationRepository.checkNotificationsValid(notificationIds)) {
       throw ErrorCodes.InvalidNotificationIds
     }
 
-    // Check all notifications exist
+    // Validation: Check if all notifications exist
     const allExist =
-      await notificationRepository.checkExistingNotifications(notificationIds)
+      await notificationRepository.checkExistNotifications(notificationIds)
     if (!allExist) {
       throw ErrorCodes.NotificationsNotFound
     }
 
-    // Check user owns all notifications
-    const userOwnsAll = await notificationRepository.checkUserOwnsNotifications(
+    // Validation: Check if all notifications belong to the user
+    const allBelongToUser = await notificationRepository.checkAuthNotifications(
       userId,
       notificationIds,
     )
-    if (!userOwnsAll) {
+    if (!allBelongToUser) {
       throw ErrorCodes.NotificationOwnershipError
     }
 
-    // Mark multiple as read
-    const request: MarkMultipleAsReadRequest = {
-      userId,
-      notificationIds,
-    }
-
-    const result = await notificationRepository.markMultipleAsReadAsync(request)
+    const result =
+      await notificationRepository.updateMutipleArchivedStatusAsync(
+        userId,
+        notificationIds,
+        isArchived,
+      )
     return result
   }
 
-  public async getNotifications(request: GetNotificationsRequest) {
-    const result = await notificationRepository.findPaginatedAsync(request)
+  public async updateAllArchivedStatusAsync(
+    userId: string,
+    req: ArchivedStatusUpdateAllRequest,
+  ) {
+    const { isArchived } = req
+    const result = await notificationRepository.updateAllArchivedStatusAsync(
+      userId,
+      isArchived,
+    )
+    return result
+  }
+
+  public async updateReadStatusAsync(
+    userId: string,
+    req: ReadStatusUpdateRequest,
+  ) {
+    const { isRead, notificationIds } = req
+
+    // Validation: Check if notificationIds is provided
+    if (!notificationIds || notificationIds.length === 0) {
+      throw ErrorCodes.MissingNotificationIds
+    }
+
+    // Validation: Check if all notificationIds are valid MongoDB ObjectIds
+    if (!notificationRepository.checkNotificationsValid(notificationIds)) {
+      throw ErrorCodes.InvalidNotificationIds
+    }
+
+    // Validation: Check if all notifications exist
+    const allExist =
+      await notificationRepository.checkExistNotifications(notificationIds)
+    if (!allExist) {
+      throw ErrorCodes.NotificationsNotFound
+    }
+
+    // Validation: Check if all notifications belong to the user
+    const allBelongToUser = await notificationRepository.checkAuthNotifications(
+      userId,
+      notificationIds,
+    )
+    if (!allBelongToUser) {
+      throw ErrorCodes.NotificationOwnershipError
+    }
+
+    const result = await notificationRepository.updateMutipleReadStatusAsync(
+      userId,
+      notificationIds,
+      isRead,
+    )
+    return result
+  }
+
+  public async updateAllReadStatusAsync(
+    userId: string,
+    req: ReadStatusUpdateAllRequest,
+  ) {
+    const { isRead } = req
+    const result = await notificationRepository.updateAllReadStatusAsync(
+      userId,
+      isRead,
+    )
     return result
   }
 }

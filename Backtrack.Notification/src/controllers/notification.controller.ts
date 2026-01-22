@@ -3,32 +3,30 @@ import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES'
 import { AsyncHandler } from '@src/decorators/async-handler'
 import { HEADERS } from '@src/utils/headers'
 import notificationService from '@src/services/notification.service'
-import { SendRequest } from '@src/contracts/requests/notification.request'
 import {
-  GetNotificationsResponse,
-  MarkAllAsReadResponse,
-  MarkMultipleAsReadResponse,
-  SendResponse,
+  ArchivedStatusUpdateAllRequestSchema,
+  ArchivedStatusUpdateRequestSchema,
+  NotificationSendRequest,
+  ReadStatusUpdateAllRequestSchema,
+  ReadStatusUpdateRequestSchema,
+} from '@src/contracts/requests/notification.request'
+import {
+  NotificationStatusUpdateResponse,
+  NotificationSendResponse,
 } from '@src/contracts/responses/notification.response'
-import {
-  parseBoolean,
-  parseNotificationChannel,
-  parseNotificationStatus,
-  parseNumber,
-} from '@src/utils/type-parsers'
 
 export class NotificationController {
   @AsyncHandler
   public async sendNotification(req: Request, res: Response) {
     const userId = req.headers[HEADERS.AUTH_ID] as string
-    const requestData = req.body as SendRequest
+    const requestData = req.body as NotificationSendRequest
 
     const notification = await notificationService.sendNotification(
       userId,
       requestData,
     )
 
-    const response: SendResponse = {
+    const response: NotificationSendResponse = {
       success: true,
       data: notification,
     }
@@ -37,52 +35,70 @@ export class NotificationController {
   }
 
   @AsyncHandler
-  public async getNotifications(req: Request, res: Response) {
+  public async updateReadStatusAsync(req: Request, res: Response) {
     const userId = req.headers[HEADERS.AUTH_ID] as string
-    const { cursor, limit, channel, status, isRead } = req.query
+    const request = ReadStatusUpdateRequestSchema.parse(req.body)
 
-    const result = await notificationService.getNotifications({
+    const result = await notificationService.updateReadStatusAsync(
       userId,
-      cursor: cursor as string | undefined,
-      limit: parseNumber(limit),
-      channel: parseNotificationChannel(channel),
-      status: parseNotificationStatus(status),
-      isRead: parseBoolean(isRead),
-    })
-
-    const response: GetNotificationsResponse = {
-      success: true,
-      data: result,
-    }
-
-    return res.status(HTTP_STATUS_CODES.Ok).json(response)
-  }
-
-  @AsyncHandler
-  public async markAllAsRead(req: Request, res: Response) {
-    const userId = req.headers[HEADERS.AUTH_ID] as string
-
-    const result = await notificationService.markAllAsRead(userId)
-
-    const response: MarkAllAsReadResponse = {
-      success: true,
-      data: result,
-    }
-
-    return res.status(HTTP_STATUS_CODES.Ok).json(response)
-  }
-
-  @AsyncHandler
-  public async markMultipleAsRead(req: Request, res: Response) {
-    const userId = req.headers[HEADERS.AUTH_ID] as string
-    const notificationIds = req.body.notificationIds as string[]
-
-    const result = await notificationService.markMultipleAsRead(
-      userId,
-      notificationIds,
+      request,
     )
 
-    const response: MarkMultipleAsReadResponse = {
+    const response: NotificationStatusUpdateResponse = {
+      success: true,
+      data: result,
+    }
+
+    return res.status(HTTP_STATUS_CODES.Ok).json(response)
+  }
+
+  @AsyncHandler
+  public async updateArchivedStatusAsync(req: Request, res: Response) {
+    const userId = req.headers[HEADERS.AUTH_ID] as string
+    const request = ArchivedStatusUpdateRequestSchema.parse(req.body)
+
+    const result = await notificationService.updateArchivedStatusAsync(
+      userId,
+      request,
+    )
+
+    const response: NotificationStatusUpdateResponse = {
+      success: true,
+      data: result,
+    }
+
+    return res.status(HTTP_STATUS_CODES.Ok).json(response)
+  }
+
+  @AsyncHandler
+  public async updateAllReadStatusAsync(req: Request, res: Response) {
+    const userId = req.headers[HEADERS.AUTH_ID] as string
+    const request = ReadStatusUpdateAllRequestSchema.parse(req.body)
+
+    const result = await notificationService.updateAllReadStatusAsync(
+      userId,
+      request,
+    )
+
+    const response: NotificationStatusUpdateResponse = {
+      success: true,
+      data: result,
+    }
+
+    return res.status(HTTP_STATUS_CODES.Ok).json(response)
+  }
+
+  @AsyncHandler
+  public async updateAllArchivedStatusAsync(req: Request, res: Response) {
+    const userId = req.headers[HEADERS.AUTH_ID] as string
+    const request = ArchivedStatusUpdateAllRequestSchema.parse(req.body)
+
+    const result = await notificationService.updateAllArchivedStatusAsync(
+      userId,
+      request,
+    )
+
+    const response: NotificationStatusUpdateResponse = {
       success: true,
       data: result,
     }

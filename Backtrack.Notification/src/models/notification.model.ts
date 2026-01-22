@@ -3,25 +3,13 @@ import {
   NotificationEvent,
   NotificationStatus,
 } from '../types/notification.type'
-import mongoose, { Schema } from 'mongoose'
+import mongoose, { InferSchemaType, Schema } from 'mongoose'
 
 const NotificationSchema = new Schema(
   {
     userId: {
       type: String,
       index: true,
-      required: true,
-    },
-
-    channel: {
-      type: String,
-      enum: Object.values(NotificationChannel),
-      required: true,
-    },
-
-    type: {
-      type: String,
-      enum: Object.values(NotificationEvent),
       required: true,
     },
 
@@ -40,6 +28,18 @@ const NotificationSchema = new Schema(
       default: null,
     },
 
+    channel: {
+      type: String,
+      enum: Object.values(NotificationChannel),
+      required: true,
+    },
+
+    type: {
+      type: String,
+      enum: Object.values(NotificationEvent),
+      required: true,
+    },
+
     status: {
       type: String,
       enum: Object.values(NotificationStatus),
@@ -48,10 +48,14 @@ const NotificationSchema = new Schema(
 
     sentAt: { type: Date, default: new Date(0) },
     isRead: { type: Boolean, default: false },
+    isArchived: { type: Boolean, default: false },
   },
   {
     timestamps: true,
   },
 )
+
+NotificationSchema.index({ userId: 1, createdAt: -1 })
+NotificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 })
 
 export const Notification = mongoose.model('Notification', NotificationSchema)

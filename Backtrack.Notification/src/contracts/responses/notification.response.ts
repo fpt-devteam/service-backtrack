@@ -16,33 +16,28 @@ export type NotificationItem = {
   status: NotificationStatusType
   sentAt: Date
   isRead: boolean
+  isArchived: boolean
   createdAt: Date
   updatedAt: Date
 }
 
-export type GetNotificationsResult = PaginatedResponse<NotificationItem[]>
+export type NotificationsGetResult = PaginatedResponse<NotificationItem[]>
 
-export type SendResult = {
+export type NotificationSendResult = {
   userId: string
   channel: NotificationChannelType
   status: NotificationStatusType
   sentAt: Date
 }
 
-export type MarkAllAsReadResult = {
+export type NotificationStatusUpdateResult = {
   matchedCount: number
   modifiedCount: number
 }
 
-export type MarkMultipleAsReadResult = {
-  matchedCount: number
-  modifiedCount: number
-}
+export type NotificationSendResponse = ApiResponse<NotificationSendResult>
 
-export type SendResponse = ApiResponse<SendResult>
+export type NotificationGetResponse = ApiResponse<NotificationsGetResult>
 
-export type GetNotificationsResponse = ApiResponse<GetNotificationsResult>
-
-export type MarkAllAsReadResponse = ApiResponse<MarkAllAsReadResult>
-
-export type MarkMultipleAsReadResponse = ApiResponse<MarkMultipleAsReadResult>
+export type NotificationStatusUpdateResponse =
+  ApiResponse<NotificationStatusUpdateResult>
