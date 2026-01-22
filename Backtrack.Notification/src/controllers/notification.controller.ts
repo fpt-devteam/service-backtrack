@@ -6,11 +6,13 @@ import notificationService from '@src/services/notification.service'
 import {
   ArchivedStatusUpdateAllRequestSchema,
   ArchivedStatusUpdateRequestSchema,
+  NotificationOptionsSchema,
   NotificationSendRequest,
   ReadStatusUpdateAllRequestSchema,
   ReadStatusUpdateRequestSchema,
 } from '@src/contracts/requests/notification.request'
 import {
+  NotificationGetResponse,
   NotificationStatusUpdateResponse,
   NotificationSendResponse,
 } from '@src/contracts/responses/notification.response'
@@ -32,6 +34,21 @@ export class NotificationController {
     }
 
     return res.status(HTTP_STATUS_CODES.Created).json(response)
+  }
+
+  @AsyncHandler
+  public async getNotifications(req: Request, res: Response) {
+    const userId = req.headers[HEADERS.AUTH_ID] as string
+    const options = NotificationOptionsSchema.parse(req.query)
+
+    const result = await notificationService.getNotifications(userId, options)
+
+    const response: NotificationGetResponse = {
+      success: true,
+      data: result,
+    }
+
+    return res.status(HTTP_STATUS_CODES.Ok).json(response)
   }
 
   @AsyncHandler

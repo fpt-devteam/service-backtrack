@@ -5,10 +5,16 @@ import {
   ReadStatusUpdateRequest,
   ReadStatusUpdateAllRequest,
   ArchivedStatusUpdateAllRequest,
+  NotificationOptions,
 } from '@src/contracts/requests/notification.request'
 import { ErrorCodes } from '@src/common/errors/error.constants'
 
 class NotificationService {
+  public async getNotifications(userId: string, options: NotificationOptions) {
+    const result = await notificationRepository.findPaginated(userId, options)
+    return result
+  }
+
   public async sendNotification(
     userId: string,
     requestData: NotificationSendRequest,

@@ -1,23 +1,44 @@
-import { Nullable, Optional, PaginationOptions } from '@src/types/shared.type'
+import { Nullable, Optional } from '@src/types/shared.type'
 import { z } from 'zod'
 
 import {
+  NotificationChannel,
   NotificationChannelType,
-  NotificationStatusType,
+  NotificationStatus,
   NotificationType,
 } from '@src/types/notification.type'
 
-export type NotificationsQueryRequest = {
-  userId: string
-  options: NotificationsOptions
+// Helper function to parse boolean query params
+const parseBooleanString = (val: string | undefined): boolean | undefined => {
+  if (val === 'true') return true
+  if (val === 'false') return false
+  return undefined
 }
 
-export type NotificationsOptions = PaginationOptions & {
-  channel?: NotificationChannelType
-  status?: NotificationStatusType
-  isRead?: boolean
-  isArchived?: boolean
-}
+// Notification query options schema with cursor pagination
+export const NotificationOptionsSchema = z.object({
+  cursor: z.string().optional(),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? Number.parseInt(val, 10) : 20))
+    .pipe(z.number().min(1).max(50)),
+  channel: z.enum(Object.values(NotificationChannel)).optional(),
+  status: z.enum(Object.values(NotificationStatus)).optional(),
+  isRead: z
+    .string()
+    .optional()
+    .transform(parseBooleanString)
+    .pipe(z.boolean().optional()),
+  isArchived: z
+    .string()
+    .optional()
+    .transform(parseBooleanString)
+    .pipe(z.boolean().optional()),
+})
+
+export type NotificationOptions = z.infer<typeof NotificationOptionsSchema>
+//
 
 export type NotificationSendRequest = {
   channel: NotificationChannelType

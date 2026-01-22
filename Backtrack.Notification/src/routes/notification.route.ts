@@ -1,24 +1,29 @@
 import express from 'express'
 import NotificationController from '../controllers/notification.controller'
-import { validateBody } from '@src/middlewares/validation.middleware'
+import {
+  validateBody,
+  validateQuery,
+} from '@src/middlewares/validation.middleware'
 import {
   ArchivedStatusUpdateAllRequestSchema,
   ArchivedStatusUpdateRequestSchema,
+  NotificationOptionsSchema,
   ReadStatusUpdateAllRequestSchema,
   ReadStatusUpdateRequestSchema,
 } from '@src/contracts/requests/notification.request'
 
 const router = express.Router()
 
-// router.get(
-//   '/',
-//   NotificationController.getNotifications.bind(NotificationController),
-// )
+router.get(
+  '/',
+  validateQuery(NotificationOptionsSchema),
+  NotificationController.getNotifications.bind(NotificationController),
+)
 
-// router.post(
-//   '/',
-//   NotificationController.sendNotification.bind(NotificationController),
-// )
+router.post(
+  '/',
+  NotificationController.sendNotification.bind(NotificationController),
+)
 
 router.put(
   '/read',
