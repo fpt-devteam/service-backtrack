@@ -29,7 +29,7 @@ export class NotificationController {
     const userId = req.headers[HEADERS.AUTH_ID] as string
     const options = NotificationOptionsSchema.parse(req.query)
 
-    const result = await notificationService.getNotifications(userId, options)
+    const result = await notificationService.filterAsync(userId, options)
 
     const response: NotificationGetResponse = {
       success: true,

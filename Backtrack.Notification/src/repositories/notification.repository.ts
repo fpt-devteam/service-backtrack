@@ -1,5 +1,5 @@
 import { NotificationSendPushRequest, NotificationOptions } from '@src/contracts/requests/notification.request'
-import { NotificationsGetResult, NotificationStatusUpdateResult } from '@src/contracts/responses/notification.response'
+import { NotificationStatusUpdateResult } from '@src/contracts/responses/notification.response'
 import { Device } from '@src/models/device.model'
 import { Notification } from '@src/models/notification.model'
 import expoPushProvider from '@src/providers/expo-push.provider'
@@ -9,17 +9,14 @@ import { Model, Types } from 'mongoose'
 class NotificationRepository {
   constructor(private readonly model: Model<any>) {}
 
-  public async findPaginated(userId: string, options: NotificationOptions): Promise<NotificationsGetResult> {
+  public async filterAsync(userId: string, options: NotificationOptions) {
     const { cursor, limit, channel, status, isRead, isArchived } = options
     const filter: any = { userId }
 
-    if (cursor) {
-      filter.createdAt = { $lt: new Date(cursor) }
-    }
+    if (cursor) filter.createdAt = { $lt: new Date(cursor) }
 
-    if (channel !== undefined) {
-      filter.channel = channel
-    }
+    if (channel !== undefined) filter.channel = channel
+
     if (status !== undefined) {
       filter.status = status
     }
@@ -30,8 +27,7 @@ class NotificationRepository {
       filter.isArchived = isArchived
     }
 
-    const items = await this.model
-      .find(filter)
+    const items = await Notification.find(filter)
       .sort({ createdAt: -1 })
       .limit(limit + 1)
       .exec()

@@ -3,8 +3,8 @@ import { NotificationSendPushRequest, ArchivedStatusUpdateRequest, ReadStatusUpd
 import { ErrorCodes } from '@src/common/errors/error.constants'
 
 class NotificationService {
-  public async getNotifications(userId: string, options: NotificationOptions) {
-    const result = await notificationRepository.findPaginated(userId, options)
+  public async filterAsync(userId: string, options: NotificationOptions) {
+    const result = await notificationRepository.filterAsync(userId, options)
     return result
   }
 
