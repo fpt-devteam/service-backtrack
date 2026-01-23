@@ -27,4 +27,14 @@ export const ErrorCodes = {
     'Some notifications do not belong to the user',
     HTTP_STATUS_CODES.Forbidden,
   ),
+  DeviceNotFound: new AppError(
+    'DeviceNotFound',
+    'Device not found or does not belong to the user',
+    HTTP_STATUS_CODES.NotFound,
+  ),
+  InvalidDeviceData: new AppError(
+    'InvalidDeviceData',
+    'Invalid device registration data',
+    HTTP_STATUS_CODES.BadRequest,
+  ),
 }
