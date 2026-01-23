@@ -11,7 +11,7 @@ services:
       - ReverseProxy__Clusters__core-cluster__Destinations__core-destination__Address=http://backtrack-core-api:2000
       - ReverseProxy__Clusters__chat-cluster__Destinations__chat-destination__Address=http://backtrack-chat-api:3000
       - ReverseProxy__Clusters__qr-cluster__Destinations__qr-destination__Address=http://backtrack-qr-api:4000
-      - ReverseProxy__Clusters__notification-cluster__Destinations__notification-destination__Address=http://backtrack-notification-api:6000     
+      - ReverseProxy__Clusters__notification-cluster__Destinations__notification-destination__Address=http://backtrack-notification-api:5000     
     env_file:
       - ./env/backtrack-api-gateway.docker.env
     networks:
@@ -74,7 +74,7 @@ services:
       dockerfile: dockerfiles/Dockerfile.backtrack-notification-api
     container_name: backtrack-notification-api
     ports:
-      - "6000:6000"
+      - "5000:5000"
     environment:
       - RABBITMQ_URL=amqp://backtrack:backtrack123@backtrack-message-broker:5672/
       - MONGODB_CONNECTIONSTRING=mongodb://mongo:mongo123@backtrack-notification-db:27017/backtrack-notification?authSource=admin
