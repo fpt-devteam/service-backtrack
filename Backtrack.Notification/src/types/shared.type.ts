@@ -8,9 +8,7 @@ export type ApiError = {
   details?: unknown
 }
 
-export type ApiResponse<T> =
-  | { success: true; data: T }
-  | { success: false; error: ApiError }
+export type ApiResponse<T> = { success: true; data: T } | { success: false; error: ApiError }
 
 export type PaginationOptions = {
   cursor?: string

@@ -3,5 +3,4 @@ export const DevicePlatform = {
   Android: 'android',
 } as const
 
-export type DevicePlatformType =
-  (typeof DevicePlatform)[keyof typeof DevicePlatform]
+export type DevicePlatformType = (typeof DevicePlatform)[keyof typeof DevicePlatform]

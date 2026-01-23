@@ -1,5 +1,4 @@
 import { RegisterDeviceBody } from '@src/contracts/requests/device.request'
-import { DeviceRegisterResult, DeviceUnregisterResult } from '@src/contracts/responses/device.response'
 import { Device } from '@src/models/device.model'
 import { Model } from 'mongoose'
 
@@ -37,7 +36,6 @@ class DeviceRepository {
   }
 
   public async deactivateDeviceByTokenForOtherUsers(token: string, currentUserId: string) {
-    // Mark all devices with this token (except current user) as inactive
     await this.model
       .updateMany(
         { token, userId: { $ne: currentUserId } },
