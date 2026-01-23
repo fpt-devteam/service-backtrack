@@ -24,11 +24,7 @@ function zodToAppErrorFirst(err: z.ZodError): AppError {
 export function validateBody<T extends z.ZodSchema>(schema: T) {
   return (req: Request, _res: Response, next: NextFunction) => {
     const result = schema.safeParse(req.body)
-
-    if (!result.success) {
-      return next(zodToAppErrorFirst(result.error))
-    }
-
+    if (!result.success) return next(zodToAppErrorFirst(result.error))
     req.body = result.data
     next()
   }
@@ -37,13 +33,7 @@ export function validateBody<T extends z.ZodSchema>(schema: T) {
 export function validateQuery<T extends z.ZodSchema>(schema: T) {
   return (req: Request, _res: Response, next: NextFunction) => {
     const result = schema.safeParse(req.query)
-
-    if (!result.success) {
-      return next(zodToAppErrorFirst(result.error))
-    }
-
-    // Don't assign to req.query (it's read-only)
-    // The controller will parse it again
+    if (!result.success) return next(zodToAppErrorFirst(result.error))
     next()
   }
 }

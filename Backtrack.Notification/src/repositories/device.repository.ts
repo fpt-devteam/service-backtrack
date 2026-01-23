@@ -1,21 +1,13 @@
 import { RegisterDeviceBody } from '@src/contracts/requests/device.request'
-import {
-  DeviceRegisterResult,
-  DeviceUnregisterResult,
-} from '@src/contracts/responses/device.response'
+import { DeviceRegisterResult, DeviceUnregisterResult } from '@src/contracts/responses/device.response'
 import { Device } from '@src/models/device.model'
 import { Model } from 'mongoose'
 
 class DeviceRepository {
   constructor(private readonly model: Model<any>) {}
 
-  public async upsertDevice(
-    userId: string,
-    data: RegisterDeviceBody,
-  ): Promise<DeviceRegisterResult> {
+  public async upsertDevice(userId: string, data: RegisterDeviceBody) {
     const now = new Date()
-
-    // Upsert by (userId, deviceId)
     const device = await this.model
       .findOneAndUpdate(
         { userId, deviceId: data.deviceId },
@@ -23,7 +15,6 @@ class DeviceRepository {
           $set: {
             token: data.token,
             platform: data.platform,
-            appVersion: data.appVersion || null,
             isActive: true,
             lastSeenAt: now,
             updatedAt: now,
@@ -45,10 +36,7 @@ class DeviceRepository {
     }
   }
 
-  public async deactivateDeviceByTokenForOtherUsers(
-    token: string,
-    currentUserId: string,
-  ): Promise<void> {
+  public async deactivateDeviceByTokenForOtherUsers(token: string, currentUserId: string) {
     // Mark all devices with this token (except current user) as inactive
     await this.model
       .updateMany(
@@ -63,27 +51,17 @@ class DeviceRepository {
       .exec()
   }
 
-  public async findDeviceByUserAndToken(
-    userId: string,
-    token: string,
-  ): Promise<any> {
+  public async findDeviceByUserAndToken(userId: string, token: string) {
     return await this.model.findOne({ userId, token }).exec()
   }
 
-  public async findDeviceByUserAndDeviceId(
-    userId: string,
-    deviceId: string,
-  ): Promise<any> {
+  public async findDeviceByUserAndDeviceId(userId: string, deviceId: string) {
     return await this.model.findOne({ userId, deviceId }).exec()
   }
 
-  public async deactivateDevice(
-    userId: string,
-    deviceIdentifier: { token?: string; deviceId?: string },
-  ): Promise<DeviceUnregisterResult | null> {
+  public async deactivateDevice(userId: string, deviceIdentifier: { token?: string; deviceId?: string }) {
     const query: any = { userId }
 
-    // Prefer deviceId, fallback to token
     if (deviceIdentifier.deviceId) {
       query.deviceId = deviceIdentifier.deviceId
     } else if (deviceIdentifier.token) {

@@ -26,11 +26,6 @@ const DeviceSchema = new Schema(
       required: true,
     },
 
-    appVersion: {
-      type: String,
-      default: null,
-    },
-
     isActive: {
       type: Boolean,
       default: true,
@@ -41,18 +36,11 @@ const DeviceSchema = new Schema(
       default: Date.now,
     },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 )
 
-// Enforce uniqueness on (userId, deviceId)
 DeviceSchema.index({ userId: 1, deviceId: 1 }, { unique: true })
-
-// Index for active device queries
 DeviceSchema.index({ userId: 1, isActive: 1 })
-
-// Index for token lookups
 DeviceSchema.index({ token: 1 })
 
 export const Device = mongoose.model('Device', DeviceSchema)

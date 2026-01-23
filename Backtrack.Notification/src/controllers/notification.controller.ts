@@ -3,41 +3,29 @@ import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES'
 import { AsyncHandler } from '@src/decorators/async-handler'
 import { HEADERS } from '@src/utils/headers'
 import notificationService from '@src/services/notification.service'
-import {
-  ArchivedStatusUpdateAllRequestSchema,
-  ArchivedStatusUpdateRequestSchema,
-  NotificationOptionsSchema,
-  NotificationSendRequest,
-  ReadStatusUpdateAllRequestSchema,
-  ReadStatusUpdateRequestSchema,
-} from '@src/contracts/requests/notification.request'
-import {
-  NotificationGetResponse,
-  NotificationStatusUpdateResponse,
-  NotificationSendResponse,
-} from '@src/contracts/responses/notification.response'
+import { NotificationSendPushRequestSchema, ArchivedStatusUpdateAllRequestSchema, ArchivedStatusUpdateRequestSchema, NotificationOptionsSchema, ReadStatusUpdateAllRequestSchema, ReadStatusUpdateRequestSchema } from '@src/contracts/requests/notification.request'
+import { NotificationGetResponse, NotificationStatusUpdateResponse } from '@src/contracts/responses/notification.response'
 
 export class NotificationController {
   @AsyncHandler
-  public async sendNotification(req: Request, res: Response) {
-    const userId = req.headers[HEADERS.AUTH_ID] as string
-    const requestData = req.body as NotificationSendRequest
+  public async createAsync(req: Request, res: Response) {
+    const payload = NotificationSendPushRequestSchema.parse(req.body)
+    const result = await notificationService.createAsync(payload)
 
-    const notification = await notificationService.sendNotification(
-      userId,
-      requestData,
-    )
-
-    const response: NotificationSendResponse = {
+    const response = {
       success: true,
-      data: notification,
+      data: {
+        notificationId: result.notificationId,
+        status: result.status,
+        deduped: result.deduped,
+      },
     }
 
     return res.status(HTTP_STATUS_CODES.Created).json(response)
   }
 
   @AsyncHandler
-  public async getNotifications(req: Request, res: Response) {
+  public async getAsync(req: Request, res: Response) {
     const userId = req.headers[HEADERS.AUTH_ID] as string
     const options = NotificationOptionsSchema.parse(req.query)
 
@@ -56,10 +44,7 @@ export class NotificationController {
     const userId = req.headers[HEADERS.AUTH_ID] as string
     const request = ReadStatusUpdateRequestSchema.parse(req.body)
 
-    const result = await notificationService.updateReadStatusAsync(
-      userId,
-      request,
-    )
+    const result = await notificationService.updateReadStatusAsync(userId, request)
 
     const response: NotificationStatusUpdateResponse = {
       success: true,
@@ -74,10 +59,7 @@ export class NotificationController {
     const userId = req.headers[HEADERS.AUTH_ID] as string
     const request = ArchivedStatusUpdateRequestSchema.parse(req.body)
 
-    const result = await notificationService.updateArchivedStatusAsync(
-      userId,
-      request,
-    )
+    const result = await notificationService.updateArchivedStatusAsync(userId, request)
 
     const response: NotificationStatusUpdateResponse = {
       success: true,
@@ -92,10 +74,7 @@ export class NotificationController {
     const userId = req.headers[HEADERS.AUTH_ID] as string
     const request = ReadStatusUpdateAllRequestSchema.parse(req.body)
 
-    const result = await notificationService.updateAllReadStatusAsync(
-      userId,
-      request,
-    )
+    const result = await notificationService.updateAllReadStatusAsync(userId, request)
 
     const response: NotificationStatusUpdateResponse = {
       success: true,
@@ -110,10 +89,7 @@ export class NotificationController {
     const userId = req.headers[HEADERS.AUTH_ID] as string
     const request = ArchivedStatusUpdateAllRequestSchema.parse(req.body)
 
-    const result = await notificationService.updateAllArchivedStatusAsync(
-      userId,
-      request,
-    )
+    const result = await notificationService.updateAllArchivedStatusAsync(userId, request)
 
     const response: NotificationStatusUpdateResponse = {
       success: true,
