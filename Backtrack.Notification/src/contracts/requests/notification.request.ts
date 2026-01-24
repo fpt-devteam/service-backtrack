@@ -36,7 +36,7 @@ export type NotificationSendPushRequest = z.infer<
 
 export const NotificationOptionsSchema = z.object({
   cursor: z.string().optional(),
-  status: z.enum(Object.values(NOTIFICATION_STATUS)),
+  status: z.enum(Object.values(NOTIFICATION_STATUS)).optional(),
 })
 
 export type NotificationOptions = z.infer<typeof NotificationOptionsSchema>

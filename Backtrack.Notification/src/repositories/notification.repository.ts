@@ -18,11 +18,18 @@ class NotificationRepository {
   public async filterAsync(userId: string, options: NotificationOptions) {
     const { cursor, status } = options
 
-    const filter: any = { userId, status }
-    if (cursor) filter.createdAt = { $lt: new Date(cursor) }
+    const filter: any = { userId }
+    if (cursor) filter.sentAt = { $lt: new Date(cursor) }
+
+    filter.status = {
+      $in: [NOTIFICATION_STATUS.Unread, NOTIFICATION_STATUS.Read],
+    }
+
+    if (status === NOTIFICATION_STATUS.Archived)
+      filter.status = NOTIFICATION_STATUS.Archived
 
     const result = await Notification.find(filter)
-      .sort({ createdAt: -1 })
+      .sort({ sentAt: -1 })
       .limit(DEFAULT_LIMIT + 1)
       .lean()
       .exec()

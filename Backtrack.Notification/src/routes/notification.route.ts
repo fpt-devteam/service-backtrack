@@ -25,7 +25,7 @@ router.get(
 )
 
 router.put(
-  '/status',
+  '/',
   validateBody(NotificationStatusUpdateRequestSchema),
   NotificationController.updateStatusNotificationsAsync.bind(
     NotificationController,
