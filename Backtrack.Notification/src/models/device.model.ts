@@ -1,4 +1,3 @@
-import { DevicePlatform } from '@src/types/device.type'
 import mongoose, { Schema } from 'mongoose'
 
 const DeviceSchema = new Schema(
@@ -13,12 +12,6 @@ const DeviceSchema = new Schema(
       type: String,
       required: true,
       index: true,
-    },
-
-    platform: {
-      type: String,
-      enum: Object.values(DevicePlatform),
-      required: true,
     },
 
     deviceId: {

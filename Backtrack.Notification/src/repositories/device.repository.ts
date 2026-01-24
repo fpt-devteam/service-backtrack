@@ -1,94 +1,47 @@
-import { RegisterDeviceBody } from '@src/contracts/requests/device.request'
+import { UpdatePushTokenRequest } from '@src/contracts/requests/device.request'
 import { Device } from '@src/models/device.model'
 import { Model } from 'mongoose'
 
 class DeviceRepository {
   constructor(private readonly model: Model<any>) {}
 
-  public async upsertDevice(userId: string, data: RegisterDeviceBody) {
+  public async upsertDevice(userId: string, data: UpdatePushTokenRequest) {
     const now = new Date()
-    const device = await this.model
+    const { deviceId, token } = data
+
+    const res = await this.model
       .findOneAndUpdate(
-        { userId, deviceId: data.deviceId },
+        { userId, deviceId },
         {
-          $set: {
-            token: data.token,
-            platform: data.platform,
-            isActive: true,
-            lastSeenAt: now,
-            updatedAt: now,
-          },
-          $setOnInsert: {
-            userId,
-            deviceId: data.deviceId,
-            createdAt: now,
-          },
+          $set: { token, isActive: true, lastSeenAt: now },
+          $setOnInsert: { userId, deviceId },
         },
-        { upsert: true, new: true },
+        { upsert: true, new: true, rawResult: true } as any,
       )
       .exec()
 
-    return {
-      deviceId: device.deviceId,
-      isActive: device.isActive,
-      lastSeenAt: device.lastSeenAt,
-    }
+    const updatedExisting = res.lastErrorObject?.updatedExisting
+    return { upserted: !updatedExisting }
   }
 
-  public async deactivateDeviceByTokenForOtherUsers(token: string, currentUserId: string) {
-    await this.model
-      .updateMany(
-        { token, userId: { $ne: currentUserId } },
-        {
-          $set: {
-            isActive: false,
-            updatedAt: new Date(),
-          },
-        },
-      )
-      .exec()
-  }
+  public async deactivateDevice(userId: string, deviceId: string) {
+    const now = new Date()
 
-  public async findDeviceByUserAndToken(userId: string, token: string) {
-    return await this.model.findOne({ userId, token }).exec()
-  }
-
-  public async findDeviceByUserAndDeviceId(userId: string, deviceId: string) {
-    return await this.model.findOne({ userId, deviceId }).exec()
-  }
-
-  public async deactivateDevice(userId: string, deviceIdentifier: { token?: string; deviceId?: string }) {
-    const query: any = { userId }
-
-    if (deviceIdentifier.deviceId) {
-      query.deviceId = deviceIdentifier.deviceId
-    } else if (deviceIdentifier.token) {
-      query.token = deviceIdentifier.token
-    } else {
-      return null
-    }
-
-    const device = await this.model
+    const res = await this.model
       .findOneAndUpdate(
-        query,
+        { userId, deviceId, isActive: true },
         {
-          $set: {
-            isActive: false,
-            lastSeenAt: new Date(),
-            updatedAt: new Date(),
-          },
+          $set: { isActive: false, lastSeenAt: now },
+          $unset: { token: 1 },
         },
         { new: true },
       )
+      .lean()
       .exec()
 
-    if (!device) {
-      return null
-    }
-
     return {
-      deviceId: device.deviceId,
-      isActive: device.isActive,
+      deactivated: !!res,
+      device: res,
     }
   }
 }

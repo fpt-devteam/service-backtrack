@@ -1,5 +1,5 @@
 import { NotificationSendPushRequest, NotificationOptions } from '@src/contracts/requests/notification.request'
-import { NotificationStatusUpdateResult } from '@src/contracts/responses/notification.response'
+import { NotificationItem, NotificationStatusUpdateResult } from '@src/contracts/responses/notification.response'
 import { Device } from '@src/models/device.model'
 import { Notification } from '@src/models/notification.model'
 import expoPushProvider from '@src/providers/expo-push.provider'
@@ -30,15 +30,32 @@ class NotificationRepository {
     const items = await Notification.find(filter)
       .sort({ createdAt: -1 })
       .limit(limit + 1)
+      .lean()
       .exec()
 
     const hasMore = items.length > limit
     const notifications = hasMore ? items.slice(0, limit) : items
 
-    const nextCursor = hasMore && notifications.length > 0 ? notifications[notifications.length - 1].createdAt.toISOString() : null
+    const transformedNotifications: NotificationItem[] = notifications.map((item: any) => ({
+      _id: item._id.toString(),
+      userId: item.userId,
+      channel: item.channel,
+      type: item.type,
+      title: item.title,
+      body: item.body,
+      data: item.data,
+      status: item.status,
+      sentAt: item.sentAt,
+      isRead: item.isRead,
+      isArchived: item.isArchived,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    }))
+
+    const nextCursor = hasMore && transformedNotifications.length > 0 ? transformedNotifications[transformedNotifications.length - 1].createdAt.toISOString() : null
 
     return {
-      items: notifications,
+      items: transformedNotifications,
       hasMore,
       nextCursor,
     }
