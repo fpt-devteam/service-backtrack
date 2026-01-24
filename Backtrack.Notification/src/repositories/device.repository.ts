@@ -32,7 +32,6 @@ class DeviceRepository {
         { userId, deviceId, isActive: true },
         {
           $set: { isActive: false, lastSeenAt: now },
-          $unset: { token: 1 },
         },
         { new: true },
       )

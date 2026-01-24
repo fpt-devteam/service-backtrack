@@ -1,105 +1,73 @@
-import { NotificationSendPushRequest, NotificationOptions } from '@src/contracts/requests/notification.request'
-import { NotificationItem, NotificationStatusUpdateResult } from '@src/contracts/responses/notification.response'
+import {
+  NotificationSendPushRequest,
+  NotificationOptions,
+  NotificationStatusUpdateRequest,
+} from '@src/contracts/requests/notification.request'
+import { UserNotification } from '@src/contracts/responses/notification.response'
 import { Device } from '@src/models/device.model'
 import { Notification } from '@src/models/notification.model'
 import expoPushProvider from '@src/providers/expo-push.provider'
-import { NotificationStatus } from '@src/types/notification.type'
+import { NOTIFICATION_STATUS } from '@src/types/notification.type'
 import { Model, Types } from 'mongoose'
+
+const DEFAULT_LIMIT = 5
 
 class NotificationRepository {
   constructor(private readonly model: Model<any>) {}
 
   public async filterAsync(userId: string, options: NotificationOptions) {
-    const { cursor, limit, channel, status, isRead, isArchived } = options
-    const filter: any = { userId }
+    const { cursor, status } = options
 
+    const filter: any = { userId, status }
     if (cursor) filter.createdAt = { $lt: new Date(cursor) }
 
-    if (channel !== undefined) filter.channel = channel
-
-    if (status !== undefined) {
-      filter.status = status
-    }
-    if (isRead !== undefined) {
-      filter.isRead = isRead
-    }
-    if (isArchived !== undefined) {
-      filter.isArchived = isArchived
-    }
-
-    const items = await Notification.find(filter)
+    const result = await Notification.find(filter)
       .sort({ createdAt: -1 })
-      .limit(limit + 1)
+      .limit(DEFAULT_LIMIT + 1)
       .lean()
       .exec()
 
-    const hasMore = items.length > limit
-    const notifications = hasMore ? items.slice(0, limit) : items
+    const hasMore = result.length > DEFAULT_LIMIT
+    const notifications = hasMore ? result.slice(0, DEFAULT_LIMIT) : result
 
-    const transformedNotifications: NotificationItem[] = notifications.map((item: any) => ({
-      _id: item._id.toString(),
+    const items: UserNotification[] = notifications.map((item: any) => ({
+      id: item._id.toString(),
       userId: item.userId,
-      channel: item.channel,
       type: item.type,
       title: item.title,
       body: item.body,
       data: item.data,
       status: item.status,
       sentAt: item.sentAt,
-      isRead: item.isRead,
-      isArchived: item.isArchived,
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
     }))
 
-    const nextCursor = hasMore && transformedNotifications.length > 0 ? transformedNotifications[transformedNotifications.length - 1].createdAt.toISOString() : null
+    const nextCursor =
+      hasMore && items.length > 0
+        ? items[items.length - 1].sentAt.toISOString()
+        : null
 
     return {
-      items: transformedNotifications,
+      items,
       hasMore,
       nextCursor,
     }
   }
 
-  public async updateAllReadStatusAsync(userId: string, newStatus: boolean) {
-    const res = await this.model.updateMany({ userId, isRead: !newStatus }, { $set: { isRead: newStatus } }).exec()
-
-    const result: NotificationStatusUpdateResult = {
-      matchedCount: res.matchedCount,
-      modifiedCount: res.modifiedCount,
-    }
-    return result
-  }
-
-  public async updateMutipleReadStatusAsync(userId: string, notificationIds: string[], newStatus: boolean) {
+  public async updateStatusNotificationsAsync(
+    userId: string,
+    data: NotificationStatusUpdateRequest,
+  ) {
+    const { notificationIds, status } = data
     const objectIds = notificationIds.map((id) => new Types.ObjectId(id))
 
-    const res = await this.model.updateMany({ userId, _id: { $in: objectIds }, isRead: !newStatus }, { $set: { isRead: newStatus } }).exec()
+    const res = await this.model
+      .updateMany(
+        { userId, _id: { $in: objectIds }, status: { $ne: status } },
+        { $set: { status } },
+      )
+      .exec()
 
-    const result: NotificationStatusUpdateResult = {
-      matchedCount: res.matchedCount,
-      modifiedCount: res.modifiedCount,
-    }
-
-    return result
-  }
-
-  public async updateAllArchivedStatusAsync(userId: string, newStatus: boolean) {
-    const res = await this.model.updateMany({ userId, isArchived: !newStatus }, { $set: { isArchived: newStatus } }).exec()
-
-    const result: NotificationStatusUpdateResult = {
-      matchedCount: res.matchedCount,
-      modifiedCount: res.modifiedCount,
-    }
-    return result
-  }
-
-  public async updateMutipleArchivedStatusAsync(userId: string, notificationIds: string[], newStatus: boolean) {
-    const objectIds = notificationIds.map((id) => new Types.ObjectId(id))
-
-    const res = await this.model.updateMany({ userId, _id: { $in: objectIds }, isArchived: !newStatus }, { $set: { isArchived: newStatus } }).exec()
-
-    const result: NotificationStatusUpdateResult = {
+    const result = {
       matchedCount: res.matchedCount,
       modifiedCount: res.modifiedCount,
     }
@@ -108,7 +76,7 @@ class NotificationRepository {
   }
 
   public async createAsync(payload: NotificationSendPushRequest) {
-    const { target, source, provider, title, body, data, type, channel } = payload
+    const { target, source, title, body, data, type } = payload
     const { eventId, name } = source
 
     // Step 1: Check for existing notification (deduplication)
@@ -132,18 +100,20 @@ class NotificationRepository {
       title,
       body,
       data: data || null,
-      channel,
-      status: NotificationStatus.Pending,
+      status: NOTIFICATION_STATUS.Unread,
       source: { name, eventId },
-      provider: provider,
-      isRead: false,
-      isArchived: false,
       sentAt: new Date(),
     }
+
     const notification = await Notification.create(notificationData)
 
     // Step 3: Send push notification
-    await this.sendPushNotification(notification._id.toString(), { userId: target.userId, title, body, data })
+    await this.sendPushNotification({
+      userId: target.userId,
+      title,
+      body,
+      data,
+    })
 
     return {
       notificationId: notification._id.toString(),
@@ -165,7 +135,10 @@ class NotificationRepository {
     return count === notificationIds.length
   }
 
-  public async checkAuthNotifications(userId: string, notificationIds: string[]) {
+  public async checkAuthNotifications(
+    userId: string,
+    notificationIds: string[],
+  ) {
     const objectIds = notificationIds.map((id) => new Types.ObjectId(id))
 
     const count = await this.model
@@ -187,28 +160,21 @@ class NotificationRepository {
     return true
   }
 
-  private async sendPushNotification(
-    notificationId: string,
-    message: {
-      userId: string
-      title?: string | null
-      body?: string | null
-      data?: Record<string, unknown>
-    },
-  ) {
+  // Helpers
+  private async sendPushNotification(message: {
+    userId: string
+    title?: string | null
+    body?: string | null
+    data?: Record<string, unknown>
+  }) {
     try {
       const { userId, title, body, data } = message
       const allDevices = await Device.find({ userId, isActive: true })
-      const tokens = allDevices.map((device) => device.token)
-      const results = await expoPushProvider.sendToTokens(tokens, { title, body, data })
 
-      const successCount = results.filter((r) => r.success).length
-      const status = successCount > 0 ? NotificationStatus.Sent : NotificationStatus.Failed
-      await Notification.findByIdAndUpdate(notificationId, { status, sentAt: new Date() })
+      const tokens = allDevices.map((device) => device.token)
+      await expoPushProvider.sendToTokens(tokens, { title, body, data })
     } catch (error) {
       console.log('Error at send push notification:', error)
-      const status = NotificationStatus.Failed
-      await Notification.findByIdAndUpdate(notificationId, { status, sentAt: new Date() })
     }
   }
 }

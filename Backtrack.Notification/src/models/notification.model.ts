@@ -1,43 +1,33 @@
-import { NotificationChannel, NotificationEvent, PushProviders, NotificationStatus } from '../types/notification.type'
+import { NOTIFICATION_EVENT, NOTIFICATION_STATUS } from '../types/notification.type'
 import mongoose, { Schema } from 'mongoose'
 
 const NotificationSchema = new Schema(
   {
     userId: { type: String, index: true, required: true },
-    title: { type: String, default: null },
-    body: { type: String, default: null },
-    data: { type: Schema.Types.Mixed, default: null },
-    isArchived: { type: Boolean, default: false },
-    isRead: { type: Boolean, default: false },
-    sentAt: { type: Date, default: new Date(0) },
-
-    channel: {
-      type: String,
-      enum: Object.values(NotificationChannel),
-      required: true,
-    },
 
     type: {
       type: String,
-      enum: Object.values(NotificationEvent),
+      enum: Object.values(NOTIFICATION_EVENT),
       required: true,
     },
 
+    title: { type: String, required: true, trim: true },
+
+    body: { type: String, required: true, trim: true },
+
+    data: { type: Schema.Types.Mixed, default: null },
+
     status: {
       type: String,
-      enum: Object.values(NotificationStatus),
-      default: NotificationStatus.Pending,
+      enum: Object.values(NOTIFICATION_STATUS),
+      default: NOTIFICATION_STATUS.Unread,
     },
+
+    sentAt: { type: Date, default: new Date(0) },
 
     source: {
       name: { type: String, required: true, trim: true },
       eventId: { type: String, required: true, trim: true },
-    },
-
-    provider: {
-      type: String,
-      enum: Object.values(PushProviders),
-      required: true,
     },
   },
   { timestamps: true },
