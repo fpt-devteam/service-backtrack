@@ -12,6 +12,11 @@ class NotificationService {
     return result
   }
 
+  public async getUnreadCountAsync(userId: string) {
+    const result = await notificationRepository.getUnreadCountAsync(userId)
+    return result
+  }
+
   public async createAsync(payload: NotificationSendPushRequest) {
     const result = await notificationRepository.createAsync(payload)
     return result

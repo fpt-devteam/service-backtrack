@@ -60,6 +60,17 @@ class NotificationRepository {
     }
   }
 
+  public async getUnreadCountAsync(userId: string) {
+    const count = await this.model
+      .countDocuments({
+        userId,
+        status: NOTIFICATION_STATUS.Unread,
+      })
+      .exec()
+
+    return { count }
+  }
+
   public async updateStatusNotificationsAsync(
     userId: string,
     data: NotificationStatusUpdateRequest,

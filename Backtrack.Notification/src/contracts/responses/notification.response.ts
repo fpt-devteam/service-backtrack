@@ -18,3 +18,8 @@ export type UserNotification = {
 export type UserNotificationFilterResult = PaginatedResponse<UserNotification[]>
 export type UserNotificationFilterResponse =
   ApiResponse<UserNotificationFilterResult>
+
+export type UnreadCountResult = {
+  count: number
+}
+export type UnreadCountResponse = ApiResponse<UnreadCountResult>

@@ -24,6 +24,11 @@ router.get(
   NotificationController.getAsync.bind(NotificationController),
 )
 
+router.get(
+  '/unread-count',
+  NotificationController.getUnreadCountAsync.bind(NotificationController),
+)
+
 router.put(
   '/',
   validateBody(NotificationStatusUpdateRequestSchema),

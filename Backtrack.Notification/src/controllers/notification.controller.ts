@@ -8,7 +8,10 @@ import {
   NotificationOptionsSchema,
   NotificationStatusUpdateRequestSchema,
 } from '@src/contracts/requests/notification.request'
-import { UserNotificationFilterResponse } from '@src/contracts/responses/notification.response'
+import {
+  UserNotificationFilterResponse,
+  UnreadCountResponse,
+} from '@src/contracts/responses/notification.response'
 
 export class NotificationController {
   @AsyncHandler
@@ -35,6 +38,19 @@ export class NotificationController {
     const result = await notificationService.filterAsync(userId, options)
 
     const response: UserNotificationFilterResponse = {
+      success: true,
+      data: result,
+    }
+
+    return res.status(HTTP_STATUS_CODES.Ok).json(response)
+  }
+
+  @AsyncHandler
+  public async getUnreadCountAsync(req: Request, res: Response) {
+    const userId = req.headers[HEADERS.AUTH_ID] as string
+    const result = await notificationService.getUnreadCountAsync(userId)
+
+    const response: UnreadCountResponse = {
       success: true,
       data: result,
     }
