@@ -5,7 +5,7 @@ WORKDIR /app
 # Install pnpm globally
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy package files (pnpm cần pnpm-lock.yaml)
+# Copy package files
 COPY Backtrack.Chat/package.json Backtrack.Chat/pnpm-lock.yaml ./
 
 # Install ALL dependencies (including dev dependencies for build)

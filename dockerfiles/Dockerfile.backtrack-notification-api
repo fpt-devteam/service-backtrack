@@ -1,11 +1,9 @@
-# Build stage
 FROM node:20-alpine AS build
 WORKDIR /app
 
 # Install pnpm globally
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy package files (pnpm cần pnpm-lock.yaml)
 COPY Backtrack.Notification/package.json Backtrack.Notification/pnpm-lock.yaml ./
 
 # Install ALL dependencies (including dev dependencies for build)

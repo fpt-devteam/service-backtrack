@@ -79,7 +79,7 @@ services:
       - RABBITMQ_URL=amqp://backtrack:backtrack123@backtrack-message-broker:5672/
       - MONGODB_CONNECTIONSTRING=mongodb://mongo:mongo123@backtrack-notification-db:27017/backtrack-notification?authSource=admin
     env_file:
-      - ./env/backtrack-api-notification.docker.env
+      - ./env/backtrack-notification-api.docker.env
     networks:
       - backtrack-network
     restart: unless-stopped

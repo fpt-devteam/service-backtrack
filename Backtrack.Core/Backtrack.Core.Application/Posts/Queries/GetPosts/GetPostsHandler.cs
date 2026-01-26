@@ -32,12 +32,6 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
             authorId: query.AuthorId,
             cancellationToken: cancellationToken);
 
-        GeoPoint? searchPoint = null;
-        if (query.Latitude.HasValue && query.Longitude.HasValue)
-        {
-            searchPoint = new GeoPoint(query.Latitude.Value, query.Longitude.Value);
-        }
-
         var postResults = items.Select(post =>
         {
             return new PostResult
