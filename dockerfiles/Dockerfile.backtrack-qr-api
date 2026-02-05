@@ -2,45 +2,29 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copy package files for dependency installation (layer caching optimization)
+# Copy package files (Layer caching optimization)
 COPY Backtrack.QR/package*.json ./
 
-# Install all dependencies (including dev dependencies for build)
 RUN npm ci && \
-    npm cache clean --force
+  npm cache clean --force
 
 # Copy source code
 COPY Backtrack.QR/. .
 
-# Build the TypeScript application
+# Build
 RUN npm run build
 
 # ===================== Runtime stage =====================
 FROM node:20-alpine AS runtime
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+COPY --chown=node:node Backtrack.QR/package*.json ./
 
-# Copy package files and install production dependencies only
-COPY Backtrack.QR/package*.json ./
 RUN npm ci --omit=dev && \
-    npm cache clean --force
+  npm cache clean --force
 
-# Copy built files from build stage
-COPY --from=build /app/dist ./dist
+COPY --from=build --chown=node:node /app/dist ./dist
 
-# Create a non-root user for security
-RUN addgroup -g 1001 appuser && \
-    adduser -D -u 1001 -G appuser appuser && \
-    chown -R appuser:appuser /app
-USER appuser
+USER node
 
-# Configure the application
-ENV NODE_ENV=production
-ENV PORT=4000
-EXPOSE 4000
-
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/index.js"]
