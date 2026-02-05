@@ -1,5 +1,4 @@
-﻿using Backtrack.Core.Domain.Common;
-using Backtrack.Core.Domain.Constants;
+﻿using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 using System.Security.Cryptography;
 using System.Text;

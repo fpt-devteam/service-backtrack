@@ -1,11 +1,11 @@
-using Backtrack.Core.Application.Common.Exceptions;
 using FluentValidation;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Http.Json;
 using System.Diagnostics;
 using System.Text.Json;
 using Backtrack.Core.WebApi.Utils;
-using Backtrack.Core.WebApi.Contracts.Common;
+using Backtrack.Core.Application.Exceptions;
+using Backtrack.Core.WebApi.Common;
 
 namespace Backtrack.Core.WebApi.Middlewares;
 
@@ -16,7 +16,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         [typeof(NotFoundException)] = StatusCodes.Status404NotFound,
         [typeof(ConflictException)] = StatusCodes.Status409Conflict,
         [typeof(UnauthorizedException)] = StatusCodes.Status401Unauthorized,
-        [typeof(Application.Common.Exceptions.ValidationException)] = StatusCodes.Status400BadRequest,
+        [typeof(Application.Exceptions.ValidationException)] = StatusCodes.Status400BadRequest,
         [typeof(FluentValidation.ValidationException)] = StatusCodes.Status400BadRequest,
     };
 

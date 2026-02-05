@@ -1,7 +1,6 @@
-using Backtrack.Core.Application.Users;
+using Backtrack.Core.Application.Usecases.Users;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Infrastructure.Data;
-using Backtrack.Core.Infrastructure.Repositories.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Npgsql;

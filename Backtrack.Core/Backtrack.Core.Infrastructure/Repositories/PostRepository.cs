@@ -1,9 +1,8 @@
-using Backtrack.Core.Application.Posts;
+using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 using Backtrack.Core.Infrastructure.Data;
-using Backtrack.Core.Infrastructure.Repositories.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
