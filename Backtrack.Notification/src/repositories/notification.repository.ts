@@ -13,7 +13,7 @@ import { Model, Types } from 'mongoose'
 const DEFAULT_LIMIT = 5
 
 class NotificationRepository {
-  constructor(private readonly model: Model<any>) {}
+  constructor(private readonly model: Model<any>) { }
 
   public async filterAsync(userId: string, options: NotificationOptions) {
     const { cursor, status } = options
@@ -21,9 +21,13 @@ class NotificationRepository {
     const filter: any = { userId }
     if (cursor) filter.sentAt = { $lt: new Date(cursor) }
 
-    filter.status = {
-      $in: [NOTIFICATION_STATUS.Unread, NOTIFICATION_STATUS.Read],
-    }
+    if (!status)
+      filter.status = {
+        $in: [NOTIFICATION_STATUS.Unread, NOTIFICATION_STATUS.Read],
+      }
+
+    if (status === NOTIFICATION_STATUS.Unread)
+      filter.status = NOTIFICATION_STATUS.Unread
 
     if (status === NOTIFICATION_STATUS.Archived)
       filter.status = NOTIFICATION_STATUS.Archived
