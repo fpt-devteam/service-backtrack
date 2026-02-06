@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using Backtrack.ApiGateway.Endpoints;
 using Backtrack.ApiGateway.Middleware;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
@@ -34,6 +36,12 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Configure JSON serialization to return enums as strings
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
@@ -56,6 +64,9 @@ app.MapHealthChecks("/health");
 
 // 4. Firebase Authentication - validates tokens and injects user headers
 app.UseMiddleware<FirebaseAuthMiddleware>();
+
+// 5. Map auth endpoints (public, before reverse proxy)
+app.MapAuthEndpoints();
 
 app.MapReverseProxy();
 

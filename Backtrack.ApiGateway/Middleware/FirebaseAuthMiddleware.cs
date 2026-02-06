@@ -2,6 +2,7 @@ using System.Net;
 using Backtrack.ApiGateway.Common;
 using Backtrack.ApiGateway.Errors;
 using Backtrack.ApiGateway.Exceptions;
+using Backtrack.ApiGateway.Utils;
 using FirebaseAdmin.Auth;
 
 namespace Backtrack.ApiGateway.Middleware;
@@ -19,8 +20,6 @@ public class FirebaseAuthMiddleware
     private const string AuthAvatarUrlHeaderName = "X-Auth-Avatar-Url";
     private const string CorrelationIdHeaderName = "X-Correlation-Id";
 
-
-
     public FirebaseAuthMiddleware(
         RequestDelegate next,
         ILogger<FirebaseAuthMiddleware> logger,
@@ -32,13 +31,16 @@ public class FirebaseAuthMiddleware
         _publicPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "/health",
+            "/auth/check-email",
             "/api/qr/qr-code/public-code",
             "/api/qr/health",
             "/api/chat/hub",
             "/api/qr/order/payment-webhook",
             "/api/qr/payment/failed",
             "/api/qr/payment/succeed",
-            "/api/qr/packages"
+            "/api/qr/packages",
+            "/api/core/swagger",
+            "/swagger"
         };
     }
 
@@ -70,47 +72,31 @@ public class FirebaseAuthMiddleware
         {
             var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(token);
 
-            var authId = decodedToken.Uid;
-            if (string.IsNullOrWhiteSpace(authId))
+            var authId = GetAuthId(decodedToken);
+            if (authId is null)
             {
                 await WriteErrorResponse(context, AuthErrors.InvalidAuthToken, StatusCodes.Status401Unauthorized);
                 return;
             }
 
-            var email = decodedToken.Claims.TryGetValue("email", out var emailClaim)
-                ? emailClaim.ToString()
-                : string.Empty;
+            var email = GetEmail(decodedToken, authId);
+            if (email is null)
+            {
+                await WriteErrorResponse(context, AuthErrors.MissingEmailInToken, StatusCodes.Status401Unauthorized);
+                return;
+            }
 
-            // if (string.IsNullOrWhiteSpace(email))
-            // {
-            //     _logger.LogWarning("Email missing in Firebase token for user: {UserId}", authId);
-            //     await WriteErrorResponse(context, AuthErrors.MissingEmailInToken, StatusCodes.Status401Unauthorized);
-            //     return;
-            // }
-
-            var displayName = decodedToken.Claims.TryGetValue("name", out var nameClaim)
-                ? nameClaim.ToString()
-                : string.Empty;
-
-            var avatarUrl = decodedToken.Claims.TryGetValue("picture", out var pictureClaim)
-                ? pictureClaim.ToString()
-                : string.Empty;
+            if (!IsEmailVerified(decodedToken, authId))
+            {
+                await WriteErrorResponse(context, AuthErrors.EmailNotVerified, StatusCodes.Status401Unauthorized);
+                return;
+            }
 
             context.Request.Headers[AuthIdHeaderName] = authId;
             context.Request.Headers[AuthProviderHeaderName] = "firebase";
             context.Request.Headers[AuthEmailHeaderName] = email;
-
-            if (!string.IsNullOrWhiteSpace(displayName))
-            {
-                var encodedName = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(displayName));
-                context.Request.Headers[AuthNameHeaderName] = encodedName;
-            }
-
-            if (!string.IsNullOrWhiteSpace(avatarUrl))
-            {
-                var encodedAvatarUrl = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(avatarUrl));
-                context.Request.Headers[AuthAvatarUrlHeaderName] = encodedAvatarUrl;
-            }
+            context.Request.Headers[AuthNameHeaderName] = GetDisplayName(decodedToken);
+            context.Request.Headers[AuthAvatarUrlHeaderName] = GetAvatarUrl(decodedToken);
 
             await _next(context);
         }
@@ -127,6 +113,63 @@ public class FirebaseAuthMiddleware
                 Message: "An unexpected error occurred during authentication.");
             await WriteErrorResponse(context, internalError, StatusCodes.Status500InternalServerError);
         }
+    }
+
+    private static string? GetAuthId(FirebaseToken decodedToken)
+    {
+        var authId = decodedToken.Uid;
+        return string.IsNullOrWhiteSpace(authId) ? null : authId;
+    }
+
+    private string? GetEmail(FirebaseToken decodedToken, string authId)
+    {
+        var email = decodedToken.Claims.TryGetValue("email", out var emailClaim)
+            ? emailClaim?.ToString()
+            : null;
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            _logger.LogWarning("Email missing in Firebase token for user: {UserId}", authId);
+            return null;
+        }
+
+        return email;
+    }
+
+    private bool IsEmailVerified(FirebaseToken decodedToken, string authId)
+    {
+        if (!decodedToken.Claims.TryGetValue("email_verified", out var emailVerifiedClaim))
+        {
+            _logger.LogWarning("Email verified claim missing in Firebase token for user: {UserId}", authId);
+            return false;
+        }
+
+        if (emailVerifiedClaim is bool verified)
+            return verified;
+
+        if (bool.TryParse(emailVerifiedClaim?.ToString(), out var parsedVerified))
+            return parsedVerified;
+
+        _logger.LogWarning("Invalid email_verified claim value in Firebase token for user: {UserId}", authId);
+        return false;
+    }
+
+    private static string GetDisplayName(FirebaseToken decodedToken)
+    {
+        if (!decodedToken.Claims.TryGetValue("name", out var nameClaim))
+            return string.Empty;
+
+        var name = nameClaim?.ToString() ?? string.Empty;
+        return Base64Util.EncodeToBase64(name);
+    }
+
+    private static string GetAvatarUrl(FirebaseToken decodedToken)
+    {
+        if (!decodedToken.Claims.TryGetValue("picture", out var pictureClaim))
+            return string.Empty;
+
+        var avatarUrl = pictureClaim?.ToString() ?? string.Empty;
+        return Base64Util.EncodeToBase64(avatarUrl);
     }
 
     private bool IsPublicPath(string path)

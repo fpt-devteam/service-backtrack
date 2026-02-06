@@ -29,9 +29,6 @@ public class UserController : ControllerBase
         if (string.IsNullOrWhiteSpace(userId))
             throw new InvalidOperationException($"Required header '{HeaderNames.AuthId}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
 
-        // if (string.IsNullOrWhiteSpace(email))
-        // throw new InvalidOperationException($"Required header '{HeaderNames.AuthEmail}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
-
         var displayName = Base64Util.DecodeToUtf8(encodedDisplayName);
         var avatarUrl = Base64Util.DecodeToUtf8(encodedAvatarUrl);
 
