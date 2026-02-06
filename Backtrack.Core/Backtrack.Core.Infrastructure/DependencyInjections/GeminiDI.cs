@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Common.Interfaces.AI;
+using Backtrack.Core.Application.Interfaces.AI;
 using Backtrack.Core.Infrastructure.AI;
 using Backtrack.Core.Infrastructure.Configurations;
 using Microsoft.Extensions.Configuration;

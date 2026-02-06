@@ -1,10 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
-using Backtrack.Core.WebApi.Mappings;
-using Backtrack.Core.WebApi.Contracts.Posts.Requests;
-using Backtrack.Core.WebApi.Contracts.Posts.Responses;
-using Backtrack.Core.WebApi.Contracts.Common;
 using Backtrack.Core.WebApi.Constants;
+using Backtrack.Core.Application.Usecases.Posts.Commands.CreatePost;
+using Backtrack.Core.Application.Usecases.Posts.Queries.GetPosts;
+using Backtrack.Core.Application.Usecases.Posts.Queries.SearchPostsBySemantic;
+using Backtrack.Core.WebApi.Common;
+using Backtrack.Core.Application.Usecases.Posts.Queries.GetPostById;
+using Backtrack.Core.Application.Usecases.Posts.Queries.GetSimilarPosts;
+using Backtrack.Core.Application.Usecases.Posts.Commands.DeletePost;
+using Backtrack.Core.Application.Usecases.Posts;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -22,27 +26,24 @@ public class PostController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreatePostAsync([FromBody] CreatePostRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreatePostAsync([FromBody] CreatePostCommand command, CancellationToken cancellationToken)
     {
         var authorId = Request.Headers[HeaderNames.AuthId].ToString();
+        command = command with { AuthorId = authorId };
 
-        var command = request.ToCommand(authorId);
         var result = await _mediator.Send(command, cancellationToken);
-        var response = result.ToResponse();
-
-        return this.ApiCreated(response);
+        return this.ApiCreated(result);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetPostsAsync([FromQuery] GetPostsRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetPostsAsync([FromQuery] GetPostsQuery query, CancellationToken cancellationToken = default)
     {
-        var query = request.ToQuery();
         var result = await _mediator.Send(query, cancellationToken);
 
-        var response = PagedResponse<PostResponse>.Create(
-            items: result.Items.Select(item => item.ToResponse()),
-            page: request.Page,
-            pageSize: request.PageSize,
+        var response = PagedResponse<PostResult>.Create(
+            items: result.Items,
+            page: query.Page,
+            pageSize: query.PageSize,
             totalCount: result.Total
         );
 
@@ -54,23 +55,20 @@ public class PostController : ControllerBase
         [FromRoute] Guid postId,
         CancellationToken cancellationToken = default)
     {
-        var query = PostMappings.ToQuery(postId);
+        var query = new GetPostByIdQuery { PostId = postId };
         var result = await _mediator.Send(query, cancellationToken);
-        var response = result.ToResponse();
-
-        return this.ApiOk(response);
+        return this.ApiOk(result);
     }
 
     [HttpGet("search/semantic")]
-    public async Task<IActionResult> SearchPostsBySemanticAsync([FromQuery] SearchPostsBySemanticRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> SearchPostsBySemanticAsync([FromQuery] SearchPostsBySemanticQuery query, CancellationToken cancellationToken = default)
     {
-        var query = request.ToQuery();
         var result = await _mediator.Send(query, cancellationToken);
 
-        var response = PagedResponse<PostSemanticSearchResponse>.Create(
-            items: result.Items.Select(item => item.ToResponse()),
-            page: request.Page,
-            pageSize: request.PageSize,
+        var response = PagedResponse<PostSemanticSearchResult>.Create(
+            items: result.Items,
+            page: query.Page,
+            pageSize: query.PageSize,
             totalCount: result.Total
         );
 
@@ -90,17 +88,14 @@ public class PostController : ControllerBase
         [FromQuery] int limit = 5,
         CancellationToken cancellationToken = default)
     {
-        var request = new GetSimilarPostsRequest
+        var query = new GetSimilarPostsQuery
         {
             PostId = postId,
             Limit = limit
         };
 
-        var query = request.ToQuery();
         var result = await _mediator.Send(query, cancellationToken);
-        var response = result.ToResponse();
-
-        return this.ApiOk(response);
+        return this.ApiOk(result);
     }
 
     [HttpDelete("{postId:guid}")]
@@ -108,9 +103,8 @@ public class PostController : ControllerBase
         [FromRoute] Guid postId,
         CancellationToken cancellationToken = default)
     {
-        var command = PostMappings.ToCommand(postId);
+        var command = new DeletePostCommand { PostId = postId };
         await _mediator.Send(command, cancellationToken);
-
         return NoContent();
     }
 }

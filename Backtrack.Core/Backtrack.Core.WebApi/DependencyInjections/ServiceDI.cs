@@ -1,17 +1,14 @@
-using Backtrack.Core.Application.Common.Behaviors;
-using Backtrack.Core.Application.Common.Interfaces.Helpers;
-using Backtrack.Core.Application.Common.Interfaces.Messaging;
-using Backtrack.Core.Application.Common.Interfaces.Repositories;
-using Backtrack.Core.Application.Posts;
-using Backtrack.Core.Application.Posts.Commands.CreatePost;
-using Backtrack.Core.Application.Posts.Queries.GetPosts;
-using Backtrack.Core.Application.Users;
-using Backtrack.Core.Application.Users.Commands.EnsureUserExist;
-using Backtrack.Core.Application.Users.Queries.GetMe;
+using Backtrack.Core.Application.Interfaces.Helpers;
+using Backtrack.Core.Application.Interfaces.Messaging;
+using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases;
+using Backtrack.Core.Application.Usecases.Posts;
+using Backtrack.Core.Application.Usecases.Posts.Commands.CreatePost;
+using Backtrack.Core.Application.Usecases.Users;
+using Backtrack.Core.Application.Usecases.Users.Commands.EnsureUserExist;
 using Backtrack.Core.Infrastructure.Helpers;
 using Backtrack.Core.Infrastructure.Messaging;
 using Backtrack.Core.Infrastructure.Repositories;
-using Backtrack.Core.Infrastructure.Repositories.Common;
 using FluentValidation;
 using MediatR;
 

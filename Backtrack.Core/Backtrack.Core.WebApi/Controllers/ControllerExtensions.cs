@@ -1,5 +1,5 @@
 
-using Backtrack.Core.WebApi.Contracts.Common;
+using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Utils;
 using Microsoft.AspNetCore.Mvc;
 

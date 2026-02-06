@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Common.Interfaces.BackgroundJobs;
+using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Infrastructure.BackgroundJobs;
 using Backtrack.Core.WebApi.Configurations;
 using Backtrack.Core.WebApi.DependencyInjections;

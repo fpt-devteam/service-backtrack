@@ -7,11 +7,6 @@ services:
     container_name: backtrack-api-gateway
     ports:
       - "8080:8080"
-    environment:
-      - ReverseProxy__Clusters__core-cluster__Destinations__core-destination__Address=http://backtrack-core-api:2000
-      - ReverseProxy__Clusters__chat-cluster__Destinations__chat-destination__Address=http://backtrack-chat-api:3000
-      - ReverseProxy__Clusters__qr-cluster__Destinations__qr-destination__Address=http://backtrack-qr-api:4000
-      - ReverseProxy__Clusters__notification-cluster__Destinations__notification-destination__Address=http://backtrack-notification-api:5000     
     env_file:
       - ./env/backtrack-api-gateway.docker.env
     networks:
@@ -26,14 +21,10 @@ services:
     container_name: backtrack-core-api
     ports:
       - "2000:2000"
-    environment:
-      - ConnectionStrings__RabbitMQ=amqp://backtrack:backtrack123@backtrack-message-broker:5672/
-      - ConnectionStrings__PostgresDB=Host=backtrack-core-db;Port=5432;Database=backtrack-core-db;Username=postgres;Password=postgres123
     env_file:
       - ./env/backtrack-core-api.docker.env
     networks:
       - backtrack-network
-    # restart: unless-stopped
 
   backtrack-chat-api:
     build:
@@ -42,14 +33,10 @@ services:
     container_name: backtrack-chat-api
     ports:
       - "3000:3000"
-    environment:
-      - MONGODB_CONNECTIONSTRING=mongodb://mongo:mongo123@backtrack-chat-db:27017/backtrack-chat?authSource=admin
-      - RABBITMQ_URL=amqp://backtrack:backtrack123@backtrack-message-broker:5672/
     env_file:
       - ./env/backtrack-chat-api.docker.env
     networks:
       - backtrack-network
-    restart: unless-stopped
 
   backtrack-qr-api:
     image: backtrack-qr-api:latest
@@ -59,14 +46,11 @@ services:
     container_name: backtrack-qr-api
     ports:
       - "4000:4000"
-    environment:
-      - RABBITMQ_URL=amqp://backtrack:backtrack123@backtrack-message-broker:5672/
-      - DATABASE_URI=mongodb://mongo:mongo123@backtrack-qr-db:27017/backtrack-qr-db?authSource=admin
     env_file:
       - ./env/backtrack-qr-api.docker.env
     networks:
       - backtrack-network
-    restart: unless-stopped
+
   backtrack-notification-api:
     image: backtrack-notification-api:latest
     build:
@@ -75,9 +59,6 @@ services:
     container_name: backtrack-notification-api
     ports:
       - "5000:5000"
-    environment:
-      - RABBITMQ_URL=amqp://backtrack:backtrack123@backtrack-message-broker:5672/
-      - MONGODB_CONNECTIONSTRING=mongodb://mongo:mongo123@backtrack-notification-db:27017/backtrack-notification?authSource=admin
     env_file:
       - ./env/backtrack-notification-api.docker.env
     networks:
@@ -116,7 +97,6 @@ services:
       - backtrack-qr-db-data:/data/db
     networks:
       - backtrack-network
-    restart: unless-stopped
 
   backtrack-message-broker:
     image: rabbitmq:3.13-management-alpine

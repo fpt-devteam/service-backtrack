@@ -1,5 +1,5 @@
-using Backtrack.Core.Application.Common.Interfaces.Messaging;
-using Backtrack.Core.Application.Events.Integration;
+using Backtrack.Core.Application.Events;
+using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Domain.Constants;
 using DotNetCore.CAP;
 

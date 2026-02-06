@@ -1,4 +1,3 @@
-using Backtrack.Core.Domain.Common;
 using Backtrack.Core.Domain.Constants;
 
 namespace Backtrack.Core.Domain.Entities

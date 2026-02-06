@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Common.Interfaces.Helpers;
+using Backtrack.Core.Application.Interfaces.Helpers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;

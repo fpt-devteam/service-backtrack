@@ -1,12 +1,9 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Backtrack.Core.Application.Users.Commands.EnsureUserExist;
-using Backtrack.Core.Application.Users.Queries.GetMe;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
 using MediatR;
-using Backtrack.Core.WebApi.Contracts.Users.Responses;
-using Backtrack.Core.WebApi.Contracts.Users.Requests;
+using Backtrack.Core.Application.Usecases.Users.Commands.EnsureUserExist;
+using Backtrack.Core.Application.Usecases.Users.Queries.GetMe;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -47,17 +44,7 @@ public class UserController : ControllerBase
         };
 
         var result = await _mediator.Send(command, cancellationToken);
-
-        var response = new UserResponse
-        {
-            Id = result.Id,
-            Email = result.Email,
-            DisplayName = result.DisplayName,
-            AvatarUrl = result.AvatarUrl,
-            GlobalRole = result.GlobalRole
-        };
-
-        return this.ApiCreated(response);
+        return this.ApiCreated(result);
     }
 
     [HttpGet("me")]
@@ -70,16 +57,6 @@ public class UserController : ControllerBase
 
         var query = new GetMeQuery(userId);
         var result = await _mediator.Send(query, cancellationToken);
-
-        var response = new UserResponse
-        {
-            Id = result.Id,
-            Email = result.Email,
-            DisplayName = result.DisplayName,
-            AvatarUrl = result.AvatarUrl,
-            GlobalRole = result.GlobalRole
-        };
-
-        return this.ApiOk(response);
+        return this.ApiOk(result);
     }
 }
