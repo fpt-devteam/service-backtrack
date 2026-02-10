@@ -1,11 +1,9 @@
-﻿using Backtrack.Core.WebApi.Constants;
-
-namespace Backtrack.Core.WebApi.Utils
+﻿namespace Backtrack.Core.WebApi.Utils
 {
     public static class HttpContextUtil
     {
-        public static string GetCorrelationId(HttpContext context)
-            => context.Request.Headers.TryGetValue(HeaderNames.CorrelationId, out var values)
+        public static string GetHeaderValue(HttpContext context, string headerName)
+            => context.Request.Headers.TryGetValue(headerName, out var values)
                 ? values.ToString()
                 : string.Empty;
     }

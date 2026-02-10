@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http.Json;
 using System.Diagnostics;
 using System.Text.Json;
 using Backtrack.Core.WebApi.Utils;
+using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.WebApi.Common;
 
@@ -16,6 +17,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         [typeof(NotFoundException)] = StatusCodes.Status404NotFound,
         [typeof(ConflictException)] = StatusCodes.Status409Conflict,
         [typeof(UnauthorizedException)] = StatusCodes.Status401Unauthorized,
+        [typeof(ForbiddenException)] = StatusCodes.Status403Forbidden,
         [typeof(Application.Exceptions.ValidationException)] = StatusCodes.Status400BadRequest,
         [typeof(FluentValidation.ValidationException)] = StatusCodes.Status400BadRequest,
     };
@@ -45,7 +47,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
     {
         context.Response.ContentType = "application/json";
 
-        var correlationId = HttpContextUtil.GetCorrelationId(context);
+        var correlationId = HttpContextUtil.GetHeaderValue(context, HeaderNames.CorrelationId);
         var status = ResolveStatusCode(ex) ?? StatusCodes.Status500InternalServerError;
 
         if (status >= 500)

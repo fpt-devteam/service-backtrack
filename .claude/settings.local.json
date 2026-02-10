@@ -23,7 +23,9 @@
       "Bash(pnpm build:*)",
       "Bash(pnpm type-check:*)",
       "Bash(npm uninstall:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "mcp__notion__API-retrieve-a-page",
+      "mcp__notion__API-get-block-children"
     ],
     "deny": [],
     "ask": []
