@@ -1,17 +1,15 @@
 import { Channel, ConsumeMessage } from 'amqplib'
 import { createChannel } from '@src/messaging/rabbitmq-connection'
-import { UserEnsureExistEvent } from '@src/contracts/events/user-event'
+import { InvitationCreatedEvent } from '@src/contracts/events/invitation-event'
 import { EventTopics } from '@src/contracts/events/event-topics'
 import ENV from '@src/common/constants/ENV'
 import logger from '@src/utils/logger'
-import { parseUserGlobalRole, UserGlobalRole } from '@src/models/user.model'
-import userRepository from '@src/repositories/user.repository'
 
 const EXCHANGE_NAME = ENV.RabbitMQ.Exchange
-const QUEUE_NAME = ENV.RabbitMQ.UserSyncQueue
-const BINDING_PATTERN = 'user.#'
+const QUEUE_NAME = ENV.RabbitMQ.SendEmailQueue
+const BINDING_PATTERN = 'invitation.#'
 
-export async function startUserSyncConsumer(): Promise<void> {
+export async function startSendEmailConsumer(): Promise<void> {
   const channel = await setupChannel()
   await channel.consume(QUEUE_NAME, (msg) => processMessage(channel, msg))
 }
@@ -21,11 +19,11 @@ async function setupChannel(): Promise<Channel> {
     const channel = await createChannel()
     await channel.assertQueue(QUEUE_NAME, { durable: true })
     await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, BINDING_PATTERN)
-    logger.info(`User sync consumer started. Listening to queue: ${QUEUE_NAME}`)
+    logger.info(`Send email consumer started. Listening to queue: ${QUEUE_NAME}`)
 
     return channel
   } catch (error) {
-    logger.error('Failed to start user sync consumer:', {
+    logger.error('Failed to start send email consumer:', {
       error: String(error),
     })
     throw error
@@ -44,9 +42,9 @@ async function processMessage(
   const content = msg.content.toString()
 
   try {
-    if (routingKey === EventTopics.User.EnsureExist) {
-      const event: UserEnsureExistEvent = JSON.parse(content)
-      await handleUserEnsureExist(event)
+    if (routingKey === EventTopics.Invitation.Created) {
+      const event: InvitationCreatedEvent = JSON.parse(content)
+      await handleInvitationCreated(event)
     } else {
       logger.warn(`Unknown routing key: ${routingKey}`)
     }
@@ -59,15 +57,16 @@ async function processMessage(
   }
 }
 
-async function handleUserEnsureExist(event: UserEnsureExistEvent): Promise<void> {
-  await userRepository.ensureExistAsync({
-    _id: event.Id,
-    email: event.Email,
-    displayName: event.DisplayName,
-    avatarUrl: event.AvatarUrl ?? null,
-    globalRole: parseUserGlobalRole(event.GlobalRole) ?? UserGlobalRole.Customer,
-    createdAt: new Date(event.CreatedAt),
-    syncedAt: new Date(),
-  });
+async function handleInvitationCreated(event: InvitationCreatedEvent): Promise<void> {
+  // Implement the logic to handle the invitation created event, such as sending an email
+  // log all properties of the event for debugging purposes
+  logger.info('Handling InvitationCreatedEvent:', {
+    InvitationId: event.InvitationId,
+    Email: event.Email,
+    OrganizationName: event.OrganizationName,
+    InviterName: event.InviterName,
+    Role: event.Role,
+    ExpiredTime: event.ExpiredTime,
+    EventTimestamp: event.EventTimestamp,
+  })
 }
-
