@@ -1,7 +1,6 @@
-using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Entities;
 
-namespace Backtrack.Core.Application.Usecases.Organizations;
+namespace Backtrack.Core.Application.Interfaces.Repositories;
 
 public interface IOrganizationRepository : IGenericRepository<Organization, Guid>
 {

@@ -2,10 +2,7 @@ using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases;
-using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Posts.Commands.CreatePost;
-using Backtrack.Core.Application.Usecases.Organizations;
-using Backtrack.Core.Application.Usecases.Users;
 using Backtrack.Core.Application.Usecases.Users.Commands.EnsureUserExist;
 using Backtrack.Core.Infrastructure.Helpers;
 using Backtrack.Core.Infrastructure.Messaging;
@@ -33,6 +30,7 @@ public static class ServiceDI
         services.AddScoped<IPostRepository, PostRepository>();
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         services.AddScoped<IMembershipRepository, MembershipRepository>();
+        services.AddScoped<IJoinInvitationRepository, JoinInvitationRepository>();
         services.AddScoped(typeof(IGenericRepository<,>), typeof(CrudRepositoryBase<,>));
 
         // Messaging

@@ -2,7 +2,7 @@
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.AI;
 using Backtrack.Core.Application.Interfaces.Helpers;
-using Backtrack.Core.Application.Usecases.Posts;
+using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;

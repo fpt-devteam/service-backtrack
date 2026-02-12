@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Usecases.Organizations;
+using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Infrastructure.Data;
@@ -46,5 +46,12 @@ public class MembershipRepository : CrudRepositoryBase<Membership, Guid>, IMembe
                 m.Role == MembershipRole.OrgAdmin &&
                 m.Status == MembershipStatus.Active,
                 cancellationToken);
+    }
+
+    public async Task<Membership?> GetByOrgAndUserEmailAsync(Guid orgId, string email, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(m => m.User)
+            .FirstOrDefaultAsync(m => m.OrganizationId == orgId && m.User.Email == email, cancellationToken);
     }
 }

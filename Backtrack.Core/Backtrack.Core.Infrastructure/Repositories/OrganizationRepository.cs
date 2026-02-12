@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Usecases.Organizations;
+using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;

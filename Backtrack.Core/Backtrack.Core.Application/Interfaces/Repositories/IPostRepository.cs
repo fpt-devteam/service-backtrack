@@ -1,8 +1,7 @@
-using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 
-namespace Backtrack.Core.Application.Usecases.Posts
+namespace Backtrack.Core.Application.Interfaces.Repositories
 {
     public interface IPostRepository : IGenericRepository<Post, Guid>
     {

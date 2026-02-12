@@ -1,6 +1,7 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.AI;
+using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using MediatR;
 

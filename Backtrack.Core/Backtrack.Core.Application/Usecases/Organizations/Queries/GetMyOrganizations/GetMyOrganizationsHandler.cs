@@ -1,3 +1,4 @@
+using Backtrack.Core.Application.Interfaces.Repositories;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Organizations.Queries.GetMyOrganizations;
