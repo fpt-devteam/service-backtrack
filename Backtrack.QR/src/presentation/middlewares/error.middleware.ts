@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import * as logger from "@/src/shared/utils/logger.js";
-import { isAppError } from "@/src/shared/errors/error.js";
-import { fail, getHttpStatus } from "@/src/shared/contracts/common/api-response.js";
+import * as logger from "@/src/shared/core/logger.js";
+import { isAppError } from "@/src/shared/core/error.js";
+import { fail, getHttpStatus } from "@/src/presentation/contracts/common/api-response.js";
 
 const getCorrelationId = (req: Request) =>
   (req as any).correlationId || "unknown";
@@ -26,7 +26,7 @@ export const errorMiddleware = (
 
     return res
       .status(getHttpStatus(err))
-      .json(fail(err.code, err.message, { correlationId, cause: err.cause }));
+      .json(fail(err.code, err.message, { cause: err.cause }));
   }
 
   if (err instanceof globalThis.Error) {
@@ -50,7 +50,6 @@ export const errorMiddleware = (
     error: {
       code: "InternalServerError",
       message: "An unexpected error occurred",
-    },
-    correlationId,
+    }
   });
 };

@@ -1,25 +1,25 @@
 import { Request, Response, NextFunction } from 'express';
-import { randomUUID } from 'crypto';
+import { getHeader, HeaderNames } from '@/src/presentation/utils/http-headers.util.js';
 
 declare global {
-    namespace Express {
-        interface Request {
-            correlationId?: string;
-        }
+  namespace Express {
+    interface Request {
+      correlationId?: string;
     }
+  }
 }
 
-/**
- * Correlation ID middleware
- * Ensures every request has a unique correlation ID for tracking
- */
 export const correlationMiddleware = (
-    req: Request,
-    res: Response,
-    next: NextFunction
+  req: Request,
+  res: Response,
+  next: NextFunction
 ) => {
-    const correlationId = (req.headers['x-correlation-id'] as string) || randomUUID();
-    req.correlationId = correlationId;
-    res.setHeader('X-Correlation-Id', correlationId);
-    next();
+  const correlationId = getHeader(req, HeaderNames.CorrelationId) ?? "missing-correlation-id";
+  req.correlationId = correlationId;
+
+  const originalJson = res.json.bind(res);
+  res.json = (body: unknown) => {
+    return originalJson({ ...(body as object), correlationId });
+  };
+  next();
 };

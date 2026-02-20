@@ -1,35 +1,20 @@
-import { connectToRabbitMQ, closeConnection } from './rabbitmq-connection.js';
-import { startUserSyncConsumer } from '@/src/infrastructure/consumers/user-sync.consumer.js';
-import { startQrGenerationConsumer } from '@/src/infrastructure/consumers/qr-generation.consumer.js';
-import * as logger from '@/src/shared/utils/logger.js';
+import { connectToRabbitMQ, closeConnection } from '@/src/infrastructure/messaging/rabbitmq-connection.js';
+import { startUserSyncConsumer } from '@/src/infrastructure/messaging/user-sync.consumer.js';
+import * as logger from '@/src/shared/core/logger.js';
 
 export async function startConsumers(): Promise<void> {
-    try {
-        logger.info('Starting message consumers...');
-
-        // Connect to RabbitMQ
-        await connectToRabbitMQ();
-
-        // Start all consumers
-        await startUserSyncConsumer();
-        await startQrGenerationConsumer();
-
-        logger.info('All message consumers started successfully');
-    } catch (error) {
-        logger.error('Failed to start message consumers:', { error: String(error) });
-        throw error;
-    }
+  logger.info('Starting message consumers...');
+  await connectToRabbitMQ();
+  await startUserSyncConsumer();
 }
 
 export async function stopConsumers(): Promise<void> {
-    try {
-        logger.info('Stopping message consumers...');
-
-        // Close RabbitMQ connection (will also close all channels and consumers)
-        await closeConnection();
-
-        logger.info('All message consumers stopped successfully');
-    } catch (error) {
-        logger.error('Error stopping message consumers:', { error: String(error) });
-    }
+  try {
+    logger.info('Stopping message consumers...');
+    // Close RabbitMQ connection (will also close all channels and consumers)
+    await closeConnection();
+    logger.info('All message consumers stopped successfully');
+  } catch (error) {
+    logger.error('Error stopping message consumers:', { error: String(error) });
+  }
 }

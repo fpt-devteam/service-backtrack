@@ -1,11 +1,8 @@
 import express from 'express';
-import { correlationMiddleware } from './presentation/middlewares/correlation.middleware.js';
-import { errorMiddleware } from './presentation/middlewares/error.middleware.js';
-import { loggingMiddleware } from './presentation/middlewares/logging.middleware.js';
-import qrCodeRoute from './presentation/routes/qr-code.route.js';
-import orderRoute from './presentation/routes/order.route.js';
-import paymentRoute from './presentation/routes/payment.route.js';
-import packageRoute from './presentation/routes/package.route.js';
+import { errorMiddleware } from '@/src/presentation/middlewares/error.middleware.js';
+import { loggingMiddleware } from '@/src/presentation/middlewares/logging.middleware.js';
+import userRoute from '@/src/presentation/routes/user.route.js';
+import { correlationMiddleware } from '@/src/presentation/middlewares/correlation.middleware.js';
 
 export const app = express();
 
@@ -14,12 +11,7 @@ app.use(correlationMiddleware);
 app.use(loggingMiddleware);
 
 app.get('/health', (req, res) => {
-    res.json({ status: 'healthy' });
+  res.json({ status: 'healthy' });
 });
-
-app.use('/', qrCodeRoute);
-app.use('/', orderRoute);
-app.use('/', paymentRoute);
-app.use('/', packageRoute);
-
+app.use('/users', userRoute);
 app.use(errorMiddleware);

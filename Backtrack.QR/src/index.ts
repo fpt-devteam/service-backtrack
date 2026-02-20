@@ -4,8 +4,8 @@ import path from "node:path";
 const envPath = path.resolve(process.cwd(), "../env/backtrack-qr-api.docker.env");
 
 dotenv.config({
-    path: envPath,
+  path: envPath,
 });
 
-await import('@/src/shared/configs/env.js');
-await import("./main.js");
+await import('@/src/infrastructure/configs/env.js');
+await import("@/src/main.js");

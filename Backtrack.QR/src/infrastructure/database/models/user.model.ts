@@ -1,19 +1,7 @@
-import mongoose, { Schema } from "mongoose";
+import { Schema, model, Document } from 'mongoose';
+import { UserGlobalRoleType, UserGlobalRole } from '@/src/domain/constants/user-global-role.constant.js';
 
-export const UserGlobalRole = {
-  Customer: 'Customer',
-  PlatformSuperAdmin: 'PlatformSuperAdmin',
-} as const;
-
-export type UserGlobalRoleType = typeof UserGlobalRole[keyof typeof UserGlobalRole];
-
-const ROLE_VALUES = Object.values(UserGlobalRole) as readonly UserGlobalRoleType[];
-export function parseUserGlobalRole(input: unknown): UserGlobalRoleType | null {
-  if (typeof input !== "string") return null;
-  return (ROLE_VALUES as readonly string[]).includes(input) ? (input as UserGlobalRoleType) : null;
-}
-
-export interface IUser {
+export interface UserDocument extends Document<string> {
   _id: string;
   email?: string | null;
   displayName?: string | null;
@@ -25,19 +13,23 @@ export interface IUser {
   syncedAt: Date;
 }
 
-const UserSchema = new Schema<IUser>(
+const userSchema = new Schema<UserDocument>(
   {
     _id: { type: String, required: true },
-    email: { type: String, required: false, index: true },
+    email: { type: String, default: null },
     displayName: { type: String, default: null },
     avatarUrl: { type: String, default: null },
-    globalRole: { type: String, enum: Object.values(UserGlobalRole), default: UserGlobalRole.Customer },
+    globalRole: {
+      type: String,
+      enum: Object.values(UserGlobalRole),
+      required: true,
+    },
     deletedAt: { type: Date, default: null },
-    syncedAt: { type: Date, default: Date.now },
+    syncedAt: { type: Date, required: true },
   },
   {
     timestamps: true,
   }
 );
 
-export const UserModel = mongoose.model<IUser>('User', UserSchema);
+export const UserModel = model<UserDocument>('User', userSchema);

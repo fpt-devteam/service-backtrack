@@ -1,5 +1,4 @@
-// src/middlewares/validate.ts
-import { createError } from "@/src/shared/errors/error.js";
+import { createError } from "@/src/shared/core/error.js";
 import type { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 
