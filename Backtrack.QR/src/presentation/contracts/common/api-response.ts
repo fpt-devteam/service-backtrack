@@ -10,9 +10,9 @@ export const ok = <T>(data: T): ApiSuccess<T> => ({
   data,
 });
 
-export const fail = (code: string, message: string, details?: unknown): ApiFailure => ({
+export const fail = (error: Error): ApiFailure => ({
   success: false,
-  error: { code, message, details },
+  error: { code: error.code, message: error.message, details: error.cause },
 });
 
 const statusMap: Record<string, number> = {

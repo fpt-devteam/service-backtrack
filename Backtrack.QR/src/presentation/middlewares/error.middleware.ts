@@ -26,7 +26,7 @@ export const errorMiddleware = (
 
     return res
       .status(getHttpStatus(err))
-      .json(fail(err.code, err.message, { cause: err.cause }));
+      .json(fail(err));
   }
 
   if (err instanceof globalThis.Error) {

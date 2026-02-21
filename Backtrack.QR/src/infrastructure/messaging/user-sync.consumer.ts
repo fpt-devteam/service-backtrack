@@ -5,6 +5,7 @@ import { UserEnsureExistEvent } from '@/src/infrastructure/events/user-events.js
 import { EventTopics } from '@/src/infrastructure/events/event-topics.js';
 import { userRepository } from '@/src/infrastructure/database/repositories/user.repository.js';
 import { env } from '@/src/infrastructure/configs/env.js';
+import { qrRepository } from '@/src/infrastructure/database/repositories/qr.repository.js';
 
 const EXCHANGE_NAME = env.RABBITMQ_EXCHANGE;
 const QUEUE_NAME = env.RABBITMQ_USER_SYNC_QUEUE;
@@ -38,6 +39,7 @@ async function processMessage(channel: Channel, msg: ConsumeMessage | null): Pro
 
   const routingKey = msg.fields.routingKey;
   const content = msg.content.toString();
+  logger.info(`Received message with routing key ${routingKey}: ${content}`);
 
   try {
     if (routingKey === EventTopics.User.EnsureExist) {
@@ -47,6 +49,7 @@ async function processMessage(channel: Channel, msg: ConsumeMessage | null): Pro
       logger.warn(`Unknown routing key: ${routingKey}`);
     }
     channel.ack(msg);
+    logger.info(`Message with routing key ${routingKey} processed successfully`);
   } catch (error) {
     logger.error(`Error processing message with routing key ${routingKey}:`, { error: String(error) });
     channel.nack(msg, false, true);
@@ -55,4 +58,5 @@ async function processMessage(channel: Channel, msg: ConsumeMessage | null): Pro
 
 async function handleUserEnsureExist(user: UserEnsureExistEvent): Promise<void> {
   await userRepository.ensureExist(user);
+  await qrRepository.ensureExist(user);
 }

@@ -13,7 +13,7 @@ export const getUserByIdAsync = async (req: Request, res: Response): Promise<voi
       error: result.error,
       correlationId: req.correlationId
     });
-    res.status(getHttpStatus(result.error)).json(fail(result.error.kind, result.error.message));
+    res.status(getHttpStatus(result.error)).json(fail(result.error));
     return;
   }
 
@@ -35,7 +35,7 @@ export const createUserAsync = async (req: Request, res: Response): Promise<void
       error: result.error,
       correlationId: req.correlationId
     });
-    res.status(getHttpStatus(result.error)).json(fail(result.error.kind, result.error.message));
+    res.status(getHttpStatus(result.error)).json(fail(result.error));
     return;
   }
 
