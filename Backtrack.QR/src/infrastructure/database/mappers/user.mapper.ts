@@ -7,10 +7,11 @@ export const userToDomain = (doc: UserDocument): User => ({
   displayName: doc.displayName,
   avatarUrl: doc.avatarUrl,
   globalRole: doc.globalRole,
+  providerCustomerId: doc.providerCustomerId,
+  subscriptionStatus: doc.subscriptionStatus,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
   deletedAt: doc.deletedAt,
-  syncedAt: doc.syncedAt,
 });
 
 export const userToPersistence = (user: Omit<User, 'createdAt' | 'updatedAt'>) => ({
@@ -19,6 +20,7 @@ export const userToPersistence = (user: Omit<User, 'createdAt' | 'updatedAt'>) =
   displayName: user.displayName,
   avatarUrl: user.avatarUrl,
   globalRole: user.globalRole,
+  providerCustomerId: user.providerCustomerId,
+  subscriptionStatus: user.subscriptionStatus,
   deletedAt: user.deletedAt,
-  syncedAt: user.syncedAt,
 });

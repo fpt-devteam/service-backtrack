@@ -7,10 +7,11 @@ export interface UserDocument extends Document<string> {
   displayName?: string | null;
   avatarUrl?: string | null;
   globalRole: UserGlobalRoleType;
+  providerCustomerId?: string | null;
+  subscriptionStatus?: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
-  syncedAt: Date;
 }
 
 const userSchema = new Schema<UserDocument>(
@@ -24,8 +25,9 @@ const userSchema = new Schema<UserDocument>(
       enum: Object.values(UserGlobalRole),
       required: true,
     },
+    providerCustomerId: { type: String, default: null, index: true },
+    subscriptionStatus: { type: String, default: null },
     deletedAt: { type: Date, default: null },
-    syncedAt: { type: Date, required: true },
   },
   {
     timestamps: true,

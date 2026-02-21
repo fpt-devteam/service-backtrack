@@ -6,8 +6,9 @@ export type User = {
   displayName?: string | null;
   avatarUrl?: string | null;
   globalRole: UserGlobalRoleType;
+  providerCustomerId?: string | null;
+  subscriptionStatus?: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
-  syncedAt: Date;
 }

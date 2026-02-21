@@ -16,8 +16,7 @@ export const createUserRepository = (): UserRepository => ({
         displayName: user.DisplayName,
         avatarUrl: user.AvatarUrl,
         globalRole: parseUserGlobalRole(user.GlobalRole) ?? UserGlobalRole.Customer,
-        createdAt: new Date(user.CreatedAt),
-        syncedAt: new Date(),
+        createdAt: new Date(user.CreatedAt)
       }
     );
     return userToDomain(doc);
@@ -32,15 +31,20 @@ export const createUserRepository = (): UserRepository => ({
     return doc ? userToDomain(doc) : null;
   },
 
+  findByProviderCustomerId: async (providerCustomerId: string) => {
+    const doc = await UserModel.findOne({ providerCustomerId, deletedAt: null });
+    return doc ? userToDomain(doc) : null;
+  },
+
   save: async (user: Omit<User, 'createdAt' | 'updatedAt'>) => {
     const doc = await UserModel.create(userToPersistence(user));
     return userToDomain(doc);
   },
 
-  update: async (user) => {
+  update: async (id: string, fields: Partial<Omit<User, 'createdAt' | 'updatedAt' | 'id'>>) => {
     const doc = await UserModel.findByIdAndUpdate(
-      user.id,
-      { $set: userToPersistence(user) },
+      id,
+      { $set: fields },
       { new: true }
     );
     return doc ? userToDomain(doc) : null;

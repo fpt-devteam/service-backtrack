@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
-import { DB_NAME } from '@/src/infrastructure/configs/constants.js';
 import { env } from '@/src/infrastructure/configs/env.js';
 import * as logger from '@/src/shared/core/logger.js';
 
+const DB_NAME = 'backtrack-qr-db';
 export const connectToDatabase = async () => {
   try {
     await mongoose.connect(env.DATABASE_URI, {
