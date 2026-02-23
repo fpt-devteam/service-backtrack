@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Usecases.Posts;
+using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;

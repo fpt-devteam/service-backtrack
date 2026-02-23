@@ -2,6 +2,7 @@ import { z } from 'zod'
 import {
   NOTIFICATION_EVENT,
   NOTIFICATION_STATUS,
+  NOTIFICATION_CATEGORY,
 } from '@src/types/notification.type'
 
 export const NotificationIdsSchema = z
@@ -28,6 +29,7 @@ export const NotificationSendPushRequestSchema = z.object({
   body: z.string().trim().min(1, 'Body is required'),
   data: z.record(z.string(), z.unknown()).optional(),
   type: z.enum(Object.values(NOTIFICATION_EVENT)),
+  category: z.enum(Object.values(NOTIFICATION_CATEGORY)),
 })
 
 export type NotificationSendPushRequest = z.infer<

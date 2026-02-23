@@ -1,5 +1,6 @@
 using Backtrack.Core.Application.Events;
 using Backtrack.Core.Application.Interfaces.Messaging;
+using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;

@@ -43,6 +43,7 @@ export default {
     Url: getEnv('RABBITMQ_URL'),
     Exchange: getEnv('RABBITMQ_EXCHANGE'),
     UserSyncQueue: getEnv('RABBITMQ_USER_SYNC_QUEUE'),
+    SendEmailQueue: getEnv('RABBITMQ_SEND_EMAIL_QUEUE'),
   },
 } as const
 

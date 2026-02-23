@@ -1,5 +1,6 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
+using Backtrack.Core.Application.Interfaces.Repositories;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Users.Queries.GetMe;

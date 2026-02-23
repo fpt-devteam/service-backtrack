@@ -1,4 +1,4 @@
-import { NOTIFICATION_EVENT, NOTIFICATION_STATUS } from '../types/notification.type'
+import { NOTIFICATION_CATEGORY, NOTIFICATION_EVENT, NOTIFICATION_STATUS } from '../types/notification.type'
 import mongoose, { Schema } from 'mongoose'
 
 const NotificationSchema = new Schema(
@@ -8,6 +8,12 @@ const NotificationSchema = new Schema(
     type: {
       type: String,
       enum: Object.values(NOTIFICATION_EVENT),
+      required: true,
+    },
+
+    category: {
+      type: String,
+      enum: Object.values(NOTIFICATION_CATEGORY),
       required: true,
     },
 

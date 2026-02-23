@@ -21,16 +21,13 @@ public class UserController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateUserAsync(CancellationToken cancellationToken)
     {
-        var userId = Request.Headers[HeaderNames.AuthId].ToString();
-        var email = Request.Headers[HeaderNames.AuthEmail].ToString();
-        var encodedDisplayName = Request.Headers[HeaderNames.AuthName].ToString();
-        var encodedAvatarUrl = Request.Headers[HeaderNames.AuthAvatarUrl].ToString();
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var email = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthEmail);
+        var encodedDisplayName = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthName);
+        var encodedAvatarUrl = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthAvatarUrl);
 
         if (string.IsNullOrWhiteSpace(userId))
             throw new InvalidOperationException($"Required header '{HeaderNames.AuthId}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
-
-        // if (string.IsNullOrWhiteSpace(email))
-        // throw new InvalidOperationException($"Required header '{HeaderNames.AuthEmail}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
 
         var displayName = Base64Util.DecodeToUtf8(encodedDisplayName);
         var avatarUrl = Base64Util.DecodeToUtf8(encodedAvatarUrl);
@@ -50,7 +47,7 @@ public class UserController : ControllerBase
     [HttpGet("me")]
     public async Task<IActionResult> GetMeAsync(CancellationToken cancellationToken)
     {
-        var userId = Request.Headers[HeaderNames.AuthId].ToString();
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
 
         if (string.IsNullOrWhiteSpace(userId))
             throw new InvalidOperationException($"Required header '{HeaderNames.AuthId}' is missing. This indicates a configuration issue with the API Gateway or middleware.");

@@ -1,3 +1,4 @@
+import { startSendEmailConsumer } from '@src/consumers/send-email.consumer';
 import { connectToRabbitMQ, closeConnection } from './rabbitmq-connection';
 import { startUserSyncConsumer } from '@src/consumers/user-sync.consumer';
 
@@ -10,6 +11,7 @@ export async function startConsumers(): Promise<void> {
     await connectToRabbitMQ();
 
     await startUserSyncConsumer();
+    await startSendEmailConsumer();
 
     logger.info('All message consumers started successfully');
   } catch (error) {

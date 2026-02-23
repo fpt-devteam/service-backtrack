@@ -6,4 +6,9 @@ public static class EventTopics
     {
         public const string EnsureExist = "user.ensure-exist";
     }
+
+    public static class Invitation
+    {
+        public const string Created = "invitation.created";
+    }
 }

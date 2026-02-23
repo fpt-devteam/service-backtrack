@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using Backtrack.Core.WebApi.Constants;
+using Backtrack.Core.WebApi.Utils;
 using Backtrack.Core.Application.Usecases.Posts.Commands.CreatePost;
 using Backtrack.Core.Application.Usecases.Posts.Queries.GetPosts;
 using Backtrack.Core.Application.Usecases.Posts.Queries.SearchPostsBySemantic;
@@ -28,7 +29,7 @@ public class PostController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreatePostAsync([FromBody] CreatePostCommand command, CancellationToken cancellationToken)
     {
-        var authorId = Request.Headers[HeaderNames.AuthId].ToString();
+        var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         command = command with { AuthorId = authorId };
 
         var result = await _mediator.Send(command, cancellationToken);

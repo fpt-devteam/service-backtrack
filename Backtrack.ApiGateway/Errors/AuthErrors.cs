@@ -19,4 +19,8 @@ public static class AuthErrors
     public static readonly Error MissingEmailInToken = new(
         Code: "MissingEmailInToken",
         Message: "Missing email in token");
+
+    public static readonly Error EmailNotVerified = new(
+        Code: "EmailNotVerified",
+        Message: "Email address has not been verified.");
 }

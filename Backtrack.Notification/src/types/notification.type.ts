@@ -16,4 +16,10 @@ export const NOTIFICATION_EVENT = {
   SystemAlertEvent: "SystemAlertEvent",
 } as const
 
+export const NOTIFICATION_CATEGORY = {
+  InApp: "InApp",
+  Push: "Push",
+} as const
+
 export type NotificationEvent = (typeof NOTIFICATION_EVENT)[keyof typeof NOTIFICATION_EVENT]
+export type NotificationCategory = (typeof NOTIFICATION_CATEGORY)[keyof typeof NOTIFICATION_CATEGORY]

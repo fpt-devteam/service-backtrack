@@ -15,7 +15,9 @@
       "Bash(dotnet remove reference:*)",
       "Bash(dotnet remove:*)",
       "Bash(dotnet clean:*)",
-      "Bash(dotnet add:*)"
+      "Bash(dotnet add:*)",
+      "mcp__notion__API-retrieve-a-page",
+      "mcp__notion__API-get-block-children"
     ],
     "deny": [],
     "ask": []

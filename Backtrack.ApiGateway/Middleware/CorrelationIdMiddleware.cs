@@ -21,14 +21,14 @@ public class CorrelationIdMiddleware
             !string.IsNullOrWhiteSpace(existingCorrelationId))
         {
             correlationId = existingCorrelationId!;
-            _logger.LogDebug("Using existing Correlation ID: {CorrelationId}", correlationId);
+            _logger.LogInformation("Using existing Correlation ID: {CorrelationId}", correlationId);
         }
         else
         {
             // Generate new correlation ID
             correlationId = Guid.NewGuid().ToString();
             context.Request.Headers[CorrelationIdHeader] = correlationId;
-            _logger.LogDebug("Generated new Correlation ID: {CorrelationId}", correlationId);
+            _logger.LogInformation("Generated new Correlation ID: {CorrelationId}", correlationId);
         }
 
         // Add correlation ID to response headers for client tracking

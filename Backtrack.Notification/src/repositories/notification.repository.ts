@@ -4,10 +4,9 @@ import {
   NotificationStatusUpdateRequest,
 } from '@src/contracts/requests/notification.request'
 import { UserNotification } from '@src/contracts/responses/notification.response'
-import { Device } from '@src/models/device.model'
 import { Notification } from '@src/models/notification.model'
-import expoPushProvider from '@src/providers/expo-push.provider'
 import { NOTIFICATION_STATUS } from '@src/types/notification.type'
+
 import { Model, Types } from 'mongoose'
 
 const DEFAULT_LIMIT = 5
@@ -98,10 +97,9 @@ class NotificationRepository {
   }
 
   public async createAsync(payload: NotificationSendPushRequest) {
-    const { target, source, title, body, data, type } = payload
+    const { target, source, title, body, data, type, category } = payload
     const { eventId, name } = source
 
-    // Step 1: Check for existing notification (deduplication)
     const existNotification = await Notification.findOne({
       userId: target.userId,
       source: { name, eventId },
@@ -109,13 +107,11 @@ class NotificationRepository {
 
     if (existNotification) {
       return {
-        notificationId: existNotification._id.toString(),
-        status: existNotification.status,
+        notification: existNotification,
         deduped: true,
       }
     }
 
-    // Step 2: Create new notification in DB with status Pending
     const notificationData = {
       userId: target.userId,
       type,
@@ -124,24 +120,12 @@ class NotificationRepository {
       data: data || null,
       status: NOTIFICATION_STATUS.Unread,
       source: { name, eventId },
+      category,
       sentAt: new Date(),
     }
 
     const notification = await Notification.create(notificationData)
-
-    // Step 3: Send push notification
-    await this.sendPushNotification({
-      userId: target.userId,
-      title,
-      body,
-      data,
-    })
-
-    return {
-      notificationId: notification._id.toString(),
-      status: notification.status,
-      deduped: false,
-    }
+    return { notification, deduped: false }
   }
 
   // Validations
@@ -180,24 +164,6 @@ class NotificationRepository {
       }
     }
     return true
-  }
-
-  // Helpers
-  private async sendPushNotification(message: {
-    userId: string
-    title?: string | null
-    body?: string | null
-    data?: Record<string, unknown>
-  }) {
-    try {
-      const { userId, title, body, data } = message
-      const allDevices = await Device.find({ userId, isActive: true })
-
-      const tokens = allDevices.map((device) => device.token)
-      await expoPushProvider.sendToTokens(tokens, { title, body, data })
-    } catch (error) {
-      console.log('Error at send push notification:', error)
-    }
   }
 }
 
