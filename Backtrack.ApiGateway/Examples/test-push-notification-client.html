@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push Notification Service Test Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #555;
+            margin: 20px 0 10px 0;
+            font-size: 18px;
+        }
+
+        .config {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+
+        .config div {
+            margin: 5px 0;
+        }
+
+        .config strong {
+            display: inline-block;
+            width: 120px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        input,
+        textarea {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        input {
+            width: 300px;
+        }
+
+        .token-input {
+            width: 100%;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 60px;
+            font-family: inherit;
+        }
+
+        .output {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+
+        .success {
+            color: #22c55e;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+        .info {
+            color: #3b82f6;
+        }
+
+        .message {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            background: #e0e7ff;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status.connected {
+            background: #22c55e;
+            color: white;
+        }
+
+        .status.disconnected {
+            background: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🧪 Push Notification Service Test Client</h1>
+
+        <!-- Configuration -->
+        <div class="config">
+            <h2>Configuration</h2>
+            <div><strong>API Gateway:</strong> <span id="api-url"></span></div>
+            <div><strong>Socket.IO:</strong> <span id="socket-url"></span></div>
+            <div><strong>Socket Status:</strong> <span id="socket-status"
+                    class="status disconnected">Disconnected</span></div>
+            <div style="margin-top: 15px;">
+                <strong>Firebase Token:</strong>
+                <textarea id="firebase-token" class="token-input"
+                    placeholder="Enter Firebase JWT token here..."></textarea>
+            </div>
+            <div style="margin-top: 10px;">
+                <strong>Device ID:</strong>
+                <input type="text" id="device-id" placeholder="Enter Device ID for socket room">
+            </div>
+            <button onclick="testSocketConnect()">Connect Socket.IO</button>
+            <button onclick="testSocketDisconnect()">Disconnect</button>
+            <!-- Test: Socket.IO Connection -->
+            <h2>🔌 Socket.IO Real-time</h2>
+            <div class="section">
+                <div class="output" id="socket-output">Click connect button to start...</div>
+            </div>
+        </div>
+
+        <!-- Test: Send Push Notification -->
+        <div class="section">
+            <h2>📤 Send Push Notification</h2>
+            <input type="text" id="target-user-id" placeholder="Target User ID" value="test-user-123">
+            <input type="text" id="notification-title" placeholder="Notification Title" value="New Message">
+            <input type="text" id="notification-body" placeholder="Notification Body" value="You have a new message!">
+            <br>
+            <div style="display: inline-block">
+                <label>Type</label>
+                <select id="notification-type" style="margin-right: 15px;">
+                    <option value="ChatEvent">ChatEvent</option>
+                    <option value="AIMatchingEvent">AIMatchingEvent</option>
+                    <option value="QRScanEvent">QRScanEvent</option>
+                    <option value="SystemAlertEvent">SystemAlertEvent</option>
+                </select>
+                <label>Category</label>
+                <select id="notification-category">
+                    <option value="Push">Push</option>
+                    <option value="InApp">InApp</option>
+                </select>
+            </div>
+
+            <br>
+            <button onclick="testSendPushNotification()">POST /api/notification/</button>
+            <div class="output" id="send-output">Fill in the details and click button to send push notification...</div>
+        </div>
+
+        <!-- Unread Count Updates -->
+        <div class="section">
+            <h2>🔔 Unread Count Updates (Real-time)</h2>
+            <div
+                style="margin-bottom: 10px; padding: 10px; background: #fffbeb; border-left: 4px solid #f59e0b; font-size: 12px;">
+                <strong>⚠️ Important:</strong> To receive notifications, your Device ID must exist in the database
+                with:<br>
+                • <code>userId</code> matching the Target User ID above<br>
+                • <code>deviceId</code> matching the Device ID in config<br>
+                • <code>isActive: true</code>
+            </div>
+            <div class="output" id="unread-count-output">Waiting for unread count updates...</div>
+        </div>
+
+
+    </div>
+
+    <!-- Socket.IO Client Library -->
+    <script src="http://localhost:3000/hub/socket.io.js"></script>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            API_GATEWAY: 'http://localhost:8080',
+            SOCKET_URL: 'http://localhost:5000',
+        };
+
+        let socket = null;
+
+        // Helper function to get current token
+        function getCurrentToken() {
+            return document.getElementById('firebase-token').value.trim();
+        }
+
+
+        // Helper function to get auth headers
+        function getAuthHeaders() {
+            return {
+                'Authorization': `Bearer ${getCurrentToken()}`,
+                'Content-Type': 'application/json',
+            };
+        }
+
+        // Helper function to log output
+        function logger(elementId, message, type = 'info') {
+            const output = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            output.innerHTML = `[${timestamp}] <span class="${className}">${message}</span>\n` + output.innerHTML;
+        }
+
+        // Send Push Notification Test
+        async function testSendPushNotification() {
+            const targetUserId = document.getElementById('target-user-id').value;
+            const title = document.getElementById('notification-title').value;
+            const body = document.getElementById('notification-body').value;
+            const type = document.getElementById('notification-type').value;
+            const category = document.getElementById('notification-category').value;
+            const firebaseToken = document.getElementById('firebase-token').value.trim();
+            const deviceId = document.getElementById('device-id').value.trim();
+            const output = document.getElementById('send-output');
+
+            // Validate Firebase Token and Device ID
+            if (!firebaseToken) {
+                logger('send-output', '❌ Firebase Token is required! Please enter a valid token in the Configuration section.', 'error');
+                return;
+            }
+
+            if (!deviceId) {
+                logger('send-output', '❌ Device ID is required! Please enter a valid device ID in the Configuration section.', 'error');
+                return;
+            }
+
+            if (!targetUserId || !title || !body) {
+                logger('send-output', '❌ Please enter all required fields (User ID, Title, Body)', 'error');
+                return;
+            }
+
+            output.innerHTML = 'Sending push notification...\n';
+
+            // Construct payload according to NotificationSendPushRequestSchema
+            const payload = {
+                target: {
+                    userId: targetUserId
+                },
+                source: {
+                    name: 'Test Client',
+                    eventId: `test-event-${Date.now()}`
+                },
+                title: title,
+                body: body,
+                type: type,
+                category: category,
+                data: {
+                    timestamp: new Date().toISOString(),
+                    source: 'test-client',
+                    custom: 'This is test data'
+                }
+            };
+
+            try {
+                const url = `${CONFIG.API_GATEWAY}/api/notification`;
+                logger('send-output', `POST ${url}`, 'info');
+                logger('send-output', `Payload: ${JSON.stringify(payload, null, 2)}`, 'info');
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    logger('send-output', '✅ Push notification sent successfully!', 'success');
+                    logger('send-output', JSON.stringify(result.data, null, 2), 'success');
+                } else {
+                    logger('send-output', `❌ Failed (${response.status}): ${result.error?.message || 'Unknown error'}`, 'error');
+                    logger('send-output', JSON.stringify(result, null, 2), 'error');
+                }
+            } catch (error) {
+                logger('send-output', '❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        // Test 4: Socket.IO Connect
+        function testSocketConnect() {
+            if (socket && socket.connected) {
+                logger('socket-output', '⚠️  Already connected', 'info');
+                return;
+            }
+
+            logger('socket-output', 'Connecting to ' + CONFIG.SOCKET_URL, 'info');
+
+            const deviceId = document.getElementById('device-id').value;
+            if (!deviceId) {
+                logger('socket-output', '❌ Device ID is required! Please enter a valid device ID in the Configuration section.', 'error');
+                return;
+            }
+
+            const currentToken = getCurrentToken();
+            if (!currentToken) {
+                logger('socket-output', '❌ Firebase Token is required for Socket.IO authentication! Please enter a valid token in the Configuration section.', 'error');
+                return;
+            }
+
+            socket = io(CONFIG.SOCKET_URL, {
+                path: '/hub',
+                transports: ['websocket', 'polling'],
+                auth: {
+                    token: currentToken,
+                },
+                extraHeaders: {
+                    'Authorization': `Bearer ${currentToken}`,
+                },
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                reconnectionAttempts: 5,
+                timeout: 20000,
+            });
+
+            socket.emit('join_device', deviceId);
+            logger('socket-output', `🔗 Joining device room: ${deviceId}`, 'info');
+
+            socket.on('connect', () => {
+                logger('socket-output', '✅ Socket.IO Connected! ID: ' + socket.id, 'success');
+                logger('socket-output', '📡 Transport: ' + socket.io.engine.transport.name, 'info');
+
+                document.getElementById('socket-status').className = 'status connected';
+                document.getElementById('socket-status').textContent = 'Connected';
+            });
+
+            socket.on('disconnect', (reason) => {
+                logger('socket-output', '❌ Socket.IO Disconnected', 'error');
+                logger('socket-output', '📊 Reason: ' + reason, 'error');
+                document.getElementById('socket-status').className = 'status disconnected';
+                document.getElementById('socket-status').textContent = 'Disconnected';
+
+                // Log common disconnect reasons
+                if (reason === 'io server disconnect') {
+                    logger('socket-output', '⚠️  Server disconnected you. Reconnecting...', 'error');
+                } else if (reason === 'io client disconnect') {
+                    logger('socket-output', '👋 You disconnected manually', 'info');
+                } else if (reason === 'ping timeout') {
+                    logger('socket-output', '⏱️  Ping timeout - connection lost', 'error');
+                } else if (reason === 'transport close') {
+                    logger('socket-output', '🔌 Transport closed - network issue', 'error');
+                } else if (reason === 'transport error') {
+                    logger('socket-output', '❌ Transport error occurred', 'error');
+                }
+            });
+
+            socket.on('reconnect', (attemptNumber) => {
+                logger('socket-output', `✅ Reconnected after ${attemptNumber} attempts`, 'success');
+            });
+
+            socket.on('reconnect_attempt', (attemptNumber) => {
+                logger('socket-output', `🔄 Reconnection attempt ${attemptNumber}...`, 'info');
+            });
+
+            socket.on('reconnect_error', (error) => {
+                logger('socket-output', '❌ Reconnection error: ' + error.message, 'error');
+            });
+
+            socket.on('reconnect_failed', () => {
+                logger('socket-output', '❌ Reconnection failed after max attempts', 'error');
+            });
+
+            socket.on('receive_message', (message) => {
+                logger('socket-output', '📨 Received message event', 'success');
+                logger('realtime-messages', JSON.stringify(message, null, 2), 'success');
+            });
+
+            socket.on('unreadCountUpdated', (data) => {
+                logger('socket-output', '🔔 Received unreadCountUpdated event', 'success');
+                logger('unread-count-output', '📊 Unread count updated for user: ' + data.userId, 'success');
+                logger('unread-count-output', JSON.stringify(data, null, 2), 'info');
+            });
+
+            socket.on('error', (error) => {
+                logger('socket-output', '❌ Socket error: ' + error.message, 'error');
+            });
+
+            socket.on('connect_error', (error) => {
+                logger('socket-output', '❌ Connection error: ' + error.message, 'error');
+                logger('socket-output', '💡 Check if server is running on port 3000', 'info');
+            });
+
+            // Monitor ping/pong for debugging
+            socket.io.engine.on('ping', () => {
+                logger('socket-output', '💓 Sent ping to server', 'info');
+            });
+
+            socket.io.engine.on('pong', (latency) => {
+                logger('socket-output', `💓 Received pong (${latency}ms)`, 'success');
+            });
+
+            // Monitor transport upgrade
+            socket.io.engine.on('upgrade', (transport) => {
+                logger('socket-output', `⬆️  Upgraded to ${transport.name}`, 'success');
+            });
+        }
+
+        function testSocketDisconnect() {
+            if (socket) {
+                socket.disconnect();
+                logger('socket-output', 'Disconnected manually', 'info');
+            }
+        }
+
+        // Auto-connect socket on page load
+        window.addEventListener('load', () => {
+            console.log('Test client loaded');
+            console.log('Config:', CONFIG);
+
+            // Load configuration values
+            document.getElementById('api-url').textContent = CONFIG.API_GATEWAY;
+            document.getElementById('socket-url').textContent = CONFIG.SOCKET_URL;
+        });
+    </script>
+</body>
+
+</html>

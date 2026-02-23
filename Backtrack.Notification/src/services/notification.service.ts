@@ -5,6 +5,10 @@ import {
   NotificationStatusUpdateRequest,
 } from '@src/contracts/requests/notification.request'
 import { ErrorCodes } from '@src/common/errors'
+import { Device } from '@src/models/device.model'
+import expoPushProvider from '@src/providers/expo-push.provider'
+import { NOTIFICATION_CATEGORY, NOTIFICATION_STATUS } from '@src/types/notification.type'
+import { getSocketInstance } from '@src/socket'
 
 class NotificationService {
   public async filterAsync(userId: string, options: NotificationOptions) {
@@ -18,8 +22,30 @@ class NotificationService {
   }
 
   public async createAsync(payload: NotificationSendPushRequest) {
-    const result = await notificationRepository.createAsync(payload)
-    return result
+    const { notification, deduped } = await notificationRepository.createAsync(payload)
+
+    if (deduped) {
+      return {
+        notificationId: notification._id.toString(),
+        status: notification.status,
+        deduped: true,
+      }
+    }
+
+    if (notification.category === NOTIFICATION_CATEGORY.Push) {
+      await this.sendPushNotification({
+        userId: payload.target.userId,
+        title: payload.title,
+        body: payload.body,
+        data: payload.data,
+      })
+    }
+
+    return {
+      notificationId: notification._id.toString(),
+      status: notification.status,
+      deduped: false,
+    }
   }
 
   public async updateStatusNotificationsAsync(
@@ -58,6 +84,39 @@ class NotificationService {
       req,
     )
     return result
+  }
+
+  private async sendPushNotification(message: {
+    userId: string
+    title?: string | null
+    body?: string | null
+    data?: Record<string, unknown>
+  }) {
+    try {
+      const { userId, title, body, data } = message
+      const allDevices = await Device.find({ userId, isActive: true })
+
+      const tokens = allDevices.map((device) => device.token)
+      await expoPushProvider.sendToTokens(tokens, { title, body, data })
+      await this.updateUnreadCount(userId)
+    } catch (error) {
+      console.log('Error at send push notification:', error)
+    }
+  }
+
+  private async updateUnreadCount(userId: string) {
+    try {
+      const allDevices = await Device.find({ userId, isActive: true })
+      const notificationCount = await notificationRepository.getUnreadCountAsync(userId)
+
+      const io = getSocketInstance();
+      io.to(allDevices.map((d) => d.deviceId)).emit('unreadCountUpdated', {
+        userId,
+        count: notificationCount,
+      })
+    } catch (error) {
+      console.log('Error at send push notification:', error)
+    }
   }
 }
 

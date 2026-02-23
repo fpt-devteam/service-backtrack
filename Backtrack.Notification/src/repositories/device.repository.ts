@@ -3,7 +3,7 @@ import { Device } from '@src/models/device.model'
 import { Model } from 'mongoose'
 
 class DeviceRepository {
-  constructor(private readonly model: Model<any>) {}
+  constructor(private readonly model: Model<any>) { }
 
   public async upsertDevice(userId: string, data: UpdatePushTokenRequest) {
     const now = new Date()
@@ -42,6 +42,14 @@ class DeviceRepository {
       deactivated: !!res,
       device: res,
     }
+  }
+
+  public async getActiveDevicesByUserId(userId: string) {
+    const devices = await this.model
+      .find({ userId, isActive: true })
+      .lean()
+      .exec()
+    return devices
   }
 }
 
