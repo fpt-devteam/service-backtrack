@@ -7,6 +7,7 @@ import { CreateSubscriptionRequestSchema } from '@/src/presentation/contracts/su
 
 const router = Router();
 
+router.get('/me', asyncHandler(SubscriptionController.getSubscriptionAsync));
 router.post('/', validateBody(CreateSubscriptionRequestSchema), asyncHandler(SubscriptionController.createSubscriptionAsync));
 
 export default router;

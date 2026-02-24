@@ -4,6 +4,7 @@ import { createQrRepository } from '@/src/infrastructure/database/repositories/q
 import { createPaymentHistoryRepository } from '@/src/infrastructure/database/repositories/payment-history.repository.js';
 import { createSubscriptionRepository } from '@/src/infrastructure/database/repositories/subscription.repository.js';
 import { createSubscriptionUseCase } from '@/src/application/usecases/subscription/create-subscription.usecase.js';
+import { getSubscriptionUseCase } from '@/src/application/usecases/subscription/get-subscription.usecase.js';
 import { handleSubscriptionUpsertUseCase } from '@/src/application/usecases/subscription/handle-subscription-upsert.usecase.js';
 import { handleInvoicePaymentUseCase } from '@/src/application/usecases/subscription/handle-invoice-payment.usecase.js';
 
@@ -18,6 +19,7 @@ const paymentHistoryRepository = createPaymentHistoryRepository();
 export const getQrByUserId = getQrByUserIdUseCase({ qrRepository });
 
 // Subscription use cases
+export const getSubscription = getSubscriptionUseCase({ subscriptionRepository });
 export const createSubscription = createSubscriptionUseCase({ userRepository, subscriptionRepository });
 export const handleSubscriptionUpsert = handleSubscriptionUpsertUseCase({ userRepository, subscriptionRepository });
 export const handleInvoicePayment = handleInvoicePaymentUseCase({ userRepository, paymentHistoryRepository });
