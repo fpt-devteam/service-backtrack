@@ -12,8 +12,6 @@ import {
   UserNotificationFilterResponse,
   UnreadCountResponse,
 } from '@src/contracts/responses/notification.response'
-import { IosApp } from 'firebase-admin/lib/project-management/ios-app'
-import deviceService from '@src/services/device.service'
 
 export class NotificationController {
   @AsyncHandler
