@@ -6,6 +6,7 @@ import { errorHandler } from '@src/middlewares/error-handler'
 import ENV from '@src/common/constants/ENV'
 import notificationRoute from '@src/routes/notification.route'
 import deviceRoute from '@src/routes/device.route'
+import emailRoute from '@src/routes/email.route'
 
 const app: Express = express()
 
@@ -27,6 +28,7 @@ app.get('/health', (_: Request, res: Response) => {
 // API Routes
 app.use('/', notificationRoute)
 app.use('/device', deviceRoute)
+app.use('/email', emailRoute)
 
 // 404 handler
 app.use((req: Request, res: Response) => {

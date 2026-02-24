@@ -45,5 +45,11 @@ export default {
     UserSyncQueue: getEnv('RABBITMQ_USER_SYNC_QUEUE'),
     SendEmailQueue: getEnv('RABBITMQ_SEND_EMAIL_QUEUE'),
   },
+
+  Email: {
+    Service: getEnv('EMAIL_SERVICE'),
+    User: getEnv('EMAIL_USER'),
+    Pass: getEnv('EMAIL_PASS'),
+  },
 } as const
 
