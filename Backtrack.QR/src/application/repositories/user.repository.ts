@@ -9,4 +9,5 @@ export type UserRepository = {
   save: (user: Omit<User, 'createdAt' | 'updatedAt'>) => Promise<User>;
   update: (id: string, fields: Partial<Omit<User, 'createdAt' | 'updatedAt' | 'id'>>) => Promise<User | null>;
   deleteById: (id: string) => Promise<void>;
+  setProviderCustomerIdIfNull: (userId: string, customerId: string) => Promise<string>;
 };

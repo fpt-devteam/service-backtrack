@@ -7,6 +7,7 @@ import { SubscriptionPlan, SubscriptionPlanType } from '@/src/domain/constants/s
 import { SubscriptionStatus, SubscriptionStatusType } from '@/src/domain/constants/subscription-status.constant.js';
 import { ServerErrors } from '@/src/application/errors/server.error.js';
 import logger from '@/src/shared/core/logger.js';
+import { StripeSubscriptionStatus } from '@/src/application/utils/stripe.util.js';
 
 type Deps = {
   userRepository: UserRepository;
@@ -20,9 +21,12 @@ const mapPlanType = (stripeSubscription: Stripe.Subscription): SubscriptionPlanT
 
 const mapStatus = (stripeStatus: Stripe.Subscription.Status): SubscriptionStatusType | null => {
   switch (stripeStatus) {
-    case 'active': return SubscriptionStatus.Active;
-    case 'past_due': return SubscriptionStatus.PastDue;
-    case 'canceled': return SubscriptionStatus.Canceled;
+    case StripeSubscriptionStatus.ACTIVE: return SubscriptionStatus.Active;
+    case StripeSubscriptionStatus.PAST_DUE: return SubscriptionStatus.PastDue;
+    case StripeSubscriptionStatus.CANCELED: return SubscriptionStatus.Canceled;
+    case StripeSubscriptionStatus.UNPAID: return SubscriptionStatus.Unpaid;
+    case StripeSubscriptionStatus.INCOMPLETE: return SubscriptionStatus.Incomplete;
+    case StripeSubscriptionStatus.INCOMPLETE_EXPIRED: return SubscriptionStatus.IncompleteExpired;
     default: return null;
   }
 };

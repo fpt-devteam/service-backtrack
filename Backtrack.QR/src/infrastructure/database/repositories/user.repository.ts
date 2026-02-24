@@ -53,6 +53,21 @@ export const createUserRepository = (): UserRepository => ({
   deleteById: async (id: string) => {
     await UserModel.findByIdAndUpdate(id, { $set: { deletedAt: new Date() } });
   },
+
+  setProviderCustomerIdIfNull: async (userId: string, customerId: string): Promise<string> => {
+    const updated = await UserModel.findOneAndUpdate(
+      { _id: userId, providerCustomerId: null },
+      { $set: { providerCustomerId: customerId } },
+      { new: false }
+    );
+
+    if (updated) {
+      return customerId;
+    }
+
+    const existing = await UserModel.findById(userId).select('providerCustomerId');
+    return existing!.providerCustomerId!;
+  }
 });
 
 export const userRepository = createUserRepository();
