@@ -22,9 +22,3 @@ export const ONGOING_SUBSCRIPTION_STATUSES = [
 ] as const satisfies readonly SubscriptionStatusType[];
 
 export type OngoingSubscriptionStatusType = typeof ONGOING_SUBSCRIPTION_STATUSES[number];
-
-export const TERMINATED_SUBSCRIPTION_STATUSES = [
-  SubscriptionStatus.Incomplete,
-  SubscriptionStatus.IncompleteExpired,
-  SubscriptionStatus.Canceled,
-] as const satisfies readonly SubscriptionStatusType[];
