@@ -5,6 +5,7 @@ import { createSubscription, getSubscription } from '@/src/infrastructure/contai
 import { getHeader, HeaderNames } from '@/src/presentation/utils/http-headers.util.js';
 import { ServerErrors } from '@/src/application/errors/server.error.js';
 import { CreateSubscriptionRequest } from '@/src/presentation/contracts/subscriptions/requests/create-subscription.request.js';
+import logger from '@/src/shared/core/logger.js';
 
 export const getSubscriptionAsync = async (req: Request, res: Response): Promise<void> => {
   const userId = getHeader(req, HeaderNames.AuthId);
@@ -33,6 +34,7 @@ export const createSubscriptionAsync = async (req: Request, res: Response): Prom
 
   if (isSuccess(result))
     res.status(201).json(ok(result.value));
-  else
+  else {
     res.status(getHttpStatus(result.error)).json(fail(result.error));
+  }
 };
