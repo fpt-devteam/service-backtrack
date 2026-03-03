@@ -1,154 +1,126 @@
-import {
-  messageRepository,
-  conversationRepository,
-  participantRepository,
-  userRepository,
-} from '@src/repositories';
-import {
-  ErrorCodes,
-} from '@src/common/errors';
-import { MessageType, IMessage } from '@src/models/message.model';
-import { PaginationOptions } from '@src/contracts/requests/pagination.request';
-import {
-  PaginatedResponse,
-} from '@src/contracts/responses/pagination.response';
-import { MessageResponse } from '@src/contracts/responses/message.response';
+import Message, { MessageStatus } from '@/models/message';
+import Conversation from '@/models/conversation';
+import ConversationParticipant from '@/models/conversation-participant';
+import { SendMessageRequest } from '@/dtos/message/message.request';
+import { MessageResponse, MessagesResponse } from '@/dtos/message/message.response';
+import { CursorPaginationParams, cursorPaginate } from '@/utils/pagination';
+import { ConversationErrors } from './errors/conversation.errors';
+import logger from '@/utils/logger';
 
-class MessageService {
-
-  private toMessageResponse(message: IMessage): MessageResponse {
-    return {
-      id: message._id.toString(),
-      // eslint-disable-next-line @typescript-eslint/no-base-to-string
-      conversationId: message.conversationId.toString(),
-      senderId: message.senderId,
-      type: message.type,
-      content: message.content,
-      status: message.status,
-      createdAt: message.createdAt.toISOString(),
-      updatedAt: message.updatedAt.toISOString(),
-    };
+export const sendMessage = async (data: SendMessageRequest): Promise<MessageResponse> => {
+  // Verify conversation exists
+  const conversation = await Conversation.findById(data.conversationId).exec();
+  if (!conversation || conversation.deletedAt) {
+    throw ConversationErrors.NotFound;
   }
 
-  public async sendMessage(
-    senderId: string,
-    conversationId: string,
-    content: string,
-    typeContent?: MessageType,
-  ): Promise<MessageResponse> {
-    if (!content.trim()) {
-      throw ErrorCodes.MissingContent;
-    }
+  // Verify sender is a participant
+  const participant = await ConversationParticipant.findOne({
+    conversationId: data.conversationId,
+    memberId: data.senderId,
+    deletedAt: null,
+  }).exec();
 
-    const conversation = await conversationRepository.findById(conversationId);
-    if (!conversation) {
-      throw ErrorCodes.ConversationNotFound;
-    }
-
-    const isParticipant = await participantRepository.isParticipant(
-      conversationId,
-      senderId,
-    );
-
-    if (!isParticipant) {
-      throw ErrorCodes.NotParticipant;
-    }
-
-    const sender = await userRepository.getByIdAsync?.(senderId);
-    if (!sender) {
-      throw ErrorCodes.SenderNotFound;
-    }
-
-    const message = await messageRepository.create({
-      conversationId,
-      senderId,
-      content,
-      type: typeContent ?? MessageType.TEXT,
-    });
-
-    await this.updateConversationMetadata(
-      conversationId,
-      senderId,
-      content,
-      message.createdAt,
-    );
-
-    return this.toMessageResponse(message);
+  if (!participant) {
+    throw ConversationErrors.Unauthorized;
   }
 
-  private async updateConversationMetadata(
-    conversationId: string,
-    senderId: string,
-    content: string,
-    timestamp: Date,
-  ): Promise<void> {
-    await conversationRepository.updateLastMessage(
-      conversationId,
-      content,
-      timestamp,
-      senderId,
-    );
+  // Create message
+  const message = new Message({
+    conversationId: data.conversationId,
+    senderId: data.senderId,
+    type: data.type,
+    content: data.content,
+    attachments: data.attachments || [],
+    status: MessageStatus.SENT,
+  });
 
-    const participants = await participantRepository.findByConversationId(
-      conversationId,
-    );
+  await message.save();
 
-    const updatePromises = participants.map((p) => {
-      if (p.memberId === senderId) {
-        return participantRepository.updateTimestamp(
-          conversationId, p.memberId);
-      } else {
-        return participantRepository.incrementUnreadCount(
-          conversationId,
-          p.memberId,
-        );
-      }
-    });
+  // Update conversation last message
+  await Conversation.findByIdAndUpdate(data.conversationId, {
+    lastMessageContent: data.content,
+    lastMessageAt: message.createdAt,
+    senderId: data.senderId,
+  }).exec();
 
-    await Promise.all(updatePromises);
-  }
-
-  public async getMessagesByConversationId(
-    conversationId: string,
-    userId: string,
-    options: PaginationOptions,
-  ): Promise<PaginatedResponse<MessageResponse[]>> {
-    const { limit = 10, cursor } = options;
-    const conversation = await conversationRepository.findById(conversationId);
-    if (!conversation || conversation.deletedAt) {
-      throw ErrorCodes.ConversationNotFound;
+  // Increment unread count for other participants
+  await ConversationParticipant.updateMany(
+    {
+      conversationId: data.conversationId,
+      memberId: { $ne: data.senderId },
+      deletedAt: null,
+    },
+    {
+      $inc: { unreadCount: 1 },
     }
+  ).exec();
 
-    const isParticipant = await participantRepository.isParticipant(
-      conversationId,
-      userId,
-    );
+  logger.info(`Message sent in conversation ${data.conversationId} by ${data.senderId}`);
 
-    if (!isParticipant) {
-      throw ErrorCodes.NotParticipant;
-    }
+  return {
+    id: message._id.toString(),
+    conversationId: message.conversationId.toString(),
+    senderId: message.senderId,
+    type: message.type,
+    content: message.content,
+    attachments: message.attachments,
+    status: message.status!,
+    createdAt: message.createdAt,
+    updatedAt: message.updatedAt,
+  };
+};
 
-    const messages = await messageRepository.findMessagesPaginated(
-      conversationId,
-      limit,
-      cursor,
-    );
-    const hasMore = messages.length > limit; 
-    const nextCursor = hasMore && messages.length > 0
-      ? messages[messages.length - 1].createdAt.toISOString()
-      : null;
-    if (hasMore) messages.pop();
-    const messageResponses = messages.map((msg) => this.toMessageResponse(msg));
-    return {
-      items: messageResponses,
-      hasMore,
-      nextCursor,
-    };
+export const getMessagesByConversationId = async (
+  conversationId: string,
+  userId: string,
+  params: CursorPaginationParams
+): Promise<MessagesResponse> => {
+  // Verify conversation exists
+  const conversation = await Conversation.findById(conversationId).exec();
+  if (!conversation || conversation.deletedAt) {
+    throw ConversationErrors.NotFound;
   }
 
-  public async getMessageCount(conversationId: string): Promise<number> {
-    return await messageRepository.countByConversationId(conversationId);
-  }
-}
+  // Verify user is a participant
+  const participant = await ConversationParticipant.findOne({
+    conversationId,
+    memberId: userId,
+    deletedAt: null,
+  }).exec();
 
-export default new MessageService();
+  if (!participant) {
+    throw ConversationErrors.Unauthorized;
+  }
+
+  // Get paginated messages
+  const result = await cursorPaginate(
+    Message as any,
+    { conversationId, deletedAt: null },
+    params,
+    'createdAt',
+    -1 // Newest first
+  );
+
+  const messages: MessageResponse[] = result.items.map((msg: any) => ({
+    id: msg._id.toString(),
+    conversationId: msg.conversationId.toString(),
+    senderId: msg.senderId,
+    type: msg.type,
+    content: msg.content,
+    attachments: msg.attachments,
+    status: msg.status!,
+    createdAt: msg.createdAt,
+    updatedAt: msg.updatedAt,
+  }));
+
+  return {
+    messages,
+    nextCursor: result.nextCursor,
+    hasMore: result.hasMore,
+  };
+};
+
+export const updateMessageStatus = async (messageId: string, status: MessageStatus): Promise<void> => {
+  await Message.findByIdAndUpdate(messageId, { status }).exec();
+};

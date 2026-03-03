@@ -1,35 +1,50 @@
-import mongoose, { Schema } from 'mongoose';
+import { Schema, model } from 'mongoose';
 
 export const UserGlobalRole = {
   Customer: 'Customer',
   PlatformSuperAdmin: 'PlatformSuperAdmin',
 } as const;
 
-export type UserGlobalRoleType =
-  typeof UserGlobalRole[keyof typeof UserGlobalRole];
+export type UserGlobalRoleType = typeof UserGlobalRole[keyof typeof UserGlobalRole];
 
-const ROLE_VALUES =
-  Object.values(UserGlobalRole) as readonly UserGlobalRoleType[];
+const ROLE_VALUES = Object.values(UserGlobalRole) as readonly UserGlobalRoleType[];
 
 export function parseUserGlobalRole(input: unknown): UserGlobalRoleType | null {
-  if (typeof input !== 'string') return null;
-  return (ROLE_VALUES as readonly string[]).includes(input)
-    ? (input as UserGlobalRoleType) : null;
+  if (typeof input !== "string") return null;
+  return (ROLE_VALUES as readonly string[]).includes(input) ? (input as UserGlobalRoleType) : null;
 }
 
-const UserSchema = new Schema({
-  _id: { type: String, required: true },
-  email: { type: String, required: false, index: true },
-  displayName: { type: String, default: null },
-  avatarUrl: { type: String, default: null },
-  globalRole: {
-    type: String, enum: Object.values(
-      UserGlobalRole), default: UserGlobalRole.Customer
-  },
-  createdAt: { type: Date, required: true },
-  updatedAt: { type: Date, default: null },
-  deletedAt: { type: Date, default: null },
-  syncedAt: { type: Date, default: Date.now },
-});
+export interface IUser {
+	_id: string;
+	email?: string | null;
+	displayName?: string | null;
+	avatarUrl?: string | null;
+	globalRole: UserGlobalRoleType;
+	providerCustomerId?: string | null;
+	subscriptionStatus?: string | null;
+	createdAt: Date;
+	updatedAt: Date;
+	deletedAt?: Date | null;
+}
 
-export const User = mongoose.model('User', UserSchema);
+const userSchema = new Schema<IUser>(
+	{
+		_id: { type: String, required: true },
+		email: { type: String, default: null, unique: true, sparse: true },
+		displayName: { type: String, default: null },
+		avatarUrl: { type: String, default: null },
+		globalRole: { 
+			type: String, 
+			enum: Object.values(UserGlobalRole),
+			default: UserGlobalRole.Customer,
+			required: true
+		},
+		providerCustomerId: { type: String, default: null },
+		subscriptionStatus: { type: String, default: null },
+		deletedAt: { type: Date, default: null },
+	},
+	{ timestamps: true },
+);
+
+const User = model<IUser>('User', userSchema);
+export default User;

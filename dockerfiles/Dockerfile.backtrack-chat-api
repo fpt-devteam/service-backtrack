@@ -2,30 +2,29 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Copy package files
+COPY Backtrack.Chat/package.json Backtrack.Chat/package-lock.json ./
 
-COPY Backtrack.Chat/package.json Backtrack.Chat/pnpm-lock.yaml ./
-
-RUN pnpm install --frozen-lockfile
+# Install all dependencies (including devDependencies for build)
+RUN npm ci
 
 # Copy source code và Build
 COPY Backtrack.Chat/. .
-RUN pnpm run build
+RUN npm run build
 
 # ===================== Runtime stage =====================
 FROM node:20-alpine AS final
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
 # Copy package files
-COPY Backtrack.Chat/package.json Backtrack.Chat/pnpm-lock.yaml ./
+COPY Backtrack.Chat/package.json Backtrack.Chat/package-lock.json ./
 
-RUN pnpm install --prod --frozen-lockfile && \
-  pnpm store prune
+# Install only production dependencies
+RUN npm ci --omit=dev && \
+  npm cache clean --force
 
 COPY --from=build --chown=node:node /app/dist ./dist
 
 USER node
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "--enable-source-maps", "dist/server.js"]

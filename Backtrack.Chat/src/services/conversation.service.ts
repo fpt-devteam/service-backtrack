@@ -1,154 +1,289 @@
-import {
-  conversationRepository,
-  participantRepository,
-  userRepository,
-} from '@src/repositories';
-import { ErrorCodes } from '@src/common/errors';
-import {
-  CreateConversationInput,
-} from '@src/contracts/requests/conversation.request';
-import { PaginationOptions } from '@src/repositories/base/ibase.repository';
-import {
-  ConversationResponse,
-} from '@src/contracts/responses/conversation.response';
-import {
-  PaginatedResponse } from '@src/contracts/responses/pagination.response';
-import { 
-  ConversationAggregationResult,
-} from '@src/repositories/conversation.repository';
+import mongoose from 'mongoose';
+import { CreateConversationRequest } from "@/dtos/conversation/conversation.request";
+import Conversation, { ConversationType, IConversation } from "@/models/conversation";
+import ConversationParticipant, { ConversationParticipantRole } from "@/models/conversation-participant";
+import { ConversationErrors } from "./errors/conversation.errors";
+import { ConversationResponse } from "@/dtos/conversation/conversation.response";
+import User from "@/models/user.model";
 
-export class ConversationService {
-  public async getAllConversationsByUserId(
-    userId: string,
-    options: PaginationOptions = {},
-  ): Promise<PaginatedResponse<ConversationResponse[]>> {
-    const { limit = 10, cursor } = options;
+export const createConversation = async (data: CreateConversationRequest, userId: string): Promise<IConversation> => {
+  if (data.type === ConversationType.PERSONAL) {
+    const duplicate = await ConversationParticipant.aggregate([
+      { $match: { memberId: { $in: [data.memberId, userId] } } },
+      { $group: { _id: '$conversationId', count: { $sum: 1 } } },
+      { $match: { count: 2 } },
+      { $limit: 1 },
+    ]);
 
-    const conversations: ConversationAggregationResult[] = 
-    await conversationRepository.findConversationsPaginated(
-      userId,
-      limit,
-      cursor,
-    );
+    if (duplicate.length > 0) {
+      throw ConversationErrors.AlreadyExists;
+    }
+  }
 
-    const hasMore = conversations.length > limit;
-    const nextCursor = hasMore && conversations.length > 0
-      ? conversations[conversations.length - 1].lastMessageAt?.toISOString() 
-      ?? null
-      : null;
-    if (hasMore) conversations.pop();
+  // Create conversation without transaction (MongoDB standalone mode)
+  const conversation = new Conversation({
+    type: data.type,
+    ...(data.type === ConversationType.ORGANIZATION && {
+      orgId: data.orgId,
+      ticketStatus: data.ticketStatus,
+    }),
+  });
+  await conversation.save();
 
-    const conversationResponses: ConversationResponse[] = 
-    conversations.map(conv => ({
-      conversationId: conv.conversationId.toString(),
-      partner: {
-        id: conv.partner.id,
-        displayName: conv.partner.displayName,
-        avatar: conv.partner.avatar,
-      },
-      lastMessage: {
-        lastContent: conv.lastMessageContent ?? '',
-        timestamp: conv.lastMessageAt?.toISOString() ?? '',
-        senderId: conv.senderId ?? '',
-      },
-      unreadCount: conv.myParticipant?.unreadCount ?? 0,
-      updatedAt: conv.myParticipant?.updatedAt,
-    }));
+  const participants = buildParticipants(conversation._id, data, userId);
+  await ConversationParticipant.insertMany(participants);
+
+  return conversation;
+};
+
+const buildParticipants = (conversationId: mongoose.Types.ObjectId, data: CreateConversationRequest, userId: string) => {
+  if (data.type === ConversationType.ORGANIZATION) {
+    return [
+      { conversationId, memberId: userId, role: ConversationParticipantRole.CUSTOMER, orgId: data.orgId },
+      { conversationId, memberId: data.orgId, role: ConversationParticipantRole.STAFF, orgId: data.orgId },
+    ];
+  }
+  return [
+    { conversationId, memberId: userId, role: ConversationParticipantRole.CUSTOMER },
+    { conversationId, memberId: data.memberId, role: ConversationParticipantRole.CUSTOMER },
+  ];
+};
+
+export const getConversationById = async (id: string, userId: string): Promise<ConversationResponse | null> => {
+    const conversation = await Conversation.findById(id).lean().exec();
+    
+    if (!conversation || conversation.deletedAt) {
+        return null;
+    }
+
+    const participant = await ConversationParticipant.findOne({
+        conversationId: id,
+        memberId: userId,
+        deletedAt: null
+    }).exec();
+
+    if (!participant) {
+        throw ConversationErrors.Unauthorized;
+    }
+
+    let partner = null;
+
+    // Get the other participant (partner) for both personal and organization conversations
+    const otherParticipant = await ConversationParticipant.findOne({
+        conversationId: id,
+        memberId: { $ne: userId },
+        deletedAt: null
+    }).exec();
+
+    if (otherParticipant) {
+        const partnerUser = await User.findById(otherParticipant.memberId)
+            .select('displayName email avatarUrl')
+            .lean()
+            .exec();
+
+        if (partnerUser) {
+            partner = {
+                id: partnerUser._id.toString(),
+                displayName: partnerUser.displayName,
+                email: partnerUser.email,
+                avatarUrl: partnerUser.avatarUrl
+            };
+        }
+    }
+
     return {
-      items: conversationResponses,
-      hasMore,
-      nextCursor,
+        conversationId: conversation._id.toString(),
+        type: conversation.type,
+        partner,
+        orgId: conversation.orgId || null,
+        lastMessage: conversation.lastMessageContent ? {
+            senderId: conversation.senderId,
+            content: conversation.lastMessageContent,
+            timestamp: conversation.lastMessageAt
+        } : null,
+        unreadCount: participant.unreadCount || 0,
+        createdAt: conversation.createdAt,
+        updatedAt: conversation.updatedAt
     };
-  }
+};
 
-  public async getConversationById(
-    conversationId: string,
-    userId: string,
-  ): Promise<ConversationResponse> {
-    const result = await conversationRepository.findConversationByIdWithDetails(
-      conversationId,
-      userId,
-    );
+export const updateConversation = async (id: string, userId: string, data: Partial<IConversation>): Promise<ConversationResponse | null> => {
+    // Check if user is a participant
+    const participant = await ConversationParticipant.findOne({
+        conversationId: id,
+        memberId: userId,
+        deletedAt: null
+    }).exec();
 
-    if (!result) {
-      throw ErrorCodes.ConversationNotFound;
+    if (!participant) {
+        throw ConversationErrors.Unauthorized;
     }
 
-    return {
-      conversationId: result.conversationId.toString(),
-      partner: {
-        id: result.partner.id,
-        displayName: result.partner.displayName,
-        avatar: result.partner.avatar,
-      },
-      lastMessage: {
-        lastContent: result.lastMessageContent ?? '',
-        timestamp: result.lastMessageAt?.toISOString() ?? '',
-        senderId: result.senderId ?? '',
+    const conversation = await Conversation.findByIdAndUpdate(
+        id, 
+        data, 
+        { new: true }
+    ).lean().exec();
 
-      },
-      unreadCount: result.myParticipant?.unreadCount ?? 0,
-      updatedAt: result.myParticipant?.updatedAt,
-    };
-  }
-
-  public async createConversation(
-    request: CreateConversationInput,
-  ) {
-    const creator = await userRepository.getByIdAsync(request.creatorId);
-    const partner = await userRepository.getByIdAsync(request.partnerId);
-    if (!creator) {
-      throw ErrorCodes.UserNotFound;
-    }
-    if (!partner) {
-      throw ErrorCodes.PartnerNotFound;
+    if (!conversation) {
+        throw ConversationErrors.NotFound;
     }
 
-    if (creator._id === partner._id) {
-      throw ErrorCodes.CannotCreateConversationWithYourself;
+    // Return formatted response
+    return getConversationById(id, userId);
+};
+
+export const updateTicketStatus = async (id: string, userId: string, ticketStatus: string): Promise<ConversationResponse | null> => {
+    // Check if conversation exists and is organization type
+    const conversation = await Conversation.findById(id).lean().exec();
+    
+    if (!conversation || conversation.deletedAt) {
+        throw ConversationErrors.NotFound;
     }
 
-    const existingConversationId = await participantRepository.
-      findExistingConversation(
-        request.creatorId,
-        request.partnerId,
-      );
-
-    if (existingConversationId) {
-      return existingConversationId;
+    if (conversation.type !== ConversationType.ORGANIZATION) {
+        throw ConversationErrors.InvalidConversationType;
     }
 
-    const conversation = await conversationRepository.create({});
+    // Check if user is a participant
+    const participant = await ConversationParticipant.findOne({
+        conversationId: id,
+        memberId: userId,
+        deletedAt: null
+    }).exec();
 
-    const buildNickname = (
-      keyName: string,
-      displayName?: string | null,
-    ): string => {
-      if (!displayName) {
-        return keyName;
-      }
-      return `${keyName} - ${displayName}`;
-    };
+    if (!participant) {
+        throw ConversationErrors.Unauthorized;
+    }
 
-    const participantsReq: Record<string, string> = {
-      [request.creatorId]: buildNickname(
-        request.creatorKeyName,
-        creator.displayName,
-      ),
-      [request.partnerId]: buildNickname(
-        request.partnerKeyName,
-        partner.displayName,
-      ),
-    };
+    await Conversation.findByIdAndUpdate(
+        id, 
+        { ticketStatus }, 
+        { new: true }
+    ).exec();
 
-    await participantRepository.addParticipants(
-      conversation._id.toString(),
-      participantsReq,
-    );
-
-    return conversation._id.toString();
-  }
-
+    // Return formatted response
+    return getConversationById(id, userId);
 }
 
-export default new ConversationService();
+export const deleteConversation = async (id: string, userId: string): Promise<void> => {
+    // Check if user is a participant
+    const participant = await ConversationParticipant.findOne({
+        conversationId: id,
+        memberId: userId,
+        deletedAt: null
+    }).exec();
+
+    if (!participant) {
+        throw ConversationErrors.Unauthorized;
+    }
+
+    const conversation = await Conversation.findByIdAndUpdate(
+        id, 
+        { deletedAt: new Date() }, 
+        { new: true }
+    ).exec();
+
+    if (!conversation) {
+        throw ConversationErrors.NotFound;
+    }
+};
+
+export interface ConversationsListResult {
+    conversations: ConversationResponse[];
+    nextCursor: string | null;
+    hasMore: boolean;
+}
+
+export const listConversationsByUserId = async (
+    userId: string,
+    params: { cursor?: string; limit?: number } = {}
+): Promise<ConversationsListResult> => {
+    const limit = Math.min(params.limit || 20, 100);
+
+    // Get all conversation participants for this user
+    const participantRecords = await ConversationParticipant.find({
+        memberId: userId,
+        deletedAt: null
+    }).exec();
+
+    const conversationIds = participantRecords.map(p => p.conversationId);
+
+    const query: any = {
+        _id: { $in: conversationIds },
+        deletedAt: null,
+    };
+
+    // Cursor by lastMessageAt (ISO date string of last item from previous page)
+    if (params.cursor) {
+        query.lastMessageAt = { $lt: new Date(params.cursor) };
+    }
+
+    // Fetch limit + 1 to detect hasMore
+    const conversations = await Conversation.find(query)
+        .sort({ lastMessageAt: -1 })
+        .limit(limit + 1)
+        .lean()
+        .exec();
+
+    const hasMore = conversations.length > limit;
+    if (hasMore) {
+        conversations.pop();
+    }
+
+    const lastConversation = conversations[conversations.length - 1];
+    const nextCursor = hasMore && lastConversation?.lastMessageAt
+        ? lastConversation.lastMessageAt.toISOString()
+        : null;
+
+    // Map to response format
+    const responses: ConversationResponse[] = [];
+
+    for (const conversation of conversations) {
+        const participant = participantRecords.find(
+            p => p.conversationId.toString() === conversation._id.toString()
+        );
+
+        let partner = null;
+
+        // Get the other participant (partner) for both personal and organization conversations
+        const otherParticipant = await ConversationParticipant.findOne({
+            conversationId: conversation._id,
+            memberId: { $ne: userId },
+            deletedAt: null
+        }).exec();
+
+        if (otherParticipant) {
+            const partnerUser = await User.findById(otherParticipant.memberId)
+                .select('displayName email avatarUrl')
+                .lean()
+                .exec();
+
+            if (partnerUser) {
+                partner = {
+                    id: partnerUser._id.toString(),
+                    displayName: partnerUser.displayName,
+                    email: partnerUser.email,
+                    avatarUrl: partnerUser.avatarUrl
+                };
+            }
+        }
+
+        responses.push({
+            conversationId: conversation._id.toString(),
+            type: conversation.type,
+            partner,
+            orgId: conversation.orgId || null,
+            lastMessage: conversation.lastMessageContent ? {
+                senderId: conversation.senderId,
+                content: conversation.lastMessageContent,
+                timestamp: conversation.lastMessageAt
+            } : null,
+            unreadCount: participant?.unreadCount || 0,
+            createdAt: conversation.createdAt,
+            updatedAt: conversation.updatedAt
+        });
+    }
+
+    return { conversations: responses, nextCursor, hasMore };
+};
