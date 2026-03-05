@@ -1,6 +1,6 @@
-using Backtrack.Core.Application.Usecases.Organizations.Commands.CreateInvitation;
-using Backtrack.Core.Application.Usecases.Organizations.Commands.JoinByInvitation;
-using Backtrack.Core.Application.Usecases.Organizations.Queries.CheckInvitation;
+using Backtrack.Core.Application.Usecases.Organizations.CheckInvitation;
+using Backtrack.Core.Application.Usecases.Organizations.CreateInvitation;
+using Backtrack.Core.Application.Usecases.Organizations.JoinByInvitation;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;

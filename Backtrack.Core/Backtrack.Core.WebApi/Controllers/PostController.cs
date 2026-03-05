@@ -2,14 +2,14 @@ using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
-using Backtrack.Core.Application.Usecases.Posts.Commands.CreatePost;
-using Backtrack.Core.Application.Usecases.Posts.Queries.GetPosts;
-using Backtrack.Core.Application.Usecases.Posts.Queries.SearchPostsBySemantic;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.Application.Usecases.Posts.Queries.GetPostById;
 using Backtrack.Core.Application.Usecases.Posts.Queries.GetSimilarPosts;
 using Backtrack.Core.Application.Usecases.Posts.Commands.DeletePost;
 using Backtrack.Core.Application.Usecases.Posts;
+using Backtrack.Core.Application.Usecases.Posts.CreatePost;
+using Backtrack.Core.Application.Usecases.Posts.SearchPostsBySemantic;
+using Backtrack.Core.Application.Usecases.Posts.GetPosts;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
