@@ -72,9 +72,34 @@ public sealed class CreateInvitationHandler : IRequestHandler<CreateInvitationCo
             throw new NotFoundException(OrganizationErrors.NotFound);
         }
 
+        var existingInvitation = await _invitationRepository.GetPendingByEmailAndOrgAsync(command.Email, command.OrgId, cancellationToken);
+        if (existingInvitation is not null)
+        {
+            await _eventPublisher.PublishInvitationCreatedAsync(new InvitationCreatedIntegrationEvent
+            {
+                InvitationId = existingInvitation.Id,
+                Email = existingInvitation.Email,
+                OrganizationName = organization.Name,
+                InviterName = command.UserName,
+                Role = existingInvitation.Role.ToString(),
+                HashCode = existingInvitation.HashCode,
+                ExpiredTime = existingInvitation.ExpiredTime,
+                EventTimestamp = DateTimeOffset.UtcNow,
+            });
+
+            return new CreateInvitationResult
+            {
+                Id = existingInvitation.Id,
+                Email = existingInvitation.Email,
+                Role = existingInvitation.Role.ToString(),
+                Status = existingInvitation.Status.ToString(),
+                ExpiredTime = existingInvitation.ExpiredTime,
+                CreatedAt = existingInvitation.CreatedAt,
+            };
+        }
+
         // Generate secure random hash code
         var hashCode = GenerateSecureToken();
-
         var invitation = new JoinInvitation
         {
             Id = Guid.NewGuid(),
@@ -86,9 +111,6 @@ public sealed class CreateInvitationHandler : IRequestHandler<CreateInvitationCo
             Status = InvitationStatus.Pending,
             InvitedBy = command.UserId,
         };
-        //log hashcode
-        _logger.LogInformation("Generated invitation hash code: {HashCode} for email: {Email}", hashCode, command.Email);
-
 
         await _invitationRepository.CreateAsync(invitation);
         await _invitationRepository.SaveChangesAsync();
