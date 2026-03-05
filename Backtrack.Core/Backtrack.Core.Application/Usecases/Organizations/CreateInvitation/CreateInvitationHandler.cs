@@ -58,13 +58,6 @@ public sealed class CreateInvitationHandler : IRequestHandler<CreateInvitationCo
             throw new ForbiddenException(MembershipErrors.InsufficientRole);
         }
 
-        // Check no pending invitation already exists for this email+org
-        var existingInvitation = await _invitationRepository.GetPendingByEmailAndOrgAsync(command.Email, command.OrgId, cancellationToken);
-        if (existingInvitation is not null)
-        {
-            throw new ConflictException(InvitationErrors.AlreadyInvited);
-        }
-
         // Check email is not already a member of the org
         var existingMemberships = await _membershipRepository.GetByOrgAndUserEmailAsync(command.OrgId, command.Email, cancellationToken);
         if (existingMemberships is not null)
