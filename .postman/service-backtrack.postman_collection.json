@@ -3,7 +3,8 @@
     "_postman_id": "76aa06da-9deb-45cd-9b61-949e5d597fe8",
     "name": "service-backtrack",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "37421097"
+    "_exporter_id": "37421097",
+    "_collection_link": "https://go.postman.co/collection/37421097-76aa06da-9deb-45cd-9b61-949e5d597fe8?source=collection_link"
   },
   "item": [
     {
@@ -15,10 +16,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/health",
+              "raw": "http://localhost:8080/health",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
                 "health"
               ]
@@ -72,7 +75,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"email\": \"nhatthang270404+1@gmail.com\"\r\n}",
+              "raw": "{\r\n    \"email\": \"philongkokodudu1@gmail.com\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -97,7 +100,188 @@
               ]
             }
           },
-          "response": []
+          "response": [
+            {
+              "name": "Verified",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"email\": \"nhatthang270404+1@gmail.com\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/check-email",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "check-email"
+                  ],
+                  "query": [
+                    {
+                      "key": "email",
+                      "value": "nhatthang270404+2@gmail.com",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Wed, 11 Feb 2026 03:03:37 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Correlation-Id",
+                  "value": "eb7f954c-c925-4e8e-ad58-3d30eebcf84e"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"status\": \"Verified\",\n        \"email\": \"nhatthang270404+1@gmail.com\"\n    },\n    \"error\": null,\n    \"correlationId\": \"eb7f954c-c925-4e8e-ad58-3d30eebcf84e\"\n}"
+            },
+            {
+              "name": "Not found",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"email\": \"nhatthang270404+11@gmail.com\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/check-email",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "check-email"
+                  ],
+                  "query": [
+                    {
+                      "key": "email",
+                      "value": "nhatthang270404+2@gmail.com",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Wed, 11 Feb 2026 03:04:08 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Correlation-Id",
+                  "value": "9b4fb094-9c37-4715-9c83-c4f750a3644a"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"status\": \"NotFound\",\n        \"email\": \"nhatthang270404+11@gmail.com\"\n    },\n    \"error\": null,\n    \"correlationId\": \"9b4fb094-9c37-4715-9c83-c4f750a3644a\"\n}"
+            },
+            {
+              "name": "Not verified",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"email\": \"philongkokodudu1@gmail.com\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/check-email",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "check-email"
+                  ],
+                  "query": [
+                    {
+                      "key": "email",
+                      "value": "nhatthang270404+2@gmail.com",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Wed, 11 Feb 2026 03:07:10 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Correlation-Id",
+                  "value": "c23de79e-94a2-465d-9f07-d0fd9e14e8d7"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"status\": \"NotVerified\",\n        \"email\": \"philongkokodudu1@gmail.com\"\n    },\n    \"error\": null,\n    \"correlationId\": \"c23de79e-94a2-465d-9f07-d0fd9e14e8d7\"\n}"
+            }
+          ]
         }
       ]
     },
@@ -800,7 +984,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\r\n    \"displayName\": \"Thang ngu\"\r\n}"
+                  "raw": ""
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/core/users/me",
@@ -1216,77 +1400,6 @@
                 }
               },
               "response": []
-            },
-            {
-              "name": "New Request",
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              },
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{accessToken}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "GET",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"images\": [\r\n        {\r\n            \"message\": \"Only JPG/PNG/WebP/Heic images are allowed.\",\r\n            \"ref\": undefined,\r\n            \"type\": \"mime\"\r\n        }\r\n    ]\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/api/core/posts?page=1&pageSize=10&postType=Lost&searchTerm=Suitcase&latitude=14.0538846&longitude=109.0572086&radiusInKm=11.15",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "core",
-                    "posts"
-                  ],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "1"
-                    },
-                    {
-                      "key": "pageSize",
-                      "value": "10"
-                    },
-                    {
-                      "key": "postType",
-                      "value": "Lost"
-                    },
-                    {
-                      "key": "searchTerm",
-                      "value": "Suitcase"
-                    },
-                    {
-                      "key": "latitude",
-                      "value": "14.0538846"
-                    },
-                    {
-                      "key": "longitude",
-                      "value": "109.0572086"
-                    },
-                    {
-                      "key": "radiusInKm",
-                      "value": "11.15"
-                    }
-                  ]
-                }
-              },
-              "response": []
             }
           ]
         },
@@ -1358,7 +1471,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\r\n  \"name\": \"Vincom\",\r\n  \"slug\": \"vincom\",\r\n//   \"address\": \"string\",\r\n  \"phone\": \"0784904003\",\r\n  \"industryType\": \"COMMERCIAL\",\r\n  \"taxIdentificationNumber\": \"083919289349392020182\"\r\n}"
+                  "raw": ""
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/core/orgs/me",
@@ -1370,13 +1483,6 @@
                     "core",
                     "orgs",
                     "me"
-                  ],
-                  "query": [
-                    {
-                      "key": "email",
-                      "value": "nhatthang270404+2@gmail.com",
-                      "disabled": true
-                    }
                   ]
                 }
               },
@@ -1452,6 +1558,127 @@
                     "orgs",
                     "{{orgId}}",
                     "members"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Join Invitation",
+          "item": [
+            {
+              "name": "Org Admin Invite",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"orgId\": \"ff53872f-a280-4eb6-9b5f-9ce167ed59be\",\r\n  \"email\": \"nhatthang270404+3@gmail.com\",\r\n  \"role\": \"OrgStaff\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/core/invitations",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "core",
+                    "invitations"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Verify invitation token",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"token\": \"DiA2RjYpAyVzXiLTmLp6aINQNaPOexF3QLYJJzZ4UIg\",\r\n  \"email\": \"nhatthang270404+1@gmail.com\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/core/invitations/check",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "core",
+                    "invitations",
+                    "check"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Join organization",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"token\": \"DiA2RjYpAyVzXiLTmLp6aINQNaPOexF3QLYJJzZ4UIg\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/core/invitations/join",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "core",
+                    "invitations",
+                    "join"
                   ]
                 }
               },
@@ -1952,50 +2179,9 @@
             }
           },
           "response": []
-        }
-      ]
-    },
-    {
-      "name": "qr-service",
-      "item": [
-        {
-          "name": "health",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": ""
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/health",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "health"
-              ]
-            }
-          },
-          "response": []
         },
         {
-          "name": "create",
+          "name": "Send Email",
           "request": {
             "auth": {
               "type": "bearer",
@@ -2011,7 +2197,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"item\": {\r\n        \"name\": \"Điện thoại iphone xam lá chuối\",\r\n        // \"description\": \"phone 17 xanh lá chuối\",\r\n        \"imageUrls\": [\r\n            \"https://cdn.dienthoaigiakho.vn/photos/1757497223185-iPhone-17-17.jpg\"\r\n        ]\r\n    }\r\n}\r\n\r\n// {\r\n//     \"item\": {\r\n//         \"name\": \"Giày sneaker siêu xịn, siêu đẹp\",\r\n//         \"description\": \"Giày nike, màu trắng, hơi bẩn ở gót\",\r\n//         \"imageUrls\": [\r\n//             \"https://supersports.com.vn/cdn/shop/files/CW2288-111-1.jpg?v=1760951049\"\r\n//         ]\r\n//     }\r\n// }",
+              "raw": "{\r\n    // \"to\": \"dev@koko.vn\",\r\n    \"to\": [\r\n        \"nhatthang270404@gmail.com\"\r\n        // \"user2@example.com\",\r\n        // \"user3@example.com\"\r\n    ],\r\n    \"subject\": \"System Update - March 2026\", \r\n    \"text\": \"The server maintenance is complete.\",\r\n    \"html\": \"<h1>Maintenance Complete</h1><p>All systems are operational.</p>\"\r\n    // \"cc\": \"admin@koko.vn\",\r\n    // \"cc\": [\"admin1@koko.vn\",\"admin2@koko.vn\"],\r\n    // \"bcc\": \"audit@company.com\",\r\n    // \"bcc\": [\r\n    //     \"audit@company.com\",\r\n    //     \"archive@company.com\"\r\n    // ]\r\n}   \r\n",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2019,58 +2205,45 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/qr/qr-codes",
+              "raw": "{{baseUrl}}/api/notification/email",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "qr",
-                "qr-codes"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "2",
-                  "disabled": true
-                },
-                {
-                  "key": "pageSize",
-                  "value": "1",
-                  "disabled": true
-                },
-                {
-                  "key": "searchTerm",
-                  "value": "",
-                  "disabled": true
-                },
-                {
-                  "key": "longitude",
-                  "value": "106.7717",
-                  "disabled": true
-                },
-                {
-                  "key": "latitude",
-                  "value": "10.8527",
-                  "disabled": true
-                },
-                {
-                  "key": "radiusInKm",
-                  "value": "10",
-                  "disabled": true
-                }
+                "notification",
+                "email"
               ]
             }
           },
-          "response": [
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "qr-service",
+      "item": [
+        {
+          "name": "legacy",
+          "item": [
             {
               "name": "create",
-              "originalRequest": {
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
                 "method": "POST",
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "// {\r\n//     \"item\": {\r\n//         \"name\": \"Điện thoại iphone xam lá chuối\",\r\n//         \"description\": \"phone 17 xanh lá chuối\",\r\n//         \"imageUrls\": [\r\n//             \"https://cdn.dienthoaigiakho.vn/photos/1757497223185-iPhone-17-17.jpg\"\r\n//         ]\r\n//     }\r\n// }\r\n\r\n{\r\n    \"item\": {\r\n        \"name\": \"Giày sneaker siêu xịn, siêu đẹp\",\r\n        \"description\": \"Giày nike, màu trắng, hơi bẩn ở gót\",\r\n        \"imageUrls\": [\r\n            \"https://supersports.com.vn/cdn/shop/files/CW2288-111-1.jpg?v=1760951049\"\r\n        ]\r\n    }\r\n}",
+                  "raw": "{\r\n    \"item\": {\r\n        \"name\": \"Điện thoại iphone xam lá chuối\",\r\n        // \"description\": \"phone 17 xanh lá chuối\",\r\n        \"imageUrls\": [\r\n            \"https://cdn.dienthoaigiakho.vn/photos/1757497223185-iPhone-17-17.jpg\"\r\n        ]\r\n    }\r\n}\r\n\r\n// {\r\n//     \"item\": {\r\n//         \"name\": \"Giày sneaker siêu xịn, siêu đẹp\",\r\n//         \"description\": \"Giày nike, màu trắng, hơi bẩn ở gót\",\r\n//         \"imageUrls\": [\r\n//             \"https://supersports.com.vn/cdn/shop/files/CW2288-111-1.jpg?v=1760951049\"\r\n//         ]\r\n//     }\r\n// }",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2121,300 +2294,127 @@
                   ]
                 }
               },
-              "status": "Created",
-              "code": 201,
-              "_postman_previewlanguage": "Text",
-              "header": [
+              "response": [
                 {
-                  "key": "Content-Length",
-                  "value": "422"
-                },
-                {
-                  "key": "Content-Type",
-                  "value": "application/json; charset=utf-8"
-                },
-                {
-                  "key": "Date",
-                  "value": "Thu, 08 Jan 2026 17:28:37 GMT"
-                },
-                {
-                  "key": "Server",
-                  "value": "Kestrel"
-                },
-                {
-                  "key": "ETag",
-                  "value": "W/\"1a6-F56gS+7cynCjxpxob0iAxrizE8s\""
-                },
-                {
-                  "key": "X-Powered-By",
-                  "value": "Express"
-                },
-                {
-                  "key": "X-Correlation-Id",
-                  "value": "ea381ae0-bce5-4e1f-8dcd-9dbee948ae02"
-                }
-              ],
-              "cookie": [],
-              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"qrCode\": {\n            \"id\": \"695fe9458a63f5e66b6ae45b\",\n            \"publicCode\": \"BTK-8ZO2ERDC\",\n            \"linkedAt\": \"2026-01-08T17:28:37.437Z\",\n            \"createdAt\": \"2026-01-08T17:28:37.443Z\"\n        },\n        \"item\": {\n            \"name\": \"Giày sneaker siêu xịn, siêu đẹp\",\n            \"description\": \"Giày nike, màu trắng, hơi bẩn ở gót\",\n            \"imageUrls\": [\n                \"https://supersports.com.vn/cdn/shop/files/CW2288-111-1.jpg?v=1760951049\"\n            ]\n        },\n        \"ownerId\": \"5UOM7YtiyVh5lRGVmPttmrKxTCR2\"\n    }\n}"
-            }
-          ]
-        },
-        {
-          "name": "get by id",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"name\": \"Long ngu\",\r\n    \"description\": \"Long rat ngu\",\r\n    \"imageUrls\": [\"hahaha\"],\r\n    \"userId\": \"694829226da18bc0a0d63069\"\r\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/qr-codes/:id",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "qr-codes",
-                ":id"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "69568776c12c4fdf3490e76d"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "get all",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": ""
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/qr-codes?pageSize=1&page=2",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "qr-codes"
-              ],
-              "query": [
-                {
-                  "key": "pageSize",
-                  "value": "1"
-                },
-                {
-                  "key": "page",
-                  "value": "2"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
+                  "name": "create",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "// {\r\n//     \"item\": {\r\n//         \"name\": \"Điện thoại iphone xam lá chuối\",\r\n//         \"description\": \"phone 17 xanh lá chuối\",\r\n//         \"imageUrls\": [\r\n//             \"https://cdn.dienthoaigiakho.vn/photos/1757497223185-iPhone-17-17.jpg\"\r\n//         ]\r\n//     }\r\n// }\r\n\r\n{\r\n    \"item\": {\r\n        \"name\": \"Giày sneaker siêu xịn, siêu đẹp\",\r\n        \"description\": \"Giày nike, màu trắng, hơi bẩn ở gót\",\r\n        \"imageUrls\": [\r\n            \"https://supersports.com.vn/cdn/shop/files/CW2288-111-1.jpg?v=1760951049\"\r\n        ]\r\n    }\r\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/qr/qr-codes",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "qr",
+                        "qr-codes"
+                      ],
+                      "query": [
+                        {
+                          "key": "page",
+                          "value": "2",
+                          "disabled": true
+                        },
+                        {
+                          "key": "pageSize",
+                          "value": "1",
+                          "disabled": true
+                        },
+                        {
+                          "key": "searchTerm",
+                          "value": "",
+                          "disabled": true
+                        },
+                        {
+                          "key": "longitude",
+                          "value": "106.7717",
+                          "disabled": true
+                        },
+                        {
+                          "key": "latitude",
+                          "value": "10.8527",
+                          "disabled": true
+                        },
+                        {
+                          "key": "radiusInKm",
+                          "value": "10",
+                          "disabled": true
+                        }
+                      ]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "Text",
+                  "header": [
+                    {
+                      "key": "Content-Length",
+                      "value": "422"
+                    },
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json; charset=utf-8"
+                    },
+                    {
+                      "key": "Date",
+                      "value": "Thu, 08 Jan 2026 17:28:37 GMT"
+                    },
+                    {
+                      "key": "Server",
+                      "value": "Kestrel"
+                    },
+                    {
+                      "key": "ETag",
+                      "value": "W/\"1a6-F56gS+7cynCjxpxob0iAxrizE8s\""
+                    },
+                    {
+                      "key": "X-Powered-By",
+                      "value": "Express"
+                    },
+                    {
+                      "key": "X-Correlation-Id",
+                      "value": "ea381ae0-bce5-4e1f-8dcd-9dbee948ae02"
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"success\": true,\n    \"data\": {\n        \"qrCode\": {\n            \"id\": \"695fe9458a63f5e66b6ae45b\",\n            \"publicCode\": \"BTK-8ZO2ERDC\",\n            \"linkedAt\": \"2026-01-08T17:28:37.437Z\",\n            \"createdAt\": \"2026-01-08T17:28:37.443Z\"\n        },\n        \"item\": {\n            \"name\": \"Giày sneaker siêu xịn, siêu đẹp\",\n            \"description\": \"Giày nike, màu trắng, hơi bẩn ở gót\",\n            \"imageUrls\": [\n                \"https://supersports.com.vn/cdn/shop/files/CW2288-111-1.jpg?v=1760951049\"\n            ]\n        },\n        \"ownerId\": \"5UOM7YtiyVh5lRGVmPttmrKxTCR2\"\n    }\n}"
                 }
               ]
             },
-            "method": "PUT",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"name\": \"Chai nước\",\r\n    \"description\": \"Màu đen, black\",\r\n    \"imageUrls\": [\r\n        \"https://firebasestorage.googleapis.com/v0/b/backtrack-sep490.firebasestorage.app/o/posts%2Fimages%2FXsup0djQthTL3PSDtwMCeORRwDx1%2Fimg_1768355661555_0?alt=media&token=d14884b7-c27c-420e-8614-8b2746244be6\"\r\n    ]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/qr-codes/:id/item",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "qr-codes",
-                ":id",
-                "item"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "69661d13b9e7c92028b17734"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "get by public code",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": ""
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/qr-code/public-code/:publicCode",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "qr-code",
-                "public-code",
-                ":publicCode"
-              ],
-              "variable": [
-                {
-                  "key": "publicCode",
-                  "value": "BTK-REZSPUEZ"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "generate qr code",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"item\": {\r\n        \"name\": \"linhhh\",\r\n        \"description\": \"Tat linh\",\r\n        \"imageUrls\": [\r\n            \"hahaha\"\r\n        ]\r\n    }\r\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/qr-codes/:public-code/image",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "qr-codes",
-                ":public-code",
-                "image"
-              ],
-              "variable": [
-                {
-                  "key": "public-code",
-                  "value": "BTK-F5DL4OES"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "create-digital",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "file",
-              "file": {}
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/qr-codes/physical",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "qr-codes",
-                "physical"
-              ]
-            }
-          },
-          "response": [
             {
-              "name": "New Request",
-              "originalRequest": {
-                "method": "POST",
+              "name": "get by id",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
                 "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"Long ngu\",\r\n    \"description\": \"Long rat ngu\",\r\n    \"imageUrls\": [\"hahaha\"],\r\n    \"userId\": \"694829226da18bc0a0d63069\"\r\n}"
+                },
                 "url": {
-                  "raw": "{{baseUrl}}/api/qr/qr-codes/digital",
+                  "raw": "{{baseUrl}}/api/qr/qr-codes/:id",
                   "host": [
                     "{{baseUrl}}"
                   ],
@@ -2422,371 +2422,576 @@
                     "api",
                     "qr",
                     "qr-codes",
-                    "digital"
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "69568776c12c4fdf3490e76d"
+                    }
                   ]
                 }
               },
-              "status": "Created",
-              "code": 201,
-              "_postman_previewlanguage": "Text",
-              "header": [
-                {
-                  "key": "Content-Length",
-                  "value": "204"
+              "response": []
+            },
+            {
+              "name": "get all",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
                 },
-                {
-                  "key": "Content-Type",
-                  "value": "application/json; charset=utf-8"
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
                 },
-                {
-                  "key": "Date",
-                  "value": "Tue, 06 Jan 2026 15:48:25 GMT"
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/qr-codes?pageSize=1&page=2",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "qr-codes"
+                  ],
+                  "query": [
+                    {
+                      "key": "pageSize",
+                      "value": "1"
+                    },
+                    {
+                      "key": "page",
+                      "value": "2"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
                 },
-                {
-                  "key": "Server",
-                  "value": "Kestrel"
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"Chai nước\",\r\n    \"description\": \"Màu đen, black\",\r\n    \"imageUrls\": [\r\n        \"https://firebasestorage.googleapis.com/v0/b/backtrack-sep490.firebasestorage.app/o/posts%2Fimages%2FXsup0djQthTL3PSDtwMCeORRwDx1%2Fimg_1768355661555_0?alt=media&token=d14884b7-c27c-420e-8614-8b2746244be6\"\r\n    ]\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
-                {
-                  "key": "ETag",
-                  "value": "W/\"cc-5NIcDS5xZl/iIuZIdGewiC+8+cY\""
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/qr-codes/:id/item",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "qr-codes",
+                    ":id",
+                    "item"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "69661d13b9e7c92028b17734"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "get by public code",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "noauth"
                 },
-                {
-                  "key": "X-Powered-By",
-                  "value": "Express"
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
                 },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/qr-code/public-code/:publicCode",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "qr-code",
+                    "public-code",
+                    ":publicCode"
+                  ],
+                  "variable": [
+                    {
+                      "key": "publicCode",
+                      "value": "BTK-REZSPUEZ"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "generate qr code",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"item\": {\r\n        \"name\": \"linhhh\",\r\n        \"description\": \"Tat linh\",\r\n        \"imageUrls\": [\r\n            \"hahaha\"\r\n        ]\r\n    }\r\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/qr-codes/:public-code/image",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "qr-codes",
+                    ":public-code",
+                    "image"
+                  ],
+                  "variable": [
+                    {
+                      "key": "public-code",
+                      "value": "BTK-F5DL4OES"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "create-digital",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "file",
+                  "file": {}
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/qr-codes/physical",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "qr-codes",
+                    "physical"
+                  ]
+                }
+              },
+              "response": [
                 {
-                  "key": "X-Correlation-Id",
-                  "value": "fc1ee2b9-8f7f-45a0-8fc5-1c3c29353f97"
-                }
-              ],
-              "cookie": [],
-              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"qrCode\": {\n            \"id\": \"695d2ec971e3880f9bcc71d0\",\n            \"publicCode\": \"BTK-4Z0NQ5LH\",\n            \"linkedAt\": null,\n            \"createdAt\": \"2026-01-06T15:48:25.756Z\"\n        },\n        \"item\": null,\n        \"ownerId\": \"xJ8rHQlPYTgENhO6vl2kEWgzQ6A2\"\n    }\n}"
-            }
-          ]
-        },
-        {
-          "name": "active qr",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"name\": \"Long ngu\",\r\n    \"description\": \"Long rat ngu\",\r\n    \"imageUrls\": [\"hahaha\"]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/qr-codes/{{publicCode}}/activate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "qr-codes",
-                "{{publicCode}}",
-                "activate"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "payment-link",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
+                  "name": "New Request",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/qr/qr-codes/digital",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "qr",
+                        "qr-codes",
+                        "digital"
+                      ]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "Text",
+                  "header": [
+                    {
+                      "key": "Content-Length",
+                      "value": "204"
+                    },
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json; charset=utf-8"
+                    },
+                    {
+                      "key": "Date",
+                      "value": "Tue, 06 Jan 2026 15:48:25 GMT"
+                    },
+                    {
+                      "key": "Server",
+                      "value": "Kestrel"
+                    },
+                    {
+                      "key": "ETag",
+                      "value": "W/\"cc-5NIcDS5xZl/iIuZIdGewiC+8+cY\""
+                    },
+                    {
+                      "key": "X-Powered-By",
+                      "value": "Express"
+                    },
+                    {
+                      "key": "X-Correlation-Id",
+                      "value": "fc1ee2b9-8f7f-45a0-8fc5-1c3c29353f97"
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"success\": true,\n    \"data\": {\n        \"qrCode\": {\n            \"id\": \"695d2ec971e3880f9bcc71d0\",\n            \"publicCode\": \"BTK-4Z0NQ5LH\",\n            \"linkedAt\": null,\n            \"createdAt\": \"2026-01-06T15:48:25.756Z\"\n        },\n        \"item\": null,\n        \"ownerId\": \"xJ8rHQlPYTgENhO6vl2kEWgzQ6A2\"\n    }\n}"
                 }
               ]
             },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"packageId\": \"695a35ae56f6dabe51959a04\",\r\n    \"shippingAddress\": \"Long An\"\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+            {
+              "name": "active qr",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"Long ngu\",\r\n    \"description\": \"Long rat ngu\",\r\n    \"imageUrls\": [\"hahaha\"]\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/qr-codes/{{publicCode}}/activate",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "qr-codes",
+                    "{{publicCode}}",
+                    "activate"
+                  ]
                 }
-              }
+              },
+              "response": []
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/order/link-payment",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "order",
-                "link-payment"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "get order by code",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
+            {
+              "name": "payment-link",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"packageId\": \"695a35ae56f6dabe51959a04\",\r\n    \"shippingAddress\": \"Long An\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/order/link-payment",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "order",
+                    "link-payment"
+                  ]
                 }
-              ]
+              },
+              "response": []
             },
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"packageId\": \"695a35ae56f6dabe51959a04\",\r\n    \"shippingAddress\": \"Long An\"\r\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/order-code/{{code}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "order-code",
-                "{{code}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "re-create payment link",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
+            {
+              "name": "get order by code",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"packageId\": \"695a35ae56f6dabe51959a04\",\r\n    \"shippingAddress\": \"Long An\"\r\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/order-code/{{code}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "order-code",
+                    "{{code}}"
+                  ]
                 }
-              ]
+              },
+              "response": []
             },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/payment/re-create-link/:orderId",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "payment",
-                "re-create-link",
-                ":orderId"
-              ],
-              "variable": [
-                {
-                  "key": "orderId",
-                  "value": "696a04ea6102b675294326a3"
+            {
+              "name": "re-create payment link",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/payment/re-create-link/:orderId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "payment",
+                    "re-create-link",
+                    ":orderId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "orderId",
+                      "value": "696a04ea6102b675294326a3"
+                    }
+                  ]
                 }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "get order by id",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
+              },
+              "response": []
+            },
+            {
+              "name": "get order by id",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"packageId\": \"695a35ae56f6dabe51959a04\",\r\n    \"shippingAddress\": \"Long An\"\r\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/order/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "order",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "6969fc866876bf812f4a7b15"
+                    }
+                  ]
                 }
-              ]
+              },
+              "response": []
             },
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"packageId\": \"695a35ae56f6dabe51959a04\",\r\n    \"shippingAddress\": \"Long An\"\r\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/order/:id",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "order",
-                ":id"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "6969fc866876bf812f4a7b15"
+            {
+              "name": "get all package",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"packageId\": \"695a35ae56f6dabe51959a04\",\r\n    \"shippingAddress\": \"Long An\"\r\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/packages",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "packages"
+                  ]
                 }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "get all package",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"packageId\": \"695a35ae56f6dabe51959a04\",\r\n    \"shippingAddress\": \"Long An\"\r\n}"
+              },
+              "response": []
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/packages",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "packages"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "get package by id",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"packageId\": \"695a35ae56f6dabe51959a04\",\r\n    \"shippingAddress\": \"Long An\"\r\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/packages/{{packageId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "packages",
-                "{{packageId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "delete package",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
+            {
+              "name": "get package by id",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"packageId\": \"695a35ae56f6dabe51959a04\",\r\n    \"shippingAddress\": \"Long An\"\r\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/packages/{{packageId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "packages",
+                    "{{packageId}}"
+                  ]
                 }
-              ]
+              },
+              "response": []
             },
-            "method": "DELETE",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"packageId\": \"695a35ae56f6dabe51959a04\",\r\n    \"shippingAddress\": \"Long An\"\r\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/packages/{{packageId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "packages",
-                "{{packageId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "create package",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
+            {
+              "name": "delete package",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"packageId\": \"695a35ae56f6dabe51959a04\",\r\n    \"shippingAddress\": \"Long An\"\r\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/packages/{{packageId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "packages",
+                    "{{packageId}}"
+                  ]
                 }
-              ]
+              },
+              "response": []
             },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"name\": \"cat linh package\",\r\n    \"price\": 2000,\r\n    \"qrCount\": 1,\r\n    \"isActive\": true\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/qr/packages",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "qr",
-                "packages"
-              ]
-            }
-          },
-          "response": [
             {
               "name": "create package",
-              "originalRequest": {
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
                 "method": "POST",
                 "header": [],
                 "body": {
@@ -2810,13 +3015,201 @@
                   ]
                 }
               },
-              "status": "Created",
-              "code": 201,
-              "_postman_previewlanguage": "Text",
+              "response": [
+                {
+                  "name": "create package",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\r\n    \"name\": \"cat linh package\",\r\n    \"price\": 2000,\r\n    \"qrCount\": 1,\r\n    \"isActive\": true\r\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/qr/packages",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "qr",
+                        "packages"
+                      ]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "Text",
+                  "header": [
+                    {
+                      "key": "Content-Length",
+                      "value": "208"
+                    },
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json; charset=utf-8"
+                    },
+                    {
+                      "key": "Date",
+                      "value": "Fri, 16 Jan 2026 13:07:43 GMT"
+                    },
+                    {
+                      "key": "Server",
+                      "value": "Kestrel"
+                    },
+                    {
+                      "key": "ETag",
+                      "value": "W/\"d0-UwR91PObpdSZDN2X7Yc3Q69u7pc\""
+                    },
+                    {
+                      "key": "X-Powered-By",
+                      "value": "Express"
+                    },
+                    {
+                      "key": "X-Correlation-Id",
+                      "value": "b2d1e792-650b-4c87-8d92-5f4b83434d9b"
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"data\": {\n        \"id\": \"696a381fb08f3545669a3154\",\n        \"name\": \"cat linh package\",\n        \"price\": 2000,\n        \"qrCount\": 1,\n        \"isActive\": true,\n        \"createdAt\": \"2026-01-16T20:07:43.000+07:00\"\n    },\n    \"correlationId\": \"b2d1e792-650b-4c87-8d92-5f4b83434d9b\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "update package",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"cat linh ne package\",\r\n    \"price\": 200\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/packages/{{packageId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "packages",
+                    "{{packageId}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "health",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/qr/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "qr",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Qr",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/qr/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "qr",
+                "me"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "me"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
               "header": [
                 {
                   "key": "Content-Length",
-                  "value": "208"
+                  "value": "258"
                 },
                 {
                   "key": "Content-Type",
@@ -2824,7 +3217,7 @@
                 },
                 {
                   "key": "Date",
-                  "value": "Fri, 16 Jan 2026 13:07:43 GMT"
+                  "value": "Sat, 21 Feb 2026 02:58:00 GMT"
                 },
                 {
                   "key": "Server",
@@ -2832,7 +3225,7 @@
                 },
                 {
                   "key": "ETag",
-                  "value": "W/\"d0-UwR91PObpdSZDN2X7Yc3Q69u7pc\""
+                  "value": "W/\"102-GNJGVf0xCZe3QVwTvlZsexZrzkA\""
                 },
                 {
                   "key": "X-Powered-By",
@@ -2840,22 +3233,32 @@
                 },
                 {
                   "key": "X-Correlation-Id",
-                  "value": "b2d1e792-650b-4c87-8d92-5f4b83434d9b"
+                  "value": "4951c888-fc5f-4c32-8552-bfdb3412342d"
                 }
               ],
               "cookie": [],
-              "body": "{\n    \"data\": {\n        \"id\": \"696a381fb08f3545669a3154\",\n        \"name\": \"cat linh package\",\n        \"price\": 2000,\n        \"qrCount\": 1,\n        \"isActive\": true,\n        \"createdAt\": \"2026-01-16T20:07:43.000+07:00\"\n    },\n    \"correlationId\": \"b2d1e792-650b-4c87-8d92-5f4b83434d9b\"\n}"
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": \"69991b6e192ff90b71f5fc07\",\n        \"userId\": \"5UOM7YtiyVh5lRGVmPttmrKxTCR2\",\n        \"publicCode\": \"BTK-IXL0B840\",\n        \"createdAt\": \"2026-02-21T02:41:50.732Z\",\n        \"updatedAt\": \"2026-02-21T02:41:50.732Z\"\n    },\n    \"correlationId\": \"4951c888-fc5f-4c32-8552-bfdb3412342d\"\n}"
             }
           ]
         },
         {
-          "name": "update package",
+          "name": "Subscribe subscription",
           "request": {
-            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"name\": \"cat linh ne package\",\r\n    \"price\": 200\r\n}",
+              "raw": "{\r\n    \"priceId\": \"price_1T3B5zQqedaIws15A0XEX6HR\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2863,19 +3266,328 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/qr/packages/{{packageId}}",
+              "raw": "{{baseUrl}}/api/qr/subscriptions",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "qr",
-                "packages",
-                "{{packageId}}"
+                "subscriptions"
               ]
             }
           },
-          "response": []
+          "response": [
+            {
+              "name": "Already Subscribe",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"priceId\": \"price_1T3B5zQqedaIws15A0XEX6HR\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/subscriptions",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "subscriptions"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Length",
+                  "value": "233"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Wed, 25 Feb 2026 07:40:48 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"e9-2IXY0vkeuDyEjiYKyx/KerwgVGM\""
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "X-Correlation-Id",
+                  "value": "4f6e8730-a68a-4f6d-9a0a-233daa5d3f1e"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": false,\n    \"error\": {\n        \"code\": \"SubscriptionAlreadySubscribed\",\n        \"message\": \"User already has an active subscription. Cancel the current subscription before creating a new one.\"\n    },\n    \"correlationId\": \"4f6e8730-a68a-4f6d-9a0a-233daa5d3f1e\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get My Subscription",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/qr/subscriptions/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "qr",
+                "subscriptions",
+                "me"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "No active subscription",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/subscriptions/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "subscriptions",
+                    "me"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Length",
+                  "value": "83"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Wed, 25 Feb 2026 08:15:58 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"53-PZkWfzvrGE1hbPlRMMlAVv1LfZs\""
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "X-Correlation-Id",
+                  "value": "26033f78-55d7-4d6d-ae99-a8e983c16deb"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"data\": null,\n    \"correlationId\": \"26033f78-55d7-4d6d-ae99-a8e983c16deb\"\n}"
+            },
+            {
+              "name": "Active Subscription",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/subscriptions/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "subscriptions",
+                    "me"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Length",
+                  "value": "310"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Wed, 25 Feb 2026 08:22:25 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"136-ax1NwIXcxXcYxgisfg5ZrzVYjYs\""
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "X-Correlation-Id",
+                  "value": "b34884de-2cf5-413d-81a6-1b944e3f6d67"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": \"699eb09aee46c268a27c5b97\",\n        \"userId\": \"5UOM7YtiyVh5lRGVmPttmrKxTCR2\",\n        \"planType\": \"Yearly\",\n        \"currentPeriodStart\": \"2026-02-21T11:40:14.000Z\",\n        \"currentPeriodEnd\": \"2027-02-21T11:40:14.000Z\",\n        \"status\": \"Active\",\n        \"cancelAtPeriodEnd\": false\n    },\n    \"correlationId\": \"b34884de-2cf5-413d-81a6-1b944e3f6d67\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cancel subscription",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/qr/subscriptions/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "qr",
+                "subscriptions",
+                "me"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "No Active Subscription",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/qr/subscriptions/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "qr",
+                    "subscriptions",
+                    "me"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Length",
+                  "value": "167"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Wed, 25 Feb 2026 08:15:00 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"a7-8eONOgZu4YLkDsTa6VTtybQSaoo\""
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "X-Correlation-Id",
+                  "value": "e5993d21-970d-4f21-b03c-73232b7c5a24"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": false,\n    \"error\": {\n        \"code\": \"NoActiveSubscription\",\n        \"message\": \"User has no active subscription to cancel.\"\n    },\n    \"correlationId\": \"e5993d21-970d-4f21-b03c-73232b7c5a24\"\n}"
+            }
+          ]
         }
       ]
     }

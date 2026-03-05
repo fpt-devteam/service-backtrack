@@ -51,5 +51,7 @@ export default {
     User: getEnv('EMAIL_USER'),
     Pass: getEnv('EMAIL_PASS'),
   },
+
+  BacktrackConsoleWebDomain: getEnv('BACKTRACK_CONSOLE_WEB_DOMAIN'),
 } as const
 
