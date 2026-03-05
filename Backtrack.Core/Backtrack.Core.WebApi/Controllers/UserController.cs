@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
 using MediatR;
-using Backtrack.Core.Application.Usecases.Users.Commands.EnsureUserExist;
-using Backtrack.Core.Application.Usecases.Users.Queries.GetMe;
+using Backtrack.Core.Application.Usecases.Users.EnsureUserExist;
+using Backtrack.Core.Application.Usecases.Users.GetMe;
 
 namespace Backtrack.Core.WebApi.Controllers;
 

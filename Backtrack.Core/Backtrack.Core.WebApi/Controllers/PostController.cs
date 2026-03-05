@@ -3,13 +3,13 @@ using MediatR;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
 using Backtrack.Core.WebApi.Common;
-using Backtrack.Core.Application.Usecases.Posts.Queries.GetPostById;
-using Backtrack.Core.Application.Usecases.Posts.Queries.GetSimilarPosts;
-using Backtrack.Core.Application.Usecases.Posts.Commands.DeletePost;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Application.Usecases.Posts.SearchPostsBySemantic;
 using Backtrack.Core.Application.Usecases.Posts.GetPosts;
+using Backtrack.Core.Application.Usecases.Posts.GetPostById;
+using Backtrack.Core.Application.Usecases.Posts.GetSimilarPosts;
+using Backtrack.Core.Application.Usecases.Posts.DeletePost;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
