@@ -34,7 +34,6 @@ public class FirebaseAuthMiddleware
             "/auth/check-email",
             "/api/qr/qr-code/public-code",
             "/api/qr/health",
-            "/api/chat/hub",
             "/api/qr/webhooks/stripe",
             "/api/core/swagger",
             "/swagger"
@@ -51,14 +50,32 @@ public class FirebaseAuthMiddleware
             return;
         }
 
-        if (!context.Request.Headers.TryGetValue(AuthHeaderName, out var authHeader) ||
-            string.IsNullOrWhiteSpace(authHeader))
+        // WebSocket upgrade requests cannot carry custom headers from the browser.
+        // SignalR sends the token as ?access_token=... query parameter in that case.
+        string? token = null;
+        if (context.WebSockets.IsWebSocketRequest &&
+            context.Request.Query.TryGetValue("access_token", out var wsToken) &&
+            !string.IsNullOrWhiteSpace(wsToken))
         {
-            await WriteErrorResponse(context, AuthErrors.MissingAuthHeaders, StatusCodes.Status401Unauthorized);
-            return;
+            token = wsToken.ToString();
+        }
+        else
+        {
+            if (!context.Request.Headers.TryGetValue(AuthHeaderName, out var authHeader) ||
+                string.IsNullOrWhiteSpace(authHeader))
+            {
+                await WriteErrorResponse(context, AuthErrors.MissingAuthHeaders, StatusCodes.Status401Unauthorized);
+                return;
+            }
+
+            token = ExtractBearerToken(authHeader!);
         }
 
-        var token = ExtractBearerToken(authHeader!);
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            await WriteErrorResponse(context, AuthErrors.InvalidAuthHeaderFormat, StatusCodes.Status401Unauthorized);
+            return;
+        }
         if (string.IsNullOrWhiteSpace(token))
         {
             await WriteErrorResponse(context, AuthErrors.InvalidAuthHeaderFormat, StatusCodes.Status401Unauthorized);

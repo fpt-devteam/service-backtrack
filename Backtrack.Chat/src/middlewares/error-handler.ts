@@ -1,52 +1,88 @@
-import { Request, Response, NextFunction } from 'express';
-import { AppError } from '@src/common/errors';
-import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES';
-import logger from '@src/utils/logger';
+import { NextFunction, Request, Response } from 'express';
+import { ApiResponseBuilder, ApiError } from '@/utils/api-response';
+import { isAppError, type Error } from '@/utils/api-error';
+import logger from '@/utils/logger';
+import { ZodError } from 'zod';
 
-export const errorHandler = (
-  err: Error,
+const getStatusCodeFromErrorKind = (kind: Error['kind']): number => {
+  switch (kind) {
+    case 'Validation':
+      return 400;
+    case 'Unauthorized':
+      return 401;
+    case 'NotFound':
+      return 404;
+    case 'Conflict':
+      return 409;
+    case 'Internal':
+      return 500;
+    default:
+      return 500;
+  }
+};
+
+export const errorMiddleware = (
+  err: any,
   req: Request,
   res: Response,
-  _next: NextFunction,
+  _next: NextFunction
 ) => {
-  const correlationId = req.headers['x-correlation-id'] as string;
-
-  // Handle operational errors (AppError instances)
-  if (err instanceof AppError) {
-    logger.warn(`[AppError] ${err.code}: ${err.message}`, {
-      correlationId,
-      path: req.path,
-    });
-
-    const response = {
-      success: false,
-      error: {
-        code: err.code,
-        message: err.message,
-
-      },
-      correlationId,
-    };
-
-    return res.status(err.statusCode).json(response);
-  }
-
-  // Log unexpected errors
-  logger.error('[UnexpectedError]', {
+  // Log error details for debugging
+  logger.error('Error occurred:', {
+    name: err.name,
     error: err.message,
     stack: err.stack,
-    correlationId,
     path: req.path,
     method: req.method,
   });
 
-  // Handle validation errors
-  return res.status(HTTP_STATUS_CODES.InternalServerError).json({
-    success: false,
-    error: {
-      code: 'InternalServerError',
-      message: 'An unexpected error occurred',
-    },
-    correlationId,
-  });
+  let statusCode: number;
+  let errorResponse: ApiError;
+
+  if (err instanceof ZodError) {
+    // Handle Zod validation errors
+    statusCode = 400;
+    errorResponse = {
+      code: 'VALIDATION_ERROR',
+      message: 'Validation failed',
+      details: err.errors.map(e => ({
+        path: e.path.join('.'),
+        message: e.message,
+      })),
+    };
+  } else if (err.name === 'ValidationError' && err.errors) {
+    // Handle Mongoose validation errors
+    statusCode = 400;
+    errorResponse = {
+      code: 'VALIDATION_ERROR',
+      message: 'Validation failed',
+      details: Object.values(err.errors).map((e: any) => ({
+        path: e.path,
+        message: e.message,
+      })),
+    };
+  } else if (isAppError(err)) {
+    // Handle new Error type
+    statusCode = getStatusCodeFromErrorKind(err.kind);
+    errorResponse = {
+      code: err.code,
+      message: err.message,
+    };
+    if (err.cause) {
+      errorResponse.details = err.cause;
+    }
+  } else {
+    // Handle legacy errors and unknown errors
+    statusCode = err.statusCode || 500;
+    errorResponse = {
+      code: err.code || 'INTERNAL_SERVER_ERROR',
+      message: err.message || 'Something went wrong',
+    };
+  }
+
+  const response = ApiResponseBuilder.error(errorResponse, req.headers['x-correlation-id'] as string);
+
+  res.status(statusCode).json(response);
 };
+
+export default errorMiddleware;

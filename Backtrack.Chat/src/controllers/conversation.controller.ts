@@ -1,122 +1,76 @@
 import { Request, Response } from 'express';
-import { AsyncHandler } from '@src/decorators/async-handler';
-import ConversationService from '@src/services/conversation.service';
-import HTTP_STATUS_CODES from '@src/common/constants/HTTP_STATUS_CODES';
-import { ErrorCodes } from '@src/common/errors';
-import { HEADER_AUTH_ID } from '@src/utils/headers';
-import {
-  CreateConversationInput,
-  ModifyConversationParticipantNicknameInput,
-} from '@src/contracts/requests/conversation.request';
-import ConversationParticipantService
-  from '@src/services/conversation.participant.service';
+import { CreateConversationSchema } from '@/dtos/conversation/conversation.request';
+import * as conversationService from '@/services/conversation.service';
+import { ApiResponseBuilder } from '@/utils/api-response';
+import { Constants } from '@/config/constants';
+// import { createError } from '@/utils/api-error';
 
-export class ConversationControllerClass {
-  @AsyncHandler
-  public async getAllConversations(req: Request, res: Response) {
-    const userId = req.headers[HEADER_AUTH_ID] as string;
-    const { limit, cursor } = req.query;
-    if (!userId) {
-      throw ErrorCodes.MissingUserId;
-    }
-    const paginationOptions = {
-      limit: limit ? parseInt(limit as string, 10) : undefined,
-      cursor: cursor as string | undefined,
-    };
+export const createConversation = async (req: Request, res: Response) => {
+	const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+	
+	// if (!userId) {
+	// 	throw createError('Unauthorized', 'MISSING_AUTH_HEADER', 'User authentication header is required');
+	// }
 
-    const conversations =
-      await ConversationService.getAllConversationsByUserId(
-        userId,
-        paginationOptions,
-      );
+	const parsed = CreateConversationSchema.parse(req.body);
+	const conversation = await conversationService.createConversation(parsed, userId);
+	const response = ApiResponseBuilder.success({ conversation }, req.headers['x-correlation-id'] as string);
+	return res.status(201).json(response);
+};
 
-    return res.status(HTTP_STATUS_CODES.Ok).json({
-      success: true,
-      data: conversations,
-    });
-  }
+export const listConversations = async (req: Request, res: Response) => {
+	const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
 
-  @AsyncHandler
-  public async getConversationById(req: Request, res: Response) {
-    const { id } = req.params;
-    const userId = req.headers[HEADER_AUTH_ID] as string;
-    if (!userId) {
-      throw ErrorCodes.MissingUserId;
-    }
-    const conversation = 
-    await ConversationService.getConversationById(id, userId);
+	// if (!userId) {
+	// 	throw createError('Unauthorized', 'MISSING_AUTH_HEADER', 'User authentication header is required');
+	// }
 
-    return res.status(HTTP_STATUS_CODES.Ok).json({
-      success: true,
-      data: conversation,
-    });
-  }
+	const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+	const cursor = req.query.cursor as string | undefined;
 
-  @AsyncHandler
-  public async createConversation(req: Request, res: Response) {
-    const userId = req.headers[HEADER_AUTH_ID] as string;
-    const {
-      partnerId,
-      creatorKeyName,
-      partnerKeyName,
-      customAvatarUrl,
-    } = req.body as Omit<CreateConversationInput, 'creatorId'>;
-    if (!userId) {
-      throw ErrorCodes.MissingUserId;
-    }
-    if (!partnerId) {
-      throw ErrorCodes.MissingPartnerId;
-    }
+	const result = await conversationService.listConversationsByUserId(userId, { cursor, limit });
+	const response = ApiResponseBuilder.success(result, req.headers['x-correlation-id'] as string);
+	return res.status(200).json(response);
+};
 
-    const conversationInput: CreateConversationInput = {
-      creatorId: userId,
-      partnerId,
-      creatorKeyName,
-      partnerKeyName,
-      customAvatarUrl,
-    };
+export const getConversationById = async (req: Request, res: Response) => {
+	const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
 
-    const conversationId = await ConversationService.createConversation(
-      conversationInput,
-    );
+	// if (!userId) {
+	// 	throw createError('Unauthorized', 'MISSING_AUTH_HEADER', 'User authentication header is required');
+	// }
 
-    return res.status(HTTP_STATUS_CODES.Created).json({
-      success: true,
-      data: { conversationId },
-    });
-  }
+	const id = req.params.id as string;
 
-  @AsyncHandler
-  public async modifyConversationParticipantNickname(
-    req: Request,
-    res: Response,
-  ) {
-    const userId = req.headers[HEADER_AUTH_ID] as string;
-    const { id } = req.params;
-    const { targetUserId, newNickname } =
-      req.body as ModifyConversationParticipantNicknameInput;
-    if (!userId) {
-      throw ErrorCodes.MissingUserId;
-    }
-    if (!targetUserId) {
-      throw ErrorCodes.MissingPartnerId;
-    }
+	const conversation = await conversationService.getConversationById(id, userId);
+	const response = ApiResponseBuilder.success({ conversation }, req.headers['x-correlation-id'] as string);
+	return res.status(200).json(response);
+};
 
-    if (!newNickname) {
-      throw ErrorCodes.MissingContent;
-    }
+export const updateConversation = async (req: Request, res: Response) => {
+	const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
 
-    await ConversationParticipantService.modifyNickname(
-      id,
-      userId,
-      targetUserId,
-      newNickname,
-    );
+	// if (!userId) {
+	// 	throw createError('Unauthorized', 'MISSING_AUTH_HEADER', 'User authentication header is required');
+	// }
 
-    return res.status(HTTP_STATUS_CODES.Ok).json({
-      success: true,
-    });
-  }
-}
+	const id = req.params.id as string;
 
-export default new ConversationControllerClass();
+	const conversation = await conversationService.updateConversation(id, userId, req.body);
+	const response = ApiResponseBuilder.success({ conversation }, req.headers['x-correlation-id'] as string);
+	return res.status(200).json(response);
+};
+
+export const deleteConversation = async (req: Request, res: Response) => {
+	const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+
+	// if (!userId) {
+	// 	throw createError('Unauthorized', 'MISSING_AUTH_HEADER', 'User authentication header is required');
+	// }
+
+	const id = req.params.id as string;
+
+	await conversationService.deleteConversation(id, userId);
+	const response = ApiResponseBuilder.success({ message: 'Conversation deleted successfully' }, req.headers['x-correlation-id'] as string);
+	return res.status(200).json(response);
+};

@@ -1,7 +1,6 @@
+import logger from '@/utils/logger';
+import { env } from '@/config/environment';
 import amqp from 'amqplib';
-import ENV from '@src/common/constants/ENV';
-import logger from '@src/utils/logger';
-
 type Connection = Awaited<ReturnType<typeof amqp.connect>>;
 type Channel = Awaited<ReturnType<Connection['createChannel']>>;
 
@@ -16,13 +15,13 @@ export async function connectToRabbitMQ(retryCount = 0): Promise<Connection> {
       return connection;
     }
 
-    const RABBITMQ_URL = ENV.RabbitMQ.Url;
+    const RABBITMQ_URL = env.RABBITMQ_URL;
 
     logger.info(`Connecting to RabbitMQ at ${RABBITMQ_URL}...`);
     connection = await amqp.connect(RABBITMQ_URL);
 
     connection.on('error', (err) => {
-      logger.error('RabbitMQ connection error:', err);
+      logger.error('RabbitMQ connection error:', { error: String(err) });
       connection = null;
       channel = null;
     });
@@ -34,22 +33,17 @@ export async function connectToRabbitMQ(retryCount = 0): Promise<Connection> {
       setTimeout(() => connectToRabbitMQ(), RETRY_DELAY_MS);
     });
 
-    logger.info('Successfully connected to RabbitMQ');
+    logger.info('Connected to RabbitMQ successfully');
     return connection;
   } catch (error) {
-    logger.error(
-      `Failed to connect RabbitMQ (attempt ${retryCount + 1}/${MAX_RETRIES}):`,
-      error,
-    );
+    logger.error(`Failed to connect to RabbitMQ (attempt ${retryCount + 1}/${MAX_RETRIES}):`, { error: String(error) });
 
     if (retryCount < MAX_RETRIES) {
       logger.info(`Retrying in ${RETRY_DELAY_MS / 1000} seconds...`);
-      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
       return connectToRabbitMQ(retryCount + 1);
     } else {
-      throw new Error(
-        `Failed to connect to RabbitMQ after ${MAX_RETRIES} attempts`,
-      );
+      throw new Error(`Failed to connect to RabbitMQ after ${MAX_RETRIES} attempts`);
     }
   }
 }
@@ -60,11 +54,12 @@ export async function createChannel(): Promise<Channel> {
       return channel;
     }
 
+    logger.info('Creating RabbitMQ channel...');
     const conn = await connectToRabbitMQ();
     channel = await conn.createChannel();
 
     channel.on('error', (err) => {
-      logger.error('RabbitMQ channel error:', err);
+      logger.error('RabbitMQ channel error:', { error: String(err) });
       channel = null;
     });
 
@@ -73,10 +68,10 @@ export async function createChannel(): Promise<Channel> {
       channel = null;
     });
 
-    logger.info('RabbitMQ channel created');
+    logger.info('Created RabbitMQ channel successfully');
     return channel;
   } catch (error) {
-    logger.error('Failed to create RabbitMQ channel:', error);
+    logger.error('Failed to create RabbitMQ channel:', { error: String(error) });
     throw error;
   }
 }
@@ -95,7 +90,7 @@ export async function closeConnection(): Promise<void> {
       logger.info('RabbitMQ connection closed');
     }
   } catch (error) {
-    logger.error('Error closing RabbitMQ connection:', error);
+    logger.error('Error closing RabbitMQ connection:', { error: String(error) });
   }
 }
 

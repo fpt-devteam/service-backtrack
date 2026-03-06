@@ -1,45 +1,62 @@
-import morgan from 'morgan';
-import helmet from 'helmet';
-import cors from 'cors';
-import express, { Request, Response, Express } from 'express';
-import messageRoute from '@src/routes/message.route';
-import conversationRoute from '@src/routes/conversation.route';
-import { errorHandler } from '@src/middlewares/error-handler';
-import ENV from '@src/common/constants/ENV';
+import 'dotenv/config';
+import { createServer } from 'http';
 
-const app: Express = express();
+import app from './app';
+import { env } from '@/config/environment';
+import logger from '@/utils/logger';
+import { connectDatabase, disconnectDatabase } from '@/config/database';
+import { initializeFirebase } from '@/config/firebase';
+import { initializeWebSocket } from '@/config/websocket';
+import { startConsumers, stopConsumers } from '@/messaging/consumer-manager';
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(helmet());
+const startServer = async (): Promise<void> => {
+	try {
+		await connectDatabase();
 
-if (ENV.NodeEnv === 'development') {
-  app.use(morgan('dev'));
-}
+		// Initialize Firebase Admin for WebSocket JWT self-verification
+		initializeFirebase();
 
-// Health check endpoint
-app.get('/health', (_: Request, res: Response) => {
-  res.json({ status: 'healthy' });
-});
+		// Start RabbitMQ consumers
+		startConsumers().catch((error: unknown) => {
+			logger.error('Failed to start RabbitMQ consumers:', error);
+			logger.warn('Server will continue without message consumers');
+		});
 
-// API Routes
-app.use('/conversations', conversationRoute);
-app.use('/messages', messageRoute);
+		// Create HTTP server
+		const httpServer = createServer(app);
 
-// 404 handler
-app.use((req: Request, res: Response) => {
-  res.status(404).json({
-    success: false,
-    error: {
-      code: 'NotFound',
-      message: `Cannot ${req.method} ${req.path}`,
-    },
-  });
-});
+		// Initialize WebSocket
+		initializeWebSocket(httpServer);
 
-// Error handler must be last
-app.use(errorHandler);
+		httpServer.listen(env.PORT, () => {
+			logger.info(
+				`Server running in ${env.NODE_ENV} mode at http://${env.HOST}:${env.PORT}`,
+			);
+			logger.info('WebSocket server ready for connections');
+		});
 
-export default app;
+		const shutdown = async (signal: string): Promise<void> => {
+			logger.info(`${signal} received. Shutting down gracefully...`);
+
+			httpServer.close(async () => {
+				await stopConsumers();
+				await disconnectDatabase();
+				logger.info('Server closed.');
+				process.exit(0);
+			});
+
+			setTimeout(() => {
+				logger.error('Forced shutdown after timeout');
+				process.exit(1);
+			}, 10000);
+		};
+
+		process.on('SIGINT', () => shutdown('SIGINT'));
+		process.on('SIGTERM', () => shutdown('SIGTERM'));
+	} catch (error) {
+		logger.error('Failed to start server:', error as any);
+		process.exit(1);
+	}
+};
+
+startServer();
