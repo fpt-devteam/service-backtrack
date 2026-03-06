@@ -6,4 +6,5 @@ public interface IJoinInvitationRepository : IGenericRepository<JoinInvitation, 
 {
     Task<JoinInvitation?> GetByHashCodeAsync(string hashCode, CancellationToken cancellationToken = default);
     Task<JoinInvitation?> GetPendingByEmailAndOrgAsync(string email, Guid orgId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<JoinInvitation>> GetPendingByOrgAsync(Guid orgId, CancellationToken cancellationToken = default);
 }

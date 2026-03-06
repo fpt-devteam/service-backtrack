@@ -27,4 +27,15 @@ public class JoinInvitationRepository : CrudRepositoryBase<JoinInvitation, Guid>
                 j.ExpiredTime > DateTimeOffset.UtcNow,
                 cancellationToken);
     }
+
+    public async Task<IEnumerable<JoinInvitation>> GetPendingByOrgAsync(Guid orgId, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Where(j =>
+                j.OrganizationId == orgId &&
+                j.Status == InvitationStatus.Pending &&
+                j.ExpiredTime > DateTimeOffset.UtcNow)
+            .OrderByDescending(j => j.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
 }
