@@ -81,7 +81,6 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
         return new PostResult
         {
             Id = post.Id,
-            AuthorId = post.AuthorId,
             Author = new AuthorResult
             {
                 Id = author.Id,

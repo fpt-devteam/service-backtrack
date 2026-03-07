@@ -49,7 +49,6 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
             return new PostResult
             {
                 Id = post.Id,
-                AuthorId = post.AuthorId,
                 Author = new AuthorResult
                 {
                     Id = post.Author.Id,
