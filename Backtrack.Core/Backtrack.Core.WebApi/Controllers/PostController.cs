@@ -11,6 +11,7 @@ using Backtrack.Core.Application.Usecases.Posts.GetPostById;
 using Backtrack.Core.Application.Usecases.Posts.GetSimilarPosts;
 using Backtrack.Core.Application.Usecases.Posts.DeletePost;
 using Backtrack.Core.Application.Usecases.Posts.GetMyPosts;
+using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -35,6 +36,19 @@ public class PostController : ControllerBase
 
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiCreated(result);
+    }
+
+    [HttpPut("{postId:guid}")]
+    public async Task<IActionResult> UpdatePostAsync(
+        [FromRoute] Guid postId,
+        [FromBody] UpdatePostCommand command,
+        CancellationToken cancellationToken)
+    {
+        var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        command = command with { PostId = postId, AuthorId = authorId };
+
+        var result = await _mediator.Send(command, cancellationToken);
+        return this.ApiOk(result);
     }
 
     [HttpGet("me")]

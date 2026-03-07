@@ -9,5 +9,9 @@ namespace Backtrack.Core.Application.Exceptions.Errors
         public static readonly Error NotFound = new(
             Code: "PostNotFound",
             Message: "Post not found.");
+
+        public static readonly Error Forbidden = new(
+            Code: "PostForbidden",
+            Message: "You are not authorized to perform this action on this post.");
     }
 }
