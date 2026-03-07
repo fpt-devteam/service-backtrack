@@ -10,7 +10,7 @@ public sealed record PostResult
     public required string ItemName { get; init; }
     public required string Description { get; init; }
     public required string[] ImageUrls { get; init; }
-    public LocationResult? Location { get; init; }
+    public required LocationResult Location { get; init; }
     public string? ExternalPlaceId { get; init; }
     public string? DisplayAddress { get; init; }
     public required DateTimeOffset EventTime { get; init; }

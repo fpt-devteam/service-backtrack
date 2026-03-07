@@ -31,14 +31,18 @@ public sealed record SimilarPostItem
     public required string ItemName { get; init; }
     public required string Description { get; init; }
     public string[] ImageUrls { get; init; } = Array.Empty<string>();
-    public LocationResult? Location { get; init; }
+    public required LocationResult Location { get; init; }
     public string? ExternalPlaceId { get; init; }
     public string? DisplayAddress { get; init; }
     public required DateTimeOffset EventTime { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
 
     /// <summary>
-    /// Similarity score (0.0 to 1.0, higher is more similar)
+    /// Total similarity score (0.0 to 1.0, higher is more similar)
     /// </summary>
     public required double SimilarityScore { get; init; }
+
+    public required double DescriptionSimilarity { get; init; }
+    public required double LocationSimilarity { get; init; }
+    public required double DistanceMeters { get; init; }
 }

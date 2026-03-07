@@ -44,13 +44,11 @@ public sealed class GetPostByIdHandler : IRequestHandler<GetPostByIdQuery, PostR
             ItemName = post.ItemName,
             Description = post.Description,
             ImageUrls = post.ImageUrls,
-            Location = post.Location != null
-                ? new LocationResult
-                {
-                    Latitude = post.Location.Latitude,
-                    Longitude = post.Location.Longitude
-                }
-                : null,
+            Location = new LocationResult
+            {
+                Latitude = post.Location.Latitude,
+                Longitude = post.Location.Longitude
+            },
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress = post.DisplayAddress,
             EventTime = post.EventTime,

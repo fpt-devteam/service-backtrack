@@ -37,12 +37,6 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
             throw new ValidationException(PostErrors.InvalidPostType);
         }
 
-        GeoPoint? location = null;
-        if (command.Location is not null)
-        {
-            location = new GeoPoint(command.Location.Latitude, command.Location.Longitude);
-        }
-
         var post = new Post
         {
             Id = Guid.NewGuid(),
@@ -52,7 +46,7 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
             Description = command.Description,
             DistinctiveMarks = command.DistinctiveMarks,
             ImageUrls = command.ImageUrls,
-            Location = location,
+            Location = new GeoPoint(command.Location.Latitude, command.Location.Longitude),
             ExternalPlaceId = command.ExternalPlaceId,
             DisplayAddress = command.DisplayAddress,
             ContentEmbedding = null, // Will be generated asynchronously
@@ -68,8 +62,7 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
         await _postRepository.SaveChangesAsync();
 
         // Enqueue background job to generate content embedding
-        _backgroundJobService.EnqueueJob(
-            new UpdatePostContentEmbeddingCommand(post.Id));
+        _backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
         // Fetch author information
         var author = await _userRepository.GetByIdAsync(post.AuthorId);
@@ -91,13 +84,11 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
             ItemName = post.ItemName,
             Description = post.Description,
             ImageUrls = post.ImageUrls,
-            Location = post.Location != null
-                ? new LocationResult
-                {
-                    Latitude = post.Location.Latitude,
-                    Longitude = post.Location.Longitude
-                }
-                : null,
+            Location = new LocationResult
+            {
+                Latitude = post.Location.Latitude,
+                Longitude = post.Location.Longitude
+            },
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress = post.DisplayAddress,
             EventTime = post.EventTime,

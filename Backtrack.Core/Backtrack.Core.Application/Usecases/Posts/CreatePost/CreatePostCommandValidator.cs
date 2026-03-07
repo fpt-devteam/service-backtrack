@@ -25,12 +25,5 @@ public sealed class CreatePostCommandValidator : AbstractValidator<CreatePostCom
         RuleFor(x => x.Location!.Longitude)
             .InclusiveBetween(-180, 180).WithMessage("Longitude must be between -180 and 180")
             .When(x => x.Location != null);
-
-        RuleFor(x => x)
-            .Must(x =>
-                (x.Location is not null && x.ExternalPlaceId is not null && x.DisplayAddress is not null) ||
-                (x.Location is null && x.ExternalPlaceId is null && x.DisplayAddress is null)
-            )
-            .WithMessage("Location, ExternalPlaceId and DisplayAddress must be provided together");
     }
 }

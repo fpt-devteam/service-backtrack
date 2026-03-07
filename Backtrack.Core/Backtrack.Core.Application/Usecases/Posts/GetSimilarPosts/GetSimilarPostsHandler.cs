@@ -41,18 +41,13 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
         }
 
         var similarPosts = await _postRepository.GetSimilarPostsAsync(
-            postId: request.PostId,
-            postType: sourcePost.PostType,
-            embedding: sourcePost.ContentEmbedding,
-            latitude: sourcePost.Location?.Latitude,
-            longitude: sourcePost.Location?.Longitude,
-            radiusInKm: _radiusInKm,
-            limit: request.Limit,
+            sourcePost,
             cancellationToken: cancellationToken);
 
         var results = similarPosts.Select(item =>
         {
-            var (post, similarityScore) = item;
+            var post = item.Post;
+            var similarityScore = item.SimilarityScore;
             return new SimilarPostItem
             {
                 Id = post.Id,
@@ -60,18 +55,19 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
                 ItemName = post.ItemName,
                 Description = post.Description,
                 ImageUrls = post.ImageUrls,
-                Location = post.Location != null
-                    ? new LocationResult
-                    {
-                        Latitude = post.Location.Latitude,
-                        Longitude = post.Location.Longitude
-                    }
-                    : null,
+                Location = new LocationResult
+                {
+                    Latitude = post.Location.Latitude,
+                    Longitude = post.Location.Longitude
+                },
                 ExternalPlaceId = post.ExternalPlaceId,
                 DisplayAddress = post.DisplayAddress,
                 EventTime = post.EventTime,
                 CreatedAt = post.CreatedAt,
-                SimilarityScore = similarityScore
+                SimilarityScore = similarityScore.TotalSimilarity,
+                DescriptionSimilarity = similarityScore.DescriptionSimilarity,
+                LocationSimilarity = similarityScore.LocationSimilarity,
+                DistanceMeters = similarityScore.DistanceMeters
             };
         }).ToList();
 

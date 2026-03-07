@@ -1,3 +1,4 @@
+using Backtrack.Core.Application.Utils.PostSimilarity;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 
@@ -26,14 +27,8 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             double? radiusInKm = null,
             CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<(Post Post, double SimilarityScore)>> GetSimilarPostsAsync(
-            Guid postId,
-            PostType postType,
-            float[] embedding,
-            double? latitude,
-            double? longitude,
-            double radiusInKm,
-            int limit = 20,
+        Task<IEnumerable<(Post Post, SimilarityScore SimilarityScore)>> GetSimilarPostsAsync(
+            Post post,
             CancellationToken cancellationToken = default);
     }
 }
