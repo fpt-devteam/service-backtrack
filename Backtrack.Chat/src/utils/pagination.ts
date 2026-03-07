@@ -1,3 +1,4 @@
+import { Constants } from '@/config';
 import { Model, Document, FilterQuery } from 'mongoose';
 
 export interface CursorPaginationParams {
@@ -29,17 +30,15 @@ export async function cursorPaginate<T extends Document>(
   sortField: string = 'createdAt',
   sortOrder: 1 | -1 = -1
 ): Promise<CursorPaginationResult<T>> {
-  const limit = Math.min(params.limit || 20, 100); // Max 100 items per page
+  const limit = Math.min(params.limit || Constants.PAGINATION.DEFAULT_LIMIT, Constants.PAGINATION.MAX_LIMIT); 
 
   const query: FilterQuery<T> = { ...filter };
 
-  // Use sortField (e.g. createdAt) for cursor comparison, not _id
   if (params.cursor) {
     const operator = sortOrder === -1 ? '$lt' : '$gt';
     (query as any)[sortField] = { [operator]: new Date(params.cursor) };
   }
 
-  // Fetch limit + 1 to check if there are more items
   const items = await model
     .find(query)
     .sort({ [sortField]: sortOrder, _id: sortOrder })
@@ -47,15 +46,12 @@ export async function cursorPaginate<T extends Document>(
     .lean()
     .exec();
 
-  // Check if there are more items
   const hasMore = items.length > limit;
 
-  // Remove the extra item
   if (hasMore) {
     items.pop();
   }
 
-  // Get next cursor: ISO string of the sortField value of the last item
   const lastItem = items[items.length - 1] as any;
   const cursorValue = lastItem?.[sortField];
   const nextCursor =
@@ -71,3 +67,28 @@ export async function cursorPaginate<T extends Document>(
     hasMore,
   };
 }
+
+export const buildPaginatedResult = <T>(
+    results: T[],
+    limit: number,
+    cursorField: keyof T
+): CursorPaginationResult<T> => {
+    const hasMore = results.length > limit;
+    if (hasMore) results.pop();
+
+    const last = results[results.length - 1] as any;
+    const cursorValue = last?.[cursorField];
+    const nextCursor = hasMore && cursorValue
+        ? cursorValue instanceof Date
+            ? cursorValue.toISOString()
+            : String(cursorValue)
+        : null;
+
+    return { items: results, nextCursor, hasMore };
+};
+
+export const buildCursorStage = (cursor?: string, sortOrder: 1 | -1 = -1) => {
+    if (!cursor) return {};
+    const operator = sortOrder === -1 ? '$lt' : '$gt';
+    return { [operator]: new Date(cursor) };
+};
