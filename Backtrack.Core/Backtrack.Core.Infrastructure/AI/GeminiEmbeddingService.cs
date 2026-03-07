@@ -16,7 +16,7 @@ namespace Backtrack.Core.Infrastructure.AI
         private readonly HttpClient _httpClient;
         private readonly GeminiSettings _settings;
 
-        public int EmbeddingDimension => 768; // Gemini text-embedding-004 produces 768-dimensional vectors
+        public int EmbeddingDimension => _settings.EmbeddingDimension;
 
         public GeminiEmbeddingService(HttpClient httpClient, IOptions<GeminiSettings> settings)
         {
@@ -53,24 +53,31 @@ namespace Backtrack.Core.Infrastructure.AI
                     content = new
                     {
                         parts = new[] { new { text } }
-                    }
+                    },
+                    outputDimensionality = EmbeddingDimension
                 }).ToList()
             };
 
-            
+
             var response = await _httpClient.PostAsJsonAsync(url, request, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<GeminiBatchEmbeddingResponse>(cancellationToken);
             if (result == null)
-                throw new  InvalidOperationException("Failed to parse response from Gemini API.");
-            if (!IsResultSameDimension(result.Embeddings.Select(e => e.Values).ToList()))
-                throw new InvalidOperationException("Inconsistent embedding dimensions returned from Gemini API.");
-
+                throw new InvalidOperationException("Failed to parse response from Gemini API.");
             if (result?.Embeddings == null || result.Embeddings.Count == 0)
                 throw new InvalidOperationException("No embeddings returned from Gemini API.");
 
-            return result.Embeddings.Select(e => e.Values).ToList();
+            var embeddings = result.Embeddings.Select(e => e.Values).ToList();
+
+            var invalidEmbeddings = embeddings.Where(e => e.Length != EmbeddingDimension).ToList();
+            if (invalidEmbeddings.Any())
+                throw new InvalidOperationException(
+                    $"Inconsistent embedding dimensions. Expected {EmbeddingDimension}, " +
+                    $"but got: [{string.Join(", ", invalidEmbeddings.Select(e => e.Length))}]. " +
+                    $"Check that model '{_settings.ModelName}' is correct and the API response is not truncated.");
+
+            return embeddings;
         }
 
         private bool IsResultSameDimension(IList<float[]> embeddings)
