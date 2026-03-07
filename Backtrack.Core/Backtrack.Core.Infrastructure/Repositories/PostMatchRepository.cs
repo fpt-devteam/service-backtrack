@@ -38,5 +38,30 @@ namespace Backtrack.Core.Infrastructure.Repositories
                     .SetProperty(pm => pm.UpdatedAt, now),
                     cancellationToken);
         }
+
+        public async Task<IEnumerable<PostMatch>> GetMatchesByPostIdAsync(Guid postId, CancellationToken cancellationToken = default)
+        {
+            var post = await _context.Posts.AsNoTracking().FirstOrDefaultAsync(p => p.Id == postId && p.DeletedAt == null, cancellationToken);
+            if (post == null) return Array.Empty<PostMatch>();
+
+            var query = _dbSet.AsNoTracking();
+
+            if (post.PostType == Backtrack.Core.Domain.Constants.PostType.Lost)
+            {
+                return await query
+                    .Include(pm => pm.FoundPost)
+                    .Where(pm => pm.LostPostId == postId && pm.DeletedAt == null)
+                    .OrderByDescending(pm => pm.MatchScore)
+                    .ToListAsync(cancellationToken);
+            }
+            else
+            {
+                return await query
+                    .Include(pm => pm.LostPost)
+                    .Where(pm => pm.FoundPostId == postId && pm.DeletedAt == null)
+                    .OrderByDescending(pm => pm.MatchScore)
+                    .ToListAsync(cancellationToken);
+            }
+        }
     }
 }

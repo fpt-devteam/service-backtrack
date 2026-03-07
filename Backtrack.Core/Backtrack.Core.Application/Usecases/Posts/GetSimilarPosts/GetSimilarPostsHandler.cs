@@ -1,6 +1,7 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Utils.PostSimilarity;
 using Backtrack.Core.Domain.Constants;
 using MediatR;
 
@@ -9,11 +10,12 @@ namespace Backtrack.Core.Application.Usecases.Posts.GetSimilarPosts;
 public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuery, GetSimilarPostsResult>
 {
     private readonly IPostRepository _postRepository;
-    private const double _radiusInKm = 50.0; // Fixed 50km radius
+    private readonly IPostMatchRepository _postMatchRepository;
 
-    public GetSimilarPostsHandler(IPostRepository postRepository)
+    public GetSimilarPostsHandler(IPostRepository postRepository, IPostMatchRepository postMatchRepository)
     {
         _postRepository = postRepository;
+        _postMatchRepository = postMatchRepository;
     }
 
     public async Task<GetSimilarPostsResult> Handle(GetSimilarPostsQuery request, CancellationToken cancellationToken)
@@ -25,56 +27,40 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
             throw new NotFoundException(PostErrors.NotFound);
         }
 
-        if (sourcePost.ContentEmbeddingStatus != ContentEmbeddingStatus.Ready)
-        {
-            return new GetSimilarPostsResult
-            {
-                EmbeddingStatus = sourcePost.ContentEmbeddingStatus.ToString(),
-                IsReady = false,
-                SimilarPosts = Array.Empty<SimilarPostItem>()
-            };
-        }
+        var matches = await _postMatchRepository.GetMatchesByPostIdAsync(request.PostId, cancellationToken);
 
-        if (sourcePost.ContentEmbedding == null || sourcePost.ContentEmbedding.Length == 0)
+        var results = matches.Select(match =>
         {
-            throw new InvalidOperationException($"Post {request.PostId} has Ready status but missing embedding");
-        }
-
-        var similarPosts = await _postRepository.GetSimilarPostsAsync(
-            sourcePost,
-            cancellationToken: cancellationToken);
-
-        var results = similarPosts.Select(item =>
-        {
-            var post = item.Post;
-            var similarityScore = item.SimilarityScore;
+            // If source is Lost, the match result is the Found post
+            // If source is Found, the match result is the Lost post
+            var targetPost = sourcePost.PostType == PostType.Lost ? match.FoundPost : match.LostPost;
+            
             return new SimilarPostItem
             {
-                Id = post.Id,
-                PostType = post.PostType.ToString(),
-                ItemName = post.ItemName,
-                Description = post.Description,
-                ImageUrls = post.ImageUrls,
+                Id = targetPost.Id,
+                PostType = targetPost.PostType.ToString(),
+                ItemName = targetPost.ItemName,
+                Description = targetPost.Description,
+                ImageUrls = targetPost.ImageUrls,
                 Location = new LocationResult
                 {
-                    Latitude = post.Location.Latitude,
-                    Longitude = post.Location.Longitude
+                    Latitude = targetPost.Location.Latitude,
+                    Longitude = targetPost.Location.Longitude
                 },
-                ExternalPlaceId = post.ExternalPlaceId,
-                DisplayAddress = post.DisplayAddress,
-                EventTime = post.EventTime,
-                CreatedAt = post.CreatedAt,
-                SimilarityScore = similarityScore.TotalSimilarity,
-                DescriptionSimilarity = similarityScore.DescriptionSimilarity,
-                LocationSimilarity = similarityScore.LocationSimilarity,
-                DistanceMeters = similarityScore.DistanceMeters
+                ExternalPlaceId = targetPost.ExternalPlaceId,
+                DisplayAddress = targetPost.DisplayAddress,
+                EventTime = targetPost.EventTime,
+                SimilarityScore = new SimilarityScore(
+                    DescriptionSimilarity: match.DescriptionScore,
+                    LocationSimilarity: match.LocationScore,
+                    TotalSimilarity: match.MatchScore,
+                    DistanceMeters: match.DistanceMeters
+                )
             };
         }).ToList();
 
         return new GetSimilarPostsResult
         {
-            EmbeddingStatus = ContentEmbeddingStatus.Ready.ToString(),
-            IsReady = true,
             SimilarPosts = results
         };
     }
