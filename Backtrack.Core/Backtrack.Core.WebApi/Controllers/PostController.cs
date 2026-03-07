@@ -128,7 +128,8 @@ public class PostController : ControllerBase
         [FromRoute] Guid postId,
         CancellationToken cancellationToken = default)
     {
-        var command = new DeletePostCommand { PostId = postId };
+        var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var command = new DeletePostCommand { PostId = postId, AuthorId = authorId };
         await _mediator.Send(command, cancellationToken);
         return NoContent();
     }
