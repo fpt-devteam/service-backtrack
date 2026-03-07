@@ -30,5 +30,7 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
         Task<IEnumerable<(Post Post, SimilarityScore SimilarityScore)>> GetSimilarPostsAsync(
             Post post,
             CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default);
     }
 }

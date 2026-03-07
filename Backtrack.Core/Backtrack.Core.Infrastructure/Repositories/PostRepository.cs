@@ -350,4 +350,13 @@ public class PostRepository(ApplicationDbContext context, ILogger<PostRepository
 
         return results.OrderByDescending(r => r.SimilarityScore.TotalSimilarity).ToList();
     }
+
+    public async Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(p => p.Author)
+            .Where(p => p.AuthorId == authorId && p.DeletedAt == null)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
 }
