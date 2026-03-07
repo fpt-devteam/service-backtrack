@@ -6,7 +6,9 @@ import { SubscriptionErrors } from "@/src/application/errors/subscription.error.
 import { stripe } from "@/src/infrastructure/configs/stripe.js";
 import { Stripe } from "stripe";
 import { Subscription } from "@/src/domain/entities/subscription.entity.js";
-import { ONGOING_SUBSCRIPTION_STATUSES, TERMINATED_SUBSCRIPTION_STATUSES } from "@/src/application/utils/stripe.util.js";
+import { ONGOING_SUBSCRIPTION_STATUSES, PENDING_PAYMENT_STATUSES, TERMINATED_SUBSCRIPTION_STATUSES } from "@/src/application/utils/stripe.util.js";
+import { ServerErrors } from "@/src/application/errors/server.error.js";
+import logger from "@/src/shared/core/logger.js";
 
 type Deps = {
   userRepository: UserRepository;
@@ -38,23 +40,16 @@ export const createSubscriptionUseCase = (deps: Deps) => async (input: Input): P
     return await createNewSubscription(providerCustomerId, input.priceId);
   }
 
-  if (ONGOING_SUBSCRIPTION_STATUSES.includes(latestSub.status)) {
+  if (ONGOING_SUBSCRIPTION_STATUSES.includes(providerSub.status)) {
     return failure(SubscriptionErrors.AlreadySubscribed);
   }
-
-  // pending payment
-  return reuseClientSecret(deps, latestSub, input.priceId);
-};
-
-const ensureProviderCustomerIdExists = async (deps: Deps, userId: string, email: string): Promise<string> => {
-  const customer = await stripe.customers.create({ email });
-
-  const providerCustomerId = await deps.userRepository.setProviderCustomerIdIfNull(userId, customer.id);
-
-  if (providerCustomerId !== customer.id) {
-    await stripe.customers.del(customer.id);
+  if (PENDING_PAYMENT_STATUSES.includes(providerSub.status)) {
+    return await reuseClientSecret(deps, latestSub, input.priceId);
   }
-  return providerCustomerId;
+
+  logger.error('Unexpected subscription status', { userId: input.userId, priceId: input.priceId, status: providerSub.status });
+
+  return failure(ServerErrors.UnexpectedError);
 };
 
 const reuseClientSecret = async (deps: Deps, latestSub: Subscription, priceId: string) => {
@@ -82,6 +77,17 @@ const reuseClientSecret = async (deps: Deps, latestSub: Subscription, priceId: s
     const invoice = updatedSub.latest_invoice as Stripe.Invoice;
     return success({ clientSecret: invoice.confirmation_secret!.client_secret });
   }
+};
+
+const ensureProviderCustomerIdExists = async (deps: Deps, userId: string, email: string): Promise<string> => {
+  const customer = await stripe.customers.create({ email });
+
+  const providerCustomerId = await deps.userRepository.setProviderCustomerIdIfNull(userId, customer.id);
+
+  if (providerCustomerId !== customer.id) {
+    await stripe.customers.del(customer.id);
+  }
+  return providerCustomerId;
 };
 
 const createNewSubscription = async (providerCustomerId: string, priceId: string) => {

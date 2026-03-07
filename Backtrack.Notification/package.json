@@ -2,7 +2,7 @@
   "name": "backtrack-notification",
   "version": "0.0.0",
   "scripts": {
-    "build": "tsc -p tsconfig.prod.json && tsc-alias -p tsconfig.prod.json",
+    "build": "tsc -p tsconfig.prod.json && tsc-alias -p tsconfig.prod.json && copyfiles -u 1 src/templates/*.html dist/",
     "clean-install": "rm -rf ./node_modules && rm -r package-lock.json && npm i",
     "dev": "cross-env NODE_ENV=development ts-node ./src",
     "dev:hot": "nodemon --exec \"npm run dev\" --watch ./src --ext .ts",
@@ -54,6 +54,7 @@
     "tsc-alias": "^1.8.10",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.49.0"
+    "typescript-eslint": "^8.49.0",
+    "copyfiles": "^2.4.1"
   }
 }

@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Usecases.ImageAnalysis.Commands.AnalyzeImage;
+using Backtrack.Core.Application.Usecases.ImageAnalysis.AnalyzeImage;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

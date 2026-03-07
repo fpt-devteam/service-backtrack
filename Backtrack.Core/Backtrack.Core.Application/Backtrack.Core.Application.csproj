@@ -7,6 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Usecases\Organizations\Commands\**" />
+    <Compile Remove="Usecases\Organizations\Queries\**" />
+    <EmbeddedResource Remove="Usecases\Organizations\Commands\**" />
+    <EmbeddedResource Remove="Usecases\Organizations\Queries\**" />
+    <None Remove="Usecases\Organizations\Commands\**" />
+    <None Remove="Usecases\Organizations\Queries\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Backtrack.Core.Domain\Backtrack.Core.Domain.csproj" />
   </ItemGroup>
 
@@ -20,6 +29,14 @@
     <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="8.0.0" />
     <PackageReference Include="payos" Version="1.0.9" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Usecases\ImageAnalysis\Commands\" />
+    <Folder Include="Usecases\Posts\Commands\" />
+    <Folder Include="Usecases\Posts\Queries\" />
+    <Folder Include="Usecases\Users\Commands\" />
+    <Folder Include="Usecases\Users\Queries\" />
   </ItemGroup>
 
 </Project>

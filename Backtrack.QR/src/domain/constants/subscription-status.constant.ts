@@ -14,3 +14,11 @@ export function parseSubscriptionStatus(input: unknown): SubscriptionStatusType 
   if (typeof input !== 'string') return null;
   return (SUBSCRIPTION_STATUS_VALUES as readonly string[]).includes(input) ? (input as SubscriptionStatusType) : null;
 }
+
+export const ONGOING_SUBSCRIPTION_STATUSES = [
+  SubscriptionStatus.Active,
+  SubscriptionStatus.PastDue,
+  SubscriptionStatus.Unpaid,
+] as const satisfies readonly SubscriptionStatusType[];
+
+export type OngoingSubscriptionStatusType = typeof ONGOING_SUBSCRIPTION_STATUSES[number];

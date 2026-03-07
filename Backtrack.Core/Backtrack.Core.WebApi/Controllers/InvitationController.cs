@@ -1,6 +1,7 @@
-using Backtrack.Core.Application.Usecases.Organizations.Commands.CreateInvitation;
-using Backtrack.Core.Application.Usecases.Organizations.Commands.JoinByInvitation;
-using Backtrack.Core.Application.Usecases.Organizations.Queries.CheckInvitation;
+using Backtrack.Core.Application.Usecases.Organizations.CheckInvitation;
+using Backtrack.Core.Application.Usecases.Organizations.CreateInvitation;
+using Backtrack.Core.Application.Usecases.Organizations.JoinByInvitation;
+using Backtrack.Core.Application.Usecases.Organizations.GetPendingInvitations;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
@@ -19,6 +20,22 @@ public class InvitationController : ControllerBase
     public InvitationController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    [HttpGet("pending")]
+    [ProducesResponseType(typeof(ApiResponse<GetPendingInvitationsResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetPendingInvitationsAsync(
+        [FromQuery] Guid organizationId, CancellationToken cancellationToken)
+    {
+        string userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var query = new GetPendingInvitationsQuery
+        {
+            OrganizationId = organizationId,
+            UserId = userId
+        };
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
     }
 
     [HttpPost]

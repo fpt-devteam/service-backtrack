@@ -9,5 +9,6 @@ const router = Router();
 
 router.get('/me', asyncHandler(SubscriptionController.getSubscriptionAsync));
 router.post('/', validateBody(CreateSubscriptionRequestSchema), asyncHandler(SubscriptionController.createSubscriptionAsync));
+router.delete('/me', asyncHandler(SubscriptionController.cancelSubscriptionAsync));
 
 export default router;

@@ -11,5 +11,15 @@ export const ServerErrors = {
     code: "ProviderCustomerIdNotFound",
     message: "No user found with the given provider customer ID.",
   } as Error,
+  UnknownSubscriptionStatus: {
+    kind: "Internal",
+    code: "UnknownSubscriptionStatus",
+    message: "The subscription is in an unknown status.",
+  } as Error,
+  UnexpectedError: {
+    kind: "Internal",
+    code: "UnexpectedError",
+    message: "An unexpected error occurred.",
+  } as Error,
 } as const satisfies Record<string, Error>;
 

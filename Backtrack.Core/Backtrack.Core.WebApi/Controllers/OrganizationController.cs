@@ -4,13 +4,13 @@ using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Utils;
 using Backtrack.Core.Application.Usecases.Organizations;
-using Backtrack.Core.Application.Usecases.Organizations.Commands.CreateOrganization;
-using Backtrack.Core.Application.Usecases.Organizations.Commands.UpdateOrganization;
-using Backtrack.Core.Application.Usecases.Organizations.Commands.RemoveMember;
-using Backtrack.Core.Application.Usecases.Organizations.Commands.UpdateMemberRole;
-using Backtrack.Core.Application.Usecases.Organizations.Queries.GetOrganization;
-using Backtrack.Core.Application.Usecases.Organizations.Queries.GetMyOrganizations;
-using Backtrack.Core.Application.Usecases.Organizations.Queries.GetOrgMembers;
+using Backtrack.Core.Application.Usecases.Organizations.UpdateMemberRole;
+using Backtrack.Core.Application.Usecases.Organizations.CreateOrganization;
+using Backtrack.Core.Application.Usecases.Organizations.UpdateOrganization;
+using Backtrack.Core.Application.Usecases.Organizations.GetOrganization;
+using Backtrack.Core.Application.Usecases.Organizations.GetMyOrganizations;
+using Backtrack.Core.Application.Usecases.Organizations.GetOrgMembers;
+using Backtrack.Core.Application.Usecases.Organizations.RemoveMember;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
