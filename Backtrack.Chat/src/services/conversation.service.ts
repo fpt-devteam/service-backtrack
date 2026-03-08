@@ -8,6 +8,7 @@ import User from "@/models/user.model";
 import { Constants } from '@/config/constants';
 import { buildPaginatedResult, CursorPaginationParams } from '@/utils/pagination';
 import { toObjectIdOrNull } from '@/utils/object-id';
+import { createConvParticipants } from './conversation-paticipant.service';
 
 export const createConversation = async (data: CreateConversationRequest, userId: string): Promise<IConversation> => {
   if (data.type === ConversationType.PERSONAL) {
@@ -31,25 +32,11 @@ export const createConversation = async (data: CreateConversationRequest, userId
     }),
   });
   await conversation.save();
-
-  const participants = buildParticipants(conversation._id, data, userId);
-  await ConversationParticipant.insertMany(participants);
-
+  await createConvParticipants(conversation._id, data, userId);
   return conversation;
 };
 
-const buildParticipants = (conversationId: mongoose.Types.ObjectId, data: CreateConversationRequest, userId: string) => {
-  if (data.type === ConversationType.ORGANIZATION) {
-    return [
-      { conversationId, memberId: userId, role: ConversationParticipantRole.CUSTOMER},
-      { conversationId, orgId: data.orgId, role: ConversationParticipantRole.STAFF},
-    ];
-  }
-  return [
-    { conversationId, memberId: userId, role: ConversationParticipantRole.CUSTOMER },
-    { conversationId, memberId: data.memberId, role: ConversationParticipantRole.CUSTOMER },
-  ];
-};
+
 
 export const getConversationById = async (id: string, userId: string): Promise<ConversationResponse | null> => {
     const objectId = toObjectIdOrNull(id);

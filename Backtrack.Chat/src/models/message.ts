@@ -8,7 +8,6 @@ export enum MessageType {
 }
 
 export enum MessageStatus {
-  SENDING = 'sending',
   SENT = 'sent',
   SEEN = 'seen',
   FAILED = 'failed',

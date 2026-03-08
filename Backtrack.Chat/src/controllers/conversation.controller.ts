@@ -3,7 +3,6 @@ import { CreateConversationSchema } from '@/dtos/conversation/conversation.reque
 import * as conversationService from '@/services/conversation.service';
 import { ApiResponseBuilder } from '@/utils/api-response';
 import { Constants } from '@/config/constants';
-// import { createError } from '@/utils/api-error';
 
 export const createConversation = async (req: Request, res: Response) => {
 	const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
