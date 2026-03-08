@@ -3,8 +3,7 @@ import logger from '@/utils/logger';
 import * as messageService from '@/services/message.service';
 import { SendMessageSchema } from '@/dtos/message/message.request';
 import { isAppError } from '@/utils/api-error';
-import { MessageStatus } from '@/models/message';
-import { conversationService } from '@/services';
+import { conversationParticipantService, conversationService } from '@/services';
 
 export function registerMessageHandlers(socket: Socket): void {
   const authUserId = socket.data.userId as string | undefined;
@@ -46,6 +45,11 @@ export function registerMessageHandlers(socket: Socket): void {
       }
       await conversationService.updateConversation(
                   validated.conversationId, validated.senderId, updateMessageConv);
+      await conversationParticipantService.updateUnreadCount(
+        validated.conversationId, 
+        validated.senderId
+      );
+      
       socket.to(`conversation:${message.conversationId}`).emit('message:new', message);
       socket.emit('message:send:success', message);
 
@@ -60,6 +64,29 @@ export function registerMessageHandlers(socket: Socket): void {
       }
     }
   });
+
+  // Mark conversation as read
+socket.on('conversation:read', async (data: { conversationId: string }) => {
+    try {
+      if (!authUserId) return;
+
+      await conversationParticipantService.resetUnreadCount(
+        data.conversationId, 
+        authUserId
+      );
+
+      await messageService.markMessagesAsSeen(data.conversationId, authUserId);
+
+      socket.to(`conversation:${data.conversationId}`).emit('message:seen', {
+        conversationId: data.conversationId,
+        readBy: authUserId,
+        readAt: new Date(),
+      });
+
+    } catch (error) {
+      logger.error('Error marking conversation as read:', { error: String(error) });
+    }
+});
 
   // Typing indicator
   socket.on('typing:start', (data: { conversationId: string; displayName?: string }) => {
@@ -79,14 +106,4 @@ export function registerMessageHandlers(socket: Socket): void {
     });
   });
 
-  // Handle socket update staus messages sending, sent, seen, failed
-  socket.on('message:updateStatus', async (data: { messageId: string; status: MessageStatus }) => {
-    try {
-      const { messageId, status } = data;
-      await messageService.updateMessageStatus(messageId, status);
-      logger.info(`Message ${messageId} status updated to ${status}`);
-    } catch (error) {
-      logger.error('Error updating message status:', { error: String(error) });
-    }
-  });
 }
