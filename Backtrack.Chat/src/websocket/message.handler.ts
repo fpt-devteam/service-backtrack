@@ -3,7 +3,6 @@ import logger from '@/utils/logger';
 import * as messageService from '@/services/message.service';
 import { SendMessageSchema } from '@/dtos/message/message.request';
 import { isAppError } from '@/utils/api-error';
-import { MessageStatus } from '@/models/message';
 import { conversationParticipantService, conversationService } from '@/services';
 
 export function registerMessageHandlers(socket: Socket): void {

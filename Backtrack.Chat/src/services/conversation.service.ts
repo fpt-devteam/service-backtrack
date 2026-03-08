@@ -1,7 +1,6 @@
-import mongoose from 'mongoose';
 import { CreateConversationRequest } from "@/dtos/conversation/conversation.request";
 import Conversation, { ConversationType, IConversation, TicketStatus } from "@/models/conversation";
-import ConversationParticipant, { ConversationParticipantRole } from "@/models/conversation-participant";
+import ConversationParticipant from "@/models/conversation-participant";
 import { ConversationErrors } from "./errors/conversation.errors";
 import { ConversationPartner, ConversationResponse, ConversationsListResult } from "@/dtos/conversation/conversation.response";
 import User from "@/models/user.model";
