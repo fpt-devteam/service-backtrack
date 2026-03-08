@@ -56,13 +56,9 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
             builder.HasIndex(p => p.AuthorId)
                 .HasDatabaseName("ix_posts_author_id");
 
-            var geoPointToPointConverter = new ValueConverter<GeoPoint?, Point?>(
-                toDb => toDb == null
-                    ? null
-                    : new Point(toDb.Longitude, toDb.Latitude) { SRID = 4326 },
-                fromDb => fromDb == null
-                    ? null
-                    : new GeoPoint(fromDb.Y, fromDb.X)
+            var geoPointToPointConverter = new ValueConverter<GeoPoint, Point>(
+                toDb => new Point(toDb.Longitude, toDb.Latitude) { SRID = 4326 },
+                fromDb => new GeoPoint(fromDb.Y, fromDb.X)
             );
 
             var geoPointComparer = new ValueComparer<GeoPoint?>(
@@ -75,7 +71,8 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
             builder.Property(p => p.Location)
                 .HasColumnName("location")
                 .HasColumnType("geography(point, 4326)")
-                .HasConversion(geoPointToPointConverter, geoPointComparer);
+                .HasConversion(geoPointToPointConverter, geoPointComparer)
+                .IsRequired();
 
             builder.Property(p => p.ExternalPlaceId)
                 .HasColumnName("external_place_id")

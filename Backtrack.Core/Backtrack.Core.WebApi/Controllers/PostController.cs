@@ -10,6 +10,8 @@ using Backtrack.Core.Application.Usecases.Posts.GetPosts;
 using Backtrack.Core.Application.Usecases.Posts.GetPostById;
 using Backtrack.Core.Application.Usecases.Posts.GetSimilarPosts;
 using Backtrack.Core.Application.Usecases.Posts.DeletePost;
+using Backtrack.Core.Application.Usecases.Posts.GetMyPosts;
+using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -34,6 +36,28 @@ public class PostController : ControllerBase
 
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiCreated(result);
+    }
+
+    [HttpPut("{postId:guid}")]
+    public async Task<IActionResult> UpdatePostAsync(
+        [FromRoute] Guid postId,
+        [FromBody] UpdatePostCommand command,
+        CancellationToken cancellationToken)
+    {
+        var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        command = command with { PostId = postId, AuthorId = authorId };
+
+        var result = await _mediator.Send(command, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMyPostsAsync(CancellationToken cancellationToken = default)
+    {
+        var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var query = new GetMyPostsQuery(authorId);
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
     }
 
     [HttpGet]
@@ -104,7 +128,8 @@ public class PostController : ControllerBase
         [FromRoute] Guid postId,
         CancellationToken cancellationToken = default)
     {
-        var command = new DeletePostCommand { PostId = postId };
+        var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var command = new DeletePostCommand { PostId = postId, AuthorId = authorId };
         await _mediator.Send(command, cancellationToken);
         return NoContent();
     }

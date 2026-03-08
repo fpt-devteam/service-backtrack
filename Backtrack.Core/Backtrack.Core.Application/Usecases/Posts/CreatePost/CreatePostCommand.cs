@@ -10,7 +10,7 @@ public sealed record CreatePostCommand : IRequest<PostResult>
     public required string Description { get; init; }
     public string? DistinctiveMarks { get; init; }
     public string[] ImageUrls { get; init; } = Array.Empty<string>();
-    public LocationDto? Location { get; init; }
+    public required LocationDto Location { get; init; }
     public string? ExternalPlaceId { get; init; }
     public string? DisplayAddress { get; init; }
     public required DateTimeOffset EventTime { get; init; }

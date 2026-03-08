@@ -1,4 +1,5 @@
 using MediatR;
+using System.Linq.Expressions;
 
 namespace Backtrack.Core.Application.Interfaces.BackgroundJobs
 {
@@ -15,5 +16,9 @@ namespace Backtrack.Core.Application.Interfaces.BackgroundJobs
         /// <param name="command">The command instance</param>
         /// <returns>Job identifier</returns>
         string EnqueueJob<TCommand>(TCommand command) where TCommand : IRequest;
+        string EnqueueJob(Expression<Action> methodCall);
+        string EnqueueJob<T>(Expression<Action<T>> methodCall);
+        string EnqueueJob<T>(Expression<Func<T, Task>> methodCall);
+
     }
 }

@@ -13,7 +13,7 @@ public sealed class Post : Entity<Guid>
     public required string Description { get; set; }
     public string? DistinctiveMarks { get; set; }
     public string[] ImageUrls { get; set; } = Array.Empty<string>();
-    public GeoPoint? Location { get; set; }
+    public required GeoPoint Location { get; set; }
     public string? ExternalPlaceId { get; set; }
     public string? DisplayAddress { get; set; }
     public float[]? ContentEmbedding { get; set; }

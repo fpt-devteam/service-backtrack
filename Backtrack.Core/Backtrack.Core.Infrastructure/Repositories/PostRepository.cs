@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Utils.PostSimilarity;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
@@ -27,7 +28,6 @@ public class PostRepository(ApplicationDbContext context, ILogger<PostRepository
         CancellationToken cancellationToken = default)
     {
         var query = _dbSet.AsQueryable();
-
 
         if (postType is not null)
         {
@@ -216,9 +216,7 @@ public class PostRepository(ApplicationDbContext context, ILogger<PostRepository
                     ItemName = reader.GetString(2),
                     Description = reader.GetString(3),
                     ImageUrls = reader.GetFieldValue<string[]>(4),
-                    Location = reader.IsDBNull(5)
-                        ? null
-                        : new GeoPoint(
+                    Location = new GeoPoint(
                             ((Point)reader.GetValue(5)).Y, // latitude
                             ((Point)reader.GetValue(5)).X  // longitude
                         ),
@@ -251,42 +249,11 @@ public class PostRepository(ApplicationDbContext context, ILogger<PostRepository
         return (results, totalCount);
     }
 
-    public async Task<IEnumerable<(Post Post, double SimilarityScore)>> GetSimilarPostsAsync(
-    Guid postId,
-    PostType postType,
-    float[] embedding,
-    double? latitude,
-    double? longitude,
-    double radiusInKm,
-    int limit = 20,
-    CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<(Post Post, SimilarityScore SimilarityScore)>> GetSimilarPostsAsync(
+        Post post,
+        CancellationToken cancellationToken = default)
     {
-        const double MinimumSimilarityThreshold = 0.70;
-        var radiusInMeters = radiusInKm * 1000;
-
-        // Get the author ID of the source post first
-        var sourcePost = await GetByIdAsync(postId);
-        if (sourcePost == null)
-        {
-            return Enumerable.Empty<(Post, double)>();
-        }
-
-        // IMPORTANT: pass vector as a typed parameter (no string conversion)
-        var queryVec = new Vector(embedding);
-
-        var hasLocationFilter = latitude.HasValue && longitude.HasValue;
-
-        var locationCondition = hasLocationFilter
-            ? @"
-            AND location IS NOT NULL
-            AND ST_DWithin(
-                location::geography,
-                ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography,
-                @radius
-            )"
-            : "";
-
-        // Use parameters, avoid string interpolation in SQL
+        var queryVec = new Vector(post.ContentEmbedding ?? Array.Empty<float>());
         var sql = $@"
         SELECT
             id,
@@ -303,80 +270,93 @@ public class PostRepository(ApplicationDbContext context, ILogger<PostRepository
             content_embedding,
             content_hash,
             content_embedding_status,
-            (1.0 - (content_embedding <=> @queryEmbedding)) AS similarity,
-            author_id
+            author_id,
+            (1.0 - (content_embedding <=> @queryEmbedding)) AS description_similarity_score,
+            ST_Distance(                                         
+                location::geography,
+                ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography
+            ) AS distance_meters
         FROM posts
         WHERE deleted_at IS NULL
             AND id != @postId
             AND content_embedding_status = 'Ready'
             AND content_embedding IS NOT NULL
-            {locationCondition}
+            AND location IS NOT NULL
+            AND ST_DWithin(
+                location::geography,
+                ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography,
+                @radius
+            )
             AND post_type != @postType
             AND author_id != @authorId
             AND (1.0 - (content_embedding <=> @queryEmbedding)) >= @minSimilarity
-        ORDER BY content_embedding <=> @queryEmbedding ASC
-        LIMIT @limit;
-    ";
+       ";
 
         var conn = _context.Database.GetDbConnection();
-        if (conn.State != ConnectionState.Open)
-            await _context.Database.OpenConnectionAsync(cancellationToken);
+        if (conn.State != ConnectionState.Open) await _context.Database.OpenConnectionAsync(cancellationToken);
 
         await using var command = conn.CreateCommand();
         command.CommandText = sql;
 
-        // Parameters
-        command.Parameters.Add(new NpgsqlParameter("@postId", postId));
-
-        // If your column is vector(768), pgvector expects NpgsqlDbType.Vector
+        command.Parameters.Add(new NpgsqlParameter("@postId", post.Id));
         command.Parameters.Add(new NpgsqlParameter("@queryEmbedding", queryVec));
+        command.Parameters.Add(new NpgsqlParameter("@postType", post.PostType.ToString()));
+        command.Parameters.Add(new NpgsqlParameter("@authorId", post.AuthorId));
+        command.Parameters.Add(new NpgsqlParameter("@minSimilarity", SimilarityCriteria.DescriptionSimilarityThreshold));
+        command.Parameters.Add(new NpgsqlParameter("@longitude", post.Location.Longitude));
+        command.Parameters.Add(new NpgsqlParameter("@latitude", post.Location.Latitude));
+        command.Parameters.Add(new NpgsqlParameter("@radius", SimilarityCriteria.MaxDistanceMeters));
 
-        command.Parameters.Add(new NpgsqlParameter("@postType", postType.ToString()));
-        command.Parameters.Add(new NpgsqlParameter("@authorId", sourcePost.AuthorId));
-        command.Parameters.Add(new NpgsqlParameter("@minSimilarity", MinimumSimilarityThreshold));
-        command.Parameters.Add(new NpgsqlParameter("@limit", limit));
 
-        if (hasLocationFilter)
-        {
-            command.Parameters.Add(new NpgsqlParameter("@longitude", longitude!.Value));
-            command.Parameters.Add(new NpgsqlParameter("@latitude", latitude!.Value));
-            command.Parameters.Add(new NpgsqlParameter("@radius", radiusInMeters));
-        }
-
-        var results = new List<(Post Post, double SimilarityScore)>();
+        var results = new List<(Post Post, SimilarityScore SimilarityScore)>();
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
-            var post = new Post
+            var p = new Post
             {
                 Id = reader.GetGuid(0),
                 PostType = Enum.Parse<PostType>(reader.GetString(1)),
                 ItemName = reader.GetString(2),
                 Description = reader.GetString(3),
-                ImageUrls = reader.GetFieldValue<string[]>(4),
-                Location = reader.IsDBNull(5)
-                    ? null
-                    : new GeoPoint(
-                        ((Point)reader.GetValue(5)).Y, // latitude
-                        ((Point)reader.GetValue(5)).X  // longitude
+                ImageUrls = await reader.GetFieldValueAsync<string[]>(4, cancellationToken),
+                Location = new GeoPoint(
+                        ((Point)reader.GetValue(5)).Y,
+                        ((Point)reader.GetValue(5)).X
                     ),
-                ExternalPlaceId = reader.IsDBNull(6) ? null : reader.GetString(6),
-                DisplayAddress = reader.IsDBNull(7) ? null : reader.GetString(7),
-                EventTime = reader.GetFieldValue<DateTimeOffset>(8),
-                CreatedAt = reader.GetFieldValue<DateTimeOffset>(9),
-                UpdatedAt = reader.IsDBNull(10) ? null : reader.GetFieldValue<DateTimeOffset>(10),
-                ContentEmbedding = reader.IsDBNull(11) ? null : ((Vector)reader.GetValue(11)).ToArray(),
+                ExternalPlaceId = await reader.IsDBNullAsync(6) ? null : reader.GetString(6),
+                DisplayAddress = await reader.IsDBNullAsync(7) ? null : reader.GetString(7),
+                EventTime = await reader.GetFieldValueAsync<DateTimeOffset>(8, cancellationToken),
+                CreatedAt = await reader.GetFieldValueAsync<DateTimeOffset>(9, cancellationToken),
+                UpdatedAt = await reader.IsDBNullAsync(10) ? null : await reader.GetFieldValueAsync<DateTimeOffset>(10, cancellationToken),
+                ContentEmbedding = await reader.IsDBNullAsync(11) ? null : ((Vector)reader.GetValue(11)).ToArray(),
                 ContentHash = reader.GetString(12),
                 ContentEmbeddingStatus =
                     (ContentEmbeddingStatus)Enum.Parse(typeof(ContentEmbeddingStatus), reader.GetString(13)),
-                AuthorId = reader.GetString(15)
+                AuthorId = reader.GetString(14)
             };
 
-            var similarity = reader.GetDouble(14);
-            results.Add((post, similarity));
+            var descSimilarity = reader.GetDouble(15);
+
+            var distanceMeters = reader.GetDouble(16);
+            var locationSimilarity = SimilarityScoreCalculator.CalculateLocationSimilarity(distanceMeters);
+
+            results.Add((p, new SimilarityScore(
+                descSimilarity,
+                locationSimilarity,
+                SimilarityScoreCalculator.CalculateTotalSimilarity(descSimilarity, locationSimilarity),
+                distanceMeters)));
         }
 
-        return results;
+        return results.OrderByDescending(r => r.SimilarityScore.TotalSimilarity).ToList();
+    }
+
+    public async Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(p => p.Author)
+            .Where(p => p.AuthorId == authorId && p.DeletedAt == null)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync(cancellationToken);
     }
 }

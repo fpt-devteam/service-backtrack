@@ -31,6 +31,7 @@ public static class ServiceDI
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         services.AddScoped<IMembershipRepository, MembershipRepository>();
         services.AddScoped<IJoinInvitationRepository, JoinInvitationRepository>();
+        services.AddScoped<IPostMatchRepository, PostMatchRepository>();
         services.AddScoped(typeof(IGenericRepository<,>), typeof(CrudRepositoryBase<,>));
 
         // Messaging
