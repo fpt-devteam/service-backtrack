@@ -5,7 +5,7 @@ export enum ConversationParticipantRole {
 }
 export interface IConversationParticipant {
 	conversationId: Schema.Types.ObjectId | string;
-	memberId: string;
+	memberId?: string;
     orgId?: string | null;
     role: ConversationParticipantRole;
     isAssigee?: boolean;
@@ -23,7 +23,7 @@ export interface IConversationParticipant {
 const ConversationParticipantSchema = new Schema<IConversationParticipant>(
     {
         conversationId: { type: Schema.Types.ObjectId, required: true, index: true },
-        memberId: { type: String, required: true, index: true },
+        memberId: { type: String, required: false, index: true },
         orgId: { type: String, default: null, index: true },
         role: { type: String, enum: Object.values(ConversationParticipantRole), required: true },
         isAssigee: { type: Boolean, default: false },

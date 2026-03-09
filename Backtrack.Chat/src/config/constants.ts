@@ -2,6 +2,7 @@ export const Constants = {
 	HEADERS: {
 		AUTH_USER_ID: 'x-auth-id',
 		CORRELATION_ID: 'x-correlation-id',
+		ORG_ID: 'x-org-id',
 	},
 	HTTP_STATUS: {
 		OK: 200,

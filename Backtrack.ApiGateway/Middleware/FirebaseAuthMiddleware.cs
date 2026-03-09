@@ -72,12 +72,6 @@ public class FirebaseAuthMiddleware
 
             token = ExtractBearerToken(authHeader!);
         }
-
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            await WriteErrorResponse(context, AuthErrors.InvalidAuthHeaderFormat, StatusCodes.Status401Unauthorized);
-            return;
-        }
         if (string.IsNullOrWhiteSpace(token))
         {
             await WriteErrorResponse(context, AuthErrors.InvalidAuthHeaderFormat, StatusCodes.Status401Unauthorized);

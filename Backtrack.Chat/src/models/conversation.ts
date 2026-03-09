@@ -18,6 +18,7 @@ export interface IConversation {
 	senderId?: string;
 	type: ConversationType;
 	orgId?: string | null;
+	// assignedStaffId?: string | null;
 	ticketStatus?: TicketStatus;
 	createdAt: Date;
 	updatedAt: Date;
@@ -40,6 +41,7 @@ const ConversationSchema = new Schema<IConversation>(
 			default: null,
 			index: true 
 		},
+		// assignedStaffId: { type: String, default: null, index: true },
 		ticketStatus: {
 			type: String,
 			enum: Object.values(TicketStatus),
@@ -58,6 +60,7 @@ ConversationSchema.index({ orgId: 1, ticketStatus: 1 });
 ConversationSchema.index({ orgId: 1, lastMessageAt: -1 }); 
 ConversationSchema.index({ senderId: 1, lastMessageAt: -1 }); 
 ConversationSchema.index({ deletedAt: 1 }); 
+ConversationSchema.index({ assignedStaffId: 1, ticketStatus: 1 });
 
 const Conversation = model<IConversation>('Conversation', ConversationSchema);
 export default Conversation;

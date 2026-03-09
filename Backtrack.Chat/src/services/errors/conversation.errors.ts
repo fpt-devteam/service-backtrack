@@ -26,4 +26,9 @@ export const ConversationErrors = {
     code: "InvalidConversationType",
     message: "This operation is only available for organization conversations.",
   } as Error,
+  updateTicketStatusFailed: {
+    kind: "Internal",
+    code: "UpdateTicketStatusFailed",
+    message: "Failed to update ticket status.",
+  } as Error,
 } as const satisfies Record<string, Error>;
