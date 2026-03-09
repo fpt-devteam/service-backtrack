@@ -6,6 +6,8 @@ import ENV from '@src/common/constants/ENV'
 
 const EmailConfig = {
   service: ENV.Email.Service,
+  port: 465,
+  secure: true,
   auth: {
     user: ENV.Email.User,
     pass: ENV.Email.Pass,
