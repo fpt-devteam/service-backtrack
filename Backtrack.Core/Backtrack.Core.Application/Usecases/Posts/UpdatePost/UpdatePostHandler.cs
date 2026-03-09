@@ -14,16 +14,20 @@ namespace Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostResult>
 {
     private readonly IPostRepository _postRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly IOrganizationRepository _organizationRepository;
+    private readonly IMembershipRepository _membershipRepository;
     private readonly IBackgroundJobService _backgroundJobService;
 
     public UpdatePostHandler(
         IPostRepository postRepository,
         IUserRepository userRepository,
+        IOrganizationRepository organizationRepository,
+        IMembershipRepository membershipRepository,
         IBackgroundJobService backgroundJobService)
     {
         _postRepository = postRepository;
-        _userRepository = userRepository;
+        _organizationRepository = organizationRepository;
+        _membershipRepository = membershipRepository;
         _backgroundJobService = backgroundJobService;
     }
 
@@ -42,6 +46,32 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
                 post.PostType = postType;
                 needsReEmbedding = true;
             }
+        }
+
+        if (command.OrganizationId.HasValue && post.OrganizationId != command.OrganizationId)
+        {
+            var organization = await _organizationRepository.GetByIdAsync(command.OrganizationId.Value)
+                ?? throw new NotFoundException(OrganizationErrors.NotFound);
+
+            if (await _membershipRepository.GetByOrgAndUserAsync(organization.Id, command.AuthorId) == null)
+            {
+                throw new ValidationException(MembershipErrors.MemberNotFound);
+            }
+
+            if (post.PostType == PostType.Lost) throw new ValidationException(PostErrors.LostPostCannotBeAssociatedWithOrganization);
+
+            post.OrganizationId = command.OrganizationId;
+            post.Organization = organization;
+            post.Location = organization.Location;
+            post.DisplayAddress = organization.DisplayAddress;
+            post.ExternalPlaceId = organization.ExternalPlaceId;
+            needsReEmbedding = true;
+        }
+        else if (command.OrganizationId == null && post.OrganizationId != null)
+        {
+            post.OrganizationId = null;
+            post.Organization = null;
+            needsReEmbedding = true;
         }
 
         if (command.ItemName != null && post.ItemName != command.ItemName)
@@ -89,6 +119,8 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         return new PostResult
         {
             Id = post.Id,
+            Author = post.Author?.ToAuthorResult(),
+            Organization = post.Organization?.ToOrganizationOnPost(),
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,

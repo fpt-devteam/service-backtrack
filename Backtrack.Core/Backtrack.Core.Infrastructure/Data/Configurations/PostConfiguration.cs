@@ -56,12 +56,12 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
             builder.HasIndex(p => p.AuthorId)
                 .HasDatabaseName("ix_posts_author_id");
 
-            builder.Property<Guid?>("organization_id")
+            builder.Property(p => p.OrganizationId)
                 .HasColumnName("organization_id");
 
             builder.HasOne(p => p.Organization)
                 .WithMany(o => o.Posts)
-                .HasForeignKey("organization_id")
+                .HasForeignKey(p => p.OrganizationId)
                 .HasConstraintName("fk_posts_organization_id_organizations_id")
                 .OnDelete(DeleteBehavior.SetNull);
 

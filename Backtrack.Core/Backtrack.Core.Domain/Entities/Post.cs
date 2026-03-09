@@ -21,6 +21,7 @@ public sealed class Post : Entity<Guid>
     public required string ContentHash { get; set; }
     public required DateTimeOffset EventTime { get; set; }
 
+    public Guid? OrganizationId { get; set; }
     public User Author { get; set; } = default!;
     public Organization? Organization { get; set; } = null;
 }

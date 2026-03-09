@@ -8,6 +8,7 @@ using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Backtrack.Core.Application.Usecases.Posts.CreatePost;
 
@@ -18,19 +19,22 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
     private readonly IMembershipRepository _membershipRepository;
     private readonly IHasher _hasher;
     private readonly IBackgroundJobService _backgroundJobService;
+    private readonly ILogger<CreatePostHandler> _logger;
 
     public CreatePostHandler(
         IPostRepository postRepository,
         IOrganizationRepository organizationRepository,
         IMembershipRepository membershipRepository,
         IHasher hasher,
-        IBackgroundJobService backgroundJobService)
+        IBackgroundJobService backgroundJobService,
+        ILogger<CreatePostHandler> logger)
     {
         _postRepository = postRepository;
         _organizationRepository = organizationRepository;
         _membershipRepository = membershipRepository;
         _hasher = hasher;
         _backgroundJobService = backgroundJobService;
+        _logger = logger;
     }
 
     public async Task<PostResult> Handle(CreatePostCommand command, CancellationToken cancellationToken)
@@ -70,6 +74,7 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
         {
             Id = Guid.NewGuid(),
             AuthorId = command.AuthorId,
+            OrganizationId = command.OrganizationId,
             PostType = postType,
             ItemName = command.ItemName,
             Description = command.Description,
@@ -95,6 +100,7 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
         return new PostResult
         {
             Id = post.Id,
+            Organization = post.Organization?.ToOrganizationOnPost(),
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,

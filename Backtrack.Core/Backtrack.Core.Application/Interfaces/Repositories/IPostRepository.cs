@@ -15,6 +15,7 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             double? longitude = null,
             double? radiusInKm = null,
             string? authorId = null,
+            Guid? organizationId = null,
             CancellationToken cancellationToken = default);
 
         Task<(IEnumerable<(Post Post, double SimilarityScore)> Items, int TotalCount)> SearchBySemanticAsync(

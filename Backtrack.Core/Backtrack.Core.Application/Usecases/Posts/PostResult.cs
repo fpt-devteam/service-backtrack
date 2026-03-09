@@ -7,6 +7,7 @@ public sealed record PostResult
 {
     public required Guid Id { get; init; }
     public AuthorResult? Author { get; init; }
+    public OrganizationOnPost? Organization { get; init; }
     public required string PostType { get; init; }
     public required string ItemName { get; init; }
     public required string Description { get; init; }

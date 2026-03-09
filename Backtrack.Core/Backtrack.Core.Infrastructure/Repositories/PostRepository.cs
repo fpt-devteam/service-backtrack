@@ -18,7 +18,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
 {
     public override async Task<Post?> GetByIdAsync(Guid id, bool isTrack = false)
     {
-        IQueryable<Post> query = _dbSet.Include(p => p.Author);
+        IQueryable<Post> query = _dbSet.Include(p => p.Author).Include(p => p.Organization);
         if (!isTrack)
         {
             query = query.AsNoTracking();
@@ -38,6 +38,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         double? longitude = null,
         double? radiusInKm = null,
         string? authorId = null,
+        Guid? organizationId = null,
         CancellationToken cancellationToken = default)
     {
         var query = _dbSet.AsQueryable();
@@ -50,6 +51,11 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         if (authorId is not null)
         {
             query = query.Where(p => p.AuthorId == authorId);
+        }
+
+        if (organizationId is not null)
+        {
+            query = query.Where(p => p.OrganizationId == organizationId);
         }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -86,6 +92,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
 
         var items = await query
             .Include(p => p.Author)
+            .Include(p => p.Organization)
             .OrderByDescending(p => p.CreatedAt)
             .Skip(offset)
             .Take(limit)
@@ -367,6 +374,8 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
     public async Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
+            .Include(p => p.Author)
+            .Include(p => p.Organization)
             .Where(p => p.AuthorId == authorId && p.DeletedAt == null)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync(cancellationToken);

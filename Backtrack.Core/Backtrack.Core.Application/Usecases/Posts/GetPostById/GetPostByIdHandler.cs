@@ -22,12 +22,8 @@ public sealed class GetPostByIdHandler : IRequestHandler<GetPostByIdQuery, PostR
         return new PostResult
         {
             Id = post.Id,
-            Author = new AuthorResult
-            {
-                Id = post.Author.Id,
-                DisplayName = post.Author.DisplayName,
-                AvatarUrl = post.Author.AvatarUrl
-            },
+            Author = post.Author?.ToAuthorResult(),
+            Organization = post.Organization?.ToOrganizationOnPost(),
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,

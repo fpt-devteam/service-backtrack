@@ -19,6 +19,8 @@ public sealed class GetMyPostsHandler : IRequestHandler<GetMyPostsQuery, List<Po
         return posts.Select(post => new PostResult
         {
             Id = post.Id,
+            Author = post.Author?.ToAuthorResult(),
+            Organization = post.Organization?.ToOrganizationOnPost(),
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,
