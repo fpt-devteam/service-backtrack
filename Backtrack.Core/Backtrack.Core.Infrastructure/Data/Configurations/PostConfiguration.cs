@@ -56,16 +56,24 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
             builder.HasIndex(p => p.AuthorId)
                 .HasDatabaseName("ix_posts_author_id");
 
+            builder.Property(p => p.OrganizationId)
+                .HasColumnName("organization_id");
+
+            builder.HasOne(p => p.Organization)
+                .WithMany(o => o.Posts)
+                .HasForeignKey(p => p.OrganizationId)
+                .HasConstraintName("fk_posts_organization_id_organizations_id")
+                .OnDelete(DeleteBehavior.SetNull);
+
             var geoPointToPointConverter = new ValueConverter<GeoPoint, Point>(
                 toDb => new Point(toDb.Longitude, toDb.Latitude) { SRID = 4326 },
                 fromDb => new GeoPoint(fromDb.Y, fromDb.X)
             );
 
-            var geoPointComparer = new ValueComparer<GeoPoint?>(
-                (a, b) => a == null && b == null
-                          || (a != null && b != null && a.Latitude == b.Latitude && a.Longitude == b.Longitude),
+            var geoPointComparer = new ValueComparer<GeoPoint>(
+                (a, b) => a != null && b != null && a.Latitude == b.Latitude && a.Longitude == b.Longitude,
                 v => v == null ? 0 : HashCode.Combine(v.Latitude, v.Longitude),
-                v => v == null ? null : new GeoPoint(v.Latitude, v.Longitude)
+                v => new GeoPoint(v.Latitude, v.Longitude)
             );
 
             builder.Property(p => p.Location)
@@ -80,7 +88,8 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
 
             builder.Property(p => p.DisplayAddress)
                 .HasColumnName("display_address")
-                .HasMaxLength(1000);
+                .HasMaxLength(1000)
+                .IsRequired();
 
             // Vector converter for embeddings
             var embeddingToVectorConverter = new ValueConverter<float[]?, Vector?>(

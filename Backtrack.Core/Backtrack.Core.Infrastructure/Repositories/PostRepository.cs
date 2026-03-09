@@ -14,8 +14,21 @@ using System.Data;
 
 namespace Backtrack.Core.Infrastructure.Repositories;
 
-public class PostRepository(ApplicationDbContext context, ILogger<PostRepository> logger) : CrudRepositoryBase<Post, Guid>(context), IPostRepository
+public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<Post, Guid>(context), IPostRepository
 {
+    public override async Task<Post?> GetByIdAsync(Guid id, bool isTrack = false)
+    {
+        IQueryable<Post> query = _dbSet.Include(p => p.Author).Include(p => p.Organization);
+        if (!isTrack)
+        {
+            query = query.AsNoTracking();
+        }
+
+        return await query.FirstOrDefaultAsync(p =>
+            p.Id == id &&
+            p.DeletedAt == null);
+    }
+
     public async Task<(IEnumerable<Post> Items, int TotalCount)> GetPagedAsync(
         int offset,
         int limit,
@@ -25,6 +38,7 @@ public class PostRepository(ApplicationDbContext context, ILogger<PostRepository
         double? longitude = null,
         double? radiusInKm = null,
         string? authorId = null,
+        Guid? organizationId = null,
         CancellationToken cancellationToken = default)
     {
         var query = _dbSet.AsQueryable();
@@ -37,6 +51,11 @@ public class PostRepository(ApplicationDbContext context, ILogger<PostRepository
         if (authorId is not null)
         {
             query = query.Where(p => p.AuthorId == authorId);
+        }
+
+        if (organizationId is not null)
+        {
+            query = query.Where(p => p.OrganizationId == organizationId);
         }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -73,6 +92,7 @@ public class PostRepository(ApplicationDbContext context, ILogger<PostRepository
 
         var items = await query
             .Include(p => p.Author)
+            .Include(p => p.Organization)
             .OrderByDescending(p => p.CreatedAt)
             .Skip(offset)
             .Take(limit)
@@ -303,8 +323,8 @@ public class PostRepository(ApplicationDbContext context, ILogger<PostRepository
         command.Parameters.Add(new NpgsqlParameter("@postType", post.PostType.ToString()));
         command.Parameters.Add(new NpgsqlParameter("@authorId", post.AuthorId));
         command.Parameters.Add(new NpgsqlParameter("@minSimilarity", SimilarityCriteria.DescriptionSimilarityThreshold));
-        command.Parameters.Add(new NpgsqlParameter("@longitude", post.Location.Longitude));
-        command.Parameters.Add(new NpgsqlParameter("@latitude", post.Location.Latitude));
+        command.Parameters.Add(new NpgsqlParameter("@longitude", post.Location?.Longitude ?? 0));
+        command.Parameters.Add(new NpgsqlParameter("@latitude", post.Location?.Latitude ?? 0));
         command.Parameters.Add(new NpgsqlParameter("@radius", SimilarityCriteria.MaxDistanceMeters));
 
 
@@ -355,6 +375,7 @@ public class PostRepository(ApplicationDbContext context, ILogger<PostRepository
     {
         return await _dbSet
             .Include(p => p.Author)
+            .Include(p => p.Organization)
             .Where(p => p.AuthorId == authorId && p.DeletedAt == null)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync(cancellationToken);

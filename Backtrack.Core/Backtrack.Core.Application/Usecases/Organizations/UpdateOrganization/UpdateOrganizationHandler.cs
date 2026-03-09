@@ -1,7 +1,9 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Organizations.UpdateOrganization;
@@ -48,7 +50,12 @@ public sealed class UpdateOrganizationHandler : IRequestHandler<UpdateOrganizati
 
         org.Name = command.Name;
         org.Slug = command.Slug;
-        org.Address = command.Address;
+        if (command.Location != null)
+        {
+            org.Location = new GeoPoint(command.Location.Latitude, command.Location.Longitude);
+        }
+        org.DisplayAddress = command.DisplayAddress ?? org.DisplayAddress;
+        org.ExternalPlaceId = command.ExternalPlaceId ?? org.ExternalPlaceId;
         org.Phone = command.Phone;
         org.IndustryType = command.IndustryType;
         org.TaxIdentificationNumber = command.TaxIdentificationNumber;
@@ -61,7 +68,9 @@ public sealed class UpdateOrganizationHandler : IRequestHandler<UpdateOrganizati
             Id = org.Id,
             Name = org.Name,
             Slug = org.Slug,
-            Address = org.Address,
+            Location = org.Location,
+            DisplayAddress = org.DisplayAddress,
+            ExternalPlaceId = org.ExternalPlaceId,
             Phone = org.Phone,
             IndustryType = org.IndustryType,
             TaxIdentificationNumber = org.TaxIdentificationNumber,

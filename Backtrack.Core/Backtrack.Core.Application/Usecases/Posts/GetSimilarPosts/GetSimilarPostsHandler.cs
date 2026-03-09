@@ -34,7 +34,7 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
             // If source is Lost, the match result is the Found post
             // If source is Found, the match result is the Lost post
             var targetPost = sourcePost.PostType == PostType.Lost ? match.FoundPost : match.LostPost;
-            
+
             return new SimilarPostItem
             {
                 Id = targetPost.Id,
@@ -42,11 +42,7 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
                 ItemName = targetPost.ItemName,
                 Description = targetPost.Description,
                 ImageUrls = targetPost.ImageUrls,
-                Location = new LocationResult
-                {
-                    Latitude = targetPost.Location.Latitude,
-                    Longitude = targetPost.Location.Longitude
-                },
+                Location = targetPost.Location,
                 ExternalPlaceId = targetPost.ExternalPlaceId,
                 DisplayAddress = targetPost.DisplayAddress,
                 EventTime = targetPost.EventTime,

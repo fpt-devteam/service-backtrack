@@ -18,6 +18,14 @@ public sealed class CreatePostCommandValidator : AbstractValidator<CreatePostCom
         RuleFor(x => x.EventTime)
             .NotEmpty().WithMessage("EventTime is required");
 
+        RuleFor(x => x.Location)
+            .NotNull().WithMessage("Location is required when not posting as an organization")
+            .When(x => x.OrganizationId == null);
+
+        RuleFor(x => x.DisplayAddress)
+            .NotEmpty().WithMessage("DisplayAddress is required when not posting as an organization")
+            .When(x => x.OrganizationId == null);
+
         RuleFor(x => x.Location!.Latitude)
             .InclusiveBetween(-90, 90).WithMessage("Latitude must be between -90 and 90")
             .When(x => x.Location != null);

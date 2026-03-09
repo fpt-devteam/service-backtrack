@@ -1,3 +1,5 @@
+using Backtrack.Core.Application.Usecases.Posts.CreatePost;
+using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
@@ -8,15 +10,12 @@ public sealed record CreateOrganizationCommand : IRequest<OrganizationResult>
 {
     [JsonIgnore]
     public string UserId { get; init; } = string.Empty;
-    [Required]
     public required string Name { get; init; }
-    [Required]
     public required string Slug { get; init; }
-    public string? Address { get; init; }
-    [Required]
+    public required GeoPoint Location { get; init; }
+    public required string DisplayAddress { get; init; }
+    public string? ExternalPlaceId { get; init; }
     public required string Phone { get; init; }
-    [Required]
     public required string IndustryType { get; init; }
-    [Required]
     public required string TaxIdentificationNumber { get; init; }
 }

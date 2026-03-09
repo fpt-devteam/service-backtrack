@@ -15,9 +15,23 @@ public sealed class UpdateOrganizationCommandValidator : AbstractValidator<Updat
             .MaximumLength(255).WithMessage("Slug must not exceed 255 characters")
             .Matches("^[a-z0-9]+(?:-[a-z0-9]+)*$").WithMessage("Slug must contain only lowercase letters, numbers, and hyphens");
 
-        RuleFor(x => x.Address)
-            .MaximumLength(500).WithMessage("Address must not exceed 500 characters")
-            .When(x => x.Address is not null);
+        RuleFor(x => x.Location)
+            .NotNull().WithMessage("Location is required");
+
+        RuleFor(x => x.Location!.Latitude)
+            .InclusiveBetween(-90, 90).WithMessage("Latitude must be between -90 and 90")
+            .When(x => x.Location != null);
+
+        RuleFor(x => x.Location!.Longitude)
+            .InclusiveBetween(-180, 180).WithMessage("Longitude must be between -180 and 180")
+            .When(x => x.Location != null);
+
+        RuleFor(x => x.DisplayAddress)
+            .NotEmpty().WithMessage("DisplayAddress is required")
+            .MaximumLength(1000).WithMessage("DisplayAddress must not exceed 1000 characters");
+
+        RuleFor(x => x.ExternalPlaceId)
+            .MaximumLength(500).WithMessage("ExternalPlaceId must not exceed 500 characters");
 
         RuleFor(x => x.Phone)
             .NotEmpty().WithMessage("Phone is required")

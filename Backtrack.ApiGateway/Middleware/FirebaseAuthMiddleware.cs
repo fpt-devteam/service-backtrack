@@ -20,6 +20,8 @@ public class FirebaseAuthMiddleware
     private const string AuthAvatarUrlHeaderName = "X-Auth-Avatar-Url";
     private const string CorrelationIdHeaderName = "X-Correlation-Id";
 
+    private const string OrganizationIdHeaderName = "X-Organization-Id";
+
     public FirebaseAuthMiddleware(
         RequestDelegate next,
         ILogger<FirebaseAuthMiddleware> logger,
@@ -100,11 +102,19 @@ public class FirebaseAuthMiddleware
                 return;
             }
 
+
             context.Request.Headers[AuthIdHeaderName] = authId;
             context.Request.Headers[AuthProviderHeaderName] = "firebase";
             context.Request.Headers[AuthEmailHeaderName] = email;
             context.Request.Headers[AuthNameHeaderName] = GetDisplayName(decodedToken);
             context.Request.Headers[AuthAvatarUrlHeaderName] = GetAvatarUrl(decodedToken);
+            if (context.Request.Headers.TryGetValue(OrganizationIdHeaderName, out var orgId) && !string.IsNullOrWhiteSpace(orgId))
+            {
+                _logger.LogInformation("Received organization ID in header: {OrgId}", orgId);
+                _logger.LogInformation("Received organization ID in header 2: {OrgId}", orgId.ToString());
+
+                context.Request.Headers[OrganizationIdHeaderName] = orgId.ToString();
+            }
 
             await _next(context);
         }

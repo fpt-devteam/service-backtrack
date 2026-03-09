@@ -124,3 +124,13 @@ export const getMessagesByConversationId = async (
 export const updateMessageStatus = async (messageId: string, status: MessageStatus): Promise<void> => {
   await Message.findByIdAndUpdate(messageId, { status }).exec();
 };
+export const markMessagesAsSeen = async (conversationId: string, userId: string): Promise<void> => {
+  await Message.updateMany(
+    { 
+      conversationId, 
+      senderId: { $ne: userId },      
+      status: { $ne: MessageStatus.SEEN } 
+    },
+    { $set: { status: MessageStatus.SEEN } }
+  );
+};
