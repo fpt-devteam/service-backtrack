@@ -59,11 +59,7 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
                 ItemName = post.ItemName,
                 Description = post.Description,
                 ImageUrls = post.ImageUrls,
-                Location = new LocationResult
-                {
-                    Latitude = post.Location.Latitude,
-                    Longitude = post.Location.Longitude
-                },
+                Location = post.Location,
                 ExternalPlaceId = post.ExternalPlaceId,
                 DisplayAddress = post.DisplayAddress,
                 EventTime = post.EventTime,

@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Utils.PostSimilarity;
+using Backtrack.Core.Domain.ValueObjects;
 
 namespace Backtrack.Core.Application.Usecases.Posts.GetSimilarPosts;
 
@@ -17,7 +18,7 @@ public sealed record SimilarPostItem
     public required string ItemName { get; init; }
     public required string Description { get; init; }
     public string[] ImageUrls { get; init; } = Array.Empty<string>();
-    public required LocationResult Location { get; init; }
+    public required GeoPoint Location { get; init; }
     public string? ExternalPlaceId { get; init; }
     public string? DisplayAddress { get; init; }
     public required DateTimeOffset EventTime { get; init; }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Backtrack.Core.Domain.Entities;
+using Backtrack.Core.Domain.ValueObjects;
 
 namespace Backtrack.Core.Infrastructure.Data.Configurations
 {
@@ -30,8 +31,30 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .IsUnique()
                 .HasDatabaseName("ix_organizations_slug");
 
-            builder.Property(o => o.Address)
-                .HasColumnName("address")
+            var geoPointToPointConverter = new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<GeoPoint, NetTopologySuite.Geometries.Point>(
+                toDb => new NetTopologySuite.Geometries.Point(toDb.Longitude, toDb.Latitude) { SRID = 4326 },
+                fromDb => new GeoPoint(fromDb.Y, fromDb.X)
+            );
+
+            var geoPointComparer = new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<GeoPoint>(
+                (a, b) => a != null && b != null && a.Latitude == b.Latitude && a.Longitude == b.Longitude,
+                v => v == null ? 0 : HashCode.Combine(v.Latitude, v.Longitude),
+                v => new GeoPoint(v.Latitude, v.Longitude)
+            );
+
+            builder.Property(o => o.Location)
+                .HasColumnName("location")
+                .HasColumnType("geography(point, 4326)")
+                .HasConversion(geoPointToPointConverter, geoPointComparer)
+                .IsRequired();
+
+            builder.Property(o => o.DisplayAddress)
+                .HasColumnName("display_address")
+                .HasMaxLength(1000)
+                .IsRequired();
+
+            builder.Property(o => o.ExternalPlaceId)
+                .HasColumnName("external_place_id")
                 .HasMaxLength(500);
 
             builder.Property(o => o.Phone)

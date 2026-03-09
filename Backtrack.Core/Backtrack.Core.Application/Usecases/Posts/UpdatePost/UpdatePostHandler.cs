@@ -65,7 +65,8 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         if (command.Location != null)
         {
             var newLocation = new GeoPoint(command.Location.Latitude, command.Location.Longitude);
-            if (DoubleUtil.AreNotApproximatelyEqual(post.Location.Latitude, newLocation.Latitude) ||
+            if (post.Location == null ||
+                DoubleUtil.AreNotApproximatelyEqual(post.Location.Latitude, newLocation.Latitude) ||
                 DoubleUtil.AreNotApproximatelyEqual(post.Location.Longitude, newLocation.Longitude))
             {
                 post.Location = newLocation;
@@ -85,31 +86,14 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
 
         if (needsReEmbedding) _backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
-
-        var author = await _userRepository.GetByIdAsync(post.AuthorId);
-        if (author == null)
-        {
-            throw new NotFoundException(UserErrors.NotFound);
-        }
-
         return new PostResult
         {
             Id = post.Id,
-            Author = new AuthorResult
-            {
-                Id = author.Id,
-                DisplayName = author.DisplayName,
-                AvatarUrl = author.AvatarUrl
-            },
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,
             ImageUrls = post.ImageUrls,
-            Location = new LocationResult
-            {
-                Latitude = post.Location.Latitude,
-                Longitude = post.Location.Longitude
-            },
+            Location = post.Location,
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress = post.DisplayAddress,
             EventTime = post.EventTime,

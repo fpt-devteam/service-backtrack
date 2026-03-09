@@ -14,18 +14,21 @@ namespace Backtrack.Core.Application.Usecases.Posts.CreatePost;
 public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostResult>
 {
     private readonly IPostRepository _postRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly IOrganizationRepository _organizationRepository;
+    private readonly IMembershipRepository _membershipRepository;
     private readonly IHasher _hasher;
     private readonly IBackgroundJobService _backgroundJobService;
 
     public CreatePostHandler(
         IPostRepository postRepository,
-        IUserRepository userRepository,
+        IOrganizationRepository organizationRepository,
+        IMembershipRepository membershipRepository,
         IHasher hasher,
         IBackgroundJobService backgroundJobService)
     {
         _postRepository = postRepository;
-        _userRepository = userRepository;
+        _organizationRepository = organizationRepository;
+        _membershipRepository = membershipRepository;
         _hasher = hasher;
         _backgroundJobService = backgroundJobService;
     }
@@ -37,6 +40,32 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
             throw new ValidationException(PostErrors.InvalidPostType);
         }
 
+        GeoPoint? location = command.Location;
+        string? displayAddress = command.DisplayAddress;
+        string? externalPlaceId = command.ExternalPlaceId;
+
+        if (command.OrganizationId.HasValue)
+        {
+            var organization = await _organizationRepository.GetByIdAsync(command.OrganizationId.Value)
+                ?? throw new NotFoundException(OrganizationErrors.NotFound);
+
+            if (await _membershipRepository.GetByOrgAndUserAsync(organization.Id, command.AuthorId) == null)
+            {
+                throw new ValidationException(MembershipErrors.MemberNotFound);
+            }
+
+            if (postType == PostType.Lost) throw new ValidationException(PostErrors.LostPostCannotBeAssociatedWithOrganization);
+
+            location = organization.Location;
+            displayAddress = organization.DisplayAddress;
+            externalPlaceId = organization.ExternalPlaceId;
+        }
+
+        if (location == null || displayAddress == null)
+        {
+            throw new ValidationException(new Error("LocationRequired", "Location and DisplayAddress are required."));
+        }
+
         var post = new Post
         {
             Id = Guid.NewGuid(),
@@ -46,9 +75,9 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
             Description = command.Description,
             DistinctiveMarks = command.DistinctiveMarks,
             ImageUrls = command.ImageUrls,
-            Location = new GeoPoint(command.Location.Latitude, command.Location.Longitude),
-            ExternalPlaceId = command.ExternalPlaceId,
-            DisplayAddress = command.DisplayAddress,
+            Location = location,
+            ExternalPlaceId = externalPlaceId,
+            DisplayAddress = displayAddress,
             ContentEmbedding = null, // Will be generated asynchronously
             ContentEmbeddingStatus = ContentEmbeddingStatus.Pending,
             ContentHash = command.DistinctiveMarks != null
@@ -61,34 +90,16 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
         await _postRepository.CreateAsync(post);
         await _postRepository.SaveChangesAsync();
 
-        // Enqueue background job to generate content embedding
         _backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
-
-        // Fetch author information
-        var author = await _userRepository.GetByIdAsync(post.AuthorId);
-        if (author == null)
-        {
-            throw new NotFoundException(new Error("AuthorNotFound", "Author not found"));
-        }
 
         return new PostResult
         {
             Id = post.Id,
-            Author = new AuthorResult
-            {
-                Id = author.Id,
-                DisplayName = author.DisplayName,
-                AvatarUrl = author.AvatarUrl
-            },
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,
             ImageUrls = post.ImageUrls,
-            Location = new LocationResult
-            {
-                Latitude = post.Location.Latitude,
-                Longitude = post.Location.Longitude
-            },
+            Location = post.Location,
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress = post.DisplayAddress,
             EventTime = post.EventTime,

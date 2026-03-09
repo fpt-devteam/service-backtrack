@@ -14,8 +14,21 @@ using System.Data;
 
 namespace Backtrack.Core.Infrastructure.Repositories;
 
-public class PostRepository(ApplicationDbContext context, ILogger<PostRepository> logger) : CrudRepositoryBase<Post, Guid>(context), IPostRepository
+public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<Post, Guid>(context), IPostRepository
 {
+    public override async Task<Post?> GetByIdAsync(Guid id, bool isTrack = false)
+    {
+        IQueryable<Post> query = _dbSet.Include(p => p.Author);
+        if (!isTrack)
+        {
+            query = query.AsNoTracking();
+        }
+
+        return await query.FirstOrDefaultAsync(p =>
+            p.Id == id &&
+            p.DeletedAt == null);
+    }
+
     public async Task<(IEnumerable<Post> Items, int TotalCount)> GetPagedAsync(
         int offset,
         int limit,
@@ -303,8 +316,8 @@ public class PostRepository(ApplicationDbContext context, ILogger<PostRepository
         command.Parameters.Add(new NpgsqlParameter("@postType", post.PostType.ToString()));
         command.Parameters.Add(new NpgsqlParameter("@authorId", post.AuthorId));
         command.Parameters.Add(new NpgsqlParameter("@minSimilarity", SimilarityCriteria.DescriptionSimilarityThreshold));
-        command.Parameters.Add(new NpgsqlParameter("@longitude", post.Location.Longitude));
-        command.Parameters.Add(new NpgsqlParameter("@latitude", post.Location.Latitude));
+        command.Parameters.Add(new NpgsqlParameter("@longitude", post.Location?.Longitude ?? 0));
+        command.Parameters.Add(new NpgsqlParameter("@latitude", post.Location?.Latitude ?? 0));
         command.Parameters.Add(new NpgsqlParameter("@radius", SimilarityCriteria.MaxDistanceMeters));
 
 
@@ -354,7 +367,6 @@ public class PostRepository(ApplicationDbContext context, ILogger<PostRepository
     public async Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
-            .Include(p => p.Author)
             .Where(p => p.AuthorId == authorId && p.DeletedAt == null)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync(cancellationToken);

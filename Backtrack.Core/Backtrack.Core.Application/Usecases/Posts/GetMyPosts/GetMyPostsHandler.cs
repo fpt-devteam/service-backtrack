@@ -19,21 +19,11 @@ public sealed class GetMyPostsHandler : IRequestHandler<GetMyPostsQuery, List<Po
         return posts.Select(post => new PostResult
         {
             Id = post.Id,
-            Author = new AuthorResult
-            {
-                Id = post.Author.Id,
-                DisplayName = post.Author.DisplayName,
-                AvatarUrl = post.Author.AvatarUrl
-            },
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,
             ImageUrls = post.ImageUrls,
-            Location = new LocationResult
-            {
-                Latitude = post.Location.Latitude,
-                Longitude = post.Location.Longitude
-            },
+            Location = post.Location,
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress = post.DisplayAddress,
             EventTime = post.EventTime,
