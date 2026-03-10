@@ -49,11 +49,16 @@ class EmailService {
         subject: request.subject,
       })
 
-      const info = await this.transporter.sendMail(mailOptions)
-      logger.info('Email sent successfully', {
-        messageId: info.messageId,
-        to: request.to,
-      })
+      await new Promise((resolve, reject) => {
+        this.transporter.sendMail(mailOptions, (err, info) => {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve(info);
+          }
+        });
+      });
 
       const result: EmailSendResult = {
         sent: true,
