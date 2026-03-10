@@ -6,8 +6,8 @@ import ENV from '@src/common/constants/ENV'
 
 const EmailConfig = {
   service: 'gmail',
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false,
   host: 'smtp.gmail.com',
   auth: {
     user: ENV.Email.User,
