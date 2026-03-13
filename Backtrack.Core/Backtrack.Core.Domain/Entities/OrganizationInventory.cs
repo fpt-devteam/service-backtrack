@@ -12,7 +12,7 @@ public sealed class OrganizationInventory : Entity<Guid>
     public string? DistinctiveMarks { get; set; }
     public string[] ImageUrls { get; set; } = Array.Empty<string>();
     public string? StorageLocation { get; set; }
-    public float[]? ContentEmbedding { get; set; }
+    public float[]? MultimodalEmbedding { get; set; }
     public required OrganizationInventoryStatus Status { get; set; }
     public required DateTimeOffset LoggedAt { get; set; }
 

@@ -59,12 +59,9 @@ public sealed class UpdateInventoryItemHandler(
             inventory.StorageLocation = command.StorageLocation;
         }
 
-        if (command.Status != null)
+        if (command.Status != null && Enum.TryParse<OrganizationInventoryStatus>(command.Status, true, out var status))
         {
-            if (Enum.TryParse<OrganizationInventoryStatus>(command.Status, true, out var status))
-            {
-                inventory.Status = status;
-            }
+            inventory.Status = status;
         }
 
         if (needsReEmbedding)
@@ -78,7 +75,7 @@ Description: {inventory.Description}";
             }
 
             contentForEmbedding += $"\n\nThis item is {inventory.ItemName.ToLower()}.";
-            inventory.ContentEmbedding = await embeddingService.GenerateEmbeddingAsync(contentForEmbedding, cancellationToken);
+            inventory.MultimodalEmbedding = await embeddingService.GenerateMultimodalEmbeddingAsync(contentForEmbedding, null, null, cancellationToken);
         }
 
         inventory.UpdatedAt = DateTimeOffset.UtcNow;

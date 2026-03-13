@@ -83,11 +83,13 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
             Location = location,
             ExternalPlaceId = externalPlaceId,
             DisplayAddress = displayAddress,
-            ContentEmbedding = null, // Will be generated asynchronously
+            MultimodalEmbedding = null, // Will be generated asynchronously
             ContentEmbeddingStatus = ContentEmbeddingStatus.Pending,
-            ContentHash = command.DistinctiveMarks != null
-                ? _hasher.HashStrings(command.ItemName, command.Description, command.DistinctiveMarks)
-                : _hasher.HashStrings(command.ItemName, command.Description),
+            ContentHash = _hasher.HashStrings(
+                command.ItemName,
+                command.Description,
+                command.DistinctiveMarks ?? string.Empty,
+                command.ImageUrls.Length > 0 ? command.ImageUrls[0] : string.Empty),
             EventTime = command.EventTime,
             CreatedAt = DateTimeOffset.UtcNow
         };

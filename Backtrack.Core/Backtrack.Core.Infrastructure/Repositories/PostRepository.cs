@@ -1,5 +1,4 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Utils.PostSimilarity;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
@@ -150,16 +149,16 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                         event_time,
                         created_at,
                         updated_at,
-                        content_embedding,
+                        multimodal_embedding,
                         content_hash,
                         content_embedding_status,
-                        (content_embedding <=> @queryEmbedding::vector) AS distance,
-                        (1.0 - (content_embedding <=> @queryEmbedding::vector)) AS similarity,
+                        (multimodal_embedding <=> @queryEmbedding::vector) AS distance,
+                        (1.0 - (multimodal_embedding <=> @queryEmbedding::vector)) AS similarity,
                         author_id
                     FROM posts
                     WHERE deleted_at IS NULL
                         AND content_embedding_status = 'Ready'
-                        AND content_embedding IS NOT NULL
+                        AND multimodal_embedding IS NOT NULL
                         {postTypeCondition}
                         {locationCondition}
                 )
@@ -175,7 +174,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                     event_time,
                     created_at,
                     updated_at,
-                    content_embedding,
+                    multimodal_embedding,
                     content_hash,
                     content_embedding_status,
                     similarity
@@ -189,10 +188,10 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                 FROM posts
                 WHERE deleted_at IS NULL
                     AND content_embedding_status = 'Ready'
-                    AND content_embedding IS NOT NULL
+                    AND multimodal_embedding IS NOT NULL
                     {postTypeCondition}
                     {locationCondition}
-                    AND (1.0 - (content_embedding <=> @queryEmbedding::vector)) >= @minSimilarity;
+                    AND (1.0 - (multimodal_embedding <=> @queryEmbedding::vector)) >= @minSimilarity;
             ";
 
         // Create parameters
@@ -247,7 +246,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                     UpdatedAt = reader.IsDBNull(10)
                         ? null
                         : reader.GetFieldValue<DateTimeOffset>(10),
-                    ContentEmbedding = reader.IsDBNull(11)
+                    MultimodalEmbedding = reader.IsDBNull(11)
                         ? null
                         : ((Vector)reader.GetValue(11)).ToArray(),
                     ContentHash = reader.GetString(12),
@@ -255,7 +254,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                     AuthorId = reader.GetString(14)
                 };
 
-                var similarity = reader.GetDouble(14);
+                var similarity = reader.GetDouble(15);
                 results.Add((post, similarity));
             }
 
@@ -269,12 +268,12 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return (results, totalCount);
     }
 
-    public async Task<IEnumerable<(Post Post, SimilarityScore SimilarityScore)>> GetSimilarPostsAsync(
+    public async Task<IEnumerable<(Post Post, double Similarity, double DistanceMeters)>> GetSimilarPostsAsync(
         Post post,
         CancellationToken cancellationToken = default)
     {
-        var queryVec = new Vector(post.ContentEmbedding ?? Array.Empty<float>());
-        var sql = $@"
+        var queryVec = new Vector(post.MultimodalEmbedding ?? Array.Empty<float>());
+        var sql = @"
         SELECT
             id,
             post_type,
@@ -287,12 +286,12 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             event_time,
             created_at,
             updated_at,
-            content_embedding,
+            multimodal_embedding,
             content_hash,
             content_embedding_status,
             author_id,
-            (1.0 - (content_embedding <=> @queryEmbedding)) AS description_similarity_score,
-            ST_Distance(                                         
+            (1.0 - (multimodal_embedding <=> @queryEmbedding)) AS similarity,
+            ST_Distance(
                 location::geography,
                 ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography
             ) AS distance_meters
@@ -300,7 +299,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         WHERE deleted_at IS NULL
             AND id != @postId
             AND content_embedding_status = 'Ready'
-            AND content_embedding IS NOT NULL
+            AND multimodal_embedding IS NOT NULL
             AND location IS NOT NULL
             AND ST_DWithin(
                 location::geography,
@@ -309,8 +308,8 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             )
             AND post_type != @postType
             AND author_id != @authorId
-            AND (1.0 - (content_embedding <=> @queryEmbedding)) >= @minSimilarity
-       ";
+            AND (1.0 - (multimodal_embedding <=> @queryEmbedding)) >= @minSimilarity
+        ORDER BY similarity DESC";
 
         var conn = _context.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open) await _context.Database.OpenConnectionAsync(cancellationToken);
@@ -322,13 +321,12 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         command.Parameters.Add(new NpgsqlParameter("@queryEmbedding", queryVec));
         command.Parameters.Add(new NpgsqlParameter("@postType", post.PostType.ToString()));
         command.Parameters.Add(new NpgsqlParameter("@authorId", post.AuthorId));
-        command.Parameters.Add(new NpgsqlParameter("@minSimilarity", SimilarityCriteria.DescriptionSimilarityThreshold));
+        command.Parameters.Add(new NpgsqlParameter("@minSimilarity", PostSimilarityThresholds.MinMultimodalSimilarity));
         command.Parameters.Add(new NpgsqlParameter("@longitude", post.Location?.Longitude ?? 0));
         command.Parameters.Add(new NpgsqlParameter("@latitude", post.Location?.Latitude ?? 0));
-        command.Parameters.Add(new NpgsqlParameter("@radius", SimilarityCriteria.MaxDistanceMeters));
+        command.Parameters.Add(new NpgsqlParameter("@radius", PostSimilarityThresholds.MaxDistanceMeters));
 
-
-        var results = new List<(Post Post, SimilarityScore SimilarityScore)>();
+        var results = new List<(Post Post, double Similarity, double DistanceMeters)>();
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
@@ -341,34 +339,23 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                 Description = reader.GetString(3),
                 ImageUrls = await reader.GetFieldValueAsync<string[]>(4, cancellationToken),
                 Location = new GeoPoint(
-                        ((Point)reader.GetValue(5)).Y,
-                        ((Point)reader.GetValue(5)).X
-                    ),
+                    ((Point)reader.GetValue(5)).Y,
+                    ((Point)reader.GetValue(5)).X),
                 ExternalPlaceId = await reader.IsDBNullAsync(6) ? null : reader.GetString(6),
                 DisplayAddress = await reader.IsDBNullAsync(7) ? null : reader.GetString(7),
                 EventTime = await reader.GetFieldValueAsync<DateTimeOffset>(8, cancellationToken),
                 CreatedAt = await reader.GetFieldValueAsync<DateTimeOffset>(9, cancellationToken),
                 UpdatedAt = await reader.IsDBNullAsync(10) ? null : await reader.GetFieldValueAsync<DateTimeOffset>(10, cancellationToken),
-                ContentEmbedding = await reader.IsDBNullAsync(11) ? null : ((Vector)reader.GetValue(11)).ToArray(),
+                MultimodalEmbedding = await reader.IsDBNullAsync(11) ? null : ((Vector)reader.GetValue(11)).ToArray(),
                 ContentHash = reader.GetString(12),
-                ContentEmbeddingStatus =
-                    (ContentEmbeddingStatus)Enum.Parse(typeof(ContentEmbeddingStatus), reader.GetString(13)),
+                ContentEmbeddingStatus = Enum.Parse<ContentEmbeddingStatus>(reader.GetString(13)),
                 AuthorId = reader.GetString(14)
             };
 
-            var descSimilarity = reader.GetDouble(15);
-
-            var distanceMeters = reader.GetDouble(16);
-            var locationSimilarity = SimilarityScoreCalculator.CalculateLocationSimilarity(distanceMeters);
-
-            results.Add((p, new SimilarityScore(
-                descSimilarity,
-                locationSimilarity,
-                SimilarityScoreCalculator.CalculateTotalSimilarity(descSimilarity, locationSimilarity),
-                distanceMeters)));
+            results.Add((p, reader.GetDouble(15), reader.GetDouble(16)));
         }
 
-        return results.OrderByDescending(r => r.SimilarityScore.TotalSimilarity).ToList();
+        return results;
     }
 
     public async Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)

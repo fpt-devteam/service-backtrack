@@ -9,23 +9,21 @@ namespace Backtrack.Core.Application.Interfaces.AI
         /// <summary>
         /// Generates an embedding vector from a single text input.
         /// </summary>
-        /// <param name="text">The text to embed</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>A float array representing the embedding vector</returns>
         Task<float[]> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Generates embedding vectors from multiple text inputs in a batch.
-        /// More efficient than calling GenerateEmbeddingAsync multiple times.
+        /// Generates an embedding vector from text and optional image input.
+        /// Uses gemini-embedding-2-preview which maps all modalities into the same embedding space.
         /// </summary>
-        /// <param name="texts">The texts to embed</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>A list of float arrays representing the embedding vectors</returns>
+        Task<float[]> GenerateMultimodalEmbeddingAsync(string text, string? imageBase64 = null, string? mimeType = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Generates embedding vectors from multiple text inputs in a batch.
+        /// </summary>
         Task<IList<float[]>> GenerateEmbeddingsBatchAsync(IEnumerable<string> texts, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Gets the dimension size of the embedding vectors produced by this service.
-        /// For example, Gemini text-embedding-004 produces 768-dimensional vectors.
+        /// The dimension size of the embedding vectors produced by this service.
         /// </summary>
         int EmbeddingDimension { get; }
     }

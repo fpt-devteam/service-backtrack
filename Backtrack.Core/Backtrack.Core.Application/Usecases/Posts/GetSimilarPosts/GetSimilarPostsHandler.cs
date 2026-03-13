@@ -1,7 +1,6 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Utils.PostSimilarity;
 using Backtrack.Core.Domain.Constants;
 using MediatR;
 
@@ -21,7 +20,6 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
     public async Task<GetSimilarPostsResult> Handle(GetSimilarPostsQuery request, CancellationToken cancellationToken)
     {
         var sourcePost = await _postRepository.GetByIdAsync(request.PostId);
-
         if (sourcePost == null)
         {
             throw new NotFoundException(PostErrors.NotFound);
@@ -31,8 +29,6 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
 
         var results = matches.Select(match =>
         {
-            // If source is Lost, the match result is the Found post
-            // If source is Found, the match result is the Lost post
             var targetPost = sourcePost.PostType == PostType.Lost ? match.FoundPost : match.LostPost;
 
             return new SimilarPostItem
@@ -46,18 +42,11 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
                 ExternalPlaceId = targetPost.ExternalPlaceId,
                 DisplayAddress = targetPost.DisplayAddress,
                 EventTime = targetPost.EventTime,
-                SimilarityScore = new SimilarityScore(
-                    DescriptionSimilarity: match.DescriptionScore,
-                    LocationSimilarity: match.LocationScore,
-                    TotalSimilarity: match.MatchScore,
-                    DistanceMeters: match.DistanceMeters
-                )
+                MatchScore = match.MatchScore,
+                DistanceMeters = match.DistanceMeters
             };
         }).ToList();
 
-        return new GetSimilarPostsResult
-        {
-            SimilarPosts = results
-        };
+        return new GetSimilarPostsResult { SimilarPosts = results };
     }
 }

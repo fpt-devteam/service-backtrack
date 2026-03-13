@@ -76,7 +76,7 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
         Guid? orgId = null,
         CancellationToken cancellationToken = default)
     {
-        const double MinimumSimilarityThreshold = 0.8;
+        const double MinimumSimilarityThreshold = 0.15;
 
         var embeddingArrayLiteral = "[" + string.Join(",", queryEmbedding.Select(f => f.ToString(System.Globalization.CultureInfo.InvariantCulture))) + "]";
 
@@ -97,12 +97,12 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
                         logged_at,
                         created_at,
                         updated_at,
-                        content_embedding,
-                        (content_embedding <=> @queryEmbedding::vector) AS distance,
-                        (1.0 - (content_embedding <=> @queryEmbedding::vector)) AS similarity
+                        multimodal_embedding,
+                        (multimodal_embedding <=> @queryEmbedding::vector) AS distance,
+                        (1.0 - (multimodal_embedding <=> @queryEmbedding::vector)) AS similarity
                     FROM org_inventories
                     WHERE deleted_at IS NULL
-                        AND content_embedding IS NOT NULL
+                        AND multimodal_embedding IS NOT NULL
                         {orgCondition}
                 )
                 SELECT
@@ -116,7 +116,7 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
                     logged_at,
                     created_at,
                     updated_at,
-                    content_embedding,
+                    multimodal_embedding,
                     similarity
                 FROM filtered_inventories
                 WHERE similarity >= @minSimilarity
@@ -127,9 +127,9 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
                 SELECT COUNT(*)::int
                 FROM org_inventories
                 WHERE deleted_at IS NULL
-                    AND content_embedding IS NOT NULL
+                    AND multimodal_embedding IS NOT NULL
                     {orgCondition}
-                    AND (1.0 - (content_embedding <=> @queryEmbedding::vector)) >= @minSimilarity;
+                    AND (1.0 - (multimodal_embedding <=> @queryEmbedding::vector)) >= @minSimilarity;
             ";
 
         var parameters = new List<Npgsql.NpgsqlParameter>
@@ -168,7 +168,7 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
                     LoggedAt = reader.GetFieldValue<DateTimeOffset>(7),
                     CreatedAt = reader.GetFieldValue<DateTimeOffset>(8),
                     UpdatedAt = reader.IsDBNull(9) ? null : reader.GetFieldValue<DateTimeOffset>(9),
-                    ContentEmbedding = reader.IsDBNull(10) ? null : ((Vector)reader.GetValue(10)).ToArray()
+                    MultimodalEmbedding = reader.IsDBNull(10) ? null : ((Vector)reader.GetValue(10)).ToArray()
                 };
 
                 var similarity = reader.GetDouble(11);

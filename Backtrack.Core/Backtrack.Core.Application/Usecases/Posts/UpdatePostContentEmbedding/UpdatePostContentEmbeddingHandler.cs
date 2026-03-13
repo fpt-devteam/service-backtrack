@@ -1,4 +1,4 @@
-﻿using Backtrack.Core.Application.Exceptions;
+using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.AI;
 using Backtrack.Core.Application.Interfaces.Helpers;
@@ -9,78 +9,71 @@ using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Posts.UpdatePostContentEmbedding;
 
-public sealed class UpdatePostContentEmbeddingHandler : IRequestHandler<UpdatePostContentEmbeddingCommand>
+public sealed class UpdatePostContentEmbeddingHandler(
+    IPostRepository postRepository,
+    IHasher hasher,
+    IEmbeddingService embeddingService,
+    IImageFetcher imageFetcher) : IRequestHandler<UpdatePostContentEmbeddingCommand>
 {
-    private readonly IPostRepository _postRepository;
-    private readonly IHasher _hasher;
-    private readonly IEmbeddingService _embeddingService;
-
-    public UpdatePostContentEmbeddingHandler(
-        IPostRepository postRepository,
-        IHasher hasher,
-        IEmbeddingService embeddingService)
-    {
-        _postRepository = postRepository;
-        _hasher = hasher;
-        _embeddingService = embeddingService;
-    }
-
     public async Task<Unit> Handle(UpdatePostContentEmbeddingCommand request, CancellationToken cancellationToken)
     {
-        Post post = await _postRepository.GetByIdAsync(request.PostId, true) ?? throw new NotFoundException(PostErrors.NotFound);
+        Post post = await postRepository.GetByIdAsync(request.PostId, true) ?? throw new NotFoundException(PostErrors.NotFound);
 
-        // Include DistinctiveMarks in hash calculation
-        string newContentHash = post.DistinctiveMarks != null
-            ? _hasher.HashStrings(post.ItemName, post.Description, post.DistinctiveMarks)
-            : _hasher.HashStrings(post.ItemName, post.Description);
+        string? firstImageUrl = post.ImageUrls.Length > 0 ? post.ImageUrls[0] : null;
 
-        // Skip if content hasn't changed and embedding already exists with Ready status
-        if (post.ContentHash == newContentHash && post.ContentEmbedding is not null && post.ContentEmbeddingStatus == ContentEmbeddingStatus.Ready)
+        string newContentHash = hasher.HashStrings(
+            post.ItemName,
+            post.Description,
+            post.DistinctiveMarks ?? string.Empty,
+            firstImageUrl ?? string.Empty);
+
+        if (post.ContentHash == newContentHash && post.MultimodalEmbedding is not null && post.ContentEmbeddingStatus == ContentEmbeddingStatus.Ready)
         {
             return Unit.Value;
         }
 
-        // Mark as processing
         post.ContentEmbeddingStatus = ContentEmbeddingStatus.Processing;
-        _postRepository.Update(post);
-        await _postRepository.SaveChangesAsync();
+        postRepository.Update(post);
+        await postRepository.SaveChangesAsync();
 
         try
         {
-            // Generate rich embedding with structured context
-            // NOTE: PostType is excluded to improve cross-type matching (Lost/Found)
-            // Format: Item name + description + distinctive marks
-            var contentForEmbedding = $@"Item: {post.ItemName}
-Description: {post.Description}";
+            var contentForEmbedding = $"Item: {post.ItemName}\nDescription: {post.Description}";
 
-            // Add distinctive marks if present
             if (!string.IsNullOrWhiteSpace(post.DistinctiveMarks))
             {
-                contentForEmbedding += $@"
-Distinctive marks: {post.DistinctiveMarks}";
+                contentForEmbedding += $"\nDistinctive marks: {post.DistinctiveMarks}";
             }
 
-            // Add context for better embeddings
-            contentForEmbedding += $@"
+            contentForEmbedding += $"\n\nThis item is {post.ItemName.ToLower()}.";
 
-This item is {post.ItemName.ToLower()}.";
+            string? imageBase64 = null;
+            string? mimeType = null;
 
-            var newEmbedding = await _embeddingService.GenerateEmbeddingAsync(contentForEmbedding, cancellationToken);
+            if (firstImageUrl is not null)
+            {
+                var image = await imageFetcher.FetchAsync(firstImageUrl, cancellationToken);
+                if (image is not null)
+                {
+                    imageBase64 = image.Base64;
+                    mimeType = image.MimeType;
+                }
+            }
 
-            // Update post with new embedding and mark as ready
-            post.ContentEmbedding = newEmbedding;
+            var newEmbedding = await embeddingService.GenerateMultimodalEmbeddingAsync(contentForEmbedding, imageBase64, mimeType, cancellationToken);
+
+            post.MultimodalEmbedding = newEmbedding;
             post.ContentHash = newContentHash;
             post.ContentEmbeddingStatus = ContentEmbeddingStatus.Ready;
 
-            _postRepository.Update(post);
-            await _postRepository.SaveChangesAsync();
+            postRepository.Update(post);
+            await postRepository.SaveChangesAsync();
         }
         catch (Exception)
         {
-            // Mark as failed if embedding generation fails
             post.ContentEmbeddingStatus = ContentEmbeddingStatus.Failed;
-            _postRepository.Update(post);
-            await _postRepository.SaveChangesAsync();
+            postRepository.Update(post);
+            await postRepository.SaveChangesAsync();
 
             throw; // Re-throw to allow Hangfire to retry
         }

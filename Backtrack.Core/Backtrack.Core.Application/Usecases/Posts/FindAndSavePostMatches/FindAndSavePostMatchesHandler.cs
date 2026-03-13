@@ -1,7 +1,6 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Utils.PostSimilarity;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
@@ -29,12 +28,11 @@ public sealed class FindAndSavePostMatchesHandler : IRequestHandler<FindAndSaveP
             throw new NotFoundException(PostErrors.NotFound);
         }
 
-        if (sourcePost.ContentEmbeddingStatus != ContentEmbeddingStatus.Ready || sourcePost.ContentEmbedding == null)
+        if (sourcePost.ContentEmbeddingStatus != ContentEmbeddingStatus.Ready || sourcePost.MultimodalEmbedding == null)
         {
-            return Unit.Value; // Embedding not ready, cannot find matches yet
+            return Unit.Value;
         }
 
-        // 1. Delete old match records involving this post
         if (sourcePost.PostType == PostType.Lost)
         {
             await _postMatchRepository.DeleteByLostPostIdsAsync(new[] { sourcePost.Id }, cancellationToken);
@@ -45,43 +43,35 @@ public sealed class FindAndSavePostMatchesHandler : IRequestHandler<FindAndSaveP
         }
         await _postMatchRepository.SaveChangesAsync();
 
-        // 2. Find new potential matches
         var similarPosts = await _postRepository.GetSimilarPostsAsync(sourcePost, cancellationToken);
 
-        // 3. Filter and map to PostMatch entities
-        var postMatches = similarPosts
-            .Where(item => item.SimilarityScore.TotalSimilarity >= SimilarityCriteria.TotalSimilarityThreshold)
-            .Select(item =>
+        var postMatches = similarPosts.Select(item =>
+        {
+            var (post, similarity, distanceMeters) = item;
+
+            Guid lostPostId, foundPostId;
+            if (sourcePost.PostType == PostType.Lost)
             {
-                var (post, score) = item;
+                lostPostId = sourcePost.Id;
+                foundPostId = post.Id;
+            }
+            else
+            {
+                lostPostId = post.Id;
+                foundPostId = sourcePost.Id;
+            }
 
-                Guid lostPostId, foundPostId;
-                if (sourcePost.PostType == PostType.Lost)
-                {
-                    lostPostId = sourcePost.Id;
-                    foundPostId = post.Id;
-                }
-                else
-                {
-                    lostPostId = post.Id;
-                    foundPostId = sourcePost.Id;
-                }
+            return new PostMatch
+            {
+                Id = Guid.NewGuid(),
+                LostPostId = lostPostId,
+                FoundPostId = foundPostId,
+                MatchScore = (float)similarity,
+                DistanceMeters = (float)distanceMeters,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+        }).ToList();
 
-                return new PostMatch
-                {
-                    Id = Guid.NewGuid(),
-                    LostPostId = lostPostId,
-                    FoundPostId = foundPostId,
-                    MatchScore = (float)score.TotalSimilarity,
-                    LocationScore = (float)score.LocationSimilarity,
-                    DescriptionScore = (float)score.DescriptionSimilarity,
-                    DistanceMeters = (float)score.DistanceMeters,
-                    CreatedAt = DateTimeOffset.UtcNow
-                };
-            })
-            .ToList();
-
-        // 4. Save new matches
         if (postMatches.Any())
         {
             await _postMatchRepository.CreateRangeAsync(postMatches, cancellationToken);

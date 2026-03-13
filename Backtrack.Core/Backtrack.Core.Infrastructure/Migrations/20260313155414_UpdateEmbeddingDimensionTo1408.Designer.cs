@@ -3,6 +3,7 @@ using System;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -13,9 +14,11 @@ using Pgvector;
 namespace Backtrack.Core.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260313155414_UpdateEmbeddingDimensionTo1408")]
+    partial class UpdateEmbeddingDimensionTo1408
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -277,7 +280,7 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnName("logged_by_id");
 
                     b.Property<Vector>("MultimodalEmbedding")
-                        .HasColumnType("vector(1536)")
+                        .HasColumnType("vector(1408)")
                         .HasColumnName("multimodal_embedding");
 
                     b.Property<Guid>("OrgId")
@@ -387,7 +390,7 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnName("location");
 
                     b.Property<Vector>("MultimodalEmbedding")
-                        .HasColumnType("vector(1536)")
+                        .HasColumnType("vector(1408)")
                         .HasColumnName("multimodal_embedding");
 
                     b.Property<Guid?>("OrganizationId")
@@ -445,6 +448,10 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
 
+                    b.Property<float>("DescriptionScore")
+                        .HasColumnType("real")
+                        .HasColumnName("description_score");
+
                     b.Property<float>("DistanceMeters")
                         .HasColumnType("real")
                         .HasColumnName("distance_meters");
@@ -452,6 +459,10 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Property<Guid>("FoundPostId")
                         .HasColumnType("uuid")
                         .HasColumnName("found_post_id");
+
+                    b.Property<float>("LocationScore")
+                        .HasColumnType("real")
+                        .HasColumnName("location_score");
 
                     b.Property<Guid>("LostPostId")
                         .HasColumnType("uuid")

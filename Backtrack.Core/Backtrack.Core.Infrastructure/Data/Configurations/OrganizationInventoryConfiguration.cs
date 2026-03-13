@@ -79,9 +79,9 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                     v == null ? null : v.ToArray()
             );
 
-            builder.Property(oi => oi.ContentEmbedding)
-                .HasColumnName("content_embedding")
-                .HasColumnType("vector(768)")
+            builder.Property(oi => oi.MultimodalEmbedding)
+                .HasColumnName("multimodal_embedding")
+                .HasColumnType("vector(1536)")
                 .HasConversion(embeddingToVectorConverter, embeddingComparer);
 
             builder.Property(oi => oi.Status)
@@ -110,9 +110,9 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
             builder.HasIndex(oi => oi.LoggedById)
                 .HasDatabaseName("ix_org_inventories_logged_by_id");
 
-            // Vector index for content embedding
-            builder.HasIndex(oi => oi.ContentEmbedding)
-                .HasDatabaseName("ix_org_inventories_content_embedding")
+            // Vector index for multimodal embedding
+            builder.HasIndex(oi => oi.MultimodalEmbedding)
+                .HasDatabaseName("ix_org_inventories_multimodal_embedding")
                 .HasMethod("hnsw")
                 .HasOperators("vector_cosine_ops");
 

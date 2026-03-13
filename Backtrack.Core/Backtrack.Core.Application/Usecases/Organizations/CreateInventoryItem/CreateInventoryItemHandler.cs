@@ -33,7 +33,7 @@ Description: {command.Description}";
 
         contentForEmbedding += $"\n\nThis item is {command.ItemName.ToLower()}.";
 
-        var embedding = await embeddingService.GenerateEmbeddingAsync(contentForEmbedding, cancellationToken);
+        var embedding = await embeddingService.GenerateMultimodalEmbeddingAsync(contentForEmbedding, null, null, cancellationToken);
 
         var inventory = new OrganizationInventory
         {
@@ -45,7 +45,7 @@ Description: {command.Description}";
             DistinctiveMarks = command.DistinctiveMarks,
             ImageUrls = command.ImageUrls,
             StorageLocation = command.StorageLocation,
-            ContentEmbedding = embedding,
+            MultimodalEmbedding = embedding,
             Status = OrganizationInventoryStatus.InStorage,
             LoggedAt = DateTimeOffset.UtcNow,
         };

@@ -7,17 +7,8 @@ using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Posts.SearchPostsBySemantic;
 
-public sealed class SearchPostsBySemanticHandler : IRequestHandler<SearchPostsBySemanticQuery, PagedResult<PostSemanticSearchResult>>
+public sealed class SearchPostsBySemanticHandler(IPostRepository postRepository, IEmbeddingService embeddingService) : IRequestHandler<SearchPostsBySemanticQuery, PagedResult<PostSemanticSearchResult>>
 {
-    private readonly IPostRepository _postRepository;
-    private readonly IEmbeddingService _embeddingService;
-
-    public SearchPostsBySemanticHandler(IPostRepository postRepository, IEmbeddingService embeddingService)
-    {
-        _postRepository = postRepository;
-        _embeddingService = embeddingService;
-    }
-
     public async Task<PagedResult<PostSemanticSearchResult>> Handle(SearchPostsBySemanticQuery query, CancellationToken cancellationToken)
     {
         PostType? postType = null;
@@ -39,10 +30,10 @@ Item description: {query.SearchText}
 
 Looking for information about {query.SearchText.ToLower()}.";
 
-        var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(enhancedQuery, cancellationToken);
+        var queryEmbedding = await embeddingService.GenerateMultimodalEmbeddingAsync(enhancedQuery, null, null, cancellationToken);
 
         // Search posts by semantic similarity (only searches posts with status = Ready)
-        var (items, totalCount) = await _postRepository.SearchBySemanticAsync(
+        var (items, totalCount) = await postRepository.SearchBySemanticAsync(
             queryEmbedding: queryEmbedding,
             offset: pagedQuery.Offset,
             limit: pagedQuery.Limit,

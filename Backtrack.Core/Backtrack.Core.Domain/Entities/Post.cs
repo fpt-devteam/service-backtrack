@@ -16,7 +16,7 @@ public sealed class Post : Entity<Guid>
     public required GeoPoint Location { get; set; }
     public required string DisplayAddress { get; set; }
     public string? ExternalPlaceId { get; set; }
-    public float[]? ContentEmbedding { get; set; }
+    public float[]? MultimodalEmbedding { get; set; }
     public required ContentEmbeddingStatus ContentEmbeddingStatus { get; set; }
     public required string ContentHash { get; set; }
     public required DateTimeOffset EventTime { get; set; }

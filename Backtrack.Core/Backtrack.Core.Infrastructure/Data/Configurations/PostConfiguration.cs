@@ -106,9 +106,9 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                     v == null ? null : v.ToArray()
             );
 
-            builder.Property(p => p.ContentEmbedding)
-                .HasColumnName("content_embedding")
-                .HasColumnType("vector(768)")
+            builder.Property(p => p.MultimodalEmbedding)
+                .HasColumnName("multimodal_embedding")
+                .HasColumnType("vector(1536)")
                 .HasConversion(embeddingToVectorConverter, embeddingComparer);
 
             builder.Property(p => p.ContentHash)
@@ -147,9 +147,9 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasDatabaseName("ix_posts_location")
                 .HasMethod("gist");
 
-            // Vector index for content embedding using HNSW for efficient similarity search
-            builder.HasIndex(p => p.ContentEmbedding)
-                .HasDatabaseName("ix_posts_content_embedding")
+            // Vector index for multimodal embedding using HNSW for efficient similarity search
+            builder.HasIndex(p => p.MultimodalEmbedding)
+                .HasDatabaseName("ix_posts_multimodal_embedding")
                 .HasMethod("hnsw")
                 .HasOperators("vector_cosine_ops");
 
