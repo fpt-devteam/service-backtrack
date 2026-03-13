@@ -5,33 +5,45 @@ import { EmailSendResult, EmailVerifyResult } from '@src/contracts/responses/ema
 import ENV from '@src/common/constants/ENV'
 
 const EmailConfig = {
-  service: ENV.Email.Service,
+  service: 'gmail',
+  port: 587,
+  secure: false,
+  host: 'smtp.gmail.com',
   auth: {
     user: ENV.Email.User,
     pass: ENV.Email.Pass,
   },
+  tls: {
+    rejectUnauthorized: true,
+  },
+  family: 4,
 }
 
 class EmailService {
   private readonly transporter: Transporter
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      service: EmailConfig.service,
-      auth: {
-        user: EmailConfig.auth.user,
-        pass: EmailConfig.auth.pass,
-      },
-    })
+    this.transporter = nodemailer.createTransport(EmailConfig);
+
+    logger.info('Email transporter connection verified')
 
     logger.info('Email transporter initialized', {
-      service: EmailConfig.service,
+      host: EmailConfig.host,
       user: EmailConfig.auth.user,
     })
   }
 
   public async sendEmailAsync(request: EmailSendRequest) {
     try {
+      const isConnected = await this.transporter.verify()
+      if (!isConnected) {
+        logger.error('Email transporter is not connected')
+        const result: EmailSendResult = {
+          sent: false,
+        }
+        return result
+      }
+
       const mailOptions: SendMailOptions = {
         from: EmailConfig.auth.user,
         to: request.to,
@@ -48,6 +60,7 @@ class EmailService {
       })
 
       const info = await this.transporter.sendMail(mailOptions)
+
       logger.info('Email sent successfully', {
         messageId: info.messageId,
         to: request.to,
