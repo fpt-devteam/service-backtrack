@@ -10,8 +10,8 @@ const EmailAddressSchema = z.union([
 export const EmailSendRequestSchema = z.object({
   to: EmailAddressSchema,
   subject: z.string().min(1, 'Subject is required'),
-  text: z.string().optional(),
-  html: z.string().optional(),
+  text: z.string().min(1, 'Text is required'),
+  html: z.string().min(1, 'HTML is required'),
   cc: EmailAddressSchema.optional(),
   bcc: EmailAddressSchema.optional(),
 })
