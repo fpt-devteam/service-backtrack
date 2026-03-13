@@ -76,7 +76,7 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
         Guid? orgId = null,
         CancellationToken cancellationToken = default)
     {
-        const double MinimumSimilarityThreshold = 0.15;
+        const double MinimumSimilarityThreshold = 0.8;
 
         var embeddingArrayLiteral = "[" + string.Join(",", queryEmbedding.Select(f => f.ToString(System.Globalization.CultureInfo.InvariantCulture))) + "]";
 

@@ -16,6 +16,7 @@ using Backtrack.Core.Application.Usecases.Organizations.UpdateInventoryItem;
 using Backtrack.Core.Application.Usecases.Organizations.DeleteInventoryItem;
 using Backtrack.Core.Application.Usecases.Organizations.GetInventoryItems;
 using Backtrack.Core.Application.Usecases.Organizations.GetInventoryItemById;
+using Backtrack.Core.Application.Usecases.Organizations.SearchInventoryBySemantic;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -322,5 +323,31 @@ public class OrganizationController : ControllerBase
         var command = new DeleteInventoryItemCommand { Id = id, OrgId = orgId, UserId = userId };
         await _mediator.Send(command, cancellationToken);
         return NoContent();
+    }
+
+    /// <summary>
+    /// Search organization inventory items by semantic similarity
+    /// </summary>
+    [HttpGet("{orgId:guid}/inventory/search/semantic")]
+    [ProducesResponseType(typeof(ApiResponse<PagedResponse<InventorySemanticSearchResult>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SearchInventoryBySemanticAsync(
+        [FromRoute] Guid orgId,
+        [FromQuery] string searchText,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var query = new SearchInventoryBySemanticQuery
+        {
+            OrgId = orgId,
+            UserId = userId,
+            SearchText = searchText,
+            Page = page,
+            PageSize = pageSize
+        };
+        var result = await _mediator.Send(query, cancellationToken);
+        var response = PagedResponse<InventorySemanticSearchResult>.Create(result.Items, page, pageSize, result.Total);
+        return this.ApiOk(response);
     }
 }
