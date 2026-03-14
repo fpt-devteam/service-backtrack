@@ -7,6 +7,7 @@ import { UpdateQrNoteRequestSchema } from '@/src/presentation/contracts/qr/reque
 
 const router = Router();
 
+router.get('/public/:publicCode', asyncHandler(QrController.getQrByPublicCodeAsync));
 router.get('/me', asyncHandler(QrController.getQrByUserIdAsync));
 router.patch('/me/note', validateBody(UpdateQrNoteRequestSchema), asyncHandler(QrController.updateQrNoteAsync));
 

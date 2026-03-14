@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { isSuccess } from '@/src/shared/core/result.js';
 import { ok, fail, getHttpStatus } from '@/src/presentation/contracts/common/api-response.js';
-import { getQrByUserId, updateQrNote } from '@/src/infrastructure/container.js';
+import { getQrByUserId, getQrByPublicCode, updateQrNote } from '@/src/infrastructure/container.js';
 import { getHeader, HeaderNames } from '@/src/presentation/utils/http-headers.util.js';
 import { ServerErrors } from '@/src/application/errors/server.error.js';
 import { UpdateQrNoteRequest } from '@/src/presentation/contracts/qr/requests/update-qr-note.request.js';
@@ -13,6 +13,15 @@ export const getQrByUserIdAsync = async (req: Request, res: Response): Promise<v
     return;
   }
   const result = await getQrByUserId(userId);
+  if (isSuccess(result))
+    res.json(ok(result.value));
+  else
+    res.status(getHttpStatus(result.error)).json(fail(result.error));
+};
+
+export const getQrByPublicCodeAsync = async (req: Request, res: Response): Promise<void> => {
+  const { publicCode } = req.params;
+  const result = await getQrByPublicCode(publicCode);
   if (isSuccess(result))
     res.json(ok(result.value));
   else

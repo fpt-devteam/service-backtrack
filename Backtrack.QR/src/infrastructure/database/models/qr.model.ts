@@ -1,11 +1,10 @@
 import { model, Schema, Types } from "mongoose";
-import { UUID } from "node:crypto";
 import { DEFAULT_QR_NOTE } from "@/src/domain/entities/qr.entity.js";
 
 export interface QrDocument extends Document {
   _id: Types.ObjectId;
   userId: string;
-  publicCode: UUID;
+  publicCode: string;
   note: string;
   createdAt: Date;
   updatedAt: Date;

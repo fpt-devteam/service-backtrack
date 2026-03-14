@@ -5,6 +5,7 @@ import { Qr } from '@/src/domain/entities/qr.entity.js';
 import { UserEnsureExistEvent } from '@/src/infrastructure/events/user-events.js';
 import { generatePublicCode } from '@/src/application/utils/backtrack-code-generator.util.js';
 
+
 export const createQrRepository = (): QrRepository => ({
   ensureExist: async (user: UserEnsureExistEvent) => {
     const existing = await QrModel.findOne({ userId: user.Id, deletedAt: null });
@@ -28,7 +29,7 @@ export const createQrRepository = (): QrRepository => ({
     return doc ? qrToDomain(doc) : null;
   },
 
-  findByPublicCode: async (publicCode) => {
+  findByPublicCode: async (publicCode: string) => {
     const doc = await QrModel.findOne({ publicCode });
     return doc ? qrToDomain(doc) : null;
   },
