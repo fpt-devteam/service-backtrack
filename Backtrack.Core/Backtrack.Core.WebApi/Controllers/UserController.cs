@@ -4,6 +4,7 @@ using Backtrack.Core.WebApi.Utils;
 using MediatR;
 using Backtrack.Core.Application.Usecases.Users.EnsureUserExist;
 using Backtrack.Core.Application.Usecases.Users.GetMe;
+using Backtrack.Core.Application.Usecases.Users.UpdateUserProfile;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -54,6 +55,20 @@ public class UserController : ControllerBase
 
         var query = new GetMeQuery(userId);
         var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpPatch("me")]
+    public async Task<IActionResult> UpdateProfileAsync(
+        [FromBody] UpdateUserProfileCommand command,
+        CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new InvalidOperationException($"Required header '{HeaderNames.AuthId}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
+
+        var result = await _mediator.Send(command with { UserId = userId }, cancellationToken);
         return this.ApiOk(result);
     }
 }
