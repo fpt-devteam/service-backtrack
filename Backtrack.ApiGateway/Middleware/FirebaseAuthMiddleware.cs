@@ -51,11 +51,12 @@ public class FirebaseAuthMiddleware
         {
             "/health",
             "/auth/check-email",
-            "/api/qr/qr-code/public-code",
+            "/api/qr/public",
             "/api/qr/health",
             "/api/qr/webhooks/stripe",
             "/api/core/swagger",
-            "/swagger"
+            "/swagger",
+            "/api/core/users"
         };
     }
 

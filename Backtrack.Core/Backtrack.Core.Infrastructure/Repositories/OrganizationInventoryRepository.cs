@@ -92,6 +92,8 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
                         logged_by_id,
                         item_name,
                         description,
+                        distinctive_marks,
+                        image_urls,
                         storage_location,
                         status,
                         logged_at,
@@ -111,6 +113,8 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
                     logged_by_id,
                     item_name,
                     description,
+                    distinctive_marks,
+                    image_urls,
                     storage_location,
                     status,
                     logged_at,
@@ -163,15 +167,17 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
                     LoggedById = reader.GetString(2),
                     ItemName = reader.GetString(3),
                     Description = reader.GetString(4),
-                    StorageLocation = reader.IsDBNull(5) ? null : reader.GetString(5),
-                    Status = Enum.Parse<OrganizationInventoryStatus>(reader.GetString(6)),
-                    LoggedAt = reader.GetFieldValue<DateTimeOffset>(7),
-                    CreatedAt = reader.GetFieldValue<DateTimeOffset>(8),
-                    UpdatedAt = reader.IsDBNull(9) ? null : reader.GetFieldValue<DateTimeOffset>(9),
-                    MultimodalEmbedding = reader.IsDBNull(10) ? null : ((Vector)reader.GetValue(10)).ToArray()
+                    DistinctiveMarks = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    ImageUrls = reader.IsDBNull(6) ? [] : reader.GetFieldValue<string[]>(6),
+                    StorageLocation = reader.IsDBNull(7) ? null : reader.GetString(7),
+                    Status = Enum.Parse<OrganizationInventoryStatus>(reader.GetString(8)),
+                    LoggedAt = reader.GetFieldValue<DateTimeOffset>(9),
+                    CreatedAt = reader.GetFieldValue<DateTimeOffset>(10),
+                    UpdatedAt = reader.IsDBNull(11) ? null : reader.GetFieldValue<DateTimeOffset>(11),
+                    MultimodalEmbedding = reader.IsDBNull(12) ? null : ((Vector)reader.GetValue(12)).ToArray()
                 };
 
-                var similarity = reader.GetDouble(11);
+                var similarity = reader.GetDouble(13);
                 results.Add((inventory, similarity));
             }
 
