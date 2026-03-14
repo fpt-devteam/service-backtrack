@@ -23,6 +23,5 @@ export const cancelSubscriptionUseCase = (deps: Deps) => async (input: Input): P
   await stripe.subscriptions.update(subscription.providerSubscriptionId, { cancel_at_period_end: true });
 
   const updated = await deps.subscriptionRepository.update(subscription.id, { cancelAtPeriodEnd: true });
-
   return success(updated!);
 };

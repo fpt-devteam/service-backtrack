@@ -3,8 +3,10 @@ import { getQrByUserIdUseCase } from '@/src/application/usecases/qr/get-qr-by-us
 import { createQrRepository } from '@/src/infrastructure/database/repositories/qr.repository.js';
 import { createPaymentHistoryRepository } from '@/src/infrastructure/database/repositories/payment-history.repository.js';
 import { createSubscriptionRepository } from '@/src/infrastructure/database/repositories/subscription.repository.js';
+import { createSubscriptionPlanRepository } from '@/src/infrastructure/database/repositories/subscription-plan.repository.js';
 import { createSubscriptionUseCase } from '@/src/application/usecases/subscription/create-subscription.usecase.js';
 import { getSubscriptionUseCase } from '@/src/application/usecases/subscription/get-subscription.usecase.js';
+import { getSubscriptionPlansUseCase } from '@/src/application/usecases/subscription/get-subscription-plans.usecase.js';
 import { cancelSubscriptionUseCase } from '@/src/application/usecases/subscription/cancel-subscription.usecase.js';
 import { handleSubscriptionUpsertUseCase } from '@/src/application/usecases/subscription/handle-subscription-upsert.usecase.js';
 import { handleInvoicePaymentUseCase } from '@/src/application/usecases/subscription/handle-invoice-payment.usecase.js';
@@ -13,6 +15,7 @@ import { handleInvoicePaymentUseCase } from '@/src/application/usecases/subscrip
 const userRepository = createUserRepository();
 const qrRepository = createQrRepository();
 const subscriptionRepository = createSubscriptionRepository();
+const subscriptionPlanRepository = createSubscriptionPlanRepository();
 const paymentHistoryRepository = createPaymentHistoryRepository();
 
 // Layer 2: use cases (inject repositories)
@@ -21,7 +24,8 @@ export const getQrByUserId = getQrByUserIdUseCase({ qrRepository });
 
 // Subscription use cases
 export const getSubscription = getSubscriptionUseCase({ subscriptionRepository });
+export const getSubscriptionPlans = getSubscriptionPlansUseCase({ subscriptionPlanRepository });
 export const createSubscription = createSubscriptionUseCase({ userRepository, subscriptionRepository });
 export const cancelSubscription = cancelSubscriptionUseCase({ subscriptionRepository });
-export const handleSubscriptionUpsert = handleSubscriptionUpsertUseCase({ userRepository, subscriptionRepository });
+export const handleSubscriptionUpsert = handleSubscriptionUpsertUseCase({ userRepository, subscriptionRepository, subscriptionPlanRepository });
 export const handleInvoicePayment = handleInvoicePaymentUseCase({ userRepository, paymentHistoryRepository });
