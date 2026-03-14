@@ -12,4 +12,9 @@ export const createSubscriptionPlanRepository = (): SubscriptionPlanRepository =
     const doc = await SubscriptionPlanModel.findOne({ providerPriceId });
     return doc ? subscriptionPlanToDomain(doc) : null;
   },
+
+  create: async (plan) => {
+    const doc = await SubscriptionPlanModel.create(plan);
+    return subscriptionPlanToDomain(doc);
+  },
 });

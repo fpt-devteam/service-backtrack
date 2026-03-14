@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { isSuccess } from '@/src/shared/core/result.js';
 import { ok, fail, getHttpStatus } from '@/src/presentation/contracts/common/api-response.js';
-import { createSubscription, getSubscription, getSubscriptionPlans, cancelSubscription } from '@/src/infrastructure/container.js';
+import { createSubscription, getSubscription, getSubscriptionPlans, seedSubscriptionPlans, cancelSubscription } from '@/src/infrastructure/container.js';
 import { getHeader, HeaderNames } from '@/src/presentation/utils/http-headers.util.js';
 import { ServerErrors } from '@/src/application/errors/server.error.js';
 import { CreateSubscriptionRequest } from '@/src/presentation/contracts/subscriptions/requests/create-subscription.request.js';
@@ -9,6 +9,15 @@ import logger from '@/src/shared/core/logger.js';
 
 export const getSubscriptionPlansAsync = async (req: Request, res: Response): Promise<void> => {
   const result = await getSubscriptionPlans();
+
+  if (isSuccess(result))
+    res.status(200).json(ok(result.value));
+  else
+    res.status(getHttpStatus(result.error)).json(fail(result.error));
+};
+
+export const seedSubscriptionPlansAsync = async (req: Request, res: Response): Promise<void> => {
+  const result = await seedSubscriptionPlans();
 
   if (isSuccess(result))
     res.status(200).json(ok(result.value));

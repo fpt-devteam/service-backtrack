@@ -8,6 +8,7 @@ import { createSubscriptionPlanRepository } from '@/src/infrastructure/database/
 import { createSubscriptionUseCase } from '@/src/application/usecases/subscription/create-subscription.usecase.js';
 import { getSubscriptionUseCase } from '@/src/application/usecases/subscription/get-subscription.usecase.js';
 import { getSubscriptionPlansUseCase } from '@/src/application/usecases/subscription/get-subscription-plans.usecase.js';
+import { seedSubscriptionPlansUseCase } from '@/src/application/usecases/subscription/seed-subscription-plans.usecase.js';
 import { cancelSubscriptionUseCase } from '@/src/application/usecases/subscription/cancel-subscription.usecase.js';
 import { handleSubscriptionUpsertUseCase } from '@/src/application/usecases/subscription/handle-subscription-upsert.usecase.js';
 import { handleInvoicePaymentUseCase } from '@/src/application/usecases/subscription/handle-invoice-payment.usecase.js';
@@ -27,6 +28,7 @@ export const updateQrNote = updateQrNoteUseCase({ qrRepository });
 // Subscription use cases
 export const getSubscription = getSubscriptionUseCase({ subscriptionRepository });
 export const getSubscriptionPlans = getSubscriptionPlansUseCase({ subscriptionPlanRepository });
+export const seedSubscriptionPlans = seedSubscriptionPlansUseCase({ subscriptionPlanRepository });
 export const createSubscription = createSubscriptionUseCase({ userRepository, subscriptionRepository });
 export const cancelSubscription = cancelSubscriptionUseCase({ subscriptionRepository });
 export const handleSubscriptionUpsert = handleSubscriptionUpsertUseCase({ userRepository, subscriptionRepository, subscriptionPlanRepository });

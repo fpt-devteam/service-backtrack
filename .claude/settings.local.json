@@ -26,7 +26,8 @@
       "Bash(npm run build:*)",
       "mcp__notion__API-retrieve-a-page",
       "mcp__notion__API-get-block-children",
-      "Bash(cd \"C:\\\\Users\\\\NHATTHANG\\\\FptUniversity\\\\SEP490\\\\service-backtrack\\\\Backtrack.QR\" && find . -type f | grep -E \"\\\\.\\(ts|js|json|md\\)$\" | sort)"
+      "Bash(cd \"C:\\\\Users\\\\NHATTHANG\\\\FptUniversity\\\\SEP490\\\\service-backtrack\\\\Backtrack.QR\" && find . -type f | grep -E \"\\\\.\\(ts|js|json|md\\)$\" | sort)",
+      "Bash(cd \"C:/Users/NHATTHANG/FptUniversity/SEP490/service-backtrack/Backtrack.QR\" && npx tsc --noEmit 2>&1)"
     ],
     "deny": [],
     "ask": []

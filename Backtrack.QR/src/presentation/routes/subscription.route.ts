@@ -8,6 +8,7 @@ import { CreateSubscriptionRequestSchema } from '@/src/presentation/contracts/su
 const router = Router();
 
 router.get('/plans', asyncHandler(SubscriptionController.getSubscriptionPlansAsync));
+router.post('/plans/seed', asyncHandler(SubscriptionController.seedSubscriptionPlansAsync));
 router.get('/me', asyncHandler(SubscriptionController.getSubscriptionAsync));
 router.post('/', validateBody(CreateSubscriptionRequestSchema), asyncHandler(SubscriptionController.createSubscriptionAsync));
 router.delete('/me', asyncHandler(SubscriptionController.cancelSubscriptionAsync));
