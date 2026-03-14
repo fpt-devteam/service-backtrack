@@ -5,6 +5,7 @@ export const qrToDomain = (doc: QrDocument): Qr => ({
   id: doc._id.toString(),
   userId: doc.userId,
   publicCode: doc.publicCode,
+  note: doc.note,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });

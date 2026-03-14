@@ -1,5 +1,6 @@
 import { createUserRepository } from '@/src/infrastructure/database/repositories/user.repository.js';
 import { getQrByUserIdUseCase } from '@/src/application/usecases/qr/get-qr-by-user-id.usecase.js';
+import { updateQrNoteUseCase } from '@/src/application/usecases/qr/update-qr-note.usecase.js';
 import { createQrRepository } from '@/src/infrastructure/database/repositories/qr.repository.js';
 import { createPaymentHistoryRepository } from '@/src/infrastructure/database/repositories/payment-history.repository.js';
 import { createSubscriptionRepository } from '@/src/infrastructure/database/repositories/subscription.repository.js';
@@ -21,6 +22,7 @@ const paymentHistoryRepository = createPaymentHistoryRepository();
 // Layer 2: use cases (inject repositories)
 // QR use cases
 export const getQrByUserId = getQrByUserIdUseCase({ qrRepository });
+export const updateQrNote = updateQrNoteUseCase({ qrRepository });
 
 // Subscription use cases
 export const getSubscription = getSubscriptionUseCase({ subscriptionRepository });

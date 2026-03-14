@@ -36,7 +36,16 @@ export const createQrRepository = (): QrRepository => ({
   create: async (qr: Omit<Qr, 'id' | 'createdAt' | 'updatedAt'>) => {
     const doc = await QrModel.create(qr);
     return qrToDomain(doc);
-  }
+  },
+
+  updateByUserId: async (userId: string, fields: { note?: string }) => {
+    const doc = await QrModel.findOneAndUpdate(
+      { userId, deletedAt: null },
+      { $set: fields },
+      { new: true }
+    );
+    return doc ? qrToDomain(doc) : null;
+  },
 });
 
 const generateUniquePublicCode = async (): Promise<string> => {

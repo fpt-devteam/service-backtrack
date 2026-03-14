@@ -8,4 +8,5 @@ export type QrRepository = {
   findByUserId: (userId: string) => Promise<Qr | null>;
   create: (qr: Omit<Qr, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Qr>;
   ensureExist: (user: UserEnsureExistEvent) => Promise<Qr>;
+  updateByUserId: (userId: string, fields: { note?: string }) => Promise<Qr | null>;
 };
