@@ -121,6 +121,11 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasConversion<string>()
                 .IsRequired();
 
+            builder.Property(p => p.PostMatchingStatus)
+                .HasColumnName("post_matching_status")
+                .HasConversion<string>()
+                .IsRequired();
+
             builder.Property(p => p.EventTime)
                 .HasColumnName("event_time")
                 .IsRequired();

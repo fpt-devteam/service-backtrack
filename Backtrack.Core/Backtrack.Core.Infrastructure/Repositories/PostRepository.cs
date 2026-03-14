@@ -251,6 +251,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                         : ((Vector)reader.GetValue(11)).ToArray(),
                     ContentHash = reader.GetString(12),
                     ContentEmbeddingStatus = (ContentEmbeddingStatus)Enum.Parse(typeof(ContentEmbeddingStatus), reader.GetString(13)),
+                    PostMatchingStatus = PostMatchingStatus.Completed,
                     AuthorId = reader.GetString(14)
                 };
 
@@ -349,6 +350,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                 MultimodalEmbedding = await reader.IsDBNullAsync(11) ? null : ((Vector)reader.GetValue(11)).ToArray(),
                 ContentHash = reader.GetString(12),
                 ContentEmbeddingStatus = Enum.Parse<ContentEmbeddingStatus>(reader.GetString(13)),
+                PostMatchingStatus = PostMatchingStatus.Completed,
                 AuthorId = reader.GetString(14)
             };
 

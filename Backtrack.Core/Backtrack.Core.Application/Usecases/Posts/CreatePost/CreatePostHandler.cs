@@ -85,6 +85,7 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
             DisplayAddress = displayAddress,
             MultimodalEmbedding = null, // Will be generated asynchronously
             ContentEmbeddingStatus = ContentEmbeddingStatus.Pending,
+            PostMatchingStatus = PostMatchingStatus.Pending,
             ContentHash = _hasher.HashStrings(
                 command.ItemName,
                 command.Description,

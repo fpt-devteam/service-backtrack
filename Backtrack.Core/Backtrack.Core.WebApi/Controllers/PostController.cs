@@ -12,6 +12,7 @@ using Backtrack.Core.Application.Usecases.Posts.GetSimilarPosts;
 using Backtrack.Core.Application.Usecases.Posts.DeletePost;
 using Backtrack.Core.Application.Usecases.Posts.GetMyPosts;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
+using Backtrack.Core.Application.Usecases.Posts.GetPostMatchingStatus;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -139,6 +140,16 @@ public class PostController : ControllerBase
             Limit = limit
         };
 
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("{postId:guid}/matching-status")]
+    public async Task<IActionResult> GetPostMatchingStatusAsync(
+        [FromRoute] Guid postId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new GetPostMatchingStatusQuery { PostId = postId };
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }

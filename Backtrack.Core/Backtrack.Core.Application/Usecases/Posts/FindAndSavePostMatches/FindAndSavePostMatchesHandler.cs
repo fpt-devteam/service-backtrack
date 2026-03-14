@@ -33,49 +33,68 @@ public sealed class FindAndSavePostMatchesHandler : IRequestHandler<FindAndSaveP
             return Unit.Value;
         }
 
-        if (sourcePost.PostType == PostType.Lost)
-        {
-            await _postMatchRepository.DeleteByLostPostIdsAsync(new[] { sourcePost.Id }, cancellationToken);
-        }
-        else
-        {
-            await _postMatchRepository.DeleteByFoundPostIdsAsync(new[] { sourcePost.Id }, cancellationToken);
-        }
-        await _postMatchRepository.SaveChangesAsync();
+        sourcePost.PostMatchingStatus = PostMatchingStatus.Processing;
+        _postRepository.Update(sourcePost);
+        await _postRepository.SaveChangesAsync();
 
-        var similarPosts = await _postRepository.GetSimilarPostsAsync(sourcePost, cancellationToken);
-
-        var postMatches = similarPosts.Select(item =>
+        try
         {
-            var (post, similarity, distanceMeters) = item;
-
-            Guid lostPostId, foundPostId;
             if (sourcePost.PostType == PostType.Lost)
             {
-                lostPostId = sourcePost.Id;
-                foundPostId = post.Id;
+                await _postMatchRepository.DeleteByLostPostIdsAsync(new[] { sourcePost.Id }, cancellationToken);
             }
             else
             {
-                lostPostId = post.Id;
-                foundPostId = sourcePost.Id;
+                await _postMatchRepository.DeleteByFoundPostIdsAsync(new[] { sourcePost.Id }, cancellationToken);
+            }
+            await _postMatchRepository.SaveChangesAsync();
+
+            var similarPosts = await _postRepository.GetSimilarPostsAsync(sourcePost, cancellationToken);
+
+            var postMatches = similarPosts.Select(item =>
+            {
+                var (post, similarity, distanceMeters) = item;
+
+                Guid lostPostId, foundPostId;
+                if (sourcePost.PostType == PostType.Lost)
+                {
+                    lostPostId = sourcePost.Id;
+                    foundPostId = post.Id;
+                }
+                else
+                {
+                    lostPostId = post.Id;
+                    foundPostId = sourcePost.Id;
+                }
+
+                return new PostMatch
+                {
+                    Id = Guid.NewGuid(),
+                    LostPostId = lostPostId,
+                    FoundPostId = foundPostId,
+                    MatchScore = (float)similarity,
+                    DistanceMeters = (float)distanceMeters,
+                    CreatedAt = DateTimeOffset.UtcNow
+                };
+            }).ToList();
+
+            if (postMatches.Any())
+            {
+                await _postMatchRepository.CreateRangeAsync(postMatches, cancellationToken);
+                await _postMatchRepository.SaveChangesAsync();
             }
 
-            return new PostMatch
-            {
-                Id = Guid.NewGuid(),
-                LostPostId = lostPostId,
-                FoundPostId = foundPostId,
-                MatchScore = (float)similarity,
-                DistanceMeters = (float)distanceMeters,
-                CreatedAt = DateTimeOffset.UtcNow
-            };
-        }).ToList();
-
-        if (postMatches.Any())
+            sourcePost.PostMatchingStatus = PostMatchingStatus.Completed;
+            _postRepository.Update(sourcePost);
+            await _postRepository.SaveChangesAsync();
+        }
+        catch (Exception)
         {
-            await _postMatchRepository.CreateRangeAsync(postMatches, cancellationToken);
-            await _postMatchRepository.SaveChangesAsync();
+            sourcePost.PostMatchingStatus = PostMatchingStatus.Failed;
+            _postRepository.Update(sourcePost);
+            await _postRepository.SaveChangesAsync();
+
+            throw; // Re-throw to allow Hangfire to retry
         }
 
         return Unit.Value;

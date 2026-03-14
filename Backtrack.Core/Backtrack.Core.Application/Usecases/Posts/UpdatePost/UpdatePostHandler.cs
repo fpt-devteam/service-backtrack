@@ -110,7 +110,11 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         post.EventTime = command.EventTime.HasValue ? command.EventTime.Value : post.EventTime;
         post.UpdatedAt = DateTimeOffset.UtcNow;
 
-        if (needsReEmbedding) post.ContentEmbeddingStatus = ContentEmbeddingStatus.Pending;
+        if (needsReEmbedding)
+        {
+            post.ContentEmbeddingStatus = ContentEmbeddingStatus.Pending;
+            post.PostMatchingStatus = PostMatchingStatus.Pending;
+        }
         await _postRepository.SaveChangesAsync();
 
         if (needsReEmbedding) _backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));

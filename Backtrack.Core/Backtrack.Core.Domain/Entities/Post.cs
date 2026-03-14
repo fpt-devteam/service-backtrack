@@ -18,6 +18,7 @@ public sealed class Post : Entity<Guid>
     public string? ExternalPlaceId { get; set; }
     public float[]? MultimodalEmbedding { get; set; }
     public required ContentEmbeddingStatus ContentEmbeddingStatus { get; set; }
+    public required PostMatchingStatus PostMatchingStatus { get; set; }
     public required string ContentHash { get; set; }
     public required DateTimeOffset EventTime { get; set; }
 
