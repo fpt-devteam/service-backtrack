@@ -1,7 +1,7 @@
 import { Result, success } from '@/src/shared/core/result.js';
 import { SubscriptionRepository } from '@/src/application/repositories/subscription.repository.js';
 import { ONGOING_SUBSCRIPTION_STATUSES, OngoingSubscriptionStatusType } from '@/src/domain/constants/subscription-status.constant.js';
-import { SubscriptionPlanType } from '@/src/domain/constants/subscription-plan.constant.js';
+import { SubscriptionPlanSnapshot } from '@/src/domain/entities/subscription-plan.entity.js';
 
 type Deps = {
   subscriptionRepository: SubscriptionRepository;
@@ -14,11 +14,12 @@ type Input = {
 export type SubscriptionInfo = {
   id: string;
   userId: string;
-  planType: SubscriptionPlanType;
+  planId: string;
+  subscriptionPlanSnapshot: SubscriptionPlanSnapshot;
   currentPeriodStart: Date;
   currentPeriodEnd: Date;
-  status: OngoingSubscriptionStatusType;
   cancelAtPeriodEnd: boolean;
+  status: OngoingSubscriptionStatusType;
 };
 
 export type GetSubscriptionResult = SubscriptionInfo | null;
@@ -33,10 +34,11 @@ export const getSubscriptionUseCase = (deps: Deps) => async (input: Input): Prom
   return success({
     id: subscription.id,
     userId: subscription.userId,
-    planType: subscription.planType,
+    planId: subscription.planId,
+    subscriptionPlanSnapshot: subscription.subscriptionPlanSnapshot,
     currentPeriodStart: subscription.currentPeriodStart,
     currentPeriodEnd: subscription.currentPeriodEnd,
-    status: subscription.status as OngoingSubscriptionStatusType,
     cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+    status: subscription.status as OngoingSubscriptionStatusType,
   });
 };

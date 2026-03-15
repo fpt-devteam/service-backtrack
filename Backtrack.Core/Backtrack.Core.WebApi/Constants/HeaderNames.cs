@@ -7,4 +7,5 @@ public static class HeaderNames
     public const string AuthEmail = "X-Auth-Email";
     public const string AuthName = "X-Auth-Name";
     public const string AuthAvatarUrl = "X-Auth-Avatar-Url";
+    public const string OrgId = "X-Organization-Id";
 }

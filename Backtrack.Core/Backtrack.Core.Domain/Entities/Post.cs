@@ -1,4 +1,4 @@
-﻿using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 using System.Security.Cryptography;
 using System.Text;
@@ -14,12 +14,15 @@ public sealed class Post : Entity<Guid>
     public string? DistinctiveMarks { get; set; }
     public string[] ImageUrls { get; set; } = Array.Empty<string>();
     public required GeoPoint Location { get; set; }
+    public required string DisplayAddress { get; set; }
     public string? ExternalPlaceId { get; set; }
-    public string? DisplayAddress { get; set; }
-    public float[]? ContentEmbedding { get; set; }
+    public float[]? MultimodalEmbedding { get; set; }
     public required ContentEmbeddingStatus ContentEmbeddingStatus { get; set; }
+    public required PostMatchingStatus PostMatchingStatus { get; set; }
     public required string ContentHash { get; set; }
     public required DateTimeOffset EventTime { get; set; }
 
+    public Guid? OrganizationId { get; set; }
     public User Author { get; set; } = default!;
+    public Organization? Organization { get; set; } = null;
 }

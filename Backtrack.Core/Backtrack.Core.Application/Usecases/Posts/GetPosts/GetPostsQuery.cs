@@ -8,6 +8,7 @@ public sealed record GetPostsQuery : IRequest<PagedResult<PostResult>>
     public int PageSize { get; init; } = 20;
     public string? PostType { get; init; }
     public string? AuthorId { get; init; }
+    public Guid? OrganizationId { get; init; }
     public string? SearchTerm { get; init; }
     public double? Latitude { get; init; }
     public double? Longitude { get; init; }

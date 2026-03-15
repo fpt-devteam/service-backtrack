@@ -12,6 +12,7 @@ using Backtrack.Core.Application.Usecases.Posts.GetSimilarPosts;
 using Backtrack.Core.Application.Usecases.Posts.DeletePost;
 using Backtrack.Core.Application.Usecases.Posts.GetMyPosts;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
+using Backtrack.Core.Application.Usecases.Posts.GetPostMatchingStatus;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -32,7 +33,19 @@ public class PostController : ControllerBase
     public async Task<IActionResult> CreatePostAsync([FromBody] CreatePostCommand command, CancellationToken cancellationToken)
     {
         var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        command = command with { AuthorId = authorId };
+        var orgIdHeader = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.OrgId);
+
+        _logger.LogInformation("Creating post for author {AuthorId} with organization {OrgId}", authorId, orgIdHeader);
+
+        Guid? organizationId = null;
+        if (Guid.TryParse(orgIdHeader, out var parsedOrgId))
+        {
+            organizationId = parsedOrgId;
+        }
+        _logger.LogInformation("Parsed organization ID: {OrganizationId}", organizationId);
+
+
+        command = command with { AuthorId = authorId, OrganizationId = organizationId };
 
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiCreated(result);
@@ -45,7 +58,15 @@ public class PostController : ControllerBase
         CancellationToken cancellationToken)
     {
         var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        command = command with { PostId = postId, AuthorId = authorId };
+        var orgIdHeader = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.OrgId);
+
+        Guid? organizationId = null;
+        if (Guid.TryParse(orgIdHeader, out var parsedOrgId))
+        {
+            organizationId = parsedOrgId;
+        }
+
+        command = command with { PostId = postId, AuthorId = authorId, OrganizationId = organizationId };
 
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
@@ -119,6 +140,16 @@ public class PostController : ControllerBase
             Limit = limit
         };
 
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("{postId:guid}/matching-status")]
+    public async Task<IActionResult> GetPostMatchingStatusAsync(
+        [FromRoute] Guid postId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new GetPostMatchingStatusQuery { PostId = postId };
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }

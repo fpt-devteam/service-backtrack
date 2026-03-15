@@ -4,9 +4,10 @@ import { SubscriptionDocument } from '@/src/infrastructure/database/models/subsc
 export const subscriptionToDomain = (doc: SubscriptionDocument): Subscription => ({
   id: doc._id.toString(),
   userId: doc.userId,
+  planId: doc.planId,
   providerSubscriptionId: doc.providerSubscriptionId,
-  planType: doc.planType,
   status: doc.status,
+  subscriptionPlanSnapshot: doc.subscriptionPlanSnapshot,
   currentPeriodStart: doc.currentPeriodStart,
   currentPeriodEnd: doc.currentPeriodEnd,
   cancelAtPeriodEnd: doc.cancelAtPeriodEnd,

@@ -28,14 +28,6 @@ public class PostMatchConfiguration : IEntityTypeConfiguration<PostMatch>
             .HasColumnName("match_score")
             .IsRequired();
 
-        builder.Property(pm => pm.LocationScore)
-            .HasColumnName("location_score")
-            .IsRequired();
-
-        builder.Property(pm => pm.DescriptionScore)
-            .HasColumnName("description_score")
-            .IsRequired();
-
         builder.Property(pm => pm.DistanceMeters)
             .HasColumnName("distance_meters")
             .IsRequired();

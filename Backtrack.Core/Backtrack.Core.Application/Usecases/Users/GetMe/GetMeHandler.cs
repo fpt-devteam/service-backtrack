@@ -28,6 +28,10 @@ public sealed class GetMeHandler : IRequestHandler<GetMeQuery, UserResult>
             Id = user.Id,
             Email = user.Email,
             DisplayName = user.DisplayName,
+            AvatarUrl = user.AvatarUrl,
+            Phone = user.Phone,
+            ShowEmail = user.ShowEmail,
+            ShowPhone = user.ShowPhone,
             GlobalRole = user.GlobalRole
         };
     }

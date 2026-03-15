@@ -1,3 +1,6 @@
+using Backtrack.Core.Application.Usecases.Posts.CreatePost;
+using Backtrack.Core.Domain.ValueObjects;
+
 namespace Backtrack.Core.Application.Usecases.Organizations.GetMyOrganizations;
 
 public sealed record MyOrganizationResult
@@ -5,7 +8,9 @@ public sealed record MyOrganizationResult
     public required Guid OrgId { get; init; }
     public required string Name { get; init; }
     public required string Slug { get; init; }
-    public string? Address { get; init; }
+    public required GeoPoint Location { get; init; }
+    public required string DisplayAddress { get; init; }
+    public string? ExternalPlaceId { get; init; }
     public required string Phone { get; init; }
     public required string IndustryType { get; init; }
     public required string TaxIdentificationNumber { get; init; }

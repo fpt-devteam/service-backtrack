@@ -1,6 +1,8 @@
 using Backtrack.Core.Application.Interfaces.AI;
+using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Infrastructure.AI;
 using Backtrack.Core.Infrastructure.Configurations;
+using Backtrack.Core.Infrastructure.Helpers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -30,6 +32,8 @@ namespace Backtrack.Core.Infrastructure.DependencyInjections
                     client.Timeout = TimeSpan.FromSeconds(geminiSettings.TimeoutSeconds * 2);
                 }
             });
+
+            services.AddHttpClient<IImageFetcher, HttpImageFetcher>();
         }
     }
 }

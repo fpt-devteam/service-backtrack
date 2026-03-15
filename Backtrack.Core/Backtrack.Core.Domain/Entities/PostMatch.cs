@@ -7,8 +7,6 @@ public sealed class PostMatch : Entity<Guid>
     public required Guid LostPostId { get; set; }
     public required Guid FoundPostId { get; set; }
     public required float MatchScore { get; set; }
-    public required float LocationScore { get; set; }
-    public required float DescriptionScore { get; set; }
     public required float DistanceMeters { get; set; }
 
     // Navigation properties

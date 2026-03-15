@@ -13,6 +13,7 @@ namespace Backtrack.Core.Infrastructure.Data
         public DbSet<Membership> Memberships { get; set; }
         public DbSet<JoinInvitation> JoinInvitations { get; set; }
         public DbSet<PostMatch> PostMatches { get; set; }
+        public DbSet<OrganizationInventory> OrganizationInventories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -24,6 +25,7 @@ namespace Backtrack.Core.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new MembershipConfiguration());
             modelBuilder.ApplyConfiguration(new JoinInvitationConfiguration());
             modelBuilder.ApplyConfiguration(new PostMatchConfiguration());
+            modelBuilder.ApplyConfiguration(new OrganizationInventoryConfiguration());
         }
     }
 }

@@ -34,6 +34,20 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasColumnName("avatar_url")
                 .HasMaxLength(500);
 
+            builder.Property(u => u.Phone)
+                .HasColumnName("phone")
+                .HasMaxLength(20);
+
+            builder.Property(u => u.ShowEmail)
+                .HasColumnName("show_email")
+                .IsRequired()
+                .HasDefaultValue(false);
+
+            builder.Property(u => u.ShowPhone)
+                .HasColumnName("show_phone")
+                .IsRequired()
+                .HasDefaultValue(false);
+
             builder.Property(u => u.Status)
                 .HasColumnName("status")
                 .HasConversion<string>()

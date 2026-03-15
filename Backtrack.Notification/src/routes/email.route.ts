@@ -13,9 +13,4 @@ router.post(
   EmailController.sendEmailAsync.bind(EmailController),
 )
 
-router.get(
-  '/verify',
-  EmailController.verifyConnectionAsync.bind(EmailController),
-)
-
 export default router

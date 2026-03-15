@@ -1,4 +1,3 @@
-using Backtrack.Core.Application.Utils.PostSimilarity;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 
@@ -15,6 +14,7 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             double? longitude = null,
             double? radiusInKm = null,
             string? authorId = null,
+            Guid? organizationId = null,
             CancellationToken cancellationToken = default);
 
         Task<(IEnumerable<(Post Post, double SimilarityScore)> Items, int TotalCount)> SearchBySemanticAsync(
@@ -27,7 +27,7 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             double? radiusInKm = null,
             CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<(Post Post, SimilarityScore SimilarityScore)>> GetSimilarPostsAsync(
+        Task<IEnumerable<(Post Post, double Similarity, double DistanceMeters)>> GetSimilarPostsAsync(
             Post post,
             CancellationToken cancellationToken = default);
 

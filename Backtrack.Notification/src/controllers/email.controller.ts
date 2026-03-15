@@ -23,18 +23,6 @@ export class EmailController {
 
     return res.status(HTTP_STATUS_CODES.Ok).json(response)
   }
-
-  @AsyncHandler
-  public async verifyConnectionAsync(req: Request, res: Response) {
-    const result = await emailService.verifyConnectionAsync()
-
-    const response: EmailVerifyResponse = {
-      success: true,
-      data: result,
-    }
-
-    return res.status(HTTP_STATUS_CODES.Ok).json(response)
-  }
 }
 
 export default new EmailController()

@@ -158,11 +158,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Address")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("address");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -171,11 +166,27 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
 
+                    b.Property<string>("DisplayAddress")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("display_address");
+
+                    b.Property<string>("ExternalPlaceId")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("external_place_id");
+
                     b.Property<string>("IndustryType")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("industry_type");
+
+                    b.Property<Point>("Location")
+                        .IsRequired()
+                        .HasColumnType("geography(point, 4326)")
+                        .HasColumnName("location");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -219,6 +230,91 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.ToTable("organizations", (string)null);
                 });
 
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.OrganizationInventory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("DistinctiveMarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("distinctive_marks");
+
+                    b.Property<string[]>("ImageUrls")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("image_urls");
+
+                    b.Property<string>("ItemName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("item_name");
+
+                    b.Property<DateTimeOffset>("LoggedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("logged_at");
+
+                    b.Property<string>("LoggedById")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("logged_by_id");
+
+                    b.Property<Vector>("MultimodalEmbedding")
+                        .HasColumnType("vector(1536)")
+                        .HasColumnName("multimodal_embedding");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StorageLocation")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("storage_location");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoggedById")
+                        .HasDatabaseName("ix_org_inventories_logged_by_id");
+
+                    b.HasIndex("MultimodalEmbedding")
+                        .HasDatabaseName("ix_org_inventories_multimodal_embedding");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("MultimodalEmbedding"), "hnsw");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("MultimodalEmbedding"), new[] { "vector_cosine_ops" });
+
+                    b.HasIndex("OrgId")
+                        .HasDatabaseName("ix_org_inventories_org_id");
+
+                    b.ToTable("org_inventories", (string)null);
+                });
+
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.Post", b =>
                 {
                     b.Property<Guid>("Id")
@@ -230,10 +326,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("author_id");
-
-                    b.Property<Vector>("ContentEmbedding")
-                        .HasColumnType("vector(768)")
-                        .HasColumnName("content_embedding");
 
                     b.Property<string>("ContentEmbeddingStatus")
                         .IsRequired()
@@ -261,6 +353,7 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnName("description");
 
                     b.Property<string>("DisplayAddress")
+                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("display_address");
@@ -293,6 +386,19 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("geography(point, 4326)")
                         .HasColumnName("location");
 
+                    b.Property<Vector>("MultimodalEmbedding")
+                        .HasColumnType("vector(1536)")
+                        .HasColumnName("multimodal_embedding");
+
+                    b.Property<Guid?>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("PostMatchingStatus")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("post_matching_status");
+
                     b.Property<string>("PostType")
                         .IsRequired()
                         .HasColumnType("text")
@@ -307,12 +413,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.HasIndex("AuthorId")
                         .HasDatabaseName("ix_posts_author_id");
 
-                    b.HasIndex("ContentEmbedding")
-                        .HasDatabaseName("ix_posts_content_embedding");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("ContentEmbedding"), "hnsw");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("ContentEmbedding"), new[] { "vector_cosine_ops" });
-
                     b.HasIndex("EventTime")
                         .HasDatabaseName("ix_posts_event_time");
 
@@ -320,6 +420,14 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasDatabaseName("ix_posts_location");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "gist");
+
+                    b.HasIndex("MultimodalEmbedding")
+                        .HasDatabaseName("ix_posts_multimodal_embedding");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("MultimodalEmbedding"), "hnsw");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("MultimodalEmbedding"), new[] { "vector_cosine_ops" });
+
+                    b.HasIndex("OrganizationId");
 
                     b.HasIndex("PostType")
                         .HasDatabaseName("ix_posts_post_type");
@@ -342,10 +450,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
 
-                    b.Property<float>("DescriptionScore")
-                        .HasColumnType("real")
-                        .HasColumnName("description_score");
-
                     b.Property<float>("DistanceMeters")
                         .HasColumnType("real")
                         .HasColumnName("distance_meters");
@@ -353,10 +457,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Property<Guid>("FoundPostId")
                         .HasColumnType("uuid")
                         .HasColumnName("found_post_id");
-
-                    b.Property<float>("LocationScore")
-                        .HasColumnType("real")
-                        .HasColumnName("location_score");
 
                     b.Property<Guid>("LostPostId")
                         .HasColumnType("uuid")
@@ -421,6 +521,23 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("global_role");
 
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone");
+
+                    b.Property<bool>("ShowEmail")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("show_email");
+
+                    b.Property<bool>("ShowPhone")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("show_phone");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text")
@@ -480,6 +597,27 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.OrganizationInventory", b =>
+                {
+                    b.HasOne("Backtrack.Core.Domain.Entities.User", "LoggedBy")
+                        .WithMany()
+                        .HasForeignKey("LoggedById")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired()
+                        .HasConstraintName("fk_org_inventories_logged_by_id_users_id");
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_org_inventories_org_id_organizations_id");
+
+                    b.Navigation("LoggedBy");
+
+                    b.Navigation("Organization");
+                });
+
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.Post", b =>
                 {
                     b.HasOne("Backtrack.Core.Domain.Entities.User", "Author")
@@ -489,7 +627,15 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_posts_author_id_users_id");
 
+                    b.HasOne("Backtrack.Core.Domain.Entities.Organization", "Organization")
+                        .WithMany("Posts")
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_posts_organization_id_organizations_id");
+
                     b.Navigation("Author");
+
+                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.PostMatch", b =>
@@ -516,6 +662,8 @@ namespace Backtrack.Core.Infrastructure.Migrations
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.Organization", b =>
                 {
                     b.Navigation("Memberships");
+
+                    b.Navigation("Posts");
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.User", b =>

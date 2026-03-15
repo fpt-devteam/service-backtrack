@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.RegularExpressions;
 using Backtrack.ApiGateway.Common;
 using Backtrack.ApiGateway.Errors;
 using Backtrack.ApiGateway.Exceptions;
@@ -12,6 +13,22 @@ public class FirebaseAuthMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<FirebaseAuthMiddleware> _logger;
     private readonly HashSet<string> _publicPaths;
+
+    /// <summary>
+    /// Regex patterns for public paths with dynamic segments (e.g. /users/{userId}).
+    /// Used when simple prefix matching is not safe — e.g. to avoid making /users/me public.
+    /// </summary>
+    private static readonly Regex[] _publicPathPatterns =
+    [
+        // GET /api/core/users/{userId}         — public profile
+        // GET /api/core/users/{userId}/posts   — user's public posts
+        // Explicitly excludes /users/me so the authenticated profile endpoint stays protected.
+        new Regex(@"^/api/core/users/(?!me(/|$))[^/]+(/posts)?(/.*)?$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+
+        // GET /api/qr/qr/public/{publicCode}   — scan QR code (no auth needed)
+        new Regex(@"^/api/qr/qr/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+    ];
+
     private const string AuthHeaderName = "Authorization";
     private const string AuthIdHeaderName = "X-Auth-Id";
     private const string AuthProviderHeaderName = "X-Auth-Provider";
@@ -19,6 +36,8 @@ public class FirebaseAuthMiddleware
     private const string AuthNameHeaderName = "X-Auth-Name";
     private const string AuthAvatarUrlHeaderName = "X-Auth-Avatar-Url";
     private const string CorrelationIdHeaderName = "X-Correlation-Id";
+
+    private const string OrganizationIdHeaderName = "X-Organization-Id";
 
     public FirebaseAuthMiddleware(
         RequestDelegate next,
@@ -32,11 +51,11 @@ public class FirebaseAuthMiddleware
         {
             "/health",
             "/auth/check-email",
-            "/api/qr/qr-code/public-code",
+            "/api/qr/public",
             "/api/qr/health",
             "/api/qr/webhooks/stripe",
             "/api/core/swagger",
-            "/swagger"
+            "/swagger",
         };
     }
 
@@ -100,11 +119,19 @@ public class FirebaseAuthMiddleware
                 return;
             }
 
+
             context.Request.Headers[AuthIdHeaderName] = authId;
             context.Request.Headers[AuthProviderHeaderName] = "firebase";
             context.Request.Headers[AuthEmailHeaderName] = email;
             context.Request.Headers[AuthNameHeaderName] = GetDisplayName(decodedToken);
             context.Request.Headers[AuthAvatarUrlHeaderName] = GetAvatarUrl(decodedToken);
+            if (context.Request.Headers.TryGetValue(OrganizationIdHeaderName, out var orgId) && !string.IsNullOrWhiteSpace(orgId))
+            {
+                _logger.LogInformation("Received organization ID in header: {OrgId}", orgId);
+                _logger.LogInformation("Received organization ID in header 2: {OrgId}", orgId.ToString());
+
+                context.Request.Headers[OrganizationIdHeaderName] = orgId.ToString();
+            }
 
             await _next(context);
         }
@@ -182,9 +209,12 @@ public class FirebaseAuthMiddleware
 
     private bool IsPublicPath(string path)
     {
-        return _publicPaths.Any(publicPath =>
-            path.Equals(publicPath, StringComparison.OrdinalIgnoreCase) ||
-            path.StartsWith($"{publicPath}/", StringComparison.OrdinalIgnoreCase));
+        if (_publicPaths.Any(publicPath =>
+                path.Equals(publicPath, StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith($"{publicPath}/", StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        return _publicPathPatterns.Any(pattern => pattern.IsMatch(path));
     }
 
     private static string? ExtractBearerToken(string authHeader)

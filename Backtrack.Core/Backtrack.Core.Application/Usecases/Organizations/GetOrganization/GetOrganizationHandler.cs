@@ -1,6 +1,7 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Organizations.GetOrganization;
@@ -39,7 +40,9 @@ public sealed class GetOrganizationHandler : IRequestHandler<GetOrganizationQuer
             Id = org.Id,
             Name = org.Name,
             Slug = org.Slug,
-            Address = org.Address,
+            Location = org.Location,
+            DisplayAddress = org.DisplayAddress,
+            ExternalPlaceId = org.ExternalPlaceId,
             Phone = org.Phone,
             IndustryType = org.IndustryType,
             TaxIdentificationNumber = org.TaxIdentificationNumber,

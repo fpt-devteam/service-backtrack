@@ -50,6 +50,8 @@ export default {
     Service: getEnv('EMAIL_SERVICE'),
     User: getEnv('EMAIL_USER'),
     Pass: getEnv('EMAIL_PASS'),
+    ResendApiKey: getEnv('RESEND_API_KEY'),
+    DefaultFrom: getEnv('DEFAULT_FROM'),
   },
 
   BacktrackConsoleWebDomain: getEnv('BACKTRACK_CONSOLE_WEB_DOMAIN'),

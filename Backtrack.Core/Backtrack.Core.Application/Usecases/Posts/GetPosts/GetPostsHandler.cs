@@ -42,6 +42,7 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
             longitude: query.Longitude,
             radiusInKm: query.RadiusInKm,
             authorId: query.AuthorId,
+            organizationId: query.OrganizationId,
             cancellationToken: cancellationToken);
 
         var postResults = items.Select(post =>
@@ -49,21 +50,13 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
             return new PostResult
             {
                 Id = post.Id,
-                Author = new AuthorResult
-                {
-                    Id = post.Author.Id,
-                    DisplayName = post.Author.DisplayName,
-                    AvatarUrl = post.Author.AvatarUrl
-                },
+                Author = post.Author?.ToAuthorResult(),
+                Organization = post.Organization?.ToOrganizationOnPost(),
                 PostType = post.PostType.ToString(),
                 ItemName = post.ItemName,
                 Description = post.Description,
                 ImageUrls = post.ImageUrls,
-                Location = new LocationResult
-                {
-                    Latitude = post.Location.Latitude,
-                    Longitude = post.Location.Longitude
-                },
+                Location = post.Location,
                 ExternalPlaceId = post.ExternalPlaceId,
                 DisplayAddress = post.DisplayAddress,
                 EventTime = post.EventTime,

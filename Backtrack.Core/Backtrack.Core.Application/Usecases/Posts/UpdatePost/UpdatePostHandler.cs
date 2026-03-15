@@ -14,16 +14,20 @@ namespace Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostResult>
 {
     private readonly IPostRepository _postRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly IOrganizationRepository _organizationRepository;
+    private readonly IMembershipRepository _membershipRepository;
     private readonly IBackgroundJobService _backgroundJobService;
 
     public UpdatePostHandler(
         IPostRepository postRepository,
         IUserRepository userRepository,
+        IOrganizationRepository organizationRepository,
+        IMembershipRepository membershipRepository,
         IBackgroundJobService backgroundJobService)
     {
         _postRepository = postRepository;
-        _userRepository = userRepository;
+        _organizationRepository = organizationRepository;
+        _membershipRepository = membershipRepository;
         _backgroundJobService = backgroundJobService;
     }
 
@@ -42,6 +46,32 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
                 post.PostType = postType;
                 needsReEmbedding = true;
             }
+        }
+
+        if (command.OrganizationId.HasValue && post.OrganizationId != command.OrganizationId)
+        {
+            var organization = await _organizationRepository.GetByIdAsync(command.OrganizationId.Value)
+                ?? throw new NotFoundException(OrganizationErrors.NotFound);
+
+            if (await _membershipRepository.GetByOrgAndUserAsync(organization.Id, command.AuthorId) == null)
+            {
+                throw new ValidationException(MembershipErrors.MemberNotFound);
+            }
+
+            if (post.PostType == PostType.Lost) throw new ValidationException(PostErrors.LostPostCannotBeAssociatedWithOrganization);
+
+            post.OrganizationId = command.OrganizationId;
+            post.Organization = organization;
+            post.Location = organization.Location;
+            post.DisplayAddress = organization.DisplayAddress;
+            post.ExternalPlaceId = organization.ExternalPlaceId;
+            needsReEmbedding = true;
+        }
+        else if (command.OrganizationId == null && post.OrganizationId != null)
+        {
+            post.OrganizationId = null;
+            post.Organization = null;
+            needsReEmbedding = true;
         }
 
         if (command.ItemName != null && post.ItemName != command.ItemName)
@@ -65,7 +95,8 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         if (command.Location != null)
         {
             var newLocation = new GeoPoint(command.Location.Latitude, command.Location.Longitude);
-            if (DoubleUtil.AreNotApproximatelyEqual(post.Location.Latitude, newLocation.Latitude) ||
+            if (post.Location == null ||
+                DoubleUtil.AreNotApproximatelyEqual(post.Location.Latitude, newLocation.Latitude) ||
                 DoubleUtil.AreNotApproximatelyEqual(post.Location.Longitude, newLocation.Longitude))
             {
                 post.Location = newLocation;
@@ -79,37 +110,25 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         post.EventTime = command.EventTime.HasValue ? command.EventTime.Value : post.EventTime;
         post.UpdatedAt = DateTimeOffset.UtcNow;
 
-        if (needsReEmbedding) post.ContentEmbeddingStatus = ContentEmbeddingStatus.Pending;
-        _postRepository.Update(post);
+        if (needsReEmbedding)
+        {
+            post.ContentEmbeddingStatus = ContentEmbeddingStatus.Pending;
+            post.PostMatchingStatus = PostMatchingStatus.Pending;
+        }
         await _postRepository.SaveChangesAsync();
 
         if (needsReEmbedding) _backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
-
-        var author = await _userRepository.GetByIdAsync(post.AuthorId);
-        if (author == null)
-        {
-            throw new NotFoundException(UserErrors.NotFound);
-        }
-
         return new PostResult
         {
             Id = post.Id,
-            Author = new AuthorResult
-            {
-                Id = author.Id,
-                DisplayName = author.DisplayName,
-                AvatarUrl = author.AvatarUrl
-            },
+            Author = post.Author?.ToAuthorResult(),
+            Organization = post.Organization?.ToOrganizationOnPost(),
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,
             ImageUrls = post.ImageUrls,
-            Location = new LocationResult
-            {
-                Latitude = post.Location.Latitude,
-                Longitude = post.Location.Longitude
-            },
+            Location = post.Location,
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress = post.DisplayAddress,
             EventTime = post.EventTime,

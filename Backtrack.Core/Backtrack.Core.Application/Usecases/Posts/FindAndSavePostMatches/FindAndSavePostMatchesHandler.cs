@@ -1,7 +1,6 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Utils.PostSimilarity;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
@@ -29,31 +28,32 @@ public sealed class FindAndSavePostMatchesHandler : IRequestHandler<FindAndSaveP
             throw new NotFoundException(PostErrors.NotFound);
         }
 
-        if (sourcePost.ContentEmbeddingStatus != ContentEmbeddingStatus.Ready || sourcePost.ContentEmbedding == null)
+        if (sourcePost.ContentEmbeddingStatus != ContentEmbeddingStatus.Ready || sourcePost.MultimodalEmbedding == null)
         {
-            return Unit.Value; // Embedding not ready, cannot find matches yet
+            return Unit.Value;
         }
 
-        // 1. Delete old match records involving this post
-        if (sourcePost.PostType == PostType.Lost)
-        {
-            await _postMatchRepository.DeleteByLostPostIdsAsync(new[] { sourcePost.Id }, cancellationToken);
-        }
-        else
-        {
-            await _postMatchRepository.DeleteByFoundPostIdsAsync(new[] { sourcePost.Id }, cancellationToken);
-        }
-        await _postMatchRepository.SaveChangesAsync();
+        sourcePost.PostMatchingStatus = PostMatchingStatus.Processing;
+        _postRepository.Update(sourcePost);
+        await _postRepository.SaveChangesAsync();
 
-        // 2. Find new potential matches
-        var similarPosts = await _postRepository.GetSimilarPostsAsync(sourcePost, cancellationToken);
-
-        // 3. Filter and map to PostMatch entities
-        var postMatches = similarPosts
-            .Where(item => item.SimilarityScore.TotalSimilarity >= SimilarityCriteria.TotalSimilarityThreshold)
-            .Select(item =>
+        try
+        {
+            if (sourcePost.PostType == PostType.Lost)
             {
-                var (post, score) = item;
+                await _postMatchRepository.DeleteByLostPostIdsAsync(new[] { sourcePost.Id }, cancellationToken);
+            }
+            else
+            {
+                await _postMatchRepository.DeleteByFoundPostIdsAsync(new[] { sourcePost.Id }, cancellationToken);
+            }
+            await _postMatchRepository.SaveChangesAsync();
+
+            var similarPosts = await _postRepository.GetSimilarPostsAsync(sourcePost, cancellationToken);
+
+            var postMatches = similarPosts.Select(item =>
+            {
+                var (post, similarity, distanceMeters) = item;
 
                 Guid lostPostId, foundPostId;
                 if (sourcePost.PostType == PostType.Lost)
@@ -72,20 +72,29 @@ public sealed class FindAndSavePostMatchesHandler : IRequestHandler<FindAndSaveP
                     Id = Guid.NewGuid(),
                     LostPostId = lostPostId,
                     FoundPostId = foundPostId,
-                    MatchScore = (float)score.TotalSimilarity,
-                    LocationScore = (float)score.LocationSimilarity,
-                    DescriptionScore = (float)score.DescriptionSimilarity,
-                    DistanceMeters = (float)score.DistanceMeters,
+                    MatchScore = (float)similarity,
+                    DistanceMeters = (float)distanceMeters,
                     CreatedAt = DateTimeOffset.UtcNow
                 };
-            })
-            .ToList();
+            }).ToList();
 
-        // 4. Save new matches
-        if (postMatches.Any())
+            if (postMatches.Any())
+            {
+                await _postMatchRepository.CreateRangeAsync(postMatches, cancellationToken);
+                await _postMatchRepository.SaveChangesAsync();
+            }
+
+            sourcePost.PostMatchingStatus = PostMatchingStatus.Completed;
+            _postRepository.Update(sourcePost);
+            await _postRepository.SaveChangesAsync();
+        }
+        catch (Exception)
         {
-            await _postMatchRepository.CreateRangeAsync(postMatches, cancellationToken);
-            await _postMatchRepository.SaveChangesAsync();
+            sourcePost.PostMatchingStatus = PostMatchingStatus.Failed;
+            _postRepository.Update(sourcePost);
+            await _postRepository.SaveChangesAsync();
+
+            throw; // Re-throw to allow Hangfire to retry
         }
 
         return Unit.Value;

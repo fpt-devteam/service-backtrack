@@ -21,5 +21,10 @@ export const ServerErrors = {
     code: "UnexpectedError",
     message: "An unexpected error occurred.",
   } as Error,
+  SubscriptionPlanNotFound: {
+    kind: "NotFound",
+    code: "SubscriptionPlanNotFound",
+    message: "No subscription plan found for the given price ID.",
+  } as Error,
 } as const satisfies Record<string, Error>;
 
