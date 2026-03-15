@@ -15,6 +15,13 @@ export const toObjectIdOrNull = (
     return new mongoose.Types.ObjectId(id);
 };
 
+export const toStringOrNull = (
+    id: string | mongoose.Types.ObjectId
+): string | null => {
+    if (typeof id === 'string') return id;
+    if (id instanceof mongoose.Types.ObjectId) return id.toString();
+    return null;
+};
 /**
  * Checks if a value is a valid ObjectId
  *

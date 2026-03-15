@@ -1,4 +1,5 @@
-import { MessageType, MessageStatus, IMessageAttachment } from '@/models/message';
+import { IMessageAttachment, MessageStatus, MessageType } from "@/models";
+
 
 export interface MessageResponse {
   id: string;

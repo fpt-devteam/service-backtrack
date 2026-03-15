@@ -6,7 +6,8 @@
 *.user
 *.userosscache
 *.sln.docstates
-
+*.agent
+*docs
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -18,7 +19,14 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
-
+* text=auto eol=lf
+*.js text eol=lf
+*.sh text eol=lf
+bin/* text eol=lf
+.editorconfig
+*ERRORS.md
+*GEMINI.md
+*package.json
 # Visual Studio 2015 cache/options directory
 .vs/
 

@@ -1,13 +1,14 @@
-import Message, { MessageStatus } from '@/models/message';
+import Message from '@/models/message';
+import { MessageStatus } from '@/models';
 import Conversation from '@/models/conversation';
 import ConversationParticipant from '@/models/conversation-participant';
-import { SendMessageRequest } from '@/dtos/message/message.request';
+import { SendMessagePayload } from '@/dtos/message/message.request';
 import { MessageResponse, MessagesResponse } from '@/dtos/message/message.response';
 import { CursorPaginationParams, cursorPaginate } from '@/utils/pagination';
 import { ConversationErrors } from './errors/conversation.errors';
 import logger from '@/utils/logger';
 
-export const sendMessage = async (data: SendMessageRequest): Promise<MessageResponse> => {
+export const sendMessage = async (data: SendMessagePayload): Promise<MessageResponse> => {
   // Verify conversation exists
   const conversation = await Conversation.findById(data.conversationId).exec();
   if (!conversation || conversation.deletedAt) {
@@ -64,7 +65,7 @@ export const sendMessage = async (data: SendMessageRequest): Promise<MessageResp
     senderId: message.senderId,
     type: message.type,
     content: message.content,
-    attachments: message.attachments,
+    attachments: message.attachments ?? undefined,
     status: message.status!,
     createdAt: message.createdAt,
     updatedAt: message.updatedAt,
