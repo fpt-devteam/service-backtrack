@@ -107,13 +107,13 @@ public class FirebaseAuthMiddleware
             }
 
             var email = GetEmail(decodedToken, authId);
-            if (email is null)
-            {
-                await WriteErrorResponse(context, AuthErrors.MissingEmailInToken, StatusCodes.Status401Unauthorized);
-                return;
-            }
+            // if (email is null)
+            // {
+            //     await WriteErrorResponse(context, AuthErrors.MissingEmailInToken, StatusCodes.Status401Unauthorized);
+            //     return;
+            // }
 
-            if (!IsEmailVerified(decodedToken, authId))
+            if (email is not null && !IsEmailVerified(decodedToken, authId))
             {
                 await WriteErrorResponse(context, AuthErrors.EmailNotVerified, StatusCodes.Status401Unauthorized);
                 return;
