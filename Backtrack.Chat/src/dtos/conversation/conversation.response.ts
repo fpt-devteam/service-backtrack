@@ -1,4 +1,4 @@
-import { ConversationType } from "@/models/conversation";
+import { ConversationType } from "@/models/interfaces/conversation.interface";
 export interface ConversationsListResult {
     conversations: ConversationResponse[];
     nextCursor: string | null;
@@ -6,15 +6,15 @@ export interface ConversationsListResult {
 }
 export interface ConversationPartner {
   id: string;
-  displayName?: string | null;
+  displayName: string | null;
   email: string | null;
-  avatarUrl?: string | null;
+  avatarUrl: string | null;
 }
 
 export interface ConversationLastMessage {
-  senderId?: string;
-  content?: string;
-  timestamp?: Date;
+  senderId: string | null;
+  content: string;
+  timestamp: Date | null;
 }
 
 export interface ConversationResponse {

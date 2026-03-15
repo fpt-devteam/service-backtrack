@@ -1,42 +1,48 @@
-import { CreateConversationRequest } from '@/dtos/conversation/conversation.request';
-import { ConversationParticipantRole, ConversationType } from '@/models';
+import { ConversationParticipantRole } from '@/models';
 import ConversationParticipant from '@/models/conversation-participant';
-import mongoose from 'mongoose';
 
-export const createConvParticipants = async(
-	conversationId: mongoose.Types.ObjectId,
-	data: CreateConversationRequest,
+export const createPersonalConvParticipants = async(
+	conversationId: string,
+	memberId: string,
 	userId: string,
-) => {
-	let participants;
-	if (data.type === ConversationType.ORGANIZATION) {
-		participants = [
-			{
-				conversationId,
-				memberId: userId,
-				role: ConversationParticipantRole.CUSTOMER,
-			},
-			{
-				conversationId,
-				orgId: data.orgId,
-				role: ConversationParticipantRole.STAFF,
-			},
-		];
-	} else {
-		participants = [
-			{
-				conversationId,
-				memberId: userId,
-				role: ConversationParticipantRole.CUSTOMER,
-			},
-			{
-				conversationId,
-				memberId: data.memberId,
-				role: ConversationParticipantRole.CUSTOMER,
-			},
-		];
-	}
+) => {	
+	const participants = [
+		{
+			conversationId,
+			memberId: userId,
+			role: ConversationParticipantRole.CUSTOMER,
+		},
+		{
+			conversationId,
+			memberId: memberId,
+			role: ConversationParticipantRole.CUSTOMER,
+		},
+	];
 	await ConversationParticipant.insertMany(participants);
+};
+
+export const createOrgConvParticipants = async(
+	conversationId: string,
+	role: ConversationParticipantRole,
+	userId: string,
+	data?: any
+) => {	
+	const participant =
+		{
+			conversationId,
+			memberId: userId,
+			role: role,
+			...data
+		};
+	await ConversationParticipant.insertOne(participant);
+};
+
+export const unassignConversationParticipant = async (conversationId: string, role: ConversationParticipantRole) => {
+    await ConversationParticipant.findOneAndUpdate(
+        { conversationId, role },
+        { isAssigee: false },
+        { new: true },
+    );
 };
 
 export const updateUnreadCount = async (conversationId: string, senderId: string, increment = 1): Promise<void> => {

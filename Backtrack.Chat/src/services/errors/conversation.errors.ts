@@ -26,9 +26,14 @@ export const ConversationErrors = {
     code: "InvalidConversationType",
     message: "This operation is only available for organization conversations.",
   } as Error,
-  updateTicketStatusFailed: {
-    kind: "Internal",
-    code: "UpdateTicketStatusFailed",
-    message: "Failed to update ticket status.",
+  NotInQueue: {
+    kind: "Conflict",
+    code: "ConversationNotInQueue",
+    message: "This conversation is not in the queue or has already been taken.",
+  } as Error,
+  NotAssigned: {
+    kind: "Conflict",
+    code: "ConversationNotAssigned",
+    message: "This staff member is not currently assigned to this conversation.",
   } as Error,
 } as const satisfies Record<string, Error>;
