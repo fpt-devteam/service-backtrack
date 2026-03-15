@@ -1,5 +1,5 @@
 import { Constants } from '@/config';
-import { Model, Document, FilterQuery } from 'mongoose';
+import { Model, FilterQuery } from 'mongoose';
 
 export interface CursorPaginationParams {
   cursor?: string; // ISO date string of last item's sortField from previous page
@@ -23,8 +23,8 @@ export interface CursorPaginationResult<T> {
  *
  * Cursor is the ISO date string of the last item's sortField value.
  */
-export async function cursorPaginate<T extends Document>(
-  model: Model<T>,
+export async function cursorPaginate<T extends Record<string, any>>(
+  model: Model<any>,
   filter: FilterQuery<T>,
   params: CursorPaginationParams,
   sortField: string = 'createdAt',

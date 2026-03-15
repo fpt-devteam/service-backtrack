@@ -1,47 +1,8 @@
 import { Schema, model } from "mongoose";
-
-export enum MessageType {
-  TEXT = 'text',
-  IMAGE = 'image',
-  FILE = 'file',
-  VIDEO = 'video',
-}
-
-export enum MessageStatus {
-  SENT = 'sent',
-  SEEN = 'seen',
-  FAILED = 'failed',
-}
-
-export interface IMessageAttachment {
-  type: 'image' | 'video' | 'file';
-  url: string;
-  fileName?: string;
-  fileSize?: number;
-  mimeType?: string;
-  thumbnail?: string; //  video/image
-  duration?: number; //video (seconds)
-  width?: number;    // image/video
-  height?: number;   // image/video
-}
-
-export interface IMessage {
-	conversationId: Schema.Types.ObjectId | string;
-	senderId: string;
-
-	type: MessageType;
-	content: string;
-	attachments?: IMessageAttachment[];
-
-	deletedAt?: Date | null;
-	status?: MessageStatus;
-
-	createdAt: Date;
-	updatedAt: Date;
-}
+import { IMessage, MessageStatus, MessageType } from "./interfaces/message.interface";
 
 const MessageAttachmentSchema = new Schema({
-	type: { type: String, enum: ['image', 'video', 'file'], required: true },
+	type: { type: String, enum: MessageType, required: true },
 	url: { type: String, required: true },
 	fileName: { type: String },
 	fileSize: { type: Number },
@@ -54,7 +15,7 @@ const MessageAttachmentSchema = new Schema({
 
 const MessageSchema = new Schema<IMessage>(
 	{
-		conversationId: { type: Schema.Types.ObjectId, required: true, index: true },
+		conversationId: { type: String, required: true, index: true },
 		senderId: { type: String, required: true, index: true },
 		type: { 
 			type: String, 
