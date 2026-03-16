@@ -33,6 +33,7 @@ public sealed class GetOrganizationPublicHandler : IRequestHandler<GetOrganizati
             Phone = org.Phone,
             IndustryType = org.IndustryType,
             TaxIdentificationNumber = org.TaxIdentificationNumber,
+            LogoUrl = org.LogoUrl,
             Status = org.Status.ToString(),
             CreatedAt = org.CreatedAt,
         };
