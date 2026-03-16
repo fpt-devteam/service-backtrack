@@ -44,5 +44,9 @@
             RuleFor(x => x.TaxIdentificationNumber)
                 .NotEmpty().WithMessage("Tax identification number is required")
                 .MaximumLength(50).WithMessage("Tax identification number must not exceed 50 characters");
+
+            RuleFor(x => x.LogoUrl)
+                .NotEmpty().WithMessage("Logo URL is required")
+                .MaximumLength(2048).WithMessage("Logo URL must not exceed 2048 characters");
         }
     }

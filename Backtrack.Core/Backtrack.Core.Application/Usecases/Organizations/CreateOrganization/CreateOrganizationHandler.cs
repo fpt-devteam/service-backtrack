@@ -45,6 +45,7 @@ public sealed class CreateOrganizationHandler : IRequestHandler<CreateOrganizati
             Phone = command.Phone,
             IndustryType = command.IndustryType,
             TaxIdentificationNumber = command.TaxIdentificationNumber,
+            LogoUrl = command.LogoUrl,
             Status = OrganizationStatus.Active,
         };
 
@@ -74,6 +75,7 @@ public sealed class CreateOrganizationHandler : IRequestHandler<CreateOrganizati
             Phone = organization.Phone,
             IndustryType = organization.IndustryType,
             TaxIdentificationNumber = organization.TaxIdentificationNumber,
+            LogoUrl = organization.LogoUrl,
             Status = organization.Status.ToString(),
             CreatedAt = organization.CreatedAt,
         };

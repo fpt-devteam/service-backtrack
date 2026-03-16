@@ -72,6 +72,11 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasMaxLength(50)
                 .IsRequired();
 
+            builder.Property(o => o.LogoUrl)
+                .HasColumnName("logo_url")
+                .HasMaxLength(2048)
+                .IsRequired();
+
             builder.Property(o => o.Status)
                 .HasColumnName("status")
                 .HasConversion<string>()

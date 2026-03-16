@@ -74,6 +74,7 @@ public sealed class UpdateOrganizationHandler : IRequestHandler<UpdateOrganizati
             Phone = org.Phone,
             IndustryType = org.IndustryType,
             TaxIdentificationNumber = org.TaxIdentificationNumber,
+            LogoUrl = org.LogoUrl,
             Status = org.Status.ToString(),
             CreatedAt = org.CreatedAt,
         };
