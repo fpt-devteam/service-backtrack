@@ -56,6 +56,7 @@ public class FirebaseAuthMiddleware
             "/api/qr/webhooks/stripe",
             "/api/core/swagger",
             "/swagger",
+            "/api/qr/subscriptions/plans"
         };
     }
 
