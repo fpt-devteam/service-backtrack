@@ -29,6 +29,20 @@ public class FirebaseAuthMiddleware
         new Regex(@"^/api/qr/qr/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
     ];
 
+    /// <summary>
+    /// Regex patterns that are public ONLY for GET requests.
+    /// POST/PATCH/DELETE on these paths still require authentication.
+    /// </summary>
+    private static readonly Regex[] _publicGetPathPatterns =
+    [
+        // GET /api/core/orgs  (exact)  — list all organizations, no auth needed
+        // GET /api/core/orgs/{guid}    — PROTECTED: handler checks membership, requires X-Auth-Id
+        // GET /api/core/orgs/me        — PROTECTED: returns caller's own memberships
+        new Regex(@"^/api/core/orgs$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        // GET /api/core/orgs/{guid}/public  — public org profile, no auth or membership required
+        new Regex(@"^/api/core/orgs/[0-9a-f\-]{36}/public$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+    ];
+
     private const string AuthHeaderName = "Authorization";
     private const string AuthIdHeaderName = "X-Auth-Id";
     private const string AuthProviderHeaderName = "X-Auth-Provider";
@@ -64,7 +78,7 @@ public class FirebaseAuthMiddleware
     {
         var path = context.Request.Path.Value ?? string.Empty;
 
-        if (IsPublicPath(path))
+        if (IsPublicPath(context))
         {
             await _next(context);
             return;
@@ -208,14 +222,24 @@ public class FirebaseAuthMiddleware
         return Base64Util.EncodeToBase64(avatarUrl);
     }
 
-    private bool IsPublicPath(string path)
+    private bool IsPublicPath(HttpContext context)
     {
+        var path = context.Request.Path.Value ?? string.Empty;
+
         if (_publicPaths.Any(publicPath =>
                 path.Equals(publicPath, StringComparison.OrdinalIgnoreCase) ||
                 path.StartsWith($"{publicPath}/", StringComparison.OrdinalIgnoreCase)))
             return true;
 
-        return _publicPathPatterns.Any(pattern => pattern.IsMatch(path));
+        if (_publicPathPatterns.Any(pattern => pattern.IsMatch(path)))
+            return true;
+
+        // GET-only public paths: listing/detail endpoints that don't need auth
+        if (HttpMethods.IsGet(context.Request.Method) &&
+            _publicGetPathPatterns.Any(pattern => pattern.IsMatch(path)))
+            return true;
+
+        return false;
     }
 
     private static string? ExtractBearerToken(string authHeader)

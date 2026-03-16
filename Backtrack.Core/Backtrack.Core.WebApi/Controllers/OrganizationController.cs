@@ -8,6 +8,7 @@ using Backtrack.Core.Application.Usecases.Organizations.UpdateMemberRole;
 using Backtrack.Core.Application.Usecases.Organizations.CreateOrganization;
 using Backtrack.Core.Application.Usecases.Organizations.UpdateOrganization;
 using Backtrack.Core.Application.Usecases.Organizations.GetOrganization;
+using Backtrack.Core.Application.Usecases.Organizations.GetOrganizationPublic;
 using Backtrack.Core.Application.Usecases.Organizations.GetMyOrganizations;
 using Backtrack.Core.Application.Usecases.Organizations.GetOrgMembers;
 using Backtrack.Core.Application.Usecases.Organizations.RemoveMember;
@@ -17,6 +18,7 @@ using Backtrack.Core.Application.Usecases.Organizations.DeleteInventoryItem;
 using Backtrack.Core.Application.Usecases.Organizations.GetInventoryItems;
 using Backtrack.Core.Application.Usecases.Organizations.GetInventoryItemById;
 using Backtrack.Core.Application.Usecases.Organizations.SearchInventoryBySemantic;
+using Backtrack.Core.Application.Usecases.Organizations.GetAllOrganizations;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -33,6 +35,27 @@ public class OrganizationController : ControllerBase
     public OrganizationController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    /// <summary>
+    /// Get all organizations registered in Backtrack
+    /// </summary>
+    /// <param name="page">Page number (default: 1)</param>
+    /// <param name="pageSize">Page size (default: 20)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Paginated list of all organizations</returns>
+    /// <response code="200">Returns all organizations</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(ApiResponse<PagedResponse<OrganizationResult>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllOrganizationsAsync(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new GetAllOrganizationsQuery(page, pageSize);
+        var (items, total) = await _mediator.Send(query, cancellationToken);
+        var response = PagedResponse<OrganizationResult>.Create(items, page, pageSize, total);
+        return this.ApiOk(response);
     }
 
     /// <summary>
@@ -74,6 +97,25 @@ public class OrganizationController : ControllerBase
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var query = new GetOrganizationQuery(orgId, userId);
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    /// <summary>
+    /// Get an organization by ID (public, no authentication or membership required)
+    /// </summary>
+    /// <param name="orgId">The organization ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The organization details</returns>
+    /// <response code="200">Organization found</response>
+    /// <response code="404">Organization not found</response>
+    [HttpGet("{orgId:guid}/public")]
+    [ProducesResponseType(typeof(ApiResponse<OrganizationResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetOrganizationPublicAsync(
+        [FromRoute] Guid orgId, CancellationToken cancellationToken)
+    {
+        var query = new GetOrganizationPublicQuery(orgId);
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }

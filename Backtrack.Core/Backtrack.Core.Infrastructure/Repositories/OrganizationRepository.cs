@@ -13,4 +13,17 @@ public class OrganizationRepository : CrudRepositoryBase<Organization, Guid>, IO
     {
         return await _dbSet.AnyAsync(o => o.Slug == slug, cancellationToken);
     }
+
+    public async Task<(List<Organization> Items, int Total)> GetAllAsync(
+        int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = _dbSet.AsNoTracking().OrderByDescending(o => o.CreatedAt);
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+        return (items, total);
+    }
 }
+

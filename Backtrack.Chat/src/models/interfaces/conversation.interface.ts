@@ -3,13 +3,6 @@ export enum ConversationType {
 	ORGANIZATION = 'organization',
 }
 
-export enum TicketStatus {
-	QUEUED = 'queued',
-	ASSIGNED = 'assigned',
-	RESOLVED = 'resolved',
-	ESCALATED = 'escalated',
-}
-
 export interface IConversation {
     id: string;
 	lastMessageAt: Date | null;

@@ -7,7 +7,6 @@ const ConversationParticipantSchema = new Schema<IConversationParticipant>(
         conversationId: { type: String, required: true, index: true },
         memberId: { type: String, required: false, index: true },
         role: { type: String, enum: Object.values(ConversationParticipantRole), required: true },
-        isAssigee: { type: Boolean, default: false },
         nickName: { type: String, default: null },
 
         lastReadAt: { type: Date, default: null },

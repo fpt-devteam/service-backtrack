@@ -5,4 +5,5 @@ namespace Backtrack.Core.Application.Interfaces.Repositories;
 public interface IOrganizationRepository : IGenericRepository<Organization, Guid>
 {
     Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken = default);
+    Task<(List<Organization> Items, int Total)> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default);
 }
