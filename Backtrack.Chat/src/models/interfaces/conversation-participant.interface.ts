@@ -7,7 +7,6 @@ export interface IConversationParticipant {
 	conversationId: string;
 	memberId: string | null;
     role: ConversationParticipantRole;
-    isAssigee: boolean | null;
 	nickName: string | null;
 
 	lastReadAt: Date | null;

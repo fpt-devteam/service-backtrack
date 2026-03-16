@@ -335,7 +335,6 @@ export const projectConversationStage = {
         conversationId: '$conversation._id',
         type: '$conversation.type',
         orgId: '$conversation.orgId',
-        ticketStatus: '$conversation.ticketStatus',
         assignedStaffId: '$conversation.assignedStaffId',
         lastMessageContent: '$conversation.lastMessageContent',
         lastMessageAt: '$conversation.lastMessageAt',
@@ -369,7 +368,20 @@ export const listConversationsByUserId = async (
             $match: { memberId: userId, deletedAt: null }
         },
         {
-            $lookup: { from: 'conversations', localField: 'conversationId', foreignField: '_id', as: 'conversation' }
+            $lookup: {
+                from: 'conversations',
+                let: { convIdStr: '$conversationId' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ['$_id', { $toObjectId: '$$convIdStr' }]
+                            }
+                        }
+                    }
+                ],
+                as: 'conversation'
+            }
         },
         { $unwind: '$conversation' },
         {
@@ -380,7 +392,9 @@ export const listConversationsByUserId = async (
                 })
             }
         },
-        { $sort: { 'conversation.lastMessageAt': -1 } },
+        {
+            $sort: { 'conversation.lastMessageAt': -1 }
+        },
         { $limit: limit + 1 },
         ...lookupPartnerStages(userId),
         projectConversationStage,
@@ -414,7 +428,6 @@ const formatConversationResult = (results: any[], limit: number): ConversationsL
 
 /**
  * List conversations in queue for an org.
- * Source of truth: ConversationQueue (not ticketStatus field).
  * Sorted by lastMessageAt descending.
  */
 export const listConversationsQueueByStaff = async (

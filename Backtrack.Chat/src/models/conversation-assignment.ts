@@ -5,8 +5,8 @@ const ConversationAssignmentSchema = new Schema<IConversationAssignment>(
     {
         conversationId: { type: String, required: true, index: true },
         agentId: { type: String, required: true, index: true },
-        assignedAt: { type: Date, required: true },
-        assignedBy: { type: String, required: true },
+        assignedAt: { type: Date, default: null },
+        assignedBy: { type: String, default: null },
         unassignedAt: { type: Date, default: null },
         note: { type: String, default: null },
         deletedAt: { type: Date, default: null },
