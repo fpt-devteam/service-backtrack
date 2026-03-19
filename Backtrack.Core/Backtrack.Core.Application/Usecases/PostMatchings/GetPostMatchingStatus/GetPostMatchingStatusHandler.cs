@@ -3,7 +3,7 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts.GetPostMatchingStatus;
+namespace Backtrack.Core.Application.Usecases.PostMatchings.GetPostMatchingStatus;
 
 public sealed class GetPostMatchingStatusHandler(IPostRepository postRepository)
     : IRequestHandler<GetPostMatchingStatusQuery, GetPostMatchingStatusResult>

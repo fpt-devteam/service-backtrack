@@ -3,6 +3,7 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases.PostMatchings;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePostContentEmbedding;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;

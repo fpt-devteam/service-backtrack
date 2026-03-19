@@ -5,7 +5,7 @@ using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts.SearchPostsBySemantic;
+namespace Backtrack.Core.Application.Usecases.PostMatchings.SearchPostsBySemantic;
 
 public sealed class SearchPostsBySemanticHandler(IPostRepository postRepository, IEmbeddingService embeddingService) : IRequestHandler<SearchPostsBySemanticQuery, PagedResult<PostSemanticSearchResult>>
 {

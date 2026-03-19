@@ -1,8 +1,9 @@
-using Backtrack.Core.Application.Usecases.Posts.FindAndSavePostMatches;
-using Backtrack.Core.Application.Usecases.Posts.UpdatePostContentEmbedding;
+using Backtrack.Core.Application.Usecases.PostMatchings;
+using Backtrack.Core.Application.Usecases.PostMatchings.FindAndSavePostMatches;
+using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostContentEmbedding;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts;
+namespace Backtrack.Core.Application.Usecases.PostMatchings;
 
 public class PostEmbeddingOrchestrator
 {

@@ -5,6 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Backtrack.Core.Application.Usecases.Posts.UpdatePostContentEmbedding;
+namespace Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostContentEmbedding;
 
 public sealed record UpdatePostContentEmbeddingCommand(Guid PostId) : IRequest;

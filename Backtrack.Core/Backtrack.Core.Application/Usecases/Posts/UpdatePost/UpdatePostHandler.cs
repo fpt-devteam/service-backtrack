@@ -8,6 +8,7 @@ using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
+using Backtrack.Core.Application.Usecases.PostMatchings;
 
 namespace Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 

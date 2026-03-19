@@ -7,7 +7,7 @@ using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts.UpdatePostContentEmbedding;
+namespace Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostContentEmbedding;
 
 public sealed class UpdatePostContentEmbeddingHandler(
     IPostRepository postRepository,

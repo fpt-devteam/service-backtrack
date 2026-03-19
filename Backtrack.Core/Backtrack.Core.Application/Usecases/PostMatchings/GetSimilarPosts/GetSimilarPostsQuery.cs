@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts.GetSimilarPosts;
+namespace Backtrack.Core.Application.Usecases.PostMatchings.GetSimilarPosts;
 
 /// <summary>
 /// Query to get similar posts based on vector similarity and geographic proximity

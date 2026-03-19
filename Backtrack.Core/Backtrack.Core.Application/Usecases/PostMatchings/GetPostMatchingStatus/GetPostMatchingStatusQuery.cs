@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts.GetPostMatchingStatus;
+namespace Backtrack.Core.Application.Usecases.PostMatchings.GetPostMatchingStatus;
 
 public sealed record GetPostMatchingStatusQuery : IRequest<GetPostMatchingStatusResult>
 {

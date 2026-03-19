@@ -28,7 +28,7 @@ Item description: {query.SearchText}
 
 Looking for information about {query.SearchText.ToLower()}.";
 
-        var queryEmbedding = await embeddingService.GenerateEmbeddingAsync(enhancedQuery, cancellationToken);
+        var queryEmbedding = await embeddingService.GenerateTextEmbeddingAsync(enhancedQuery, cancellationToken);
 
         var (items, totalCount) = await inventoryRepository.SearchBySemanticAsync(
             queryEmbedding: queryEmbedding,

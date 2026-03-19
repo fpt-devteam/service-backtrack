@@ -4,7 +4,7 @@ using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts.GetSimilarPosts;
+namespace Backtrack.Core.Application.Usecases.PostMatchings.GetSimilarPosts;
 
 public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuery, GetSimilarPostsResult>
 {

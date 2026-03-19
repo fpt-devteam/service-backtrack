@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts.SearchPostsBySemantic;
+namespace Backtrack.Core.Application.Usecases.PostMatchings.SearchPostsBySemantic;
 
 public sealed record SearchPostsBySemanticQuery : IRequest<PagedResult<PostSemanticSearchResult>>
 {

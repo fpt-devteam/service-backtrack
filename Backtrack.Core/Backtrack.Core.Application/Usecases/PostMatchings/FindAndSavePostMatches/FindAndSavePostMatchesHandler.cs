@@ -5,7 +5,7 @@ using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts.FindAndSavePostMatches;
+namespace Backtrack.Core.Application.Usecases.PostMatchings.FindAndSavePostMatches;
 
 public sealed class FindAndSavePostMatchesHandler : IRequestHandler<FindAndSavePostMatchesCommand>
 {
