@@ -1,6 +1,7 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases.PostImages;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
@@ -55,7 +56,7 @@ public sealed class GetPostsHandler : IRequestHandler<GetPostsQuery, PagedResult
                 PostType = post.PostType.ToString(),
                 ItemName = post.ItemName,
                 Description = post.Description,
-                ImageUrls = post.ImageUrls,
+                Images = post.Images.Select(i => i.ToPostImageResult()).ToList(),
                 Location = post.Location,
                 ExternalPlaceId = post.ExternalPlaceId,
                 DisplayAddress = post.DisplayAddress,

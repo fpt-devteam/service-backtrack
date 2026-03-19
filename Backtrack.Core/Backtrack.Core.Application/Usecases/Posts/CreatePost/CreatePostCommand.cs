@@ -1,8 +1,16 @@
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
-using System.ComponentModel.DataAnnotations;
 
 namespace Backtrack.Core.Application.Usecases.Posts.CreatePost;
+
+public sealed record ImageInput
+{
+    public required string Url { get; init; }
+    public required string Base64Data { get; init; }
+    public required string MimeType { get; init; }
+    public string? FileName { get; init; }
+    public long? FileSizeBytes { get; init; }
+}
 
 public sealed record CreatePostCommand : IRequest<PostResult>
 {
@@ -11,10 +19,9 @@ public sealed record CreatePostCommand : IRequest<PostResult>
     public required string PostType { get; init; }
     public required string ItemName { get; init; }
     public required string Description { get; init; }
-    public string? DistinctiveMarks { get; init; }
-    public string[] ImageUrls { get; init; } = Array.Empty<string>();
-    public GeoPoint? Location { get; init; }
-    public string? DisplayAddress { get; init; }
+    public ImageInput[] Images { get; init; } = Array.Empty<ImageInput>();
+    public required GeoPoint Location { get; init; }
+    public required string DisplayAddress { get; init; }
     public string? ExternalPlaceId { get; init; }
     public required DateTimeOffset EventTime { get; init; }
 }

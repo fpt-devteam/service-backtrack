@@ -17,7 +17,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
 {
     public override async Task<Post?> GetByIdAsync(Guid id, bool isTrack = false)
     {
-        IQueryable<Post> query = _dbSet.Include(p => p.Author).Include(p => p.Organization);
+        IQueryable<Post> query = _dbSet.Include(p => p.Author).Include(p => p.Organization).Include(p => p.Images);
         if (!isTrack)
         {
             query = query.AsNoTracking();
@@ -92,6 +92,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         var items = await query
             .Include(p => p.Author)
             .Include(p => p.Organization)
+            .Include(p => p.Images)
             .OrderByDescending(p => p.CreatedAt)
             .Skip(offset)
             .Take(limit)
@@ -142,7 +143,6 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                         post_type,
                         item_name,
                         description,
-                        image_urls,
                         location,
                         external_place_id,
                         display_address,
@@ -152,9 +152,9 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                         multimodal_embedding,
                         content_hash,
                         content_embedding_status,
+                        author_id,
                         (multimodal_embedding <=> @queryEmbedding::vector) AS distance,
-                        (1.0 - (multimodal_embedding <=> @queryEmbedding::vector)) AS similarity,
-                        author_id
+                        (1.0 - (multimodal_embedding <=> @queryEmbedding::vector)) AS similarity
                     FROM posts
                     WHERE deleted_at IS NULL
                         AND content_embedding_status = 'Ready'
@@ -167,7 +167,6 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                     post_type,
                     item_name,
                     description,
-                    image_urls,
                     location,
                     external_place_id,
                     display_address,
@@ -177,6 +176,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                     multimodal_embedding,
                     content_hash,
                     content_embedding_status,
+                    author_id,
                     similarity
                 FROM filtered_posts
                 WHERE similarity >= @minSimilarity
@@ -234,28 +234,27 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                     PostType = Enum.Parse<PostType>(reader.GetString(1)),
                     ItemName = reader.GetString(2),
                     Description = reader.GetString(3),
-                    ImageUrls = reader.GetFieldValue<string[]>(4),
                     Location = new GeoPoint(
-                            ((Point)reader.GetValue(5)).Y, // latitude
-                            ((Point)reader.GetValue(5)).X  // longitude
+                            ((Point)reader.GetValue(4)).Y, // latitude
+                            ((Point)reader.GetValue(4)).X  // longitude
                         ),
-                    ExternalPlaceId = reader.IsDBNull(6) ? null : reader.GetString(6),
-                    DisplayAddress = reader.IsDBNull(7) ? null : reader.GetString(7),
-                    EventTime = reader.GetFieldValue<DateTimeOffset>(8),
-                    CreatedAt = reader.GetFieldValue<DateTimeOffset>(9),
-                    UpdatedAt = reader.IsDBNull(10)
+                    ExternalPlaceId = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    DisplayAddress = reader.IsDBNull(6) ? null : reader.GetString(6),
+                    EventTime = reader.GetFieldValue<DateTimeOffset>(7),
+                    CreatedAt = reader.GetFieldValue<DateTimeOffset>(8),
+                    UpdatedAt = reader.IsDBNull(9)
                         ? null
-                        : reader.GetFieldValue<DateTimeOffset>(10),
-                    MultimodalEmbedding = reader.IsDBNull(11)
+                        : reader.GetFieldValue<DateTimeOffset>(9),
+                    MultimodalEmbedding = reader.IsDBNull(10)
                         ? null
-                        : ((Vector)reader.GetValue(11)).ToArray(),
-                    ContentHash = reader.GetString(12),
-                    ContentEmbeddingStatus = (ContentEmbeddingStatus)Enum.Parse(typeof(ContentEmbeddingStatus), reader.GetString(13)),
+                        : ((Vector)reader.GetValue(10)).ToArray(),
+                    ContentHash = reader.GetString(11),
+                    ContentEmbeddingStatus = (ContentEmbeddingStatus)Enum.Parse(typeof(ContentEmbeddingStatus), reader.GetString(12)),
                     PostMatchingStatus = PostMatchingStatus.Completed,
-                    AuthorId = reader.GetString(14)
+                    AuthorId = reader.GetString(13)
                 };
 
-                var similarity = reader.GetDouble(15);
+                var similarity = reader.GetDouble(14);
                 results.Add((post, similarity));
             }
 
@@ -280,7 +279,6 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             post_type,
             item_name,
             description,
-            image_urls,
             location,
             external_place_id,
             display_address,
@@ -338,23 +336,22 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                 PostType = Enum.Parse<PostType>(reader.GetString(1)),
                 ItemName = reader.GetString(2),
                 Description = reader.GetString(3),
-                ImageUrls = await reader.GetFieldValueAsync<string[]>(4, cancellationToken),
                 Location = new GeoPoint(
-                    ((Point)reader.GetValue(5)).Y,
-                    ((Point)reader.GetValue(5)).X),
-                ExternalPlaceId = await reader.IsDBNullAsync(6) ? null : reader.GetString(6),
-                DisplayAddress = await reader.IsDBNullAsync(7) ? null : reader.GetString(7),
-                EventTime = await reader.GetFieldValueAsync<DateTimeOffset>(8, cancellationToken),
-                CreatedAt = await reader.GetFieldValueAsync<DateTimeOffset>(9, cancellationToken),
-                UpdatedAt = await reader.IsDBNullAsync(10) ? null : await reader.GetFieldValueAsync<DateTimeOffset>(10, cancellationToken),
-                MultimodalEmbedding = await reader.IsDBNullAsync(11) ? null : ((Vector)reader.GetValue(11)).ToArray(),
-                ContentHash = reader.GetString(12),
-                ContentEmbeddingStatus = Enum.Parse<ContentEmbeddingStatus>(reader.GetString(13)),
+                    ((Point)reader.GetValue(4)).Y,
+                    ((Point)reader.GetValue(4)).X),
+                ExternalPlaceId = await reader.IsDBNullAsync(5) ? null : reader.GetString(5),
+                DisplayAddress = await reader.IsDBNullAsync(6) ? null : reader.GetString(6),
+                EventTime = await reader.GetFieldValueAsync<DateTimeOffset>(7, cancellationToken),
+                CreatedAt = await reader.GetFieldValueAsync<DateTimeOffset>(8, cancellationToken),
+                UpdatedAt = await reader.IsDBNullAsync(9) ? null : await reader.GetFieldValueAsync<DateTimeOffset>(9, cancellationToken),
+                MultimodalEmbedding = await reader.IsDBNullAsync(10) ? null : ((Vector)reader.GetValue(10)).ToArray(),
+                ContentHash = reader.GetString(11),
+                ContentEmbeddingStatus = Enum.Parse<ContentEmbeddingStatus>(reader.GetString(12)),
                 PostMatchingStatus = PostMatchingStatus.Completed,
-                AuthorId = reader.GetString(14)
+                AuthorId = reader.GetString(13)
             };
 
-            results.Add((p, reader.GetDouble(15), reader.GetDouble(16)));
+            results.Add((p, reader.GetDouble(14), reader.GetDouble(15)));
         }
 
         return results;
@@ -365,6 +362,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return await _dbSet
             .Include(p => p.Author)
             .Include(p => p.Organization)
+            .Include(p => p.Images)
             .Where(p => p.AuthorId == authorId && p.DeletedAt == null)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync(cancellationToken);

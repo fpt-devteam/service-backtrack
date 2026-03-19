@@ -3,6 +3,7 @@ using System;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -13,9 +14,11 @@ using Pgvector;
 namespace Backtrack.Core.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260319024245_AddPostImagesTable")]
+    partial class AddPostImagesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -364,6 +367,9 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("display_address");
 
+                    b.Property<string>("DistinctiveMarks")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset>("EventTime")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("event_time");
@@ -441,7 +447,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<string>("Base64Data")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("base64_data");
 
@@ -470,8 +475,8 @@ namespace Backtrack.Core.Infrastructure.Migrations
 
                     b.Property<string>("MimeType")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("mime_type");
 
                     b.Property<Guid>("PostId")

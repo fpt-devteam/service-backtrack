@@ -1,5 +1,5 @@
+using Backtrack.Core.Application.Usecases.PostImages;
 using Backtrack.Core.Domain.ValueObjects;
-using System.Text.Json.Serialization;
 
 namespace Backtrack.Core.Application.Usecases.Posts;
 
@@ -11,7 +11,7 @@ public sealed record PostResult
     public required string PostType { get; init; }
     public required string ItemName { get; init; }
     public required string Description { get; init; }
-    public required string[] ImageUrls { get; init; }
+    public List<PostImageResult> Images { get; init; } = new();
     public required GeoPoint Location { get; init; }
     public string? ExternalPlaceId { get; init; }
     public string? DisplayAddress { get; init; }

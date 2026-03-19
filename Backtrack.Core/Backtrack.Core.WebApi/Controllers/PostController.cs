@@ -5,14 +5,14 @@ using Backtrack.Core.WebApi.Utils;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Posts.CreatePost;
-using Backtrack.Core.Application.Usecases.Posts.SearchPostsBySemantic;
 using Backtrack.Core.Application.Usecases.Posts.GetPosts;
 using Backtrack.Core.Application.Usecases.Posts.GetPostById;
-using Backtrack.Core.Application.Usecases.Posts.GetSimilarPosts;
+using Backtrack.Core.Application.Usecases.PostMatchings.GetSimilarPosts;
 using Backtrack.Core.Application.Usecases.Posts.DeletePost;
 using Backtrack.Core.Application.Usecases.Posts.GetMyPosts;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
-using Backtrack.Core.Application.Usecases.Posts.GetPostMatchingStatus;
+using Backtrack.Core.Application.Usecases.PostMatchings.GetPostMatchingStatus;
+using Backtrack.Core.Application.Usecases.PostMatchings.SearchPostsBySemantic;
 
 namespace Backtrack.Core.WebApi.Controllers;
 

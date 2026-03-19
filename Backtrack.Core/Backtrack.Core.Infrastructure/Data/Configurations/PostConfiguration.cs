@@ -37,11 +37,6 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasMaxLength(2000)
                 .IsRequired();
 
-            builder.Property(p => p.ImageUrls)
-                .HasColumnName("image_urls")
-                .HasColumnType("text[]")
-                .IsRequired();
-
             builder.Property(p => p.AuthorId)
                 .HasColumnName("author_id")
                 .HasColumnType("text")

@@ -1,6 +1,7 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases.PostImages;
 using Backtrack.Core.Domain.Constants;
 using MediatR;
 
@@ -37,7 +38,7 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
                 PostType = targetPost.PostType.ToString(),
                 ItemName = targetPost.ItemName,
                 Description = targetPost.Description,
-                ImageUrls = targetPost.ImageUrls,
+                Images = targetPost.Images.Select(i => i.ToPostImageResult()).ToList(),
                 Location = targetPost.Location,
                 ExternalPlaceId = targetPost.ExternalPlaceId,
                 DisplayAddress = targetPost.DisplayAddress,

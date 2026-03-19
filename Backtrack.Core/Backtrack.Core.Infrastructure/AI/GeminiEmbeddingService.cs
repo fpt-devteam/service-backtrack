@@ -37,13 +37,13 @@ namespace Backtrack.Core.Infrastructure.AI
                 throw new InvalidOperationException("Gemini API key is not configured. Please set 'GeminiSettings__ApiKey' in configuration.");
         }
 
-        public async Task<float[]> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default)
+        public async Task<float[]> GenerateTextEmbeddingAsync(string text, CancellationToken cancellationToken = default)
         {
             return await GenerateMultimodalEmbeddingAsync(text, null, null, cancellationToken);
         }
 
         public async Task<float[]> GenerateMultimodalEmbeddingAsync(
-            string text,
+            string? text = null,
             string? imageBase64 = null,
             string? mimeType = null,
             CancellationToken cancellationToken = default)
@@ -90,49 +90,6 @@ namespace Backtrack.Core.Infrastructure.AI
             return result.Embedding.Values;
         }
 
-        public async Task<IList<float[]>> GenerateEmbeddingsBatchAsync(IEnumerable<string> texts, CancellationToken cancellationToken = default)
-        {
-            var textList = texts?.ToList() ?? throw new ArgumentNullException(nameof(texts));
-
-            if (textList.Count == 0)
-                return Array.Empty<float[]>();
-
-            var url = $"{_settings.BaseUrl}/{_settings.ModelName}:batchEmbedContents?key={_settings.ApiKey}";
-
-            var request = new
-            {
-                requests = textList.Select(text => new
-                {
-                    model = $"models/{_settings.ModelName}",
-                    content = new { parts = new[] { new { text } } },
-                    outputDimensionality = EmbeddingDimension
-                }).ToList()
-            };
-
-            var response = await _httpClient.PostAsJsonAsync(url, request, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                throw new HttpRequestException(
-                    $"Gemini batchEmbedContents failed ({(int)response.StatusCode} {response.ReasonPhrase}): {errorBody}");
-            }
-
-            var result = await response.Content.ReadFromJsonAsync<GeminiBatchEmbeddingResponse>(cancellationToken: cancellationToken);
-            if (result?.Embeddings == null || result.Embeddings.Count == 0)
-                throw new InvalidOperationException("No embeddings returned from Gemini API.");
-
-            var embeddings = result.Embeddings.Select(e => e.Values).ToList();
-
-            var invalidEmbeddings = embeddings.Where(e => e.Length != EmbeddingDimension).ToList();
-            if (invalidEmbeddings.Any())
-                throw new InvalidOperationException(
-                    $"Inconsistent embedding dimensions. Expected {EmbeddingDimension}, " +
-                    $"but got: [{string.Join(", ", invalidEmbeddings.Select(e => e.Length))}].");
-
-            return embeddings;
-        }
-
         #region Request DTOs
 
         private class EmbedContentRequest
@@ -154,10 +111,12 @@ namespace Backtrack.Core.Infrastructure.AI
         {
             // Text part — omitted when null so image-only requests stay clean
             [JsonPropertyName("text")]
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             public string? Text { get; set; }
 
             // Image part — field name must be snake_case per Gemini REST API spec
             [JsonPropertyName("inline_data")]
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             public InlineData? InlineData { get; set; }
         }
 
@@ -174,12 +133,6 @@ namespace Backtrack.Core.Infrastructure.AI
         #endregion
 
         #region Response DTOs
-
-        private class GeminiBatchEmbeddingResponse
-        {
-            [JsonPropertyName("embeddings")]
-            public List<EmbeddingData> Embeddings { get; set; } = new();
-        }
 
         private class GeminiEmbeddingResponse
         {

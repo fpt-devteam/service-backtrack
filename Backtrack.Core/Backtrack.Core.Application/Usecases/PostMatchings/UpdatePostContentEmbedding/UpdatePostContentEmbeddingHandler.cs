@@ -19,12 +19,11 @@ public sealed class UpdatePostContentEmbeddingHandler(
     {
         Post post = await postRepository.GetByIdAsync(request.PostId, true) ?? throw new NotFoundException(PostErrors.NotFound);
 
-        string? firstImageUrl = post.ImageUrls.Length > 0 ? post.ImageUrls[0] : null;
+        string? firstImageUrl = post.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.Url;
 
         string newContentHash = hasher.HashStrings(
             post.ItemName,
             post.Description,
-            post.DistinctiveMarks ?? string.Empty,
             firstImageUrl ?? string.Empty);
 
         if (post.ContentHash == newContentHash && post.MultimodalEmbedding is not null && post.ContentEmbeddingStatus == ContentEmbeddingStatus.Ready)
@@ -40,12 +39,7 @@ public sealed class UpdatePostContentEmbeddingHandler(
         {
             var contentForEmbedding = $"Item: {post.ItemName}\nDescription: {post.Description}";
 
-            if (!string.IsNullOrWhiteSpace(post.DistinctiveMarks))
-            {
-                contentForEmbedding += $"\nDistinctive marks: {post.DistinctiveMarks}";
-            }
-
-            contentForEmbedding += $"\n\nThis item is {post.ItemName.ToLower()}.";
+            contentForEmbedding += $"\n\nThis item is {post.ItemName.ToLower()}";
 
             string? imageBase64 = null;
             string? mimeType = null;

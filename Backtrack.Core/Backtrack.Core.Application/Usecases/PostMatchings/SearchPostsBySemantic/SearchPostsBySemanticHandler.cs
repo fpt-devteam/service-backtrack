@@ -53,7 +53,6 @@ Looking for information about {query.SearchText.ToLower()}.";
                 PostType = post.PostType.ToString(),
                 ItemName = post.ItemName,
                 Description = post.Description,
-                ImageUrls = post.ImageUrls,
                 Location = post.Location,
                 ExternalPlaceId = post.ExternalPlaceId,
                 DisplayAddress = post.DisplayAddress,

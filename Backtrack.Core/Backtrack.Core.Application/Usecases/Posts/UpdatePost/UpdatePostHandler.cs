@@ -3,7 +3,8 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Utils;
-using Backtrack.Core.Application.Usecases.Posts.UpdatePostContentEmbedding;
+using Backtrack.Core.Application.Usecases.PostImages;
+using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostContentEmbedding;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
@@ -87,12 +88,6 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             needsReEmbedding = true;
         }
 
-        if (command.DistinctiveMarks != null && post.DistinctiveMarks != command.DistinctiveMarks)
-        {
-            post.DistinctiveMarks = command.DistinctiveMarks;
-            needsReEmbedding = true;
-        }
-
         if (command.Location != null)
         {
             var newLocation = new GeoPoint(command.Location.Latitude, command.Location.Longitude);
@@ -105,7 +100,6 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             }
         }
 
-        post.ImageUrls = command.ImageUrls ?? post.ImageUrls;
         post.ExternalPlaceId = command.ExternalPlaceId ?? post.ExternalPlaceId;
         post.DisplayAddress = command.DisplayAddress ?? post.DisplayAddress;
         post.EventTime = command.EventTime.HasValue ? command.EventTime.Value : post.EventTime;
@@ -128,7 +122,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,
-            ImageUrls = post.ImageUrls,
+            Images = post.Images.Select(i => i.ToPostImageResult()).ToList(),
             Location = post.Location,
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress = post.DisplayAddress,
