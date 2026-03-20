@@ -26,5 +26,10 @@ export const ServerErrors = {
     code: "SubscriptionPlanNotFound",
     message: "No subscription plan found for the given price ID.",
   } as Error,
+  QrDesignNotFound: {
+    kind: "NotFound",
+    code: "QrDesignNotFound",
+    message: "No QR design found for the user.",
+  } as Error,
 } as const satisfies Record<string, Error>;
 
