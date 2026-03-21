@@ -3,6 +3,9 @@ import { getQrByUserIdUseCase } from '@/src/application/usecases/qr/get-qr-by-us
 import { getQrByPublicCodeUseCase } from '@/src/application/usecases/qr/get-qr-by-public-code.usecase.js';
 import { updateQrNoteUseCase } from '@/src/application/usecases/qr/update-qr-note.usecase.js';
 import { createQrRepository } from '@/src/infrastructure/database/repositories/qr.repository.js';
+import { createQrDesignRepository } from '@/src/infrastructure/database/repositories/qr-design.repository.js';
+import { getQrDesignByUserIdUseCase } from '@/src/application/usecases/qr/get-qr-design-by-user-id.usecase.js';
+import { updateQrDesignByUserIdUseCase } from '@/src/application/usecases/qr/update-qr-design-by-user-id.usecase.js';
 import { createPaymentHistoryRepository } from '@/src/infrastructure/database/repositories/payment-history.repository.js';
 import { createSubscriptionRepository } from '@/src/infrastructure/database/repositories/subscription.repository.js';
 import { createSubscriptionPlanRepository } from '@/src/infrastructure/database/repositories/subscription-plan.repository.js';
@@ -17,6 +20,7 @@ import { handleInvoicePaymentUseCase } from '@/src/application/usecases/subscrip
 // Layer 1: repositories
 const userRepository = createUserRepository();
 const qrRepository = createQrRepository();
+const qrDesignRepository = createQrDesignRepository();
 const subscriptionRepository = createSubscriptionRepository();
 const subscriptionPlanRepository = createSubscriptionPlanRepository();
 const paymentHistoryRepository = createPaymentHistoryRepository();
@@ -26,6 +30,8 @@ const paymentHistoryRepository = createPaymentHistoryRepository();
 export const getQrByUserId = getQrByUserIdUseCase({ qrRepository });
 export const getQrByPublicCode = getQrByPublicCodeUseCase({ qrRepository });
 export const updateQrNote = updateQrNoteUseCase({ qrRepository });
+export const getQrDesignByUserId = getQrDesignByUserIdUseCase({ qrDesignRepository });
+export const updateQrDesignByUserId = updateQrDesignByUserIdUseCase({ qrDesignRepository });
 
 // Subscription use cases
 export const getSubscription = getSubscriptionUseCase({ subscriptionRepository });
