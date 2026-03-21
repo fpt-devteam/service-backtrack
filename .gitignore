@@ -214,3 +214,4 @@ vite.config.ts.timestamp-*
 test-auth-client.html
 test-chat-client.html
 ws-test.html
+seeder

@@ -14,34 +14,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Backtrack.Core.Application.Usecases.Posts.CreatePost;
 
-public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostResult>
+public sealed class CreatePostHandler(
+    IPostRepository postRepository,
+    IOrganizationRepository organizationRepository,
+    IMembershipRepository membershipRepository,
+    IPostImageRepository postImageRepository,
+    IHasher hasher,
+    IBackgroundJobService backgroundJobService,
+    ILogger<CreatePostHandler> logger) : IRequestHandler<CreatePostCommand, PostResult>
 {
-    private readonly IPostRepository _postRepository;
-    private readonly IOrganizationRepository _organizationRepository;
-    private readonly IMembershipRepository _membershipRepository;
-    private readonly IPostImageRepository _postImageRepository;
-    private readonly IHasher _hasher;
-    private readonly IBackgroundJobService _backgroundJobService;
-    private readonly ILogger<CreatePostHandler> _logger;
-
-    public CreatePostHandler(
-        IPostRepository postRepository,
-        IOrganizationRepository organizationRepository,
-        IMembershipRepository membershipRepository,
-        IPostImageRepository postImageRepository,
-        IHasher hasher,
-        IBackgroundJobService backgroundJobService,
-        ILogger<CreatePostHandler> logger)
-    {
-        _postRepository = postRepository;
-        _organizationRepository = organizationRepository;
-        _membershipRepository = membershipRepository;
-        _postImageRepository = postImageRepository;
-        _hasher = hasher;
-        _backgroundJobService = backgroundJobService;
-        _logger = logger;
-    }
-
     public async Task<PostResult> Handle(CreatePostCommand command, CancellationToken cancellationToken)
     {
         if (!Enum.TryParse<PostType>(command.PostType, ignoreCase: true, out var postType))
@@ -55,10 +36,10 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
 
         if (command.OrganizationId.HasValue)
         {
-            var organization = await _organizationRepository.GetByIdAsync(command.OrganizationId.Value)
+            var organization = await organizationRepository.GetByIdAsync(command.OrganizationId.Value)
                 ?? throw new NotFoundException(OrganizationErrors.NotFound);
 
-            if (await _membershipRepository.GetByOrgAndUserAsync(organization.Id, command.AuthorId) == null)
+            if (await membershipRepository.GetByOrgAndUserAsync(organization.Id, command.AuthorId) == null)
             {
                 throw new ValidationException(MembershipErrors.MemberNotFound);
             }
@@ -86,7 +67,7 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
             MultimodalEmbedding = null,
             ContentEmbeddingStatus = ContentEmbeddingStatus.Pending,
             PostMatchingStatus = PostMatchingStatus.Pending,
-            ContentHash = _hasher.HashStrings(
+            ContentHash = hasher.HashStrings(
                 command.ItemName,
                 command.Description,
                 firstImageUrl),
@@ -94,12 +75,16 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        await _postRepository.CreateAsync(post);
+        await postRepository.CreateAsync(post);
 
         var images = new List<PostImage>();
         for (int i = 0; i < command.Images.Length; i++)
         {
             var input = command.Images[i];
+            // log image info but not the base64 data
+            logger.LogInformation(
+                "Adding image for Post {PostId}: Url={Url}, MimeType={MimeType}, FileName={FileName}, FileSizeBytes={FileSizeBytes}",
+                post.Id, input.Url, input.MimeType, input.FileName, input.FileSizeBytes);
             var image = new PostImage
             {
                 Id = Guid.NewGuid(),
@@ -111,13 +96,14 @@ public sealed class CreatePostHandler : IRequestHandler<CreatePostCommand, PostR
                 FileSizeBytes = input.FileSizeBytes,
                 DisplayOrder = i,
             };
-            await _postImageRepository.CreateAsync(image);
+            await postImageRepository.CreateAsync(image);
             images.Add(image);
         }
 
-        await _postRepository.SaveChangesAsync();
 
-        _backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
+        await postImageRepository.SaveChangesAsync();
+
+        backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
         return new PostResult
         {

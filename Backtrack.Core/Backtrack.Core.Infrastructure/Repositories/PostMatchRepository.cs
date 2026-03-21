@@ -44,20 +44,19 @@ namespace Backtrack.Core.Infrastructure.Repositories
             var post = await _context.Posts.AsNoTracking().FirstOrDefaultAsync(p => p.Id == postId && p.DeletedAt == null, cancellationToken);
             if (post == null) return Array.Empty<PostMatch>();
 
-            var query = _dbSet.AsNoTracking();
-
+            // Tracking enabled so callers can update assessment fields without extra round-trips
             if (post.PostType == Backtrack.Core.Domain.Constants.PostType.Lost)
             {
-                return await query
-                    .Include(pm => pm.FoundPost)
+                return await _dbSet
+                    .Include(pm => pm.FoundPost).ThenInclude(p => p.Images)
                     .Where(pm => pm.LostPostId == postId && pm.DeletedAt == null)
                     .OrderByDescending(pm => pm.MatchScore)
                     .ToListAsync(cancellationToken);
             }
             else
             {
-                return await query
-                    .Include(pm => pm.LostPost)
+                return await _dbSet
+                    .Include(pm => pm.LostPost).ThenInclude(p => p.Images)
                     .Where(pm => pm.FoundPostId == postId && pm.DeletedAt == null)
                     .OrderByDescending(pm => pm.MatchScore)
                     .ToListAsync(cancellationToken);

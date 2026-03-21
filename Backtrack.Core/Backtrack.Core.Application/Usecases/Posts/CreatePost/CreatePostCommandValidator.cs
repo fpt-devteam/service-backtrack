@@ -31,6 +31,10 @@ public sealed class CreatePostCommandValidator : AbstractValidator<CreatePostCom
         RuleFor(x => x.Location.Longitude)
             .InclusiveBetween(-180, 180).WithMessage("Longitude must be between -180 and 180");
 
+        RuleFor(x => x.Images)
+            .NotEmpty().WithMessage("At least one image is required")
+            .Must(images => images.Length <= 5).WithMessage("No more than 5 images are allowed");
+
         RuleForEach(x => x.Images).ChildRules(image =>
         {
             image.RuleFor(i => i.Url)

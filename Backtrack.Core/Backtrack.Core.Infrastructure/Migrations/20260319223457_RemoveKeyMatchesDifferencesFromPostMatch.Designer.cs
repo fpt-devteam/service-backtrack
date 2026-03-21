@@ -3,6 +3,7 @@ using System;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -13,9 +14,11 @@ using Pgvector;
 namespace Backtrack.Core.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260319223457_RemoveKeyMatchesDifferencesFromPostMatch")]
+    partial class RemoveKeyMatchesDifferencesFromPostMatch
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -519,17 +522,13 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Criteria")
+                    b.Property<string>("CriteriaJson")
                         .HasColumnType("jsonb")
                         .HasColumnName("criteria_json");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
-
-                    b.Property<int>("DescriptionScore")
-                        .HasColumnType("integer")
-                        .HasColumnName("description_score");
 
                     b.Property<float>("DistanceMeters")
                         .HasColumnType("real")
@@ -545,10 +544,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_assessed");
 
-                    b.Property<int>("LocationScore")
-                        .HasColumnType("integer")
-                        .HasColumnName("location_score");
-
                     b.Property<Guid>("LostPostId")
                         .HasColumnType("uuid")
                         .HasColumnName("lost_post_id");
@@ -557,22 +552,13 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("real")
                         .HasColumnName("match_score");
 
-                    b.Property<string>("MatchingLevel")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("matching_level");
-
-                    b.Property<int>("TimeWindowScore")
+                    b.Property<int>("MatchingLevel")
                         .HasColumnType("integer")
-                        .HasColumnName("time_window_score");
+                        .HasColumnName("matching_level");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
-
-                    b.Property<int>("VisualScore")
-                        .HasColumnType("integer")
-                        .HasColumnName("visual_score");
 
                     b.HasKey("Id");
 

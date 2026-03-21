@@ -106,6 +106,16 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasColumnType("vector(1536)")
                 .HasConversion(embeddingToVectorConverter, embeddingComparer);
 
+            builder.Property(p => p.TextEmbedding)
+                .HasColumnName("text_embedding")
+                .HasColumnType("vector(1536)")
+                .HasConversion(embeddingToVectorConverter, embeddingComparer);
+
+            builder.Property(p => p.ImageEmbedding)
+                .HasColumnName("image_embedding")
+                .HasColumnType("vector(1536)")
+                .HasConversion(embeddingToVectorConverter, embeddingComparer);
+
             builder.Property(p => p.ContentHash)
                 .HasColumnName("content_hash")
                 .HasMaxLength(64)

@@ -15,6 +15,8 @@ public sealed class Post : Entity<Guid>
     public required string DisplayAddress { get; set; }
     public string? ExternalPlaceId { get; set; }
     public float[]? MultimodalEmbedding { get; set; }
+    public float[]? TextEmbedding { get; set; }
+    public float[]? ImageEmbedding { get; set; }
     public required ContentEmbeddingStatus ContentEmbeddingStatus { get; set; }
     public required PostMatchingStatus PostMatchingStatus { get; set; }
     public required string ContentHash { get; set; }

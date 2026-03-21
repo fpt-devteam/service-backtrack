@@ -3,6 +3,7 @@ using System;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -13,9 +14,11 @@ using Pgvector;
 namespace Backtrack.Core.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260319062642_AddLlmAssessmentToPostMatch")]
+    partial class AddLlmAssessmentToPostMatch
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -373,10 +376,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("external_place_id");
 
-                    b.Property<Vector>("ImageEmbedding")
-                        .HasColumnType("vector(1536)")
-                        .HasColumnName("image_embedding");
-
                     b.Property<string>("ItemName")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -405,10 +404,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("post_type");
-
-                    b.Property<Vector>("TextEmbedding")
-                        .HasColumnType("vector(1536)")
-                        .HasColumnName("text_embedding");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -519,17 +514,9 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Criteria")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("criteria_json");
-
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
-
-                    b.Property<int>("DescriptionScore")
-                        .HasColumnType("integer")
-                        .HasColumnName("description_score");
 
                     b.Property<float>("DistanceMeters")
                         .HasColumnType("real")
@@ -539,15 +526,19 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("found_post_id");
 
-                    b.Property<bool>("IsAssessed")
+                    b.Property<string[]>("KeyDifferences")
+                        .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_assessed");
+                        .HasColumnType("text[]")
+                        .HasColumnName("key_differences")
+                        .HasDefaultValueSql("'{}'");
 
-                    b.Property<int>("LocationScore")
-                        .HasColumnType("integer")
-                        .HasColumnName("location_score");
+                    b.Property<string[]>("KeyMatches")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text[]")
+                        .HasColumnName("key_matches")
+                        .HasDefaultValueSql("'{}'");
 
                     b.Property<Guid>("LostPostId")
                         .HasColumnType("uuid")
@@ -557,22 +548,13 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("real")
                         .HasColumnName("match_score");
 
-                    b.Property<string>("MatchingLevel")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("matching_level");
-
-                    b.Property<int>("TimeWindowScore")
+                    b.Property<int?>("MatchingLevel")
                         .HasColumnType("integer")
-                        .HasColumnName("time_window_score");
+                        .HasColumnName("matching_level");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
-
-                    b.Property<int>("VisualScore")
-                        .HasColumnType("integer")
-                        .HasColumnName("visual_score");
 
                     b.HasKey("Id");
 
