@@ -50,10 +50,16 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         var correlationId = HttpContextUtil.GetHeaderValue(context, HeaderNames.CorrelationId);
         var status = ResolveStatusCode(ex) ?? StatusCodes.Status500InternalServerError;
 
+        var realErrorMessage = GetInnermostMessage(ex);
+
         if (status >= 500)
-            logger.LogError(ex, "Unexpected exception. CorrelationId={CorrelationId}", correlationId);
+        {
+            logger.LogError(ex, "[{CorrelationId}] Server Crash! Reason: {RealMessage}", correlationId, realErrorMessage);
+        }
         else
-            logger.LogWarning(ex.Message, "Handled exception. CorrelationId={CorrelationId}", correlationId);
+        {
+            logger.LogWarning("[{CorrelationId}] Client error ({Status}): {RealMessage}", correlationId, status, realErrorMessage);
+        }
 
         var apiError = BuildApiError(ex, status);
 
@@ -62,7 +68,16 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             ApiResponse<object>.ErrorResponse(apiError, correlationId),
             _json
         );
+    }
 
+    private static string GetInnermostMessage(Exception ex)
+    {
+        Exception current = ex;
+        while (current.InnerException != null)
+        {
+            current = current.InnerException;
+        }
+        return current.Message;
     }
 
     private static ApiError BuildApiError(Exception ex, int status)

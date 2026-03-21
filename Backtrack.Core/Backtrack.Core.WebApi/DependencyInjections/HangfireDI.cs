@@ -53,7 +53,13 @@ namespace Backtrack.Core.WebApi.DependencyInjections
 
             if (hangfireSettings.EnableDashboard)
             {
-                app.UseHangfireDashboard(hangfireSettings.DashboardPath);
+                app.UseHangfireDashboard(hangfireSettings.DashboardPath, new DashboardOptions
+                {
+                    // Traffic arrives from the API Gateway, not localhost.
+                    // Access is already gated by the gateway's FirebaseAuthMiddleware
+                    // via the /api/core/hangfire public-path entry.
+                    Authorization = []
+                });
             }
 
             return app;

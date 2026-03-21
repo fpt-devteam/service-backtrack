@@ -12,8 +12,6 @@ public sealed record UpdatePostCommand : IRequest<PostResult>
     public string? PostType { get; init; }
     public string? ItemName { get; init; }
     public string? Description { get; init; }
-    public string? DistinctiveMarks { get; init; }
-    public string[]? ImageUrls { get; init; }
     public GeoPoint? Location { get; init; }
     public string? ExternalPlaceId { get; init; }
     public string? DisplayAddress { get; init; }

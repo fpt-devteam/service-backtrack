@@ -11,12 +11,12 @@ public sealed class Post : Entity<Guid>
     public required PostType PostType { get; set; }
     public required string ItemName { get; set; }
     public required string Description { get; set; }
-    public string? DistinctiveMarks { get; set; }
-    public string[] ImageUrls { get; set; } = Array.Empty<string>();
     public required GeoPoint Location { get; set; }
     public required string DisplayAddress { get; set; }
     public string? ExternalPlaceId { get; set; }
     public float[]? MultimodalEmbedding { get; set; }
+    public float[]? TextEmbedding { get; set; }
+    public float[]? ImageEmbedding { get; set; }
     public required ContentEmbeddingStatus ContentEmbeddingStatus { get; set; }
     public required PostMatchingStatus PostMatchingStatus { get; set; }
     public required string ContentHash { get; set; }
@@ -25,4 +25,5 @@ public sealed class Post : Entity<Guid>
     public Guid? OrganizationId { get; set; }
     public User Author { get; set; } = default!;
     public Organization? Organization { get; set; } = null;
+    public ICollection<PostImage> Images { get; set; } = new List<PostImage>();
 }

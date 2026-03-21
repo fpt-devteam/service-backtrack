@@ -8,6 +8,7 @@ using Backtrack.Core.Application.Usecases.Organizations.UpdateMemberRole;
 using Backtrack.Core.Application.Usecases.Organizations.CreateOrganization;
 using Backtrack.Core.Application.Usecases.Organizations.UpdateOrganization;
 using Backtrack.Core.Application.Usecases.Organizations.GetOrganization;
+using Backtrack.Core.Application.Usecases.Organizations.GetOrganizationPublic;
 using Backtrack.Core.Application.Usecases.Organizations.GetMyOrganizations;
 using Backtrack.Core.Application.Usecases.Organizations.GetOrgMembers;
 using Backtrack.Core.Application.Usecases.Organizations.RemoveMember;
@@ -96,6 +97,25 @@ public class OrganizationController : ControllerBase
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var query = new GetOrganizationQuery(orgId, userId);
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    /// <summary>
+    /// Get an organization by ID (public, no authentication or membership required)
+    /// </summary>
+    /// <param name="orgId">The organization ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The organization details</returns>
+    /// <response code="200">Organization found</response>
+    /// <response code="404">Organization not found</response>
+    [HttpGet("{orgId:guid}/public")]
+    [ProducesResponseType(typeof(ApiResponse<OrganizationResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetOrganizationPublicAsync(
+        [FromRoute] Guid orgId, CancellationToken cancellationToken)
+    {
+        var query = new GetOrganizationPublicQuery(orgId);
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }

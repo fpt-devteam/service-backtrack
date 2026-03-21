@@ -1,6 +1,9 @@
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
+using Backtrack.Core.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Text.Json;
 
 namespace Backtrack.Core.Infrastructure.Data.Configurations;
 
@@ -31,6 +34,45 @@ public class PostMatchConfiguration : IEntityTypeConfiguration<PostMatch>
         builder.Property(pm => pm.DistanceMeters)
             .HasColumnName("distance_meters")
             .IsRequired();
+
+        builder.Property(pm => pm.MatchingLevel)
+            .HasColumnName("matching_level")
+            .HasConversion<string>()
+            .IsRequired();
+
+        builder.Property(pm => pm.DescriptionScore)
+            .HasColumnName("description_score")
+            .IsRequired();
+
+        builder.Property(pm => pm.VisualScore)
+            .HasColumnName("visual_score")
+            .IsRequired();
+
+        builder.Property(pm => pm.LocationScore)
+            .HasColumnName("location_score")
+            .IsRequired();
+
+        builder.Property(pm => pm.TimeWindowScore)
+            .HasColumnName("time_window_score")
+            .IsRequired();
+
+        builder.Property(pm => pm.IsAssessed)
+            .HasColumnName("is_assessed")
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(pm => pm.CriteriaAssessment)
+            .HasColumnName("criteria_json")
+            .HasColumnType("jsonb")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonSerializer.Deserialize<PostMatchCriteriaAssessment>(v, (JsonSerializerOptions?)null))
+            .IsRequired(false);
+
+        builder.Property(pm => pm.AssessmentSummary)
+            .HasColumnName("assessment_summary")
+            .HasColumnType("text")
+            .IsRequired(false);
 
         builder.Property(pm => pm.CreatedAt)
             .HasColumnName("created_at")

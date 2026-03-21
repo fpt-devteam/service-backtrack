@@ -27,7 +27,7 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             double? radiusInKm = null,
             CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<(Post Post, double Similarity, double DistanceMeters)>> GetSimilarPostsAsync(
+        Task<IEnumerable<(Post Post, double TextSimilarity, double ImageSimilarity, double DistanceMeters)>> GetSimilarPostsAsync(
             Post post,
             CancellationToken cancellationToken = default);
 

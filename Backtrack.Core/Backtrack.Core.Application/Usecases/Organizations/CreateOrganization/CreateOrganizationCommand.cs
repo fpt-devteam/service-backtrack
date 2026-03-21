@@ -18,4 +18,5 @@ public sealed record CreateOrganizationCommand : IRequest<OrganizationResult>
     public required string Phone { get; init; }
     public required string IndustryType { get; init; }
     public required string TaxIdentificationNumber { get; init; }
+    public required string LogoUrl { get; init; }
 }

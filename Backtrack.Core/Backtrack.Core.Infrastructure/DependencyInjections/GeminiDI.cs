@@ -33,6 +33,15 @@ namespace Backtrack.Core.Infrastructure.DependencyInjections
                 }
             });
 
+            services.AddHttpClient<ILlmService, GeminiLlmService>((serviceProvider, client) =>
+            {
+                var geminiSettings = configuration.GetSection("GeminiSettings").Get<GeminiSettings>();
+                if (geminiSettings != null)
+                {
+                    client.Timeout = TimeSpan.FromSeconds(geminiSettings.TimeoutSeconds * 2);
+                }
+            });
+
             services.AddHttpClient<IImageFetcher, HttpImageFetcher>();
         }
     }

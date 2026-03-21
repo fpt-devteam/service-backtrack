@@ -46,6 +46,7 @@ public sealed class GetOrganizationHandler : IRequestHandler<GetOrganizationQuer
             Phone = org.Phone,
             IndustryType = org.IndustryType,
             TaxIdentificationNumber = org.TaxIdentificationNumber,
+            LogoUrl = org.LogoUrl,
             Status = org.Status.ToString(),
             CreatedAt = org.CreatedAt,
         };

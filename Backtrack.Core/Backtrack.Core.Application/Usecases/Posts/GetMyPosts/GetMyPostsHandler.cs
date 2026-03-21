@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases.PostImages;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Posts.GetMyPosts;
@@ -24,7 +25,7 @@ public sealed class GetMyPostsHandler : IRequestHandler<GetMyPostsQuery, List<Po
             PostType = post.PostType.ToString(),
             ItemName = post.ItemName,
             Description = post.Description,
-            ImageUrls = post.ImageUrls,
+            Images = post.Images.Select(i => i.ToPostImageResult()).ToList(),
             Location = post.Location,
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress = post.DisplayAddress,

@@ -29,6 +29,7 @@ public sealed class GetAllOrganizationsHandler
             Phone = o.Phone,
             IndustryType = o.IndustryType,
             TaxIdentificationNumber = o.TaxIdentificationNumber,
+            LogoUrl = o.LogoUrl,
             Status = o.Status.ToString(),
             CreatedAt = o.CreatedAt,
         }).ToList();
