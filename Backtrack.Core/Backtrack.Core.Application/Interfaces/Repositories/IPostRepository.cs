@@ -1,30 +1,28 @@
+using Backtrack.Core.Application.Usecases;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
+using Backtrack.Core.Domain.ValueObjects;
 
 namespace Backtrack.Core.Application.Interfaces.Repositories
 {
     public interface IPostRepository : IGenericRepository<Post, Guid>
     {
-        Task<(IEnumerable<Post> Items, int TotalCount)> GetPagedAsync(
-            int offset,
-            int limit,
-            PostType? postType = null,
+        Task<(IEnumerable<(Post Post, double? DistanceMeters)> Items, int TotalCount)> GetPagedAsync(
+            PagedQuery pagedQuery,
             string? searchTerm = null,
-            double? latitude = null,
-            double? longitude = null,
-            double? radiusInKm = null,
-            string? authorId = null,
+            PostType? postType = null,
             Guid? organizationId = null,
+            GeoPoint? location = null,
+            double? radiusInKm = null,
             CancellationToken cancellationToken = default);
 
-        Task<(IEnumerable<(Post Post, double SimilarityScore)> Items, int TotalCount)> SearchBySemanticAsync(
+        Task<(IEnumerable<(Post Post, double SimilarityScore, double? DistanceMeters)> Items, int TotalCount)> SearchBySemanticAsync(
             float[] queryEmbedding,
-            int offset,
-            int limit,
+            PagedQuery pagedQuery,
             PostType? postType = null,
-            double? latitude = null,
-            double? longitude = null,
+            GeoPoint? location = null,
             double? radiusInKm = null,
+            Guid? organizationId = null,
             CancellationToken cancellationToken = default);
 
         Task<IEnumerable<(Post Post, double TextSimilarity, double ImageSimilarity, double DistanceMeters)>> GetSimilarPostsAsync(

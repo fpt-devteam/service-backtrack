@@ -11,9 +11,9 @@ namespace Backtrack.Core.Application.Utils;
 public static class PostMatchingCriteria
 {
     // ── Weighted MatchScore coefficients (must sum to 1.0) ──────────────────
-    public const float TextSimilarityWeight  = 0.40f;
+    public const float TextSimilarityWeight = 0.40f;
     public const float ImageSimilarityWeight = 0.35f;
-    public const float LocationWeight        = 0.25f;
+    public const float LocationWeight = 0.25f;
 
     // ── Geographic cap ────────────────────────────────────────────────────────
     public const double MaxDistanceMeters = 20_000; // 20 km
@@ -22,12 +22,12 @@ public static class PostMatchingCriteria
     public const double MaxTimeWindowDays = 30.0;
 
     // ── Candidate filter ──────────────────────────────────────────────────────
-    public const float MinMatchScore = 0.40f;
+    public const float MinMatchScore = 0.65f;
 
     // ── MatchingLevel thresholds (applied to final MatchScore 0-1) ───────────
-    public const float VeryHighThreshold = 0.80f;
-    public const float HighThreshold     = 0.65f;
-    public const float MediumThreshold   = 0.45f;
+    public const float VeryHighThreshold = 0.90f;
+    public const float HighThreshold = 0.80f;
+    public const float MediumThreshold = 0.70f;
 
     // ─────────────────────────────────────────────────────────────────────────
     // MatchingLevel
@@ -36,9 +36,9 @@ public static class PostMatchingCriteria
     public static MatchingLevel ComputeMatchingLevel(float matchScore) => matchScore switch
     {
         >= VeryHighThreshold => MatchingLevel.VeryHigh,
-        >= HighThreshold     => MatchingLevel.High,
-        >= MediumThreshold   => MatchingLevel.Medium,
-        _                    => MatchingLevel.Low
+        >= HighThreshold => MatchingLevel.High,
+        >= MediumThreshold => MatchingLevel.Medium,
+        _ => MatchingLevel.Low
     };
 
     // ─────────────────────────────────────────────────────────────────────────

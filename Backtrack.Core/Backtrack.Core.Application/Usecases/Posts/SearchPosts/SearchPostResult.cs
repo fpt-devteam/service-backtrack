@@ -1,11 +1,12 @@
-using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Domain.ValueObjects;
 
-namespace Backtrack.Core.Application.Usecases.PostMatchings.SearchPostsBySemantic;
+namespace Backtrack.Core.Application.Usecases.Posts.SearchPosts;
 
-public sealed record PostSemanticSearchResult
+public sealed record SearchPostResult
 {
     public required Guid Id { get; init; }
+    public AuthorResult? Author { get; init; }
+    public OrganizationOnPost? Organization { get; init; }
     public required string PostType { get; init; }
     public required string ItemName { get; init; }
     public required string Description { get; init; }
@@ -15,5 +16,6 @@ public sealed record PostSemanticSearchResult
     public string? DisplayAddress { get; init; }
     public required DateTimeOffset EventTime { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
-    public required double SimilarityScore { get; init; }
+    public double? Score { get; init; }
+    public double? DistanceInMeters { get; init; }
 }

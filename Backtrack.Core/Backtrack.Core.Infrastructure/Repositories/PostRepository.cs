@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases;
 using Backtrack.Core.Application.Utils;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
@@ -29,62 +30,43 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             p.DeletedAt == null);
     }
 
-    public async Task<(IEnumerable<Post> Items, int TotalCount)> GetPagedAsync(
-        int offset,
-        int limit,
-        PostType? postType = null,
+    public async Task<(IEnumerable<(Post Post, double? DistanceMeters)> Items, int TotalCount)> GetPagedAsync(
+        PagedQuery pagedQuery,
         string? searchTerm = null,
-        double? latitude = null,
-        double? longitude = null,
-        double? radiusInKm = null,
-        string? authorId = null,
+        PostType? postType = null,
         Guid? organizationId = null,
+        GeoPoint? location = null,
+        double? radiusInKm = null,
         CancellationToken cancellationToken = default)
     {
-        var query = _dbSet.AsQueryable();
+        var query = _dbSet.AsQueryable().Where(p => p.DeletedAt == null);
 
         if (postType is not null)
-        {
             query = query.Where(p => p.PostType == postType);
-        }
-
-        if (authorId is not null)
-        {
-            query = query.Where(p => p.AuthorId == authorId);
-        }
 
         if (organizationId is not null)
-        {
             query = query.Where(p => p.OrganizationId == organizationId);
-        }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
-        {
             query = query.Where(p =>
-                p.ItemName.Contains(searchTerm) ||
-                p.Description.Contains(searchTerm));
-        }
+                p.ItemName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                p.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
 
-        if (latitude.HasValue && longitude.HasValue && radiusInKm.HasValue)
+        if (location != null && radiusInKm.HasValue)
         {
-            var searchLocation = new GeoPoint(latitude.Value, longitude.Value);
-
             var radiusInMeters = radiusInKm.Value * 1000;
-
             var ids = await _context.Database
                 .SqlQueryRaw<Guid>(@"
-                        SELECT id
-                        FROM posts
-                        WHERE location IS NOT NULL
-                        AND ST_DWithin(
-                            location::geography,
-                            ST_SetSRID(ST_MakePoint({0}, {1}), 4326)::geography,
-                            {2}
-                        )
-                        AND deleted_at IS NULL
-                    ", longitude.Value, latitude.Value, radiusInMeters)
+                    SELECT id FROM posts
+                    WHERE location IS NOT NULL
+                    AND ST_DWithin(
+                        location::geography,
+                        ST_SetSRID(ST_MakePoint({0}, {1}), 4326)::geography,
+                        {2}
+                    )
+                    AND deleted_at IS NULL
+                ", location.Longitude, location.Latitude, radiusInMeters)
                 .ToListAsync(cancellationToken);
-
             query = query.Where(p => ids.Contains(p.Id));
         }
 
@@ -95,74 +77,64 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             .Include(p => p.Organization)
             .Include(p => p.Images)
             .OrderByDescending(p => p.CreatedAt)
-            .Skip(offset)
-            .Take(limit)
+            .Skip(pagedQuery.Offset)
+            .Take(pagedQuery.Limit)
             .ToListAsync(cancellationToken);
 
-        return (items, totalCount);
-    }
-
-    public async Task<(IEnumerable<(Post Post, double SimilarityScore)> Items, int TotalCount)> SearchBySemanticAsync(
-        float[] queryEmbedding,
-        int offset,
-        int limit,
-        PostType? postType = null,
-        double? latitude = null,
-        double? longitude = null,
-        double? radiusInKm = null,
-        CancellationToken cancellationToken = default)
-    {
-        const double MinimumSimilarityThreshold = 0.15; // Filter out results with similarity < 55%
-
-        // Convert embedding to PostgreSQL array format for SQL
-        var embeddingArrayLiteral = "[" + string.Join(",", queryEmbedding.Select(f => f.ToString(System.Globalization.CultureInfo.InvariantCulture))) + "]";
-
-        // Build SQL with safe string interpolation for enum (not user input)
-        var postTypeCondition = postType.HasValue
-            ? $"AND post_type = '{postType.Value}'"
-            : "";
-
-        var locationCondition = "";
-        double? radiusInMeters = null;
-        if (latitude.HasValue && longitude.HasValue && radiusInKm.HasValue)
+        if (location != null)
         {
-            radiusInMeters = radiusInKm.Value * 1000;
-            locationCondition = @"
-                    AND location IS NOT NULL
-                    AND ST_DWithin(
-                        location::geography,
-                        ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography,
-                        @radius
-                    )";
+            var withDistance = items
+                .Select(p => (p, (double?)Haversine(location.Latitude, location.Longitude, p.Location!.Latitude, p.Location.Longitude)))
+                .OrderBy(x => x.Item2)
+                .ToList();
+            return (withDistance, totalCount);
         }
 
-        // Build SQL query using PostgreSQL pgvector operations
+        return (items.Select(p => (p, (double?)null)).ToList(), totalCount);
+    }
+
+    private static double Haversine(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double R = 6371000;
+        var φ1 = lat1 * Math.PI / 180;
+        var φ2 = lat2 * Math.PI / 180;
+        var Δφ = (lat2 - lat1) * Math.PI / 180;
+        var Δλ = (lon2 - lon1) * Math.PI / 180;
+        var a = Math.Sin(Δφ / 2) * Math.Sin(Δφ / 2) +
+                Math.Cos(φ1) * Math.Cos(φ2) *
+                Math.Sin(Δλ / 2) * Math.Sin(Δλ / 2);
+        return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+    }
+
+    public async Task<(IEnumerable<(Post Post, double SimilarityScore, double? DistanceMeters)> Items, int TotalCount)> SearchBySemanticAsync(
+        float[] queryEmbedding,
+        PagedQuery pagedQuery,
+        PostType? postType = null,
+        GeoPoint? location = null,
+        double? radiusInKm = null,
+        Guid? organizationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        const double MinimumSimilarityThreshold = 0.5;
+
+        var embeddingArrayLiteral = "[" + string.Join(",", queryEmbedding.Select(f => f.ToString(System.Globalization.CultureInfo.InvariantCulture))) + "]";
+
+        var postTypeCondition = postType.HasValue ? $"AND post_type = '{postType.Value}'" : "";
+        var orgCondition = organizationId.HasValue ? $"AND organization_id = '{organizationId.Value}'" : "";
+
+        var hasLocation = location != null && radiusInKm.HasValue;
+        double? radiusInMeters = hasLocation ? radiusInKm!.Value * 1000 : null;
+
+        var locationCondition = hasLocation ? @"
+                AND location IS NOT NULL
+                AND ST_DWithin(
+                    location::geography,
+                    ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography,
+                    @radius
+                )" : "";
+
         var sql = $@"
-                WITH filtered_posts AS (
-                    SELECT
-                        id,
-                        post_type,
-                        item_name,
-                        description,
-                        location,
-                        external_place_id,
-                        display_address,
-                        event_time,
-                        created_at,
-                        updated_at,
-                        multimodal_embedding,
-                        content_hash,
-                        content_embedding_status,
-                        author_id,
-                        (multimodal_embedding <=> @queryEmbedding::vector) AS distance,
-                        (1.0 - (multimodal_embedding <=> @queryEmbedding::vector)) AS similarity
-                    FROM posts
-                    WHERE deleted_at IS NULL
-                        AND content_embedding_status = 'Ready'
-                        AND multimodal_embedding IS NOT NULL
-                        {postTypeCondition}
-                        {locationCondition}
-                )
+            WITH ranked AS (
                 SELECT
                     id,
                     post_type,
@@ -178,55 +150,77 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                     content_hash,
                     content_embedding_status,
                     author_id,
-                    similarity
-                FROM filtered_posts
-                WHERE similarity >= @minSimilarity
-                ORDER BY distance ASC
-                OFFSET @offset
-                LIMIT @limit;
-
-                SELECT COUNT(*)::int
+                    (multimodal_embedding <=> @queryEmbedding::vector) AS distance,
+                    (1.0 - (multimodal_embedding <=> @queryEmbedding::vector)) AS similarity
                 FROM posts
                 WHERE deleted_at IS NULL
                     AND content_embedding_status = 'Ready'
                     AND multimodal_embedding IS NOT NULL
                     {postTypeCondition}
+                    {orgCondition}
                     {locationCondition}
-                    AND (1.0 - (multimodal_embedding <=> @queryEmbedding::vector)) >= @minSimilarity;
-            ";
+            )
+            SELECT
+                id,
+                post_type,
+                item_name,
+                description,
+                location,
+                external_place_id,
+                display_address,
+                event_time,
+                created_at,
+                updated_at,
+                multimodal_embedding,
+                content_hash,
+                content_embedding_status,
+                author_id,
+                similarity
+            FROM ranked
+            WHERE similarity >= @minSimilarity
+            ORDER BY distance ASC, id ASC
+            OFFSET @offset
+            LIMIT @limit;
 
-        // Create parameters
-        var parameters = new List<Npgsql.NpgsqlParameter>
+            SELECT COUNT(*)::int
+            FROM posts
+            WHERE deleted_at IS NULL
+                AND content_embedding_status = 'Ready'
+                AND multimodal_embedding IS NOT NULL
+                {postTypeCondition}
+                {orgCondition}
+                {locationCondition}
+                AND (1.0 - (multimodal_embedding <=> @queryEmbedding::vector)) >= @minSimilarity;
+        ";
+
+        var parameters = new List<NpgsqlParameter>
         {
-            new Npgsql.NpgsqlParameter("@queryEmbedding", embeddingArrayLiteral),
-            new Npgsql.NpgsqlParameter("@minSimilarity", MinimumSimilarityThreshold),
-            new Npgsql.NpgsqlParameter("@offset", offset),
-            new Npgsql.NpgsqlParameter("@limit", limit)
+            new("@queryEmbedding", embeddingArrayLiteral),
+            new("@minSimilarity", MinimumSimilarityThreshold),
+            new("@offset", pagedQuery.Offset),
+            new("@limit", pagedQuery.Limit)
         };
 
-        if (radiusInMeters.HasValue && latitude.HasValue && longitude.HasValue)
+        if (hasLocation)
         {
-            parameters.Add(new Npgsql.NpgsqlParameter("@longitude", longitude.Value));
-            parameters.Add(new Npgsql.NpgsqlParameter("@latitude", latitude.Value));
-            parameters.Add(new Npgsql.NpgsqlParameter("@radius", radiusInMeters.Value));
+            parameters.Add(new("@longitude", location!.Longitude));
+            parameters.Add(new("@latitude", location.Latitude));
+            parameters.Add(new("@radius", radiusInMeters!.Value));
         }
 
-        // Execute raw SQL query
-        using var command = _context.Database.GetDbConnection().CreateCommand();
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        using var command = conn.CreateCommand();
         command.CommandText = sql;
         command.Parameters.AddRange(parameters.ToArray());
 
-        if (_context.Database.GetDbConnection().State != System.Data.ConnectionState.Open)
-        {
-            await _context.Database.OpenConnectionAsync(cancellationToken);
-        }
-
-        var results = new List<(Post Post, double SimilarityScore)>();
+        var rawResults = new List<(Post Post, double SimilarityScore)>();
         int totalCount = 0;
 
         using (var reader = await command.ExecuteReaderAsync(cancellationToken))
         {
-            // Read post results
             while (await reader.ReadAsync(cancellationToken))
             {
                 var post = new Post
@@ -236,37 +230,36 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                     ItemName = reader.GetString(2),
                     Description = reader.GetString(3),
                     Location = new GeoPoint(
-                            ((Point)reader.GetValue(4)).Y, // latitude
-                            ((Point)reader.GetValue(4)).X  // longitude
-                        ),
+                        ((Point)reader.GetValue(4)).Y,
+                        ((Point)reader.GetValue(4)).X),
                     ExternalPlaceId = reader.IsDBNull(5) ? null : reader.GetString(5),
                     DisplayAddress = reader.IsDBNull(6) ? null : reader.GetString(6),
                     EventTime = reader.GetFieldValue<DateTimeOffset>(7),
                     CreatedAt = reader.GetFieldValue<DateTimeOffset>(8),
-                    UpdatedAt = reader.IsDBNull(9)
-                        ? null
-                        : reader.GetFieldValue<DateTimeOffset>(9),
-                    MultimodalEmbedding = reader.IsDBNull(10)
-                        ? null
-                        : ((Vector)reader.GetValue(10)).ToArray(),
+                    UpdatedAt = reader.IsDBNull(9) ? null : reader.GetFieldValue<DateTimeOffset>(9),
+                    MultimodalEmbedding = reader.IsDBNull(10) ? null : ((Vector)reader.GetValue(10)).ToArray(),
                     ContentHash = reader.GetString(11),
-                    ContentEmbeddingStatus = (ContentEmbeddingStatus)Enum.Parse(typeof(ContentEmbeddingStatus), reader.GetString(12)),
+                    ContentEmbeddingStatus = Enum.Parse<ContentEmbeddingStatus>(reader.GetString(12)),
                     PostMatchingStatus = PostMatchingStatus.Completed,
                     AuthorId = reader.GetString(13)
                 };
-
-                var similarity = reader.GetDouble(14);
-                results.Add((post, similarity));
+                rawResults.Add((post, reader.GetDouble(14)));
             }
 
-            // Read total count
             if (await reader.NextResultAsync(cancellationToken) && await reader.ReadAsync(cancellationToken))
-            {
                 totalCount = reader.GetInt32(0);
-            }
         }
 
-        return (results, totalCount);
+        if (location != null)
+        {
+            var withDistance = rawResults
+                .Select(r => (r.Post, r.SimilarityScore, (double?)Haversine(location.Latitude, location.Longitude, r.Post.Location!.Latitude, r.Post.Location.Longitude)))
+                .OrderBy(r => r.Item3)
+                .ToList();
+            return (withDistance, totalCount);
+        }
+
+        return (rawResults.Select(r => (r.Post, r.SimilarityScore, (double?)null)).ToList(), totalCount);
     }
 
     public async Task<IEnumerable<(Post Post, double TextSimilarity, double ImageSimilarity, double DistanceMeters)>> GetSimilarPostsAsync(

@@ -2,17 +2,15 @@ using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
-using Backtrack.Core.WebApi.Common;
-using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Posts.CreatePost;
-using Backtrack.Core.Application.Usecases.Posts.GetPosts;
 using Backtrack.Core.Application.Usecases.Posts.GetPostById;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetSimilarPosts;
 using Backtrack.Core.Application.Usecases.Posts.DeletePost;
 using Backtrack.Core.Application.Usecases.Posts.GetMyPosts;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetPostMatchingStatus;
-using Backtrack.Core.Application.Usecases.PostMatchings.SearchPostsBySemantic;
+using Backtrack.Core.Application.Usecases.Posts.SearchPosts;
+using Backtrack.Core.WebApi.Common;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -81,17 +79,16 @@ public class PostController : ControllerBase
         return this.ApiOk(result);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetPostsAsync([FromQuery] GetPostsQuery query, CancellationToken cancellationToken = default)
+    [HttpPost("search")]
+    public async Task<IActionResult> SearchPostsAsync([FromBody] SearchPostsCommand command, CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(query, cancellationToken);
+        var result = await _mediator.Send(command, cancellationToken);
 
-        var response = PagedResponse<PostResult>.Create(
+        var response = PagedResponse<SearchPostResult>.Create(
             items: result.Items,
-            page: query.Page,
-            pageSize: query.PageSize,
-            totalCount: result.Total
-        );
+            page: command.Page,
+            pageSize: command.PageSize,
+            totalCount: result.Total);
 
         return this.ApiOk(response);
     }
@@ -104,21 +101,6 @@ public class PostController : ControllerBase
         var query = new GetPostByIdQuery { PostId = postId };
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
-    }
-
-    [HttpGet("search/semantic")]
-    public async Task<IActionResult> SearchPostsBySemanticAsync([FromQuery] SearchPostsBySemanticQuery query, CancellationToken cancellationToken = default)
-    {
-        var result = await _mediator.Send(query, cancellationToken);
-
-        var response = PagedResponse<PostSemanticSearchResult>.Create(
-            items: result.Items,
-            page: query.Page,
-            pageSize: query.PageSize,
-            totalCount: result.Total
-        );
-
-        return this.ApiOk(response);
     }
 
     /// <summary>
