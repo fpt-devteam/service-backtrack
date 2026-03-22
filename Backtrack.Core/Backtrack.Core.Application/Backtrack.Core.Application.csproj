@@ -7,14 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Services\**" />
     <Compile Remove="Usecases\Organizations\Commands\**" />
     <Compile Remove="Usecases\Organizations\Queries\**" />
     <Compile Remove="Usecases\Posts\Commands\**" />
     <Compile Remove="Usecases\Posts\Queries\**" />
+    <EmbeddedResource Remove="Services\**" />
     <EmbeddedResource Remove="Usecases\Organizations\Commands\**" />
     <EmbeddedResource Remove="Usecases\Organizations\Queries\**" />
     <EmbeddedResource Remove="Usecases\Posts\Commands\**" />
     <EmbeddedResource Remove="Usecases\Posts\Queries\**" />
+    <None Remove="Services\**" />
     <None Remove="Usecases\Organizations\Commands\**" />
     <None Remove="Usecases\Organizations\Queries\**" />
     <None Remove="Usecases\Posts\Commands\**" />
@@ -38,7 +41,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\" />
     <Folder Include="Usecases\ImageAnalysis\Commands\" />
     <Folder Include="Usecases\Users\Commands\" />
     <Folder Include="Usecases\Users\Queries\" />

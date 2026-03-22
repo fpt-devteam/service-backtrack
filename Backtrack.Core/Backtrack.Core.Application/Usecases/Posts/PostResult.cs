@@ -1,4 +1,3 @@
-using Backtrack.Core.Application.Usecases.PostImages;
 using Backtrack.Core.Domain.ValueObjects;
 
 namespace Backtrack.Core.Application.Usecases.Posts;

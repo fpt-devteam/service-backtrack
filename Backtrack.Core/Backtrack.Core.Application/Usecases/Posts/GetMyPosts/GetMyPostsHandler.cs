@@ -1,5 +1,4 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Usecases.PostImages;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Posts.GetMyPosts;

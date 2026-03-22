@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Usecases.PostImages;
+using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Domain.ValueObjects;
 
 namespace Backtrack.Core.Application.Usecases.PostMatchings.SearchPostsBySemantic;

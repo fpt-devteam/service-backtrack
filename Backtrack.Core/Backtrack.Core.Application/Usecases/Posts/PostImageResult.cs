@@ -1,6 +1,6 @@
 using Backtrack.Core.Domain.Entities;
 
-namespace Backtrack.Core.Application.Usecases.PostImages;
+namespace Backtrack.Core.Application.Usecases.Posts;
 
 public sealed record PostImageResult
 {
