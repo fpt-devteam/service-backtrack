@@ -1,4 +1,4 @@
-import ConversationAssignment from "@/models/conversation-assignment";
+import ConversationAssignment from "@/models/support-conversation-assignment";
 import { CursorPaginationParams, cursorPaginate } from "@/utils/pagination";
 
 export const assignConversation = async (

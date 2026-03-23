@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
-import { IConversationAssignment } from './interfaces/conversation-assignment.interface';
+import { ISupportConversationAssignment } from './interfaces/support-conversation-assignment.interface';
 
-const ConversationAssignmentSchema = new Schema<IConversationAssignment>(
+const ConversationAssignmentSchema = new Schema<ISupportConversationAssignment>(
     {
         conversationId: { type: String, required: true, index: true },
         agentId: { type: String, required: true, index: true },
@@ -21,7 +21,7 @@ ConversationAssignmentSchema.index({ conversationId: 1, assignedAt: -1 });
 ConversationAssignmentSchema.index({ conversationId: 1, unassignedAt: 1 });
 ConversationAssignmentSchema.index({ agentId: 1, unassignedAt: 1 });
 
-const ConversationAssignment = model<IConversationAssignment>(
+const ConversationAssignment = model<ISupportConversationAssignment>(
     'ConversationAssignment',
     ConversationAssignmentSchema,
 );

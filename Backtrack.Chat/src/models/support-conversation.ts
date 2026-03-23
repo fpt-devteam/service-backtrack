@@ -1,23 +1,23 @@
 import { Schema, model } from 'mongoose';
-import { ConversationType, IConversation } from './interfaces/conversation.interface';
+import { ConversationStatus, ISupportConversation } from './interfaces/support-conversation.interface';
 
 
 
-const ConversationSchema = new Schema<IConversation>(
+const ConversationSchema = new Schema<ISupportConversation>(
 	{
 		lastMessageAt: { type: Date },
 		lastMessageContent: { type: String, default: null },
 		senderId: { type: String, default: null }, 
-		type: { 
-			type: String, 
-			enum: Object.values(ConversationType), 
-			required: true,
-			index: true 
-		},
 		staffAssignId: { type: String, default: null, index: true },
 		orgId: { 
 			type: String, 
-			default: null,
+			required: true,
+			index: true 
+		},
+		status: { 
+			type: String, 
+			enum: Object.values(ConversationStatus), 
+			required: true,
 			index: true 
 		},
 		deletedAt: { type: Date, default: null }, 
@@ -33,5 +33,5 @@ ConversationSchema.index({ senderId: 1, lastMessageAt: -1 });
 ConversationSchema.index({ deletedAt: 1 }); 
 ConversationSchema.index({ staffAssignId: 1, lastMessageAt: -1 });
 
-const Conversation = model<IConversation>('Conversation', ConversationSchema);
-export default Conversation;
+const SupportConversation = model<ISupportConversation>('SupportConversation', ConversationSchema);
+export default SupportConversation;
