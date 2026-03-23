@@ -364,6 +364,63 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return results;
     }
 
+    public async Task<IEnumerable<(Post Post, double DistanceMeters)>> GetFeedAsync(
+        GeoPoint location,
+        CancellationToken cancellationToken = default)
+    {
+        const int FeedLimit = 50;
+
+        const string sql = @"
+            SELECT
+                id,
+                ST_Distance(
+                    location::geography,
+                    ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography
+                ) AS dist,
+                event_time
+            FROM posts
+            WHERE deleted_at IS NULL
+                AND location IS NOT NULL
+            ORDER BY dist ASC, event_time DESC
+            LIMIT @limit";
+
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        var idDistances = new List<(Guid Id, double Distance)>();
+
+        await using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = sql;
+            cmd.Parameters.Add(new NpgsqlParameter("@longitude", location.Longitude));
+            cmd.Parameters.Add(new NpgsqlParameter("@latitude", location.Latitude));
+            cmd.Parameters.Add(new NpgsqlParameter("@limit", FeedLimit));
+
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+                idDistances.Add((reader.GetGuid(0), reader.GetDouble(1)));
+        }
+
+        if (idDistances.Count == 0)
+            return [];
+
+        var ids = idDistances.Select(x => x.Id).ToList();
+        var posts = await _dbSet
+            .Include(p => p.Author)
+            .Include(p => p.Organization)
+            .Include(p => p.Images)
+            .Where(p => ids.Contains(p.Id))
+            .ToListAsync(cancellationToken);
+
+        var postMap = posts.ToDictionary(p => p.Id);
+
+        return idDistances
+            .Where(x => postMap.ContainsKey(x.Id))
+            .Select(x => (postMap[x.Id], x.Distance))
+            .ToList();
+    }
+
     public async Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)
     {
         return await _dbSet

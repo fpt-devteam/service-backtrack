@@ -29,6 +29,10 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             Post post,
             CancellationToken cancellationToken = default);
 
+        Task<IEnumerable<(Post Post, double DistanceMeters)>> GetFeedAsync(
+            GeoPoint location,
+            CancellationToken cancellationToken = default);
+
         Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default);
     }
 }

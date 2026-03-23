@@ -10,6 +10,7 @@ using Backtrack.Core.Application.Usecases.Posts.GetMyPosts;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetPostMatchingStatus;
 using Backtrack.Core.Application.Usecases.Posts.SearchPosts;
+using Backtrack.Core.Application.Usecases.Posts.GetFeed;
 using Backtrack.Core.WebApi.Common;
 
 namespace Backtrack.Core.WebApi.Controllers;
@@ -91,6 +92,13 @@ public class PostController : ControllerBase
             totalCount: result.Total);
 
         return this.ApiOk(response);
+    }
+
+    [HttpPost("feed")]
+    public async Task<IActionResult> GetFeedAsync([FromBody] GetFeedQuery query, CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
     }
 
     [HttpGet("{postId:guid}")]
