@@ -1,6 +1,7 @@
 import Message from '@/models/message';
 import { MessageStatus } from '@/models';
-import Conversation from '@/models/conversation';
+import SupportConversation from '@/models/support-conversation';
+import DirectConversation from '@/models/direct-conversation';
 import ConversationParticipant from '@/models/conversation-participant';
 import { SendMessagePayload } from '@/dtos/message/message.request';
 import { MessageResponse, MessagesResponse } from '@/dtos/message/message.response';
@@ -8,10 +9,24 @@ import { CursorPaginationParams, cursorPaginate } from '@/utils/pagination';
 import { ConversationErrors } from './errors/conversation.errors';
 import logger from '@/utils/logger';
 
+/**
+ * Find a conversation by ID across both DirectConversation and SupportConversation models.
+ * Returns { doc, model } so the caller can update the correct collection.
+ */
+const findConversationById = async (conversationId: string) => {
+  const direct = await DirectConversation.findById(conversationId).exec();
+  if (direct && !direct.deletedAt) return { doc: direct, model: DirectConversation };
+
+  const support = await SupportConversation.findById(conversationId).exec();
+  if (support && !support.deletedAt) return { doc: support, model: SupportConversation };
+
+  return null;
+};
+
 export const sendMessage = async (data: SendMessagePayload): Promise<MessageResponse> => {
-  // Verify conversation exists
-  const conversation = await Conversation.findById(data.conversationId).exec();
-  if (!conversation || conversation.deletedAt) {
+  // Verify conversation exists (direct or support)
+  const found = await findConversationById(data.conversationId);
+  if (!found) {
     throw ConversationErrors.NotFound;
   }
 
@@ -38,8 +53,9 @@ export const sendMessage = async (data: SendMessagePayload): Promise<MessageResp
 
   await message.save();
 
-  // Update conversation last message
-  await Conversation.findByIdAndUpdate(data.conversationId, {
+  // Update conversation last message using the correct model
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (found.model as any).findByIdAndUpdate(data.conversationId, {
     lastMessageContent: data.content,
     lastMessageAt: message.createdAt,
     senderId: data.senderId,
@@ -77,9 +93,9 @@ export const getMessagesByConversationId = async (
   userId: string,
   params: CursorPaginationParams
 ): Promise<MessagesResponse> => {
-  // Verify conversation exists
-  const conversation = await Conversation.findById(conversationId).exec();
-  if (!conversation || conversation.deletedAt) {
+  // Verify conversation exists (direct or support)
+  const found = await findConversationById(conversationId);
+  if (!found) {
     throw ConversationErrors.NotFound;
   }
 

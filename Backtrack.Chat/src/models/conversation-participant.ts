@@ -8,7 +8,7 @@ const ConversationParticipantSchema = new Schema<IConversationParticipant>(
         memberId: { type: String, required: false, index: true },
         role: { type: String, enum: Object.values(ConversationParticipantRole), required: true },
         nickName: { type: String, default: null },
-
+        isActive: { type: Boolean, default: true },
         lastReadAt: { type: Date, default: null },
         lastReadMessageId: { type: String, default: null },
         unreadCount: { type: Number, default: 0 },

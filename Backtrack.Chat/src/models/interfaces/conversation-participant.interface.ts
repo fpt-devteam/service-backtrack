@@ -8,7 +8,7 @@ export interface IConversationParticipant {
 	memberId: string | null;
     role: ConversationParticipantRole;
 	nickName: string | null;
-
+	isActive: boolean;
 	lastReadAt: Date | null;
 	lastReadMessageId: string | null;
 	unreadCount: number | null;
