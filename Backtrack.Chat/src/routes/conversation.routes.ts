@@ -4,13 +4,15 @@ import { asyncHandler } from '@/middlewares/async-handler';
 
 const router = Router();
 
-router.post('/', asyncHandler(conversationController.createConversation));
-router.get('/', asyncHandler(conversationController.listConversations));
+router.post('/direct', asyncHandler(conversationController.createDirectConversation));
+router.post('/organization', asyncHandler(conversationController.createOrgConversation));
+router.get('/', asyncHandler(conversationController.listAllConversations));
+router.get('/direct', asyncHandler(conversationController.listDirectConversations));
+router.get('/partner', asyncHandler(conversationController.getConversationByPartnerId));
 router.get('/:id', asyncHandler(conversationController.getConversationById));
-router.put('/:id', asyncHandler(conversationController.updateConversation));
 router.delete('/:id', asyncHandler(conversationController.deleteConversation));
-router.get('/queue/staff', asyncHandler(conversationController.listConversationQueueByStaff));
-router.get('/assigned/staff', asyncHandler(conversationController.listConversationAssignedByStaff));
+router.get('/organization/queue', asyncHandler(conversationController.listConversationQueueByStaff));
+router.get('/organization/assigned', asyncHandler(conversationController.listConversationAssignedByStaff));
 router.post('/:id/assign-staff', asyncHandler(conversationController.assignStaff));
 router.post('/:id/unassign-staff', asyncHandler(conversationController.unassignStaff));
 

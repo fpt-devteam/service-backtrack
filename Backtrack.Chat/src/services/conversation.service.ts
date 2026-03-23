@@ -1,78 +1,105 @@
-import { CreateConversationRequest } from "@/dtos/conversation/conversation.request";
-import Conversation from "@/models/conversation";
+
+import Conversation, { default as SupportConversation } from "@/models/support-conversation";
+import DirectConversation from "@/models/direct-conversation";
 import ConversationParticipant from "@/models/conversation-participant";
-import ConversationQueue from "@/models/conversation-queue";
-import ConversationAssignment from "@/models/conversation-assignment";
+import ConversationAssignment from "@/models/support-conversation-assignment";
 import { ConversationErrors } from "./errors/conversation.errors";
-import { ConversationPartner, ConversationResponse, ConversationsListResult } from "@/dtos/conversation/conversation.response";
-import { ConversationType, IConversation } from "@/models/interfaces/conversation.interface";
+import {
+    ConversationPartner,
+    ConversationResponse,
+    ConversationsListResult,
+    DirectConversationResponse,
+    DirectConversationsListResult,
+    SupportConversationResponse,
+    SupportConversationsListResult,
+} from '@/dtos/conversation/conversation.response';
 import User from "@/models/user.model";
 import { Constants } from '@/config/constants';
 import { buildPaginatedResult, CursorPaginationParams } from '@/utils/pagination';
-import { toStringOrNull } from '@/utils/object-id';
-import { createOrgConvParticipants, createPersonalConvParticipants, unassignConversationParticipant } from './conversation-paticipant.service';
-import { createConversationQueue, popConversationQueue, pushConversationQueue } from "./conversation-queue.service";
-import { ConversationParticipantRole } from "@/models";
+import { toStringOrNull, ToLeanDoc } from '@/utils/object-id';
+import { createOrgConvParticipants, createDirectConvParticipants, unassignConversationParticipant } from './conversation-paticipant.service';
+import { ConversationParticipantRole, ConversationStatus, IDirectConversation, ISupportConversation } from '@/models';
 import { assignConversation, unassignConversation } from "./conversation-assignment.service";
+import { Types } from 'mongoose';
 
-export const createPersonalConversation = async (
-  data: CreateConversationRequest & { type: ConversationType.PERSONAL },
-  userId: string
-): Promise<IConversation> => {
-  const duplicate = await ConversationParticipant.aggregate([
-    { $match: { memberId: { $in: [data.memberId, userId] }, deletedAt: null } },
-    { $group: { _id: '$conversationId', count: { $sum: 1 } } },
-    { $match: { count: 2 } },
-    { $limit: 1 },
-  ]);
+/** Shape of a single row from the aggregation pipeline in list queries */
+interface ConversationAggRow {
+    conversationId: Types.ObjectId | string;
+    type?: string;
+    orgId?: string | null;
+    status?: ConversationStatus | null;
+    staffAssignId?: string | null;
+    lastMessageContent?: string | null;
+    lastMessageAt?: Date | null;
+    lastMessageSenderId?: string | null;
+    unreadCount?: number;
+    partner?: {
+        id: Types.ObjectId | string;
+        displayName: string | null;
+        email: string | null;
+        avatarUrl: string | null;
+    } | null;
+    createdAt: Date;
+    updatedAt: Date;
+}
 
-  if (duplicate.length > 0) {
-    throw ConversationErrors.AlreadyExists;
-  }
+// export const createDirectConversation = async (
+//   data: CreationDirectConversationRequest,
+//   userId: string
+// ): Promise<IDirectConversation> => {
+//   const duplicate = await ConversationParticipant.aggregate([
+//     { $match: { memberId: { $in: [data.memberId, userId] }, deletedAt: null } },
+//     { $group: { _id: '$conversationId', count: { $sum: 1 } } },
+//     { $match: { count: 2 } },
+//     { $limit: 1 },
+//   ]);
 
-  const conversation = new Conversation({ type: data.type });
-  await conversation.save();
-  const conversationId = toStringOrNull(conversation._id);
-  if (!conversationId) {
-    throw ConversationErrors.NotFound;
-  }
-  await createPersonalConvParticipants(conversationId, data.memberId, userId);
-  return conversation;
-};
+//   if (duplicate.length > 0) {
+//     throw ConversationErrors.AlreadyExists;
+//   }
 
-export const createOrgConversation = async (
-  data: CreateConversationRequest & { type: ConversationType.ORGANIZATION },
-  userId: string
-): Promise<IConversation> => {
-  // Prevent duplicate: check if an ORGANIZATION conversation with this orgId
-  // already has this user as a CUSTOMER participant
-  const existingConv = await findExistingOrgConversation(userId, data.orgId);
-  if (existingConv) {
-    throw ConversationErrors.AlreadyExists;
-  }
+//   const conversation = new Conversation();
+//   await conversation.save();
+//   const conversationId = toStringOrNull(conversation._id);
+//   if (!conversationId) {
+//     throw ConversationErrors.NotFound;
+//   }
+//   await createDirectConvParticipants(conversationId, data.memberId, userId);
+//   return conversation;
+// };
 
-  const conversation = new Conversation({
-    type: data.type,
-    orgId: data.orgId,
-  });
-  await conversation.save();
-  const conversationId = toStringOrNull(conversation._id);
-  if (!conversationId) {
-    throw ConversationErrors.NotFound;
-  }
-  await createConversationQueue(conversationId);
-  await createOrgConvParticipants(conversationId, ConversationParticipantRole.CUSTOMER, userId);
-  return conversation;
-};
+// export const createOrgConversation = async (
+//   data: CreationSupportConversationRequest,
+//   userId: string
+// ): Promise<ISupportConversation> => {
+//   // Prevent duplicate: check if an ORGANIZATION conversation with this orgId
+//   // already has this user as a CUSTOMER participant
+//   const existingConv = await findExistingOrgConversation(userId, data.orgId);
+//   if (existingConv) {
+//     throw ConversationErrors.AlreadyExists;
+//   }
+
+//   const conversation = new Conversation({
+//     orgId: data.orgId,
+//   });
+//   await conversation.save();
+//   const conversationId = toStringOrNull(conversation._id);
+//   if (!conversationId) {
+//     throw ConversationErrors.NotFound;
+//   }
+//   await createConversationQueue(conversationId);
+//   await createOrgConvParticipants(conversationId, ConversationParticipantRole.CUSTOMER, userId);
+//   return conversation;
+// };
 
 /**
- * Modern flow: find existing personal conversation between two users,
+ * Modern flow: find existing Direct conversation between two users,
  * or create a new one if it doesn't exist yet.
  */
-export const findOrCreatePersonalConversation = async (
+export const findOrCreateDirectConversation = async (
   userId: string,
   recipientId: string,
-): Promise<IConversation> => {
+): Promise<DirectConversationResponse> => {
   const duplicate = await ConversationParticipant.aggregate([
     { $match: { memberId: { $in: [userId, recipientId] }, deletedAt: null } },
     { $group: { _id: '$conversationId', count: { $sum: 1 } } },
@@ -80,17 +107,21 @@ export const findOrCreatePersonalConversation = async (
     { $limit: 1 },
   ]);
 
+  const partner = await fetchPartnerUser(recipientId);
+
   if (duplicate.length > 0) {
-    const existing = await Conversation.findById(duplicate[0]._id).lean().exec();
-    if (existing && !existing.deletedAt) return existing;
+    const existing = await DirectConversation.findById(duplicate[0]._id).lean().exec();
+    if (existing && !existing.deletedAt) {
+      return toDirectConversationResponse(existing, partner);
+    }
   }
 
-  const conversation = new Conversation({ type: ConversationType.PERSONAL });
+  const conversation = new DirectConversation();
   await conversation.save();
   const conversationId = toStringOrNull(conversation._id);
   if (!conversationId) throw ConversationErrors.NotFound;
-  await createPersonalConvParticipants(conversationId, recipientId, userId);
-  return conversation;
+  await createDirectConvParticipants(conversationId, recipientId, userId);
+  return toDirectConversationResponse(conversation.toObject(), partner);
 };
 
 /**
@@ -101,19 +132,17 @@ export const findOrCreatePersonalConversation = async (
 const findExistingOrgConversation = async (
   userId: string,
   orgId: string,
-): Promise<IConversation | null> => {
-  // Get all active conversations for this org
-  const orgConversations = await Conversation.find({
+): Promise<ToLeanDoc<ISupportConversation> | null> => {
+  const orgConversations = (await Conversation.find({
     orgId,
-    type: ConversationType.ORGANIZATION,
+    status: { $ne: ConversationStatus.CLOSED },
     deletedAt: null,
-  }).lean().exec();
+  }).lean().exec()) as ToLeanDoc<ISupportConversation>[];
 
   if (!orgConversations.length) return null;
 
-  const convIds = orgConversations.map(c => (c._id as any).toString());
+  const convIds = orgConversations.map(c => c._id.toString());
 
-  // Check if this user is a CUSTOMER participant in any of them
   const participant = await ConversationParticipant.findOne({
     conversationId: { $in: convIds },
     memberId: userId,
@@ -123,9 +152,37 @@ const findExistingOrgConversation = async (
 
   if (!participant) return null;
 
-  return orgConversations.find(
-    c => (c._id as any).toString() === participant.conversationId
+  const found = orgConversations.find(
+    c => c._id.toString() === participant.conversationId
   ) ?? null;
+  return found;
+};
+
+/**
+ * Find an existing Direct conversation between two users — read-only, no creation.
+ * Returns null if no active conversation exists between the two parties.
+ */
+export const findDirectConversationByPartnerId = async (
+  userId: string,
+  partnerId: string,
+): Promise<DirectConversationResponse | null> => {
+  const duplicate = await ConversationParticipant.aggregate([
+    { $match: { memberId: { $in: [userId, partnerId] }, deletedAt: null } },
+    { $group: { _id: '$conversationId', count: { $sum: 1 } } },
+    { $match: { count: 2 } },
+    { $limit: 1 },
+  ]);
+
+  if (!duplicate.length) return null;
+
+  const [existing, partner] = await Promise.all([
+    DirectConversation.findById(duplicate[0]._id).lean().exec(),
+    fetchPartnerUser(partnerId),
+  ]);
+
+  if (!existing || existing.deletedAt) return null;
+
+  return toDirectConversationResponse(existing, partner);
 };
 
 /**
@@ -135,127 +192,158 @@ const findExistingOrgConversation = async (
 export const findOrCreateOrgConversation = async (
   userId: string,
   orgId: string,
-): Promise<IConversation> => {
+): Promise<SupportConversationResponse> => {
   const existingConv = await findExistingOrgConversation(userId, orgId);
-  if (existingConv) return existingConv;
+  if (existingConv) return toSupportConversationResponse(existingConv);
 
-  const conversation = new Conversation({ type: ConversationType.ORGANIZATION, orgId });
+  const conversation = new Conversation({ orgId, status: ConversationStatus.IN_QUEUE });
   await conversation.save();
   const conversationId = toStringOrNull(conversation._id);
   if (!conversationId) throw ConversationErrors.NotFound;
-  await createConversationQueue(conversationId);
   await createOrgConvParticipants(conversationId, ConversationParticipantRole.CUSTOMER, userId);
-  return conversation;
+  return toSupportConversationResponse(conversation.toObject());
 };
 
 
-export const getConversationById = async (id: string, userId: string): Promise<ConversationResponse | null> => {
-    const conversation = await Conversation.findById(id).lean().exec();
+export const getConversationById = async (
+    id: string,
+    userId: string,
+): Promise<DirectConversationResponse | SupportConversationResponse | null> => {
+    // ── 1. Resolve conversation type + authorize in parallel ─────────────────
+    const [supportConv, directConv, participants] = await Promise.all([
+        SupportConversation.findById(id).lean().exec(),
+        DirectConversation.findById(id).lean().exec(),
+        ConversationParticipant.find({
+            conversationId: id,
+            isActive: true,
+            deletedAt: null,
+        }).lean().exec(),
+    ]);
 
-    if (!conversation || conversation.deletedAt) {
-        return null;
+    const conv = supportConv ?? directConv;
+    if (!conv || conv.deletedAt) return null;
+
+    // ── 2. Authorization ─────────────────────────────────────────────────────
+    const myParticipant = participants.find(p => p.memberId === userId);
+    if (!myParticipant) throw ConversationErrors.Unauthorized;
+
+    // ── 3. Resolve partner user ──────────────────────────────────────────────
+    const otherParticipant = participants.find(p => p.memberId !== userId);
+
+    const partnerUser = otherParticipant?.memberId
+        ? await User.findById(otherParticipant.memberId)
+              .select('displayName email avatarUrl')
+              .lean()
+              .exec()
+        : null;
+
+    const partner: ConversationPartner | null = partnerUser
+        ? {
+              id:          partnerUser._id.toString(),
+              displayName: partnerUser.displayName ?? null,
+              email:       partnerUser.email ?? null,
+              avatarUrl:   partnerUser.avatarUrl ?? null,
+          }
+        : null;
+
+    const lastMessage = conv.lastMessageContent
+        ? {
+              senderId:  conv.senderId ?? null,
+              content:   conv.lastMessageContent,
+              timestamp: conv.lastMessageAt ?? null,
+          }
+        : null;
+
+    const unreadCount = myParticipant.unreadCount ?? 0;
+
+    // ── 4. Discriminate response shape ───────────────────────────────────────
+    if (supportConv) {
+        const s = supportConv as ToLeanDoc<ISupportConversation>;
+        return {
+            conversationId:  s._id.toString(),
+            orgId:           s.orgId ?? null,
+            status:          s.status ?? ConversationStatus.IN_QUEUE,
+            assignedStaffId: s.staffAssignId ?? null,
+            partner,
+            lastMessage,
+            unreadCount,
+            createdAt:  s.createdAt,
+            updatedAt:  s.updatedAt,
+        } satisfies SupportConversationResponse;
     }
 
-    const participant = await ConversationParticipant.findOne({
-        conversationId: id,
-        memberId: userId,
-        deletedAt: null
-    }).exec();
-
-    if (!participant) {
-        throw ConversationErrors.Unauthorized;
-    }
-
-    let partner: ConversationPartner | null = null;
-
-    const otherParticipant = await ConversationParticipant.findOne({
-        conversationId: id,
-        memberId: { $ne: userId },
-        deletedAt: null
-    }).exec();
-
-    if (otherParticipant?.memberId) {
-        const partnerUser = await User.findById(otherParticipant.memberId)
-            .select('displayName email avatarUrl')
-            .lean()
-            .exec();
-
-        if (partnerUser) {
-            partner = {
-                id: partnerUser._id.toString(),
-                displayName: partnerUser.displayName ?? null,
-                email: partnerUser.email ?? null,
-                avatarUrl: partnerUser.avatarUrl ?? null,
-            };
-        }
-    }
-
+    // directConv is guaranteed non-null here
+    const d = directConv as ToLeanDoc<IDirectConversation>;
     return {
-        conversationId: conversation._id.toString(),
-        type: conversation.type,
+        conversationId: d._id.toString(),
         partner,
-        orgId: conversation.orgId ?? null,
-        lastMessage: conversation.lastMessageContent ? {
-            senderId: conversation.senderId ?? null,
-            content: conversation.lastMessageContent,
-            timestamp: conversation.lastMessageAt ?? null,
-        } : null,
-        unreadCount: participant.unreadCount ?? 0,
-        createdAt: conversation.createdAt,
-        updatedAt: conversation.updatedAt,
+        lastMessage,
+        unreadCount,
+        createdAt:  d.createdAt,
+        updatedAt:  d.updatedAt,
+    } satisfies DirectConversationResponse;
+};
+
+/**
+ * Fetch a user's public profile as a ConversationPartner shape.
+ * Returns null if the user does not exist.
+ */
+const fetchPartnerUser = async (userId: string): Promise<ConversationPartner | null> => {
+    const user = await User.findById(userId)
+        .select('displayName email avatarUrl')
+        .lean()
+        .exec();
+    if (!user) return null;
+    return {
+        id:          user._id.toString(),
+        displayName: user.displayName ?? null,
+        email:       user.email       ?? null,
+        avatarUrl:   user.avatarUrl   ?? null,
     };
 };
 
-export const updateConversation = async (id: string, userId: string, data: Partial<IConversation>): Promise<ConversationResponse | null> => {
-    const participant = await ConversationParticipant.findOne({
-        conversationId: id,
-        memberId: userId,
-        deletedAt: null
-    }).exec();
+const toDirectConversationResponse = (doc: ToLeanDoc<IDirectConversation>, partner: ConversationPartner | null = null): DirectConversationResponse => ({
+    conversationId: doc._id.toString(),
+    partner,
+    lastMessage: doc.lastMessageContent
+        ? { senderId: doc.senderId ?? null, content: doc.lastMessageContent, timestamp: doc.lastMessageAt ?? null }
+        : null,
+    unreadCount: 0,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+});
 
-    if (!participant) {
-        throw ConversationErrors.Unauthorized;
-    }
+const toSupportConversationResponse = (doc: ToLeanDoc<ISupportConversation>): SupportConversationResponse => ({
+    conversationId: doc._id.toString(),
+    orgId: doc.orgId,
+    status: doc.status ?? ConversationStatus.IN_QUEUE,
+    assignedStaffId: doc.staffAssignId ?? null,
+    partner: null,     // populated downstream (controller/list query)
+    lastMessage: doc.lastMessageContent
+        ? { senderId: doc.senderId ?? null, content: doc.lastMessageContent, timestamp: doc.lastMessageAt ?? null }
+        : null,
+    unreadCount: 0,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+});
 
-    const conversation = await Conversation.findByIdAndUpdate(
-        id, 
-        data, 
-        { new: true }
-    ).lean().exec();
-
-    if (!conversation) {
-        throw ConversationErrors.NotFound;
-    }
-
-    return getConversationById(id, userId);
-};
-
-export const assignStaff = async (id: string, staffId: string): Promise<ConversationResponse | null> => {
-    const conversation = await Conversation.findById(id).lean().exec();
+export const assignStaff = async (id: string, staffId: string): Promise<SupportConversationResponse | null> => {
+    const conversation = await SupportConversation.findById(id).lean().exec();
     if (!conversation || conversation.deletedAt) throw ConversationErrors.NotFound;
-    if (conversation.type !== ConversationType.ORGANIZATION) throw ConversationErrors.InvalidConversationType;
 
-    // Queue entry must exist and not yet been taken by another staff
-    const queueEntry = await ConversationQueue.findOne({
-        conversationId: id,
-        takenAt: null,
-        deletedAt: null,
-    }).lean().exec();
-    if (!queueEntry) throw ConversationErrors.NotInQueue;
+    // Conversation must be waiting in queue to be picked up
+    if (conversation.status !== ConversationStatus.IN_QUEUE) throw ConversationErrors.NotInQueue;
 
-    await popConversationQueue(id, staffId);
     await assignConversation(id, staffId);
     await createOrgConvParticipants(id, ConversationParticipantRole.STAFF, staffId);
-    await Conversation.findByIdAndUpdate(id, { staffAssignId: staffId });
-    return getConversationById(id, staffId);
+    await Conversation.findByIdAndUpdate(id, { staffAssignId: staffId, status: ConversationStatus.IN_PROGRESS });
+    // id is guaranteed to be a SupportConversation at this call site
+    return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
 };
 
-export const queueTicket = async (id: string, staffId: string): Promise<boolean> => {
-    const conversation = await Conversation.findById(id).lean().exec();
+export const backToQueue = async (id: string, staffId: string): Promise<boolean> => {
+    const conversation = await SupportConversation.findById(id).lean().exec();
     if (!conversation || conversation.deletedAt) throw ConversationErrors.NotFound;
-    if (conversation.type !== ConversationType.ORGANIZATION) throw ConversationErrors.InvalidConversationType;
-
-    // Staff must be currently assigned to this conversation
     const assignment = await ConversationAssignment.findOne({
         conversationId: id,
         agentId: staffId,
@@ -263,10 +351,9 @@ export const queueTicket = async (id: string, staffId: string): Promise<boolean>
     }).lean().exec();
     if (!assignment) throw ConversationErrors.NotAssigned;
 
-    await pushConversationQueue(id);
     await unassignConversation(id, staffId);
     await unassignConversationParticipant(id, ConversationParticipantRole.STAFF);
-    await Conversation.findByIdAndUpdate(id, { staffAssignId: null });
+    await Conversation.findByIdAndUpdate(id, { staffAssignId: null, status: ConversationStatus.IN_QUEUE });
     return true;
 };
 export const deleteConversation = async (id: string, userId: string): Promise<void> => {
@@ -309,6 +396,7 @@ export const lookupPartnerStages = (userId: string) => [
                         cond: {
                             $and: [
                                 { $ne: ['$$this.memberId', userId] },
+                                { $eq: ['$$this.isActive', true] },
                                 { $eq: ['$$this.deletedAt', null] }
                             ]
                         }
@@ -333,21 +421,21 @@ export const lookupPartnerStages = (userId: string) => [
 export const projectConversationStage = {
     $project: {
         conversationId: '$conversation._id',
-        type: '$conversation.type',
-        orgId: '$conversation.orgId',
-        assignedStaffId: '$conversation.assignedStaffId',
-        lastMessageContent: '$conversation.lastMessageContent',
-        lastMessageAt: '$conversation.lastMessageAt',
+        orgId:         { $ifNull: ['$conversation.orgId', null] },         
+        status:        { $ifNull: ['$conversation.status', null] },        
+        staffAssignId: { $ifNull: ['$conversation.staffAssignId', null] }, 
+        lastMessageContent:  '$conversation.lastMessageContent',
+        lastMessageAt:       '$conversation.lastMessageAt',
         lastMessageSenderId: '$conversation.senderId',
         unreadCount: { $ifNull: ['$unreadCount', 0] },
         partner: {
             $cond: {
                 if: '$partnerUser',
                 then: {
-                    id: '$partnerUser._id',
+                    id:          '$partnerUser._id',
                     displayName: { $ifNull: ['$partnerUser.displayName', null] },
-                    email: { $ifNull: ['$partnerUser.email', null] },
-                    avatarUrl: { $ifNull: ['$partnerUser.avatarUrl', null] },
+                    email:       { $ifNull: ['$partnerUser.email', null] },
+                    avatarUrl:   { $ifNull: ['$partnerUser.avatarUrl', null] },
                 },
                 else: null
             }
@@ -360,16 +448,16 @@ export const projectConversationStage = {
 export const listConversationsByUserId = async (
     userId: string,
     params: CursorPaginationParams = {}
-): Promise<ConversationsListResult> => {
+): Promise<DirectConversationsListResult> => {
     const limit = Math.min(params.limit || Constants.PAGINATION.DEFAULT_LIMIT, Constants.PAGINATION.MAX_LIMIT);
 
     const results = await ConversationParticipant.aggregate([
         {
-            $match: { memberId: userId, deletedAt: null }
+            $match: { memberId: userId, isActive: true, deletedAt: null },
         },
         {
             $lookup: {
-                from: 'conversations',
+                from: 'directconversations',
                 let: { convIdStr: '$conversationId' },
                 pipeline: [
                     {
@@ -400,23 +488,65 @@ export const listConversationsByUserId = async (
         projectConversationStage,
     ]);
 
-    return formatConversationResult(results, limit);
+    return formatDirectResult(results, limit);
 };
 
-const formatConversationResult = (results: any[], limit: number): ConversationsListResult => {
+/** Format aggregate results from DirectConversation queries. */
+const formatDirectResult = (results: ConversationAggRow[], limit: number): DirectConversationsListResult => {
     const { items, nextCursor, hasMore } = buildPaginatedResult(results, limit, 'lastMessageAt');
 
     return {
-        conversations: items.map(c => ({
+        conversations: items.map((c: ConversationAggRow): DirectConversationResponse => ({
             conversationId: c.conversationId.toString(),
-            type: c.type,
-            orgId: c.orgId ?? null,
-            partner: c.partner ?? null,
-            lastMessage: c.lastMessageContent ? {
-                senderId: c.lastMessageSenderId ?? null,
-                content: c.lastMessageContent,
-                timestamp: c.lastMessageAt,
-            } : null,
+            partner: c.partner
+                ? {
+                    id: c.partner.id.toString(),
+                    displayName: c.partner.displayName,
+                    email: c.partner.email,
+                    avatarUrl: c.partner.avatarUrl,
+                  }
+                : null,
+            lastMessage: c.lastMessageContent
+                ? {
+                    senderId: c.lastMessageSenderId ?? null,
+                    content: c.lastMessageContent,
+                    timestamp: c.lastMessageAt ?? null,
+                  }
+                : null,
+            unreadCount: c.unreadCount ?? 0,
+            createdAt: c.createdAt,
+            updatedAt: c.updatedAt,
+        })),
+        nextCursor,
+        hasMore,
+    };
+};
+
+/** Format aggregate results from SupportConversation queries. */
+const formatSupportResult = (results: ConversationAggRow[], limit: number): SupportConversationsListResult => {
+    const { items, nextCursor, hasMore } = buildPaginatedResult(results, limit, 'lastMessageAt');
+
+    return {
+        conversations: items.map((c: ConversationAggRow): SupportConversationResponse => ({
+            conversationId: c.conversationId.toString(),
+            orgId: c.orgId!,                       
+            status: c.status!,                     
+            assignedStaffId: c.staffAssignId ?? null,
+            partner: c.partner
+                ? {
+                    id: c.partner.id.toString(),
+                    displayName: c.partner.displayName,
+                    email: c.partner.email,
+                    avatarUrl: c.partner.avatarUrl,
+                  }
+                : null,
+            lastMessage: c.lastMessageContent
+                ? {
+                    senderId: c.lastMessageSenderId ?? null,
+                    content: c.lastMessageContent,
+                    timestamp: c.lastMessageAt ?? null,
+                  }
+                : null,
             unreadCount: c.unreadCount ?? 0,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
@@ -433,14 +563,15 @@ const formatConversationResult = (results: any[], limit: number): ConversationsL
 export const listConversationsQueueByStaff = async (
     orgId: string,
     params: CursorPaginationParams = {}
-): Promise<ConversationsListResult> => {
+): Promise<SupportConversationsListResult> => {
     const limit = Math.min(params.limit || Constants.PAGINATION.DEFAULT_LIMIT, Constants.PAGINATION.MAX_LIMIT);
 
     const results = await Conversation.aggregate([
         {
             $match: {
                 orgId,
-                staffAssignId: null,      // not yet assigned to any staff
+                status: ConversationStatus.IN_QUEUE,
+                staffAssignId: null,      
                 deletedAt: null,
                 ...(params.cursor && {
                     lastMessageAt: { $lt: new Date(params.cursor) }
@@ -454,19 +585,20 @@ export const listConversationsQueueByStaff = async (
         projectConversationStage,
     ]);
 
-    return formatConversationResult(results, limit);
+    return formatSupportResult(results, limit);
 };
 
 export const listConversationsAssignedByStaff = async (
     staffId: string,
     params: CursorPaginationParams = {}
-): Promise<ConversationsListResult> => {
+): Promise<SupportConversationsListResult> => {
     const limit = Math.min(params.limit || Constants.PAGINATION.DEFAULT_LIMIT, Constants.PAGINATION.MAX_LIMIT);
 
     const results = await Conversation.aggregate([
         {
             $match: {
-                staffAssignId: staffId,   // currently assigned to this staff
+                staffAssignId: staffId,   
+                status: ConversationStatus.IN_PROGRESS,
                 deletedAt: null,
                 ...(params.cursor && {
                     lastMessageAt: { $lt: new Date(params.cursor) }
@@ -480,5 +612,206 @@ export const listConversationsAssignedByStaff = async (
         projectConversationStage,
     ]);
 
-    return formatConversationResult(results, limit);
+    return formatSupportResult(results, limit);
+};
+
+// ─── Mixed list (Direct + Support) ───────────────────────────────────────────
+
+/** Internal row shape coming out of the mixed aggregate */
+interface MixedConversationAggRow {
+    conversationId:      string;
+    type:                string;             // 'direct' | 'support'
+    orgId:               string | null;
+    status:              ConversationStatus | null;
+    staffAssignId:       string | null;
+    lastMessageAt:       Date | null;
+    lastMessageContent:  string | null;
+    lastMessageSenderId: string | null;
+    unreadCount:         number;
+    partner: {
+        id:          Types.ObjectId | string;
+        displayName: string | null;
+        email:       string | null;
+        avatarUrl:   string | null;
+    } | null;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+/** Standard partner projection from a user-doc alias inside aggregation */
+const partnerExpr = (alias: string) => ({
+    $cond: {
+        if:   `$${alias}`,
+        then: {
+            id:          `$${alias}._id`,
+            displayName: { $ifNull: [`$${alias}.displayName`, null] },
+            email:       { $ifNull: [`$${alias}.email`,       null] },
+            avatarUrl:   { $ifNull: [`$${alias}.avatarUrl`,   null] },
+        },
+        else: null,
+    },
+});
+
+/**
+ * Partner lookup stages for branches where the conversation is stored
+ * under the `conv` alias (i.e. the mixed-list aggregate branches).
+ * Uses a sub-pipeline so the join key stays as a string field.
+ */
+const lookupPartnerInBranch = (currentUserId: string) => [
+    {
+        $lookup: {
+            from: 'conversationparticipants',
+            let:  { cid: '$conversationId' },
+            pipeline: [
+                {
+                    $match: {
+                        $expr:     { $eq: ['$conversationId', '$$cid'] },
+                        isActive:  true,
+                        deletedAt: null,
+                        memberId:  { $ne: currentUserId },
+                    },
+                },
+                { $limit: 1 },
+            ],
+            as: 'partnerParticipant',
+        },
+    },
+    { $addFields: { partnerParticipant: { $first: '$partnerParticipant' } } },
+    // User._id is a String (Firebase UID) — join directly, no $toObjectId needed
+    {
+        $lookup: {
+            from:         'users',
+            localField:   'partnerParticipant.memberId',
+            foreignField: '_id',
+            as:           'partnerUser',
+        },
+    },
+    { $addFields: { partnerUser: { $first: '$partnerUser' } } },
+];
+
+/**
+ * Build one branch of the mixed-list aggregate.
+ * @param collection  Mongoose collection name ('directconversations' | 'supportconversations')
+ * @param type        Literal tag embedded in each result row
+ * @param userId      The caller's id (excluded from partner lookup)
+ * @param cursorFilter Optional $match stage for cursor pagination
+ * @param extraProject Additional $project fields specific to the conversation type
+ */
+const buildConvBranch = (
+    collection: string,
+    type: 'direct' | 'support',
+    userId: string,
+    cursorFilter: Record<string, unknown>,
+    extraProject: Record<string, unknown>,
+) =>
+    ConversationParticipant.aggregate<MixedConversationAggRow>([
+        { $match: { memberId: userId, isActive: true, deletedAt: null } },
+        {
+            $lookup: {
+                from: collection,
+                let:  { cid: '$conversationId' },
+                pipeline: [{
+                    $match: {
+                        $expr:     { $eq: ['$_id', { $toObjectId: '$$cid' }] },
+                        deletedAt: null,
+                    },
+                }],
+                as: 'conv',
+            },
+        },
+        { $unwind: '$conv' },
+        ...(Object.keys(cursorFilter).length ? [{ $match: cursorFilter }] : []),
+        ...lookupPartnerInBranch(userId),
+        {
+            $project: {
+                _id:                 0,
+                conversationId:      { $toString: '$conv._id' },
+                type:                { $literal: type },
+                lastMessageAt:       '$conv.lastMessageAt',
+                lastMessageContent:  '$conv.lastMessageContent',
+                lastMessageSenderId: '$conv.senderId',
+                unreadCount:         { $ifNull: ['$unreadCount', 0] },
+                partner:             partnerExpr('partnerUser'),
+                createdAt:           '$conv.createdAt',
+                updatedAt:           '$conv.updatedAt',
+                ...extraProject,
+            },
+        },
+    ]);
+
+/**
+ * Return every conversation (Direct + Support) that `userId` participates in,
+ * sorted by lastMessageAt desc and cursor-paginated.
+ *
+ * GET /conversations
+ */
+export const listAllConversationsByUserId = async (
+    userId: string,
+    params: CursorPaginationParams = {}
+): Promise<ConversationsListResult> => {
+    const limit = Math.min(
+        params.limit ?? Constants.PAGINATION.DEFAULT_LIMIT,
+        Constants.PAGINATION.MAX_LIMIT
+    );
+
+    const cursorFilter = params.cursor
+        ? { 'conv.lastMessageAt': { $lt: new Date(params.cursor) } }
+        : {};
+
+    const [directBranch, supportBranch] = await Promise.all([
+        buildConvBranch('directconversations', 'direct', userId, cursorFilter, {
+            orgId:         { $literal: null },
+            status:        { $literal: null },
+            staffAssignId: { $literal: null },
+        }),
+        buildConvBranch('supportconversations', 'support', userId, cursorFilter, {
+            orgId:         { $ifNull: ['$conv.orgId',         null] },
+            status:        { $ifNull: ['$conv.status',        null] },
+            staffAssignId: { $ifNull: ['$conv.staffAssignId', null] },
+        }),
+    ]);
+
+    // ── Merge → sort → paginate in-process ─────────────────────────────────
+    const merged = [...directBranch, ...supportBranch].sort((a, b) => {
+        const ta = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+        const tb = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+        return tb - ta;                          // newest first
+    });
+
+    const hasMore  = merged.length > limit;
+    const items    = merged.slice(0, limit);
+    const lastItem = items[items.length - 1];
+    const nextCursor = hasMore && lastItem?.lastMessageAt
+        ? new Date(lastItem.lastMessageAt).toISOString()
+        : null;
+
+    return {
+        conversations: items.map((c): ConversationResponse => ({
+            conversationId:  c.conversationId,
+            type:            c.type,
+            orgId:           c.orgId,
+            status:          c.status,
+            assignedStaffId: c.staffAssignId,
+            partner: c.partner
+                ? {
+                    id:          c.partner.id.toString(),
+                    displayName: c.partner.displayName,
+                    email:       c.partner.email,
+                    avatarUrl:   c.partner.avatarUrl,
+                  }
+                : null,
+            lastMessage: c.lastMessageContent
+                ? {
+                    senderId:  c.lastMessageSenderId ?? null,
+                    content:   c.lastMessageContent,
+                    timestamp: c.lastMessageAt ?? null,
+                  }
+                : null,
+            unreadCount: c.unreadCount ?? 0,
+            createdAt:   c.createdAt,
+            updatedAt:   c.updatedAt,
+        })),
+        nextCursor,
+        hasMore,
+    };
 };

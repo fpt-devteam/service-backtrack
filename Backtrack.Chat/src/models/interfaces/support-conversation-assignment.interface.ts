@@ -1,4 +1,4 @@
-export interface IConversationAssignment {
+export interface ISupportConversationAssignment {
     id: string;
     conversationId: string;
     agentId: string;

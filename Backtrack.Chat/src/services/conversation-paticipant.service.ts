@@ -1,7 +1,7 @@
 import { ConversationParticipantRole } from '@/models';
 import ConversationParticipant from '@/models/conversation-participant';
 
-export const createPersonalConvParticipants = async(
+export const createDirectConvParticipants = async(
 	conversationId: string,
 	memberId: string,
 	userId: string,
@@ -40,7 +40,7 @@ export const createOrgConvParticipants = async(
 export const unassignConversationParticipant = async (conversationId: string, role: ConversationParticipantRole) => {
     await ConversationParticipant.findOneAndUpdate(
         { conversationId, role },
-        { isAssigee: false },
+        { isActive: false },
         { new: true },
     );
 };

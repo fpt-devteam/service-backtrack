@@ -1,26 +1,78 @@
 import { Socket } from 'socket.io';
 import logger from '@/utils/logger';
 import * as messageService from '@/services/message.service';
-import { SendMessageSchema } from '@/dtos/message/message.request';
+import { SendDirectMessageSchema, SendSupportMessageSchema } from '@/dtos/message/message.request';
 import { isAppError } from '@/utils/api-error';
+
 import { conversationParticipantService, conversationService } from '@/services';
 import ConversationParticipant from '@/models/conversation-participant';
-import { IConversation } from '@/models';
+import { getIO } from '@/config/websocket';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Extract the string ID from either a Mongoose Document (has virtual .id getter)
- * or a plain lean object (only has ._id as ObjectId / string).
- * Prevents silent undefined when findOrCreate returns a lean result.
+ * Persist a message, broadcast it to room participants, and optionally
+ * notify other sockets about a newly created conversation.
+ *
+ * Extracted so that both the direct and support handlers share
+ * identical post-resolve behaviour without code duplication.
  */
-function extractId(conv: IConversation): string {
-  return conv.id ?? (conv as any)._id?.toString() ?? '';
+async function persistAndBroadcast(
+  socket: Socket,
+  authUserId: string,
+  conversationId: string,
+  payload: {
+    type: any;
+    content: string;
+    attachments?: any;
+  },
+  isNewRoom: boolean,
+  successEvent: string,
+): Promise<void> {
+  // Auto-join the sender's socket when the room is brand new
+  if (isNewRoom) {
+    const roomName = `conversation:${conversationId}`;
+    if (!socket.rooms.has(roomName)) {
+      socket.join(roomName);
+      logger.info(`Socket ${socket.id} auto-joined room ${roomName}`);
+    }
+    // Pull all other participants' open sockets into the same room
+    await autoJoinOtherParticipants(conversationId, authUserId);
+  }
+
+  // Persist (also updates lastMessage + increments unreadCount for others)
+  const message = await messageService.sendMessage({
+    conversationId,
+    senderId: authUserId,
+    type: payload.type,
+    content: payload.content,
+    attachments: payload.attachments,
+  });
+
+  // Broadcast to everyone else in the room
+  socket.to(`conversation:${conversationId}`).emit('message:new', message);
+
+  // Acknowledge to the sender
+  socket.emit(successEvent, { conversationId, message, isNewConversation: isNewRoom });
+
+  // If this is the very first message, tell other in-room participants
+  // about the new conversation (after message:new so client has both events in order)
+  if (isNewRoom) {
+    socket.to(`conversation:${conversationId}`).emit('conversation:new', {
+      conversationId,
+      message,
+    });
+  }
+
+  logger.info(`Message sent: ${message.id} in conversation ${conversationId}`);
 }
+
+// ─── Handler Registration ─────────────────────────────────────────────────────
 
 export function registerMessageHandlers(socket: Socket): void {
   const authUserId = socket.data.userId as string | undefined;
 
-  // ─── Join conversation room ────────────────────────────────────────────────
-  // Verify the requesting user is actually a participant before subscribing.
+  // ─── Join conversation room ──────────────────────────────────────────────
   socket.on('join:conversation', async (conversationId: string) => {
     try {
       if (!authUserId) {
@@ -31,6 +83,7 @@ export function registerMessageHandlers(socket: Socket): void {
       const participant = await ConversationParticipant.findOne({
         conversationId,
         memberId: authUserId,
+        isActive: true,
         deletedAt: null,
       }).lean().exec();
 
@@ -48,7 +101,7 @@ export function registerMessageHandlers(socket: Socket): void {
     }
   });
 
-  // ─── Leave conversation room ───────────────────────────────────────────────
+  // ─── Leave conversation room ─────────────────────────────────────────────
   socket.on('leave:conversation', (conversationId: string) => {
     try {
       socket.leave(`conversation:${conversationId}`);
@@ -59,15 +112,14 @@ export function registerMessageHandlers(socket: Socket): void {
     }
   });
 
-  // ─── Send message (modern find-or-create flow) ────────────────────────────
+  // ─── Send direct / DM message ────────────────────────────────────────────
   //
-  // Priority for resolving which conversation to send to:
-  //   1. conversationId present → send to that existing conversation (classic)
-  //   2. recipientId present   → find-or-create personal DM (first message creates conv)
-  //   3. orgId present         → find-or-create org conversation (first message creates conv)
+  // Event: message:send
+  // Payload: { conversationId?, recipientId, content, type?, attachments? }
   //
-  // The findOrCreate functions guarantee idempotency: calling twice with the
-  // same pair returns the same conversation, never creates a duplicate.
+  // Supply EITHER:
+  //   • conversationId  → send to an existing Direct conversation
+  //   • recipientId     → find-or-create a DM with that user, then send
   socket.on('message:send', async (data: unknown) => {
     try {
       if (!authUserId) {
@@ -75,66 +127,31 @@ export function registerMessageHandlers(socket: Socket): void {
         return;
       }
 
-      const validated = SendMessageSchema.parse({ ...(data as object), senderId: authUserId });
+      const validated = SendDirectMessageSchema.parse({ ...(data as object), senderId: authUserId });
 
-      // Step 1: Resolve conversationId
       let conversationId: string;
       let isNewRoom = false;
 
       if (validated.conversationId) {
         conversationId = validated.conversationId;
-
-      } else if (validated.recipientId) {
-        const conv = await conversationService.findOrCreatePersonalConversation(
-          authUserId,
-          validated.recipientId,
-        );
-        conversationId = extractId(conv);
-        isNewRoom = true;
-
       } else {
-        const conv = await conversationService.findOrCreateOrgConversation(
+        // recipientId is guaranteed by schema refine
+        const conv = await conversationService.findOrCreateDirectConversation(
           authUserId,
-          validated.orgId!,
+          validated.recipientId!,
         );
-        conversationId = extractId(conv);
+        conversationId = conv.conversationId;
         isNewRoom = true;
       }
 
-      // Guard: if extractId fails for any reason, abort cleanly
       if (!conversationId) {
         socket.emit('message:send:error', { code: 'INTERNAL_ERROR', message: 'Failed to resolve conversation' });
         return;
       }
 
-      // Auto-join: server subscribes the socket to the room immediately after
-      // resolve/create so the client receives message:send:success already in-room.
-      // No client round-trip (join:conversation event) is needed for the new flow.
-      if (isNewRoom) {
-        const roomName = `conversation:${conversationId}`;
-        if (!socket.rooms.has(roomName)) {
-          socket.join(roomName);
-          logger.info(`Socket ${socket.id} auto-joined room ${roomName}`);
-        }
-      }
-
-      // Step 2: Persist message (handles lastMessage + unreadCount internally)
-      const message = await messageService.sendMessage({
-        conversationId,
-        senderId: authUserId,
-        type: validated.type,
-        content: validated.content,
-        attachments: validated.attachments,
-      });
-
-      // Step 3: Broadcast
-      socket.to(`conversation:${conversationId}`).emit('message:new', message);
-      // isNewConversation flag lets the client update room list without a join round-trip
-      socket.emit('message:send:success', { conversationId, message, isNewConversation: isNewRoom });
-
-      logger.info(`Message sent: ${message.id} in conversation ${conversationId}`);
+      await persistAndBroadcast(socket, authUserId, conversationId, validated, isNewRoom, 'message:send:success');
     } catch (error) {
-      logger.error('Error sending message:', { error: String(error) });
+      logger.error('Error sending direct message:', { error: String(error) });
       if (isAppError(error)) {
         socket.emit('message:send:error', { code: error.code, message: error.message });
       } else {
@@ -143,7 +160,57 @@ export function registerMessageHandlers(socket: Socket): void {
     }
   });
 
-  // ─── Mark conversation as read ────────────────────────────────────────────
+  // ─── Send org / support message ──────────────────────────────────────────
+  //
+  // Event: message:send:support
+  // Payload: { conversationId?, orgId, content, type?, attachments? }
+  //
+  // Supply EITHER:
+  //   • conversationId  → send to the caller's existing support thread
+  //   • orgId           → find-or-create the caller's support thread with that org, then send
+  //
+  // Only the customer creates the conversation; staff reply to an existing one.
+  socket.on('message:send:support', async (data: unknown) => {
+    try {
+      if (!authUserId) {
+        socket.emit('message:send:support:error', { code: 'UNAUTHORIZED', message: 'User not authenticated' });
+        return;
+      }
+
+      const validated = SendSupportMessageSchema.parse({ ...(data as object), senderId: authUserId });
+
+      let conversationId: string;
+      let isNewRoom = false;
+
+      if (validated.conversationId) {
+        conversationId = validated.conversationId;
+      } else {
+        // orgId is guaranteed by schema refine
+        const conv = await conversationService.findOrCreateOrgConversation(
+          authUserId,
+          validated.orgId!,
+        );
+        conversationId = conv.conversationId;
+        isNewRoom = true;
+      }
+
+      if (!conversationId) {
+        socket.emit('message:send:support:error', { code: 'INTERNAL_ERROR', message: 'Failed to resolve support conversation' });
+        return;
+      }
+
+      await persistAndBroadcast(socket, authUserId, conversationId, validated, isNewRoom, 'message:send:support:success');
+    } catch (error) {
+      logger.error('Error sending support message:', { error: String(error) });
+      if (isAppError(error)) {
+        socket.emit('message:send:support:error', { code: error.code, message: error.message });
+      } else {
+        socket.emit('message:send:support:error', { code: 'INTERNAL_ERROR', message: 'Failed to send support message' });
+      }
+    }
+  });
+
+  // ─── Mark conversation as read ───────────────────────────────────────────
   socket.on('conversation:read', async (data: { conversationId: string }) => {
     try {
       if (!authUserId) return;
@@ -161,7 +228,7 @@ export function registerMessageHandlers(socket: Socket): void {
     }
   });
 
-  // ─── Typing indicators ────────────────────────────────────────────────────
+  // ─── Typing indicators ───────────────────────────────────────────────────
   socket.on('typing:start', (data: { conversationId: string; displayName?: string }) => {
     socket.to(`conversation:${data.conversationId}`).emit('typing:user', {
       conversationId: data.conversationId,
@@ -178,4 +245,44 @@ export function registerMessageHandlers(socket: Socket): void {
       isTyping: false,
     });
   });
+}
+
+// ─── Private utilities ────────────────────────────────────────────────────────
+
+/**
+ * Find all connected sockets belonging to other ACTIVE participants of a
+ * conversation and auto-join them into the room so they receive the very
+ * first message in real-time without needing to call join:conversation.
+ */
+async function autoJoinOtherParticipants(
+  conversationId: string,
+  excludeUserId: string,
+): Promise<void> {
+  try {
+    const io = getIO();
+    const roomName = `conversation:${conversationId}`;
+
+    const participants = await ConversationParticipant.find({
+      conversationId,
+      memberId: { $ne: excludeUserId },
+      isActive: true,
+      deletedAt: null,
+    }).lean().exec();
+
+    if (!participants.length) return;
+
+    const memberIds = new Set(participants.map(p => p.memberId));
+    const allSockets = await io.fetchSockets();
+
+    for (const remoteSocket of allSockets) {
+      const socketUserId = remoteSocket.data.userId as string | undefined;
+      if (socketUserId && memberIds.has(socketUserId) && !remoteSocket.rooms.has(roomName)) {
+        remoteSocket.join(roomName);
+        logger.info(`Auto-joined socket ${remoteSocket.id} (user: ${socketUserId}) into room ${roomName}`);
+      }
+    }
+  } catch (err) {
+    // Non-fatal: message is already persisted; recipient won't get real-time push this round.
+    logger.error('autoJoinOtherParticipants failed:', { conversationId, error: String(err) });
+  }
 }

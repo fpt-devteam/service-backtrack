@@ -35,3 +35,21 @@ export const isValidObjectId = (
     if (id instanceof mongoose.Types.ObjectId) return true;
     return mongoose.Types.ObjectId.isValid(id);
 };
+
+/**
+ * Converts a Mongoose document interface into the shape returned by `.lean()`.
+ *
+ * Mongoose adds an `id` virtual (string) to every document, but `.lean()` strips
+ * virtuals — leaving only the raw `_id: Types.ObjectId`.
+ * This utility removes the `id` field and adds the correct `_id` type so callers
+ * don't need to repeat `Omit<T, 'id'> & { _id: Types.ObjectId }` manually.
+ *
+ * @example
+ * type LeanDirect  = ToLeanDoc<IDirectConversation>;
+ * type LeanSupport = ToLeanDoc<ISupportConversation>;
+ *
+ * const doc = await DirectConversation.findById(id).lean().exec() as LeanDirect;
+ * doc._id.toString(); // ✅ Types.ObjectId — no `any` cast needed
+ */
+export type ToLeanDoc<T extends { id?: unknown }> =
+    Omit<T, 'id'> & { _id: mongoose.Types.ObjectId };

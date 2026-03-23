@@ -13,31 +13,45 @@ const MessageAttachmentSchema = z.object({
   height: z.number().optional(),
 });
 
-/**
- * Modern send message schema — priority-based conversation resolution:
- *   1. conversationId present → send to existing conversation (classic flow)
- *   2. recipientId present   → find-or-create personal DM
- *   3. orgId present         → find-or-create org support conversation
- *
- * At least one of the three must be provided.
- */
-export const SendMessageSchema = z.object({
+/** Shared body fields (type, content, attachments, senderId). */
+const MessageBodySchema = z.object({
   senderId: z.string().min(1),
   type: z.nativeEnum(MessageType).default(MessageType.TEXT),
   content: z.string().min(1),
   attachments: z.array(MessageAttachmentSchema).optional(),
-  // Conversation resolution — exactly one should be provided
+});
+
+/**
+ * Direct / DM message  —  WebSocket event: message:send
+ * Supply either an existing `conversationId` or a `recipientId`
+ * (find-or-create semantics).
+ */
+export const SendDirectMessageSchema = MessageBodySchema.extend({
   conversationId: z.string().min(1).optional(),
   recipientId: z.string().min(1).optional(),
-  orgId: z.string().min(1).optional(),
 }).refine(
-  d => d.conversationId || d.recipientId || d.orgId,
-  { message: 'One of conversationId, recipientId, or orgId is required' }
+  d => d.conversationId || d.recipientId,
+  { message: 'One of conversationId or recipientId is required for a direct message' },
 );
 
-export type SendMessageRequest = z.output<typeof SendMessageSchema>;
+export type SendDirectMessageRequest = z.output<typeof SendDirectMessageSchema>;
 
-// Resolved payload used by message.service — always has conversationId
+/**
+ * Org / support message  —  WebSocket event: message:send:support
+ * Supply either an existing `conversationId` or an `orgId`
+ * (find-or-create semantics for the customer's support thread).
+ */
+export const SendSupportMessageSchema = MessageBodySchema.extend({
+  conversationId: z.string().min(1).optional(),
+  orgId: z.string().min(1).optional(),
+}).refine(
+  d => d.conversationId || d.orgId,
+  { message: 'One of conversationId or orgId is required for a support message' },
+);
+
+export type SendSupportMessageRequest = z.output<typeof SendSupportMessageSchema>;
+
+/** Resolved payload consumed by message.service — always has conversationId. */
 export type SendMessagePayload = {
   conversationId: string;
   senderId: string;
