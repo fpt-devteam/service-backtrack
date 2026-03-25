@@ -20,6 +20,8 @@ public sealed class GetPublicUserProfileHandler(IUserRepository userRepository)
             AvatarUrl = user.AvatarUrl,
             Email = user.ShowEmail ? user.Email : null,
             Phone = user.ShowPhone ? user.Phone : null,
+            GlobalRole = user.GlobalRole,
+            Status = user.Status,
         };
     }
 }

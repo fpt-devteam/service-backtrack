@@ -32,7 +32,8 @@ public sealed class GetMeHandler : IRequestHandler<GetMeQuery, UserResult>
             Phone = user.Phone,
             ShowEmail = user.ShowEmail,
             ShowPhone = user.ShowPhone,
-            GlobalRole = user.GlobalRole
+            GlobalRole = user.GlobalRole,
+            Status = user.Status,
         };
     }
 }

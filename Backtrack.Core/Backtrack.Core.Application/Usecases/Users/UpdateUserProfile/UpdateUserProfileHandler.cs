@@ -21,11 +21,14 @@ public sealed class UpdateUserProfileHandler : IRequestHandler<UpdateUserProfile
         if (user == null)
             throw new NotFoundException(UserErrors.NotFound);
 
-        if (request.Phone != null)
-            user.Phone = request.Phone;
+        if (request.DisplayName != null)
+            user.DisplayName = request.DisplayName;
 
         if (request.AvatarUrl != null)
             user.AvatarUrl = request.AvatarUrl;
+
+        if (request.Phone != null)
+            user.Phone = request.Phone;
 
         if (request.ShowEmail.HasValue)
             user.ShowEmail = request.ShowEmail.Value;
@@ -45,7 +48,8 @@ public sealed class UpdateUserProfileHandler : IRequestHandler<UpdateUserProfile
             Phone = user.Phone,
             ShowEmail = user.ShowEmail,
             ShowPhone = user.ShowPhone,
-            GlobalRole = user.GlobalRole
+            GlobalRole = user.GlobalRole,
+            Status = user.Status,
         };
     }
 }

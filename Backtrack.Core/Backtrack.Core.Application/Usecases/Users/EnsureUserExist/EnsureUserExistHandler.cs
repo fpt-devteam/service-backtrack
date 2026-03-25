@@ -51,7 +51,11 @@ public sealed class EnsureUserExistHandler : IRequestHandler<EnsureUserExistComm
             Email = existingOrCreatedUser.Email,
             DisplayName = existingOrCreatedUser.DisplayName,
             AvatarUrl = existingOrCreatedUser.AvatarUrl,
-            GlobalRole = existingOrCreatedUser.GlobalRole
+            Phone = existingOrCreatedUser.Phone,
+            ShowEmail = existingOrCreatedUser.ShowEmail,
+            ShowPhone = existingOrCreatedUser.ShowPhone,
+            GlobalRole = existingOrCreatedUser.GlobalRole,
+            Status = existingOrCreatedUser.Status,
         };
     }
 }
