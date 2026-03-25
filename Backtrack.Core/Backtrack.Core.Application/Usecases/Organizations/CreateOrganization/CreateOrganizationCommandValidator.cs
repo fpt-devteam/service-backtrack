@@ -48,5 +48,34 @@
             RuleFor(x => x.LogoUrl)
                 .NotEmpty().WithMessage("Logo URL is required")
                 .MaximumLength(2048).WithMessage("Logo URL must not exceed 2048 characters");
+
+            RuleFor(x => x.ContactEmail)
+                .EmailAddress().WithMessage("Contact email must be a valid email address")
+                .MaximumLength(255).WithMessage("Contact email must not exceed 255 characters")
+                .When(x => !string.IsNullOrEmpty(x.ContactEmail));
+
+            RuleFor(x => x.CoverImageUrl)
+                .MaximumLength(2048).WithMessage("Cover image URL must not exceed 2048 characters")
+                .When(x => !string.IsNullOrEmpty(x.CoverImageUrl));
+
+            RuleFor(x => x.LocationNote)
+                .MaximumLength(1000).WithMessage("Location note must not exceed 1000 characters")
+                .When(x => !string.IsNullOrEmpty(x.LocationNote));
+
+            RuleForEach(x => x.BusinessHours)
+                .ChildRules(day =>
+                {
+                    day.RuleFor(d => d.Day)
+                        .IsInEnum().WithMessage("Day must be a valid day of the week");
+
+                    day.RuleFor(d => d.OpenTime)
+                        .Matches(@"^\d{2}:\d{2}$").WithMessage("OpenTime must be in HH:mm format")
+                        .When(d => !d.IsClosed && !string.IsNullOrEmpty(d.OpenTime));
+
+                    day.RuleFor(d => d.CloseTime)
+                        .Matches(@"^\d{2}:\d{2}$").WithMessage("CloseTime must be in HH:mm format")
+                        .When(d => !d.IsClosed && !string.IsNullOrEmpty(d.CloseTime));
+                })
+                .When(x => x.BusinessHours != null);
         }
     }

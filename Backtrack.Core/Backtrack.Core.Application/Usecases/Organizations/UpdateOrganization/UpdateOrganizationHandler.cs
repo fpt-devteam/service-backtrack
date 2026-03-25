@@ -1,7 +1,6 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
@@ -39,7 +38,7 @@ public sealed class UpdateOrganizationHandler : IRequestHandler<UpdateOrganizati
             throw new NotFoundException(OrganizationErrors.NotFound);
         }
 
-        if (org.Slug != command.Slug)
+        if (command.Slug != null && org.Slug != command.Slug)
         {
             var slugExists = await _organizationRepository.SlugExistsAsync(command.Slug, cancellationToken);
             if (slugExists)
@@ -48,17 +47,22 @@ public sealed class UpdateOrganizationHandler : IRequestHandler<UpdateOrganizati
             }
         }
 
-        org.Name = command.Name;
-        org.Slug = command.Slug;
+        org.Name = command.Name ?? org.Name;
+        org.Slug = command.Slug ?? org.Slug;
         if (command.Location != null)
         {
             org.Location = new GeoPoint(command.Location.Latitude, command.Location.Longitude);
         }
         org.DisplayAddress = command.DisplayAddress ?? org.DisplayAddress;
         org.ExternalPlaceId = command.ExternalPlaceId ?? org.ExternalPlaceId;
-        org.Phone = command.Phone;
-        org.IndustryType = command.IndustryType;
-        org.TaxIdentificationNumber = command.TaxIdentificationNumber;
+        org.Phone = command.Phone ?? org.Phone;
+        org.ContactEmail = command.ContactEmail ?? org.ContactEmail;
+        org.IndustryType = command.IndustryType ?? org.IndustryType;
+        org.TaxIdentificationNumber = command.TaxIdentificationNumber ?? org.TaxIdentificationNumber;
+        org.LogoUrl = command.LogoUrl ?? org.LogoUrl;
+        org.CoverImageUrl = command.CoverImageUrl ?? org.CoverImageUrl;
+        org.LocationNote = command.LocationNote ?? org.LocationNote;
+        org.BusinessHours = command.BusinessHours ?? org.BusinessHours;
 
         _organizationRepository.Update(org);
         await _organizationRepository.SaveChangesAsync();
@@ -72,9 +76,13 @@ public sealed class UpdateOrganizationHandler : IRequestHandler<UpdateOrganizati
             DisplayAddress = org.DisplayAddress,
             ExternalPlaceId = org.ExternalPlaceId,
             Phone = org.Phone,
+            ContactEmail = org.ContactEmail,
             IndustryType = org.IndustryType,
             TaxIdentificationNumber = org.TaxIdentificationNumber,
             LogoUrl = org.LogoUrl,
+            CoverImageUrl = org.CoverImageUrl,
+            LocationNote = org.LocationNote,
+            BusinessHours = org.BusinessHours,
             Status = org.Status.ToString(),
             CreatedAt = org.CreatedAt,
         };

@@ -31,9 +31,13 @@ public sealed class GetOrganizationPublicHandler : IRequestHandler<GetOrganizati
             DisplayAddress = org.DisplayAddress,
             ExternalPlaceId = org.ExternalPlaceId,
             Phone = org.Phone,
+            ContactEmail = org.ContactEmail,
             IndustryType = org.IndustryType,
             TaxIdentificationNumber = org.TaxIdentificationNumber,
             LogoUrl = org.LogoUrl,
+            CoverImageUrl = org.CoverImageUrl,
+            LocationNote = org.LocationNote,
+            BusinessHours = org.BusinessHours,
             Status = org.Status.ToString(),
             CreatedAt = org.CreatedAt,
         };

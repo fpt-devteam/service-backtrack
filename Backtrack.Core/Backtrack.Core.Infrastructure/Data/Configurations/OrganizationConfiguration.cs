@@ -1,5 +1,9 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 
@@ -62,6 +66,10 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasMaxLength(50)
                 .IsRequired();
 
+            builder.Property(o => o.ContactEmail)
+                .HasColumnName("contact_email")
+                .HasMaxLength(255);
+
             builder.Property(o => o.IndustryType)
                 .HasColumnName("industry_type")
                 .HasMaxLength(255)
@@ -76,6 +84,35 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasColumnName("logo_url")
                 .HasMaxLength(2048)
                 .IsRequired();
+
+            builder.Property(o => o.CoverImageUrl)
+                .HasColumnName("cover_image_url")
+                .HasMaxLength(2048);
+
+            builder.Property(o => o.LocationNote)
+                .HasColumnName("location_note")
+                .HasMaxLength(1000);
+
+            var jsonOptions = new JsonSerializerOptions
+            {
+                Converters = { new JsonStringEnumConverter() }
+            };
+
+            var businessHoursConverter = new ValueConverter<List<DailySchedule>?, string?>(
+                toDb => toDb == null ? null : JsonSerializer.Serialize(toDb, jsonOptions),
+                fromDb => fromDb == null ? null : JsonSerializer.Deserialize<List<DailySchedule>>(fromDb, jsonOptions)
+            );
+
+            var businessHoursComparer = new ValueComparer<List<DailySchedule>?>(
+                (a, b) => JsonSerializer.Serialize(a, jsonOptions) == JsonSerializer.Serialize(b, jsonOptions),
+                v => v == null ? 0 : JsonSerializer.Serialize(v, jsonOptions).GetHashCode(),
+                v => v == null ? null : JsonSerializer.Deserialize<List<DailySchedule>>(JsonSerializer.Serialize(v, jsonOptions), jsonOptions)
+            );
+
+            builder.Property(o => o.BusinessHours)
+                .HasColumnName("business_hours")
+                .HasColumnType("jsonb")
+                .HasConversion(businessHoursConverter, businessHoursComparer);
 
             builder.Property(o => o.Status)
                 .HasColumnName("status")

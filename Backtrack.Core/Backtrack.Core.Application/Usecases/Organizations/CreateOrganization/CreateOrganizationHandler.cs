@@ -1,10 +1,8 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
-using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Organizations.CreateOrganization;
@@ -43,9 +41,13 @@ public sealed class CreateOrganizationHandler : IRequestHandler<CreateOrganizati
             DisplayAddress = command.DisplayAddress,
             ExternalPlaceId = command.ExternalPlaceId,
             Phone = command.Phone,
+            ContactEmail = command.ContactEmail,
             IndustryType = command.IndustryType,
             TaxIdentificationNumber = command.TaxIdentificationNumber,
             LogoUrl = command.LogoUrl,
+            CoverImageUrl = command.CoverImageUrl,
+            LocationNote = command.LocationNote,
+            BusinessHours = command.BusinessHours,
             Status = OrganizationStatus.Active,
         };
 
@@ -73,9 +75,13 @@ public sealed class CreateOrganizationHandler : IRequestHandler<CreateOrganizati
             DisplayAddress = organization.DisplayAddress,
             ExternalPlaceId = organization.ExternalPlaceId,
             Phone = organization.Phone,
+            ContactEmail = organization.ContactEmail,
             IndustryType = organization.IndustryType,
             TaxIdentificationNumber = organization.TaxIdentificationNumber,
             LogoUrl = organization.LogoUrl,
+            CoverImageUrl = organization.CoverImageUrl,
+            LocationNote = organization.LocationNote,
+            BusinessHours = organization.BusinessHours,
             Status = organization.Status.ToString(),
             CreatedAt = organization.CreatedAt,
         };

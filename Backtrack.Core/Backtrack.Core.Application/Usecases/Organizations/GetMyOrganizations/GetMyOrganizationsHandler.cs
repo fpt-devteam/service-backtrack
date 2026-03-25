@@ -1,5 +1,4 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Organizations.GetMyOrganizations;
@@ -26,8 +25,13 @@ public sealed class GetMyOrganizationsHandler : IRequestHandler<GetMyOrganizatio
             DisplayAddress = m.Organization.DisplayAddress,
             ExternalPlaceId = m.Organization.ExternalPlaceId,
             Phone = m.Organization.Phone,
+            ContactEmail = m.Organization.ContactEmail,
             IndustryType = m.Organization.IndustryType,
             TaxIdentificationNumber = m.Organization.TaxIdentificationNumber,
+            LogoUrl = m.Organization.LogoUrl,
+            CoverImageUrl = m.Organization.CoverImageUrl,
+            LocationNote = m.Organization.LocationNote,
+            BusinessHours = m.Organization.BusinessHours,
             OrgStatus = m.Organization.Status.ToString(),
             MyRole = m.Role.ToString(),
             JoinedAt = m.JoinedAt,
