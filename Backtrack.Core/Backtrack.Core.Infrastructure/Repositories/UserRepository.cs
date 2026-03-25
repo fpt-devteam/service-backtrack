@@ -13,6 +13,10 @@ public class UserRepository : CrudRepositoryBase<User, string>, IUserRepository
     }
     public async Task<User> EnsureExistAsync(User user)
     {
+        var existingUser = await GetByIdAsync(user.Id);
+        if (existingUser is not null)
+            return existingUser;
+
         try
         {
             await CreateAsync(user);
@@ -23,13 +27,8 @@ public class UserRepository : CrudRepositoryBase<User, string>, IUserRepository
         catch (DbUpdateException ex) when (IsDuplicatePk(ex))
         {
             _context.Entry(user).State = EntityState.Detached;
-            var existingUser = await GetByIdAsync(user.Id);
-            if (existingUser is null)
-            {
-                throw new InvalidOperationException($"User with Id '{user.Id}' was not found after duplicate key exception.");
-            }
-
-            return existingUser;
+            var concurrentUser = await GetByIdAsync(user.Id);
+            return concurrentUser ?? throw new InvalidOperationException($"User with Id '{user.Id}' was not found after duplicate key exception.");
         }
     }
     private static bool IsDuplicatePk(DbUpdateException ex)
