@@ -14,4 +14,5 @@ public sealed record CreateInventoryItemCommand : IRequest<OrganizationInventory
     public string? DistinctiveMarks { get; init; }
     public string[] ImageUrls { get; init; } = Array.Empty<string>();
     public string? StorageLocation { get; init; }
+    public required FinderContactInfo FinderContact { get; init; }
 }

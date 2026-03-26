@@ -23,5 +23,30 @@ public sealed class UpdateInventoryItemCommandValidator : AbstractValidator<Upda
 
         RuleFor(x => x.StorageLocation)
             .MaximumLength(500).WithMessage("StorageLocation must not exceed 500 characters");
+
+        When(x => x.FinderContact != null, () =>
+        {
+            RuleFor(x => x.FinderContact!.Name)
+                .NotEmpty().WithMessage("FinderContact.Name must not be empty")
+                .MaximumLength(255).WithMessage("FinderContact.Name must not exceed 255 characters");
+
+            RuleFor(x => x.FinderContact!.Email)
+                .MaximumLength(255).WithMessage("FinderContact.Email must not exceed 255 characters")
+                .EmailAddress().WithMessage("FinderContact.Email must be a valid email address")
+                .When(x => x.FinderContact?.Email != null);
+
+            RuleFor(x => x.FinderContact!.Phone)
+                .MaximumLength(50).WithMessage("FinderContact.Phone must not exceed 50 characters")
+                .Matches(@"^\+?[0-9\s\-\(\)]{7,50}$").WithMessage("FinderContact.Phone must be a valid phone number")
+                .When(x => x.FinderContact?.Phone != null);
+
+            RuleFor(x => x.FinderContact!.NationalId)
+                .MaximumLength(50).WithMessage("FinderContact.NationalId must not exceed 50 characters")
+                .When(x => x.FinderContact?.NationalId != null);
+
+            RuleFor(x => x.FinderContact!.OrgMemberId)
+                .MaximumLength(100).WithMessage("FinderContact.OrgMemberId must not exceed 100 characters")
+                .When(x => x.FinderContact?.OrgMemberId != null);
+        });
     }
 }

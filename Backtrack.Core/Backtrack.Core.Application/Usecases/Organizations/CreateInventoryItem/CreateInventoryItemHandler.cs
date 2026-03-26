@@ -10,6 +10,7 @@ namespace Backtrack.Core.Application.Usecases.Organizations.CreateInventoryItem;
 
 public sealed class CreateInventoryItemHandler(
     IOrganizationInventoryRepository inventoryRepository,
+    IOrganizationRepository organizationRepository,
     IMembershipRepository membershipRepository,
     IEmbeddingService embeddingService) : IRequestHandler<CreateInventoryItemCommand, OrganizationInventoryResult>
 {
@@ -21,6 +22,12 @@ public sealed class CreateInventoryItemHandler(
         {
             throw new ForbiddenException(MembershipErrors.NotAMember);
         }
+
+        // Validate finder contact required fields defined by the organization
+        var org = await organizationRepository.GetByIdAsync(command.OrgId)
+            ?? throw new NotFoundException(OrganizationErrors.NotFound);
+
+        ValidateFinderContactRequiredFields(org.RequiredFinderContactFields, command.FinderContact);
 
         // Generate embedding synchronously
         var contentForEmbedding = $@"Item: {command.ItemName}
@@ -50,7 +57,19 @@ Description: {command.Description}";
             LoggedAt = DateTimeOffset.UtcNow,
         };
 
+        var finderContact = new FinderContact
+        {
+            Id = Guid.NewGuid(),
+            InventoryId = inventory.Id,
+            Name = command.FinderContact.Name,
+            Email = command.FinderContact.Email,
+            Phone = command.FinderContact.Phone,
+            NationalId = command.FinderContact.NationalId,
+            OrgMemberId = command.FinderContact.OrgMemberId,
+        };
+
         await inventoryRepository.CreateAsync(inventory);
+        inventory.FinderContact = finderContact;
         await inventoryRepository.SaveChangesAsync();
 
         return new OrganizationInventoryResult
@@ -65,7 +84,36 @@ Description: {command.Description}";
             StorageLocation = inventory.StorageLocation,
             Status = inventory.Status.ToString(),
             LoggedAt = inventory.LoggedAt,
-            CreatedAt = inventory.CreatedAt
+            CreatedAt = inventory.CreatedAt,
+            FinderContact = new FinderContactResult
+            {
+                Id = finderContact.Id,
+                Name = finderContact.Name,
+                Email = finderContact.Email,
+                Phone = finderContact.Phone,
+                NationalId = finderContact.NationalId,
+                OrgMemberId = finderContact.OrgMemberId,
+            }
         };
+    }
+
+    private static void ValidateFinderContactRequiredFields(
+        List<FinderContactField> requiredFields,
+        FinderContactInfo contact)
+    {
+        foreach (var field in requiredFields)
+        {
+            var missing = field switch
+            {
+                FinderContactField.Email => string.IsNullOrWhiteSpace(contact.Email),
+                FinderContactField.Phone => string.IsNullOrWhiteSpace(contact.Phone),
+                FinderContactField.NationalId => string.IsNullOrWhiteSpace(contact.NationalId),
+                FinderContactField.OrgMemberId => string.IsNullOrWhiteSpace(contact.OrgMemberId),
+                _ => false
+            };
+
+            if (missing)
+                throw new ValidationException(OrganizationInventoryErrors.MissingRequiredFinderContactField(field.ToString()));
+        }
     }
 }

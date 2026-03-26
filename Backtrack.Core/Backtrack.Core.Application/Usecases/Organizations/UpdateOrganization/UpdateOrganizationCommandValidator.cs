@@ -1,3 +1,4 @@
+using Backtrack.Core.Domain.Constants;
 using FluentValidation;
 
 namespace Backtrack.Core.Application.Usecases.Organizations.UpdateOrganization;
@@ -82,5 +83,14 @@ public sealed class UpdateOrganizationCommandValidator : AbstractValidator<Updat
                     .When(d => !d.IsClosed && !string.IsNullOrEmpty(d.CloseTime));
             })
             .When(x => x.BusinessHours != null);
+
+        When(x => x.RequiredFinderContactFields != null, () =>
+        {
+            RuleFor(x => x.RequiredFinderContactFields)
+                .NotEmpty().WithMessage("RequiredFinderContactFields must contain at least one field");
+
+            RuleForEach(x => x.RequiredFinderContactFields)
+                .IsInEnum().WithMessage("Each entry in RequiredFinderContactFields must be a valid FinderContactField");
+        });
     }
 }

@@ -3,12 +3,14 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.AI;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Domain.Entities;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Organizations.UpdateInventoryItem;
 
 public sealed class UpdateInventoryItemHandler(
     IOrganizationInventoryRepository inventoryRepository,
+    IOrganizationRepository organizationRepository,
     IMembershipRepository membershipRepository,
     IEmbeddingService embeddingService) : IRequestHandler<UpdateInventoryItemCommand, OrganizationInventoryResult>
 {
@@ -64,6 +66,37 @@ public sealed class UpdateInventoryItemHandler(
             inventory.Status = status;
         }
 
+        if (command.FinderContact != null)
+        {
+            var org = await organizationRepository.GetByIdAsync(command.OrgId)
+                ?? throw new NotFoundException(OrganizationErrors.NotFound);
+
+            ValidateFinderContactRequiredFields(org.RequiredFinderContactFields, command.FinderContact);
+
+            if (inventory.FinderContact != null)
+            {
+                inventory.FinderContact.Name = command.FinderContact.Name;
+                inventory.FinderContact.Email = command.FinderContact.Email;
+                inventory.FinderContact.Phone = command.FinderContact.Phone;
+                inventory.FinderContact.NationalId = command.FinderContact.NationalId;
+                inventory.FinderContact.OrgMemberId = command.FinderContact.OrgMemberId;
+                inventory.FinderContact.UpdatedAt = DateTimeOffset.UtcNow;
+            }
+            else
+            {
+                inventory.FinderContact = new FinderContact
+                {
+                    Id = Guid.NewGuid(),
+                    InventoryId = inventory.Id,
+                    Name = command.FinderContact.Name,
+                    Email = command.FinderContact.Email,
+                    Phone = command.FinderContact.Phone,
+                    NationalId = command.FinderContact.NationalId,
+                    OrgMemberId = command.FinderContact.OrgMemberId,
+                };
+            }
+        }
+
         if (needsReEmbedding)
         {
             var contentForEmbedding = $@"Item: {inventory.ItemName}
@@ -94,7 +127,36 @@ Description: {inventory.Description}";
             StorageLocation = inventory.StorageLocation,
             Status = inventory.Status.ToString(),
             LoggedAt = inventory.LoggedAt,
-            CreatedAt = inventory.CreatedAt
+            CreatedAt = inventory.CreatedAt,
+            FinderContact = inventory.FinderContact == null ? null : new FinderContactResult
+            {
+                Id = inventory.FinderContact.Id,
+                Name = inventory.FinderContact.Name,
+                Email = inventory.FinderContact.Email,
+                Phone = inventory.FinderContact.Phone,
+                NationalId = inventory.FinderContact.NationalId,
+                OrgMemberId = inventory.FinderContact.OrgMemberId,
+            }
         };
+    }
+
+    private static void ValidateFinderContactRequiredFields(
+        List<FinderContactField> requiredFields,
+        FinderContactInfo contact)
+    {
+        foreach (var field in requiredFields)
+        {
+            var missing = field switch
+            {
+                FinderContactField.Email => string.IsNullOrWhiteSpace(contact.Email),
+                FinderContactField.Phone => string.IsNullOrWhiteSpace(contact.Phone),
+                FinderContactField.NationalId => string.IsNullOrWhiteSpace(contact.NationalId),
+                FinderContactField.OrgMemberId => string.IsNullOrWhiteSpace(contact.OrgMemberId),
+                _ => false
+            };
+
+            if (missing)
+                throw new ValidationException(OrganizationInventoryErrors.MissingRequiredFinderContactField(field.ToString()));
+        }
     }
 }

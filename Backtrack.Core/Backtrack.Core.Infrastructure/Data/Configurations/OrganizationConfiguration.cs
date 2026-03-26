@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 
@@ -113,6 +114,23 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasColumnName("business_hours")
                 .HasColumnType("jsonb")
                 .HasConversion(businessHoursConverter, businessHoursComparer);
+
+            var requiredFinderContactFieldsConverter = new ValueConverter<List<FinderContactField>, string[]>(
+                toDb => toDb.Select(f => f.ToString()).ToArray(),
+                fromDb => fromDb.Select(s => Enum.Parse<FinderContactField>(s)).ToList()
+            );
+
+            var requiredFinderContactFieldsComparer = new ValueComparer<List<FinderContactField>>(
+                (a, b) => a != null && b != null && a.SequenceEqual(b),
+                v => v == null ? 0 : v.Aggregate(0, (h, f) => HashCode.Combine(h, f.GetHashCode())),
+                v => v == null ? new List<FinderContactField>() : v.ToList()
+            );
+
+            builder.Property(o => o.RequiredFinderContactFields)
+                .HasColumnName("required_finder_contact_fields")
+                .HasColumnType("text[]")
+                .HasConversion(requiredFinderContactFieldsConverter, requiredFinderContactFieldsComparer)
+                .IsRequired();
 
             builder.Property(o => o.Status)
                 .HasColumnName("status")

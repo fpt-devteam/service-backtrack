@@ -48,6 +48,7 @@ public sealed class CreateOrganizationHandler : IRequestHandler<CreateOrganizati
             CoverImageUrl = command.CoverImageUrl,
             LocationNote = command.LocationNote,
             BusinessHours = command.BusinessHours,
+            RequiredFinderContactFields = command.RequiredFinderContactFields,
             Status = OrganizationStatus.Active,
         };
 
@@ -82,6 +83,7 @@ public sealed class CreateOrganizationHandler : IRequestHandler<CreateOrganizati
             CoverImageUrl = organization.CoverImageUrl,
             LocationNote = organization.LocationNote,
             BusinessHours = organization.BusinessHours,
+            RequiredFinderContactFields = organization.RequiredFinderContactFields,
             Status = organization.Status.ToString(),
             CreatedAt = organization.CreatedAt,
         };

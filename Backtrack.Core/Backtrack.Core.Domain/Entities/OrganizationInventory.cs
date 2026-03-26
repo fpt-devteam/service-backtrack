@@ -18,4 +18,5 @@ public sealed class OrganizationInventory : Entity<Guid>
 
     public Organization Organization { get; set; } = default!;
     public User LoggedBy { get; set; } = default!;
+    public FinderContact? FinderContact { get; set; }
 }

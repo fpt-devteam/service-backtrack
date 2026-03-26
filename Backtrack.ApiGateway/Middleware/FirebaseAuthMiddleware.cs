@@ -26,7 +26,7 @@ public class FirebaseAuthMiddleware
             "/api/core/swagger",
             "/api/core/hangfire",
 
-            "/api/core/orgs",
+            "/api/core/orgs/public",
             "/api/core/invitations/check",
 
             "/api/core/posts/feed",

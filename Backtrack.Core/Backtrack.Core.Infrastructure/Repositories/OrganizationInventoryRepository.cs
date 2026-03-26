@@ -12,7 +12,7 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
 {
     public override async Task<OrganizationInventory?> GetByIdAsync(Guid id, bool isTrack = false)
     {
-        IQueryable<OrganizationInventory> query = _dbSet.Include(oi => oi.LoggedBy).Include(oi => oi.Organization);
+        IQueryable<OrganizationInventory> query = _dbSet.Include(oi => oi.LoggedBy).Include(oi => oi.Organization).Include(oi => oi.FinderContact);
         if (!isTrack)
         {
             query = query.AsNoTracking();

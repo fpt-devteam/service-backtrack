@@ -1,3 +1,4 @@
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 
 namespace Backtrack.Core.Application.Usecases.Organizations;
@@ -18,6 +19,7 @@ public sealed record OrganizationResult
     public string? CoverImageUrl { get; init; }
     public string? LocationNote { get; init; }
     public List<DailySchedule>? BusinessHours { get; init; }
+    public required List<FinderContactField> RequiredFinderContactFields { get; init; }
     public required string Status { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
 }

@@ -45,7 +45,7 @@ public class OrganizationController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Paginated list of all organizations</returns>
     /// <response code="200">Returns all organizations</response>
-    [HttpGet]
+    [HttpGet("public")]
     [ProducesResponseType(typeof(ApiResponse<PagedResponse<OrganizationResult>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllOrganizationsAsync(
         [FromQuery] int page = 1,

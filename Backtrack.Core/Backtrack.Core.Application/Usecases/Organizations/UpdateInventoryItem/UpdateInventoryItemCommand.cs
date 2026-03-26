@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using MediatR;
+using Backtrack.Core.Application.Usecases.Organizations;
 
 namespace Backtrack.Core.Application.Usecases.Organizations.UpdateInventoryItem;
 
@@ -17,4 +18,5 @@ public sealed record UpdateInventoryItemCommand : IRequest<OrganizationInventory
     public string[]? ImageUrls { get; init; }
     public string? StorageLocation { get; init; }
     public string? Status { get; init; }
+    public FinderContactInfo? FinderContact { get; init; }
 }

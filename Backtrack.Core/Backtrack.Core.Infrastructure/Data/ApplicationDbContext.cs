@@ -14,6 +14,7 @@ namespace Backtrack.Core.Infrastructure.Data
         public DbSet<JoinInvitation> JoinInvitations { get; set; }
         public DbSet<PostMatch> PostMatches { get; set; }
         public DbSet<OrganizationInventory> OrganizationInventories { get; set; }
+        public DbSet<FinderContact> FinderContacts { get; set; }
         public DbSet<PostImage> PostImages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -27,6 +28,7 @@ namespace Backtrack.Core.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new JoinInvitationConfiguration());
             modelBuilder.ApplyConfiguration(new PostMatchConfiguration());
             modelBuilder.ApplyConfiguration(new OrganizationInventoryConfiguration());
+            modelBuilder.ApplyConfiguration(new FinderContactConfiguration());
             modelBuilder.ApplyConfiguration(new PostImageConfiguration());
         }
     }

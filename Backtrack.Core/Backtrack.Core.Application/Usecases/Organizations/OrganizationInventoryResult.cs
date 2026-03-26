@@ -13,4 +13,15 @@ public sealed record OrganizationInventoryResult
     public required string Status { get; init; }
     public required DateTimeOffset LoggedAt { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
+    public FinderContactResult? FinderContact { get; init; }
+}
+
+public sealed record FinderContactResult
+{
+    public required Guid Id { get; init; }
+    public required string Name { get; init; }
+    public string? Email { get; init; }
+    public string? Phone { get; init; }
+    public string? NationalId { get; init; }
+    public string? OrgMemberId { get; init; }
 }

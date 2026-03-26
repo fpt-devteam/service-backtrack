@@ -18,6 +18,7 @@ public sealed class Organization : Entity<Guid>
     public string? CoverImageUrl { get; set; }
     public string? LocationNote { get; set; }
     public List<DailySchedule>? BusinessHours { get; set; }
+    public required List<FinderContactField> RequiredFinderContactFields { get; set; }
     public required OrganizationStatus Status { get; set; } = OrganizationStatus.Active;
 
     public ICollection<Membership> Memberships { get; set; } = new List<Membership>();

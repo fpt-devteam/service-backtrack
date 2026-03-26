@@ -1,3 +1,4 @@
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 using System.Text.Json.Serialization;
@@ -21,4 +22,5 @@ public sealed record CreateOrganizationCommand : IRequest<OrganizationResult>
     public string? CoverImageUrl { get; init; }
     public string? LocationNote { get; init; }
     public List<DailySchedule>? BusinessHours { get; init; }
+    public required List<FinderContactField> RequiredFinderContactFields { get; init; }
 }
