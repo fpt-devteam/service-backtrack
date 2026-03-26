@@ -432,25 +432,4 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<(IEnumerable<Post> Items, int TotalCount)> GetPagedByAuthorIdAsync(
-        string authorId,
-        PagedQuery pagedQuery,
-        CancellationToken cancellationToken = default)
-    {
-        var baseQuery = _dbSet
-            .Include(p => p.Author)
-            .Include(p => p.Organization)
-            .Include(p => p.Images)
-            .Where(p => p.AuthorId == authorId && p.DeletedAt == null)
-            .OrderByDescending(p => p.CreatedAt);
-
-        var totalCount = await baseQuery.CountAsync(cancellationToken);
-
-        var items = await baseQuery
-            .Skip(pagedQuery.Offset)
-            .Take(pagedQuery.Limit)
-            .ToListAsync(cancellationToken);
-
-        return (items, totalCount);
-    }
 }
