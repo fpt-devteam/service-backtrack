@@ -55,6 +55,7 @@ Description: {command.Description}";
             MultimodalEmbedding = embedding,
             Status = OrganizationInventoryStatus.InStorage,
             LoggedAt = DateTimeOffset.UtcNow,
+            ReceiverStaffId = command.UserId,
         };
 
         var finderContact = new FinderContact
@@ -85,6 +86,8 @@ Description: {command.Description}";
             Status = inventory.Status.ToString(),
             LoggedAt = inventory.LoggedAt,
             CreatedAt = inventory.CreatedAt,
+            ReceiverStaffId = inventory.ReceiverStaffId,
+            HandoverStaffId = inventory.HandoverStaffId,
             FinderContact = new FinderContactResult
             {
                 Id = finderContact.Id,

@@ -41,6 +41,28 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasConstraintName("fk_org_inventories_logged_by_id_users_id")
                 .OnDelete(DeleteBehavior.NoAction);
 
+            builder.Property(oi => oi.ReceiverStaffId)
+                .HasColumnName("receiver_staff_id")
+                .HasColumnType("text")
+                .IsRequired();
+
+            builder.HasOne(oi => oi.ReceiverStaff)
+                .WithMany()
+                .HasForeignKey(oi => oi.ReceiverStaffId)
+                .HasConstraintName("fk_org_inventories_receiver_staff_id_users_id")
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Property(oi => oi.HandoverStaffId)
+                .HasColumnName("handover_staff_id")
+                .HasColumnType("text");
+
+            builder.HasOne(oi => oi.HandoverStaff)
+                .WithMany()
+                .HasForeignKey(oi => oi.HandoverStaffId)
+                .HasConstraintName("fk_org_inventories_handover_staff_id_users_id")
+                .OnDelete(DeleteBehavior.NoAction)
+                .IsRequired(false);
+
             builder.Property(oi => oi.ItemName)
                 .HasColumnName("item_name")
                 .HasMaxLength(500)

@@ -38,7 +38,18 @@ public sealed class GetInventoryItemByIdHandler(
             StorageLocation = inv.StorageLocation,
             Status = inv.Status.ToString(),
             LoggedAt = inv.LoggedAt,
-            CreatedAt = inv.CreatedAt
+            CreatedAt = inv.CreatedAt,
+            ReceiverStaffId = inv.ReceiverStaffId,
+            HandoverStaffId = inv.HandoverStaffId,
+            FinderContact = inv.FinderContact == null ? null : new FinderContactResult
+            {
+                Id = inv.FinderContact.Id,
+                Name = inv.FinderContact.Name,
+                Email = inv.FinderContact.Email,
+                Phone = inv.FinderContact.Phone,
+                NationalId = inv.FinderContact.NationalId,
+                OrgMemberId = inv.FinderContact.OrgMemberId,
+            }
         };
     }
 }

@@ -128,6 +128,8 @@ Description: {inventory.Description}";
             Status = inventory.Status.ToString(),
             LoggedAt = inventory.LoggedAt,
             CreatedAt = inventory.CreatedAt,
+            ReceiverStaffId = inventory.ReceiverStaffId,
+            HandoverStaffId = inventory.HandoverStaffId,
             FinderContact = inventory.FinderContact == null ? null : new FinderContactResult
             {
                 Id = inventory.FinderContact.Id,

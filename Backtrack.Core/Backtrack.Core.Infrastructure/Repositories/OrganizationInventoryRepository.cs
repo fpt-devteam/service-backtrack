@@ -100,6 +100,8 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
                         created_at,
                         updated_at,
                         multimodal_embedding,
+                        receiver_staff_id,
+                        handover_staff_id,
                         (multimodal_embedding <=> @queryEmbedding::vector) AS distance,
                         (1.0 - (multimodal_embedding <=> @queryEmbedding::vector)) AS similarity
                     FROM org_inventories
@@ -121,6 +123,8 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
                     created_at,
                     updated_at,
                     multimodal_embedding,
+                    receiver_staff_id,
+                    handover_staff_id,
                     similarity
                 FROM filtered_inventories
                 WHERE similarity >= @minSimilarity
@@ -174,10 +178,12 @@ public class OrganizationInventoryRepository(ApplicationDbContext context) : Cru
                     LoggedAt = reader.GetFieldValue<DateTimeOffset>(9),
                     CreatedAt = reader.GetFieldValue<DateTimeOffset>(10),
                     UpdatedAt = reader.IsDBNull(11) ? null : reader.GetFieldValue<DateTimeOffset>(11),
-                    MultimodalEmbedding = reader.IsDBNull(12) ? null : ((Vector)reader.GetValue(12)).ToArray()
+                    MultimodalEmbedding = reader.IsDBNull(12) ? null : ((Vector)reader.GetValue(12)).ToArray(),
+                    ReceiverStaffId = reader.GetString(13),
+                    HandoverStaffId = reader.IsDBNull(14) ? null : reader.GetString(14),
                 };
 
-                var similarity = reader.GetDouble(13);
+                var similarity = reader.GetDouble(15);
                 results.Add((inventory, similarity));
             }
 

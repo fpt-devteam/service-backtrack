@@ -15,8 +15,12 @@ public sealed class OrganizationInventory : Entity<Guid>
     public float[]? MultimodalEmbedding { get; set; }
     public required OrganizationInventoryStatus Status { get; set; }
     public required DateTimeOffset LoggedAt { get; set; }
+    public required string ReceiverStaffId { get; set; }
+    public string? HandoverStaffId { get; set; }
 
     public Organization Organization { get; set; } = default!;
     public User LoggedBy { get; set; } = default!;
+    public User ReceiverStaff { get; set; } = default!;
+    public User? HandoverStaff { get; set; }
     public FinderContact? FinderContact { get; set; }
 }
