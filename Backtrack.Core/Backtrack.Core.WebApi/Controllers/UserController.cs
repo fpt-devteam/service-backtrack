@@ -6,6 +6,7 @@ using Backtrack.Core.Application.Usecases.Users.EnsureUserExist;
 using Backtrack.Core.Application.Usecases.Users.GetMe;
 using Backtrack.Core.Application.Usecases.Users.UpdateUserProfile;
 using Backtrack.Core.Application.Usecases.Users.GetPublicUserProfile;
+using Backtrack.Core.Application.Usecases.Posts.GetPostsByAuthorId;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -65,6 +66,16 @@ public class UserController : ControllerBase
         CancellationToken cancellationToken)
     {
         var query = new GetPublicUserProfileQuery { UserId = userId };
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("{userId}/posts")]
+    public async Task<IActionResult> GetPostsByUserIdAsync(
+        [FromRoute] string userId,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetPostsByAuthorIdQuery(userId);
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }

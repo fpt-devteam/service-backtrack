@@ -1,20 +1,20 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts.GetMyPosts;
+namespace Backtrack.Core.Application.Usecases.Posts.GetPostsByAuthorId;
 
-public sealed class GetMyPostsHandler : IRequestHandler<GetMyPostsQuery, List<PostResult>>
+public sealed class GetPostsByAuthorIdHandler : IRequestHandler<GetPostsByAuthorIdQuery, List<PostResult>>
 {
     private readonly IPostRepository _postRepository;
 
-    public GetMyPostsHandler(IPostRepository postRepository)
+    public GetPostsByAuthorIdHandler(IPostRepository postRepository)
     {
         _postRepository = postRepository;
     }
 
-    public async Task<List<PostResult>> Handle(GetMyPostsQuery request, CancellationToken cancellationToken)
+    public async Task<List<PostResult>> Handle(GetPostsByAuthorIdQuery request, CancellationToken cancellationToken)
     {
-        var posts = await _postRepository.GetByAuthorIdAsync(request.UserId, cancellationToken);
+        var posts = await _postRepository.GetByAuthorIdAsync(request.AuthorId, cancellationToken);
 
         return posts.Select(post => new PostResult
         {

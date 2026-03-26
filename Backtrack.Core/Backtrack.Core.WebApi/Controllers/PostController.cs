@@ -6,7 +6,7 @@ using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Application.Usecases.Posts.GetPostById;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetSimilarPosts;
 using Backtrack.Core.Application.Usecases.Posts.DeletePost;
-using Backtrack.Core.Application.Usecases.Posts.GetMyPosts;
+using Backtrack.Core.Application.Usecases.Posts.GetPostsByAuthorId;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetPostMatchingStatus;
 using Backtrack.Core.Application.Usecases.Posts.SearchPosts;
@@ -75,7 +75,7 @@ public class PostController : ControllerBase
     public async Task<IActionResult> GetMyPostsAsync(CancellationToken cancellationToken = default)
     {
         var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var query = new GetMyPostsQuery(authorId);
+        var query = new GetPostsByAuthorIdQuery(authorId);
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }
