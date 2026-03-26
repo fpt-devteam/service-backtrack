@@ -50,6 +50,9 @@ public class FirebaseAuthMiddleware
         // GET /api/core/orgs/{guid}/public  — public org profile, no auth or membership required
         new Regex(@"^/api/core/orgs/[0-9a-f\-]{36}/public$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
+        // GET /api/core/posts/{guid}                  — post detail, no auth required
+        new Regex(@"^/api/core/posts/[0-9a-f\-]{36}$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+
         // GET /api/core/posts/{guid}/similar          — similar posts, no auth required
         new Regex(@"^/api/core/posts/[0-9a-f\-]{36}/similar$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
         // GET /api/core/posts/{guid}/matching-status  — post matching status, no auth required
