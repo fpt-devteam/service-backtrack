@@ -364,11 +364,17 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return results;
     }
 
-    public async Task<IEnumerable<(Post Post, double DistanceMeters)>> GetFeedAsync(
+    public async Task<(IEnumerable<(Post Post, double DistanceMeters)> Items, int TotalCount)> GetFeedAsync(
         GeoPoint location,
+        int offset,
+        int limit,
         CancellationToken cancellationToken = default)
     {
-        const int FeedLimit = 50;
+        const string countSql = @"
+            SELECT COUNT(*)
+            FROM posts
+            WHERE deleted_at IS NULL
+                AND location IS NOT NULL";
 
         const string sql = @"
             SELECT
@@ -382,11 +388,18 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             WHERE deleted_at IS NULL
                 AND location IS NOT NULL
             ORDER BY dist ASC, event_time DESC
-            LIMIT @limit";
+            LIMIT @limit OFFSET @offset";
 
         var conn = _context.Database.GetDbConnection();
         if (conn.State != System.Data.ConnectionState.Open)
             await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        int totalCount;
+        await using (var countCmd = conn.CreateCommand())
+        {
+            countCmd.CommandText = countSql;
+            totalCount = Convert.ToInt32(await countCmd.ExecuteScalarAsync(cancellationToken));
+        }
 
         var idDistances = new List<(Guid Id, double Distance)>();
 
@@ -395,7 +408,8 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             cmd.CommandText = sql;
             cmd.Parameters.Add(new NpgsqlParameter("@longitude", location.Longitude));
             cmd.Parameters.Add(new NpgsqlParameter("@latitude", location.Latitude));
-            cmd.Parameters.Add(new NpgsqlParameter("@limit", FeedLimit));
+            cmd.Parameters.Add(new NpgsqlParameter("@limit", limit));
+            cmd.Parameters.Add(new NpgsqlParameter("@offset", offset));
 
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
@@ -403,7 +417,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         }
 
         if (idDistances.Count == 0)
-            return [];
+            return ([], totalCount);
 
         var ids = idDistances.Select(x => x.Id).ToList();
         var posts = await _dbSet
@@ -415,10 +429,12 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
 
         var postMap = posts.ToDictionary(p => p.Id);
 
-        return idDistances
+        var items = idDistances
             .Where(x => postMap.ContainsKey(x.Id))
             .Select(x => (postMap[x.Id], x.Distance))
             .ToList();
+
+        return (items, totalCount);
     }
 
     public async Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)

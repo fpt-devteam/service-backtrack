@@ -20,5 +20,13 @@ public sealed class GetFeedQueryValidator : AbstractValidator<GetFeedQuery>
                 .InclusiveBetween(-180, 180)
                 .WithMessage("Longitude must be between -180 and 180");
         });
+
+        RuleFor(x => x.Page)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage("Page must be at least 1");
+
+        RuleFor(x => x.PageSize)
+            .InclusiveBetween(1, 100)
+            .WithMessage("PageSize must be between 1 and 100");
     }
 }

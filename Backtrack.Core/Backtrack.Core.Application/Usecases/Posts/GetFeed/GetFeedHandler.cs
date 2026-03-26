@@ -4,13 +4,14 @@ using MediatR;
 namespace Backtrack.Core.Application.Usecases.Posts.GetFeed;
 
 public sealed class GetFeedHandler(IPostRepository postRepository)
-    : IRequestHandler<GetFeedQuery, List<FeedPostResult>>
+    : IRequestHandler<GetFeedQuery, PagedResult<FeedPostResult>>
 {
-    public async Task<List<FeedPostResult>> Handle(GetFeedQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<FeedPostResult>> Handle(GetFeedQuery query, CancellationToken cancellationToken)
     {
-        var items = await postRepository.GetFeedAsync(query.Location, cancellationToken);
+        var pagedQuery = PagedQuery.FromPage(query.Page, query.PageSize);
+        var (items, totalCount) = await postRepository.GetFeedAsync(query.Location, pagedQuery.Offset, pagedQuery.Limit, cancellationToken);
 
-        return items.Select(item => new FeedPostResult
+        var results = items.Select(item => new FeedPostResult
         {
             Id = item.Post.Id,
             Author = item.Post.Author?.ToAuthorResult(),
@@ -26,5 +27,7 @@ public sealed class GetFeedHandler(IPostRepository postRepository)
             CreatedAt = item.Post.CreatedAt,
             DistanceInMeters = item.DistanceMeters
         }).ToList();
+
+        return new PagedResult<FeedPostResult>(totalCount, results);
     }
 }
