@@ -34,5 +34,10 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             CancellationToken cancellationToken = default);
 
         Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default);
+
+        Task<(IEnumerable<Post> Items, int TotalCount)> GetPagedByAuthorIdAsync(
+            string authorId,
+            PagedQuery pagedQuery,
+            CancellationToken cancellationToken = default);
     }
 }

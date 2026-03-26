@@ -12,7 +12,23 @@ public class FirebaseAuthMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<FirebaseAuthMiddleware> _logger;
-    private readonly HashSet<string> _publicPaths;
+    private static readonly HashSet<string> _publicPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "/health",
+            "/swagger",
+            "/auth/check-email",
+
+            "/api/qr/public",
+            "/api/qr/health",
+            "/api/qr/webhooks/stripe",
+            "/api/qr/subscriptions/plans",
+
+            "/api/core/swagger",
+            "/api/core/hangfire",
+
+            "/api/core/orgs",
+            "/api/core/invitations/check"
+        };
 
     /// <summary>
     /// Regex patterns for public paths with dynamic segments (e.g. /users/{userId}).
@@ -20,25 +36,14 @@ public class FirebaseAuthMiddleware
     /// </summary>
     private static readonly Regex[] _publicPathPatterns =
     [
-        // GET /api/core/users/{userId}         — public profile
-        // GET /api/core/users/{userId}/posts   — user's public posts
-        // Explicitly excludes /users/me so the authenticated profile endpoint stays protected.
-        new Regex(@"^/api/core/users/(?!me(/|$))[^/]+(/posts)?(/.*)?$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        // GET /api/core/users/{userId}        — public user profile
+        new Regex(@"^/api/core/users/(?!me$)[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        // GET /api/core/users/{userId}/posts  — user's public posts
+        new Regex(@"^/api/core/users/(?!me(/|$))[^/]+/posts$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
-        // GET /api/qr/qr/public/{publicCode}   — scan QR code (no auth needed)
-        new Regex(@"^/api/qr/qr/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
-    ];
+        // GET /api/qr/public/{publicCode}   — scan QR code (no auth needed)
+        new Regex(@"^/api/qr/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
-    /// <summary>
-    /// Regex patterns that are public ONLY for GET requests.
-    /// POST/PATCH/DELETE on these paths still require authentication.
-    /// </summary>
-    private static readonly Regex[] _publicGetPathPatterns =
-    [
-        // GET /api/core/orgs  (exact)  — list all organizations, no auth needed
-        // GET /api/core/orgs/{guid}    — PROTECTED: handler checks membership, requires X-Auth-Id
-        // GET /api/core/orgs/me        — PROTECTED: returns caller's own memberships
-        new Regex(@"^/api/core/orgs$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
         // GET /api/core/orgs/{guid}/public  — public org profile, no auth or membership required
         new Regex(@"^/api/core/orgs/[0-9a-f\-]{36}/public$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
     ];
@@ -50,7 +55,6 @@ public class FirebaseAuthMiddleware
     private const string AuthNameHeaderName = "X-Auth-Name";
     private const string AuthAvatarUrlHeaderName = "X-Auth-Avatar-Url";
     private const string CorrelationIdHeaderName = "X-Correlation-Id";
-
     private const string OrganizationIdHeaderName = "X-Organization-Id";
 
     public FirebaseAuthMiddleware(
@@ -60,19 +64,6 @@ public class FirebaseAuthMiddleware
     {
         _next = next;
         _logger = logger;
-
-        _publicPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "/health",
-            "/auth/check-email",
-            "/api/qr/public",
-            "/api/qr/health",
-            "/api/qr/webhooks/stripe",
-            "/api/core/swagger",
-            "/swagger",
-            "/api/qr/subscriptions/plans",
-            "/api/core/hangfire"
-        };
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -123,18 +114,11 @@ public class FirebaseAuthMiddleware
             }
 
             var email = GetEmail(decodedToken, authId);
-            // if (email is null)
-            // {
-            //     await WriteErrorResponse(context, AuthErrors.MissingEmailInToken, StatusCodes.Status401Unauthorized);
-            //     return;
-            // }
-
             if (email is not null && !IsEmailVerified(decodedToken, authId))
             {
                 await WriteErrorResponse(context, AuthErrors.EmailNotVerified, StatusCodes.Status401Unauthorized);
                 return;
             }
-
 
             context.Request.Headers[AuthIdHeaderName] = authId;
             context.Request.Headers[AuthProviderHeaderName] = "firebase";
@@ -143,9 +127,6 @@ public class FirebaseAuthMiddleware
             context.Request.Headers[AuthAvatarUrlHeaderName] = GetAvatarUrl(decodedToken);
             if (context.Request.Headers.TryGetValue(OrganizationIdHeaderName, out var orgId) && !string.IsNullOrWhiteSpace(orgId))
             {
-                _logger.LogInformation("Received organization ID in header: {OrgId}", orgId);
-                _logger.LogInformation("Received organization ID in header 2: {OrgId}", orgId.ToString());
-
                 context.Request.Headers[OrganizationIdHeaderName] = orgId.ToString();
             }
 
@@ -223,21 +204,10 @@ public class FirebaseAuthMiddleware
         return Base64Util.EncodeToBase64(avatarUrl);
     }
 
-    private bool IsPublicPath(HttpContext context)
+    private static bool IsPublicPath(HttpContext context)
     {
         var path = context.Request.Path.Value ?? string.Empty;
-
-        if (_publicPaths.Any(publicPath =>
-                path.Equals(publicPath, StringComparison.OrdinalIgnoreCase) ||
-                path.StartsWith($"{publicPath}/", StringComparison.OrdinalIgnoreCase)))
-            return true;
-
-        if (_publicPathPatterns.Any(pattern => pattern.IsMatch(path)))
-            return true;
-
-        // GET-only public paths: listing/detail endpoints that don't need auth
-        if (HttpMethods.IsGet(context.Request.Method) &&
-            _publicGetPathPatterns.Any(pattern => pattern.IsMatch(path)))
+        if (_publicPaths.Contains(path) || _publicPathPatterns.Any(pattern => pattern.IsMatch(path)))
             return true;
 
         return false;

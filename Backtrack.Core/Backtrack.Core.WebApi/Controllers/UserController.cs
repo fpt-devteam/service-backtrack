@@ -7,6 +7,9 @@ using Backtrack.Core.Application.Usecases.Users.GetMe;
 using Backtrack.Core.Application.Usecases.Users.UpdateUserProfile;
 using Backtrack.Core.Application.Usecases.Users.GetPublicUserProfile;
 using Backtrack.Core.Application.Usecases.Posts.GetMyPosts;
+using Backtrack.Core.Application.Usecases.Posts;
+using Backtrack.Core.WebApi.Common;
+using UserGetMyPostsQuery = Backtrack.Core.Application.Usecases.Users.GetMyPosts.GetMyPostsQuery;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -78,6 +81,23 @@ public class UserController : ControllerBase
         var query = new GetMyPostsQuery(userId);
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
+    }
+
+    [HttpGet("me/posts")]
+    public async Task<IActionResult> GetMyPostsAsync(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new InvalidOperationException($"Required header '{HeaderNames.AuthId}' is missing. This indicates a configuration issue with the API Gateway or middleware.");
+
+        var query = new UserGetMyPostsQuery { UserId = userId, Page = page, PageSize = pageSize };
+        var result = await _mediator.Send(query, cancellationToken);
+        var response = PagedResponse<PostResult>.Create(result.Items, page, pageSize, result.Total);
+        return this.ApiOk(response);
     }
 
     [HttpPatch("me")]

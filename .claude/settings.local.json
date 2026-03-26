@@ -29,7 +29,8 @@
       "Bash(cd \"C:\\\\Users\\\\NHATTHANG\\\\FptUniversity\\\\SEP490\\\\service-backtrack\\\\Backtrack.QR\" && find . -type f | grep -E \"\\\\.\\(ts|js|json|md\\)$\" | sort)",
       "Bash(cd \"C:/Users/NHATTHANG/FptUniversity/SEP490/service-backtrack/Backtrack.QR\" && npx tsc --noEmit 2>&1)",
       "Bash(find:*)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(xargs grep:*)"
     ],
     "deny": [],
     "ask": []
