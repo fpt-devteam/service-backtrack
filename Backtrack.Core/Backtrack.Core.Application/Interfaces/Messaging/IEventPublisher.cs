@@ -6,4 +6,5 @@ public interface IEventPublisher
 {
     Task PublishUserEnsureExistAsync(UserEnsureExistIntegrationEvent @event);
     Task PublishInvitationCreatedAsync(InvitationCreatedIntegrationEvent @event);
+    Task PublishHandoverConfirmedAsync(HandoverConfirmedIntegrationEvent @event);
 }
