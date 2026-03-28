@@ -6,10 +6,12 @@ namespace Backtrack.Core.Application.Usecases.Handovers.CreateOrgHandover;
 public sealed record CreateOrgHandoverCommand : IRequest<HandoverResult>
 {
     [JsonIgnore]
-    public string UserId { get; init; } = string.Empty;
+    public required string UserId { get; init; }
 
     [JsonIgnore]
-    public Guid OrgId { get; init; }
+    public required Guid OrgId { get; init; }
 
-    public required Guid FinderPostId { get; init; }
+    public required Guid PostId { get; init; }
+    public required string NameOwner { get; init; }
+    public required string PhoneOwner { get; init; }
 }

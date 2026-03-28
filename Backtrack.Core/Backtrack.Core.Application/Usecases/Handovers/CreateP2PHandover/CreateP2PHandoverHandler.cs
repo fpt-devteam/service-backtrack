@@ -64,7 +64,6 @@ public sealed class CreateP2PHandoverHandler(
                 throw new ValidationException(HandoverErrors.CannotHandoverOwnPost);
             }
 
-            // Validate OwnerId exists
             var owner = await userRepository.GetByIdAsync(command.OwnerId);
             if (owner == null)
             {
