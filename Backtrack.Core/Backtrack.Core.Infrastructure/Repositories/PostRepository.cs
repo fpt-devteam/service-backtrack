@@ -49,8 +49,8 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
             query = query.Where(p =>
-                p.ItemName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                p.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+                EF.Functions.ILike(p.ItemName, $"%{searchTerm}%") ||
+                EF.Functions.ILike(p.Description, $"%{searchTerm}%"));
 
         if (location != null && radiusInKm.HasValue)
         {
