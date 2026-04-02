@@ -14,12 +14,11 @@ public sealed class GetFeedHandler(IPostRepository postRepository)
         var results = items.Select(item => new FeedPostResult
         {
             Id = item.Post.Id,
-            Author = item.Post.Author?.ToAuthorResult(),
+            Author = item.Post.Author?.ToPostAuthorResult(),
             Organization = item.Post.Organization?.ToOrganizationOnPost(),
-            PostType = item.Post.PostType.ToString(),
-            ItemName = item.Post.ItemName,
-            Description = item.Post.Description,
-            Images = item.Post.Images.Select(i => i.ToPostImageResult()).ToList(),
+            PostType = item.Post.PostType,
+            Item = item.Post.Item,
+            ImageUrls = item.Post.ImageUrls,
             Location = item.Post.Location,
             ExternalPlaceId = item.Post.ExternalPlaceId,
             DisplayAddress = item.Post.DisplayAddress,

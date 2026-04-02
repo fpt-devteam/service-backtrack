@@ -87,15 +87,13 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
 
     private static PostMatchContext BuildContext(Post post)
     {
-        var firstImage = post.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault();
         return new PostMatchContext
         {
-            ItemName = post.ItemName,
-            Description = post.Description,
+            ItemName = post.Item.ItemName,
+            Description = post.Item.AdditionalDetails,
             EventTime = post.EventTime,
             DisplayAddress = post.DisplayAddress,
-            ImageBase64 = firstImage?.Base64Data,
-            ImageMimeType = firstImage?.MimeType
+            ImageUrl = post.ImageUrls.FirstOrDefault()
         };
     }
 
@@ -130,10 +128,9 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
         return new SimilarPostItem
         {
             Id = targetPost.Id,
-            PostType = targetPost.PostType.ToString(),
-            ItemName = targetPost.ItemName,
-            Description = targetPost.Description,
-            Images = targetPost.Images.Select(i => i.ToPostImageResult()).ToList(),
+            PostType = targetPost.PostType,
+            Item = targetPost.Item,
+            ImageUrls = targetPost.ImageUrls,
             Location = targetPost.Location,
             ExternalPlaceId = targetPost.ExternalPlaceId,
             DisplayAddress = targetPost.DisplayAddress,

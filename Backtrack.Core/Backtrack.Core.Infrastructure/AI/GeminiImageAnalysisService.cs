@@ -1,4 +1,6 @@
 using Backtrack.Core.Application.Interfaces.AI;
+using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Domain.ValueObjects;
 using Backtrack.Core.Infrastructure.Configurations;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Json;
@@ -25,25 +27,21 @@ public sealed class GeminiImageAnalysisService : IImageAnalysisService
         Respond in JSON format:
         {
             "itemName": "Concise item name (3-6 words, e.g., 'Black Leather Wallet', 'Silver iPhone 15 Pro')",
-            "description": "Structured description with each attribute on a new line"
+            "category": "One of: Electronics, Clothing, Accessories, Documents, Bags, Keys, Other",
+            "color": "Primary color, secondary if applicable",
+            "brand": "Brand name if visible",
+            "condition": "New/Used/Worn/Damaged",
+            "material": "Leather/Fabric/Metal/Plastic/etc.",
+            "size": "Small/Medium/Large or dimensions",
+            "distinctiveMarks": "Unique features, scratches, stickers, patterns",
+            "additionalDetails": "Any other relevant info that doesn't fit in other fields"
         }
 
-        Description format (each on new line, omit if not visible):
-        - Category: [Electronics/Clothing/Accessories/Documents/Bags/Keys/etc.]
-        - Color: [Primary color, secondary if applicable]
-        - Brand: [Brand name if visible]
-        - Condition: [New/Used/Worn/Damaged]
-        - Material: [Leather/Fabric/Metal/Plastic/etc.]
-        - Size: [Small/Medium/Large or dimensions]
-        - Distinctive marks: [Unique features, scratches, stickers, patterns]
-
-        Example description:
-        "- Category: Electronics\n- Color: Space Gray\n- Brand: Apple\n- Condition: Used\n- Material: Aluminum and glass\n- Distinctive marks: Small scratch on back, red case"
-
         Guidelines:
-        1. Only describe what you can actually see - omit unknown attributes
-        2. Keep each line short and meaningful
-        3. If image is unclear, set itemName to "Unidentifiable Item"
+        1. Only describe what you can actually see - omit unknown attributes or set them to null.
+        2. Keep each field short and meaningful.
+        3. For 'category', you MUST use one of these exact values: Electronics, Clothing, Accessories, Documents, Bags, Keys, Other.
+        4. If image is unclear, set itemName to "Unidentifiable Item".
 
         Respond ONLY with the JSON object, no markdown.
         """;
@@ -57,7 +55,7 @@ public sealed class GeminiImageAnalysisService : IImageAnalysisService
             throw new InvalidOperationException("Gemini API key is not configured. Please set 'GeminiSettings__ApiKey' in configuration.");
     }
 
-    public async Task<ImageAnalysisOutput> AnalyzeImageAsync(
+    public async Task<PostItem> AnalyzeImageAsync(
         string imageBase64,
         string mimeType,
         CancellationToken cancellationToken = default)
@@ -113,52 +111,25 @@ public sealed class GeminiImageAnalysisService : IImageAnalysisService
             throw new InvalidOperationException("Empty response text from Gemini Vision API.");
 
         // Parse the JSON response
-        var analysisResult = ParseAnalysisResponse(responseText);
+        var analysisResult = GeminiResponseParser.Parse<ImageAnalysisJsonResponse>(responseText);
 
-        return new ImageAnalysisOutput
+        return new PostItem
         {
             ItemName = analysisResult.ItemName,
-            Description = analysisResult.Description
+            Category = analysisResult.Category ?? ItemCategory.Other,
+            Color = analysisResult.Color,
+            Brand = analysisResult.Brand,
+            Condition = analysisResult.Condition,
+            Material = analysisResult.Material,
+            Size = analysisResult.Size,
+            DistinctiveMarks = analysisResult.DistinctiveMarks,
+            AdditionalDetails = analysisResult.AdditionalDetails
         };
-    }
-
-    private static ImageAnalysisJsonResponse ParseAnalysisResponse(string responseText)
-    {
-        // Clean up the response - remove markdown code blocks if present
-        var cleanedResponse = responseText.Trim();
-        if (cleanedResponse.StartsWith("```json"))
-            cleanedResponse = cleanedResponse[7..];
-        else if (cleanedResponse.StartsWith("```"))
-            cleanedResponse = cleanedResponse[3..];
-
-        if (cleanedResponse.EndsWith("```"))
-            cleanedResponse = cleanedResponse[..^3];
-
-        cleanedResponse = cleanedResponse.Trim();
-
-        try
-        {
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
-            var result = JsonSerializer.Deserialize<ImageAnalysisJsonResponse>(cleanedResponse, options);
-
-            if (result == null)
-                throw new InvalidOperationException("Failed to parse image analysis response.");
-
-            return result;
-        }
-        catch (JsonException ex)
-        {
-            throw new InvalidOperationException($"Failed to parse Gemini response as JSON: {ex.Message}. Response: {cleanedResponse}");
-        }
     }
 
     #region Request/Response DTOs
 
-    private class GeminiVisionRequest
+    private sealed class GeminiVisionRequest
     {
         [JsonPropertyName("contents")]
         public List<GeminiContent> Contents { get; set; } = new();
@@ -167,13 +138,13 @@ public sealed class GeminiImageAnalysisService : IImageAnalysisService
         public GeminiGenerationConfig? GenerationConfig { get; set; }
     }
 
-    private class GeminiContent
+    private sealed class GeminiContent
     {
         [JsonPropertyName("parts")]
         public List<GeminiPart> Parts { get; set; } = new();
     }
 
-    private class GeminiPart
+    private sealed class GeminiPart
     {
         [JsonPropertyName("text")]
         public string? Text { get; set; }
@@ -182,7 +153,7 @@ public sealed class GeminiImageAnalysisService : IImageAnalysisService
         public GeminiInlineData? InlineData { get; set; }
     }
 
-    private class GeminiInlineData
+    private sealed class GeminiInlineData
     {
         [JsonPropertyName("mimeType")]
         public string MimeType { get; set; } = string.Empty;
@@ -191,7 +162,7 @@ public sealed class GeminiImageAnalysisService : IImageAnalysisService
         public string Data { get; set; } = string.Empty;
     }
 
-    private class GeminiGenerationConfig
+    private sealed class GeminiGenerationConfig
     {
         [JsonPropertyName("temperature")]
         public float Temperature { get; set; }
@@ -200,25 +171,46 @@ public sealed class GeminiImageAnalysisService : IImageAnalysisService
         public int MaxOutputTokens { get; set; }
     }
 
-    private class GeminiVisionResponse
+    private sealed class GeminiVisionResponse
     {
         [JsonPropertyName("candidates")]
         public List<GeminiCandidate> Candidates { get; set; } = new();
     }
 
-    private class GeminiCandidate
+    private sealed class GeminiCandidate
     {
         [JsonPropertyName("content")]
         public GeminiContent? Content { get; set; }
     }
 
-    private class ImageAnalysisJsonResponse
+    private sealed class ImageAnalysisJsonResponse
     {
         [JsonPropertyName("itemName")]
         public string ItemName { get; set; } = string.Empty;
 
-        [JsonPropertyName("description")]
-        public string Description { get; set; } = string.Empty;
+        [JsonPropertyName("category")]
+        public ItemCategory? Category { get; set; }
+
+        [JsonPropertyName("color")]
+        public string? Color { get; set; }
+
+        [JsonPropertyName("brand")]
+        public string? Brand { get; set; }
+
+        [JsonPropertyName("condition")]
+        public string? Condition { get; set; }
+
+        [JsonPropertyName("material")]
+        public string? Material { get; set; }
+
+        [JsonPropertyName("size")]
+        public string? Size { get; set; }
+
+        [JsonPropertyName("distinctiveMarks")]
+        public string? DistinctiveMarks { get; set; }
+
+        [JsonPropertyName("additionalDetails")]
+        public string? AdditionalDetails { get; set; }
     }
 
     #endregion

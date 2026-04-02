@@ -4,12 +4,13 @@ using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.PostMatchings;
-using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostContentEmbedding;
+using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace Backtrack.Core.Application.Usecases.Posts.CreatePost;
 
@@ -17,7 +18,6 @@ public sealed class CreatePostHandler(
     IPostRepository postRepository,
     IOrganizationRepository organizationRepository,
     IMembershipRepository membershipRepository,
-    IPostImageRepository postImageRepository,
     IHasher hasher,
     IBackgroundJobService backgroundJobService,
     ILogger<CreatePostHandler> logger) : IRequestHandler<CreatePostCommand, PostResult>
@@ -50,57 +50,27 @@ public sealed class CreatePostHandler(
             externalPlaceId = organization.ExternalPlaceId;
         }
 
-        var firstImageUrl = command.Images.Length > 0 ? command.Images[0].Url : string.Empty;
-
         var post = new Post
         {
             Id = Guid.NewGuid(),
             AuthorId = command.AuthorId,
             OrganizationId = command.OrganizationId,
             PostType = postType,
-            ItemName = command.ItemName,
-            Description = command.Description,
+            Item = command.Item,
             Location = location,
             ExternalPlaceId = externalPlaceId,
             DisplayAddress = displayAddress,
-            MultimodalEmbedding = null,
-            ContentEmbeddingStatus = ContentEmbeddingStatus.Pending,
+            Embedding = null,
+            EmbeddingStatus = EmbeddingStatus.Pending,
             PostMatchingStatus = PostMatchingStatus.Pending,
-            ContentHash = hasher.HashStrings(
-                command.ItemName,
-                command.Description,
-                firstImageUrl),
+            ContentHash = hasher.HashStrings(JsonSerializer.Serialize(command.Item)),
             EventTime = command.EventTime,
+            ImageUrls = command.ImageUrls.ToList(),
             CreatedAt = DateTimeOffset.UtcNow
         };
 
         await postRepository.CreateAsync(post);
-
-        var images = new List<PostImage>();
-        for (int i = 0; i < command.Images.Length; i++)
-        {
-            var input = command.Images[i];
-            // log image info but not the base64 data
-            logger.LogInformation(
-                "Adding image for Post {PostId}: Url={Url}, MimeType={MimeType}, FileName={FileName}, FileSizeBytes={FileSizeBytes}",
-                post.Id, input.Url, input.MimeType, input.FileName, input.FileSizeBytes);
-            var image = new PostImage
-            {
-                Id = Guid.NewGuid(),
-                PostId = post.Id,
-                Url = input.Url,
-                Base64Data = input.Base64Data,
-                MimeType = input.MimeType,
-                FileName = input.FileName,
-                FileSizeBytes = input.FileSizeBytes,
-                DisplayOrder = i,
-            };
-            await postImageRepository.CreateAsync(image);
-            images.Add(image);
-        }
-
-
-        await postImageRepository.SaveChangesAsync();
+        await postRepository.SaveChangesAsync();
 
         backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
@@ -108,10 +78,9 @@ public sealed class CreatePostHandler(
         {
             Id = post.Id,
             Organization = post.Organization?.ToOrganizationOnPost(),
-            PostType = post.PostType.ToString(),
-            ItemName = post.ItemName,
-            Description = post.Description,
-            Images = images.Select(i => i.ToPostImageResult()).ToList(),
+            PostType = post.PostType,
+            Item = post.Item,
+            ImageUrls = post.ImageUrls,
             Location = post.Location,
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress = post.DisplayAddress,

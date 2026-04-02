@@ -10,16 +10,13 @@ public sealed class DeletePostHandler : IRequestHandler<DeletePostCommand>
 {
     private readonly IPostRepository _postRepository;
     private readonly IPostMatchRepository _postMatchRepository;
-    private readonly IPostImageRepository _postImageRepository;
 
     public DeletePostHandler(
         IPostRepository postRepository,
-        IPostMatchRepository postMatchRepository,
-        IPostImageRepository postImageRepository)
+        IPostMatchRepository postMatchRepository)
     {
         _postRepository = postRepository;
         _postMatchRepository = postMatchRepository;
-        _postImageRepository = postImageRepository;
     }
 
     public async Task<Unit> Handle(DeletePostCommand command, CancellationToken cancellationToken)
@@ -47,8 +44,6 @@ public sealed class DeletePostHandler : IRequestHandler<DeletePostCommand>
         }
 
         // Delete all images for this post
-        await _postImageRepository.DeleteByPostIdAsync(post.Id, cancellationToken);
-
         await _postRepository.DeleteAsync(command.PostId);
         await _postRepository.SaveChangesAsync();
 

@@ -2,18 +2,18 @@ using Backtrack.Core.Domain.Entities;
 
 namespace Backtrack.Core.Application.Usecases.Posts;
 
-public sealed record AuthorResult
+public sealed record PostAuthorResult
 {
     public required string Id { get; init; }
     public string? DisplayName { get; init; }
     public string? AvatarUrl { get; init; }
 }
 
-public static class AuthorResultMapper
+public static class PostAuthorResultMapper
 {
-    public static AuthorResult ToAuthorResult(this User user)
+    public static PostAuthorResult ToPostAuthorResult(this User user)
     {
-        return new AuthorResult
+        return new PostAuthorResult
         {
             Id = user.Id,
             DisplayName = user.DisplayName,

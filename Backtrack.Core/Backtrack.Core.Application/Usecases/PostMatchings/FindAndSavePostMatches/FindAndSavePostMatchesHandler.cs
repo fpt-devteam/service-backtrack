@@ -13,7 +13,6 @@ namespace Backtrack.Core.Application.Usecases.PostMatchings.FindAndSavePostMatch
 public sealed class FindAndSavePostMatchesHandler(
     IPostRepository postRepository,
     IPostMatchRepository postMatchRepository,
-    IPostImageRepository postImageRepository,
     ILlmService llmService,
     ILogger<FindAndSavePostMatchesHandler> logger) : IRequestHandler<FindAndSavePostMatchesCommand>
 {
@@ -23,9 +22,8 @@ public sealed class FindAndSavePostMatchesHandler(
         var sourcePost = await postRepository.GetByIdAsync(request.PostId, isTrack: true)
             ?? throw new NotFoundException(PostErrors.NotFound);
 
-        if (sourcePost.ContentEmbeddingStatus != ContentEmbeddingStatus.Ready
-            || sourcePost.TextEmbedding is null
-            || sourcePost.ImageEmbedding is null)
+        if (sourcePost.EmbeddingStatus != EmbeddingStatus.Ready
+            || sourcePost.Embedding is null)
         {
             logger.LogWarning("Post {PostId} embeddings are not ready, skipping matching.", sourcePost.Id);
             return Unit.Value;
@@ -58,12 +56,12 @@ public sealed class FindAndSavePostMatchesHandler(
             var sourceContext = BuildPostContext(sourcePost);
             var postMatches = new List<PostMatch>();
 
-            foreach (var (candidatePost, textSimilarity, imageSimilarity, distanceMeters) in similarPosts)
+            foreach (var (candidatePost, similarity, distanceMeters) in similarPosts)
             {
                 // ── 6. Compute per-criteria scores ────────────────────────────
-                var matchScore       = PostMatchingCriteria.ComputeWeightedScore(textSimilarity, imageSimilarity, distanceMeters);
-                var descriptionScore = PostMatchingCriteria.ComputeDescriptionScore(textSimilarity);
-                var visualScore      = PostMatchingCriteria.ComputeVisualScore(imageSimilarity);
+                var matchScore       = PostMatchingCriteria.ComputeWeightedScore(similarity, distanceMeters);
+                var descriptionScore = PostMatchingCriteria.ComputeDescriptionScore(similarity);
+                var visualScore      = PostMatchingCriteria.ComputeVisualScore(similarity);
                 var locationScore    = PostMatchingCriteria.ComputeLocationScore(distanceMeters);
 
                 // Determine lost/found roles and build candidate context
@@ -75,13 +73,13 @@ public sealed class FindAndSavePostMatchesHandler(
                     lostPostId   = sourcePost.Id;
                     foundPostId  = candidatePost.Id;
                     lostContext  = sourceContext;
-                    foundContext = await BuildPostContextAsync(candidatePost, cancellationToken);
+                    foundContext = BuildPostContext(candidatePost);
                 }
                 else
                 {
                     lostPostId   = candidatePost.Id;
                     foundPostId  = sourcePost.Id;
-                    lostContext  = await BuildPostContextAsync(candidatePost, cancellationToken);
+                    lostContext  = BuildPostContext(candidatePost);
                     foundContext = sourceContext;
                 }
 
@@ -163,34 +161,15 @@ public sealed class FindAndSavePostMatchesHandler(
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    // Source post: images already loaded via GetByIdAsync Include
     private static PostMatchContext BuildPostContext(Post post)
     {
-        var firstImage = post.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault();
         return new PostMatchContext
         {
-            ItemName      = post.ItemName,
-            Description   = post.Description,
+            ItemName      = post.Item.ItemName,
+            Description   = post.Item.AdditionalDetails,
             EventTime     = post.EventTime,
             DisplayAddress = post.DisplayAddress,
-            ImageBase64   = firstImage?.Base64Data,
-            ImageMimeType = firstImage?.MimeType
-        };
-    }
-
-    // Candidate posts: built from raw SQL, Images not included — fetch from repo
-    private async Task<PostMatchContext> BuildPostContextAsync(Post post, CancellationToken cancellationToken)
-    {
-        var images = await postImageRepository.GetByPostIdAsync(post.Id, cancellationToken);
-        var firstImage = images.OrderBy(i => i.DisplayOrder).FirstOrDefault();
-        return new PostMatchContext
-        {
-            ItemName      = post.ItemName,
-            Description   = post.Description,
-            EventTime     = post.EventTime,
-            DisplayAddress = post.DisplayAddress,
-            ImageBase64   = firstImage?.Base64Data,
-            ImageMimeType = firstImage?.MimeType
+            ImageUrl      = post.ImageUrls.FirstOrDefault()
         };
     }
 }

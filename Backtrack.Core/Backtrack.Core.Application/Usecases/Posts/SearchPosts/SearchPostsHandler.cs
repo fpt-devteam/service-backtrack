@@ -56,12 +56,11 @@ public sealed class SearchPostsHandler(IPostRepository postRepository, IEmbeddin
             return new SearchPostResult
             {
                 Id = post.Id,
-                Author = post.Author?.ToAuthorResult(),
+                Author = post.Author?.ToPostAuthorResult(),
                 Organization = post.Organization?.ToOrganizationOnPost(),
-                PostType = post.PostType.ToString(),
-                ItemName = post.ItemName,
-                Description = post.Description,
-                Images = post.Images.Select(i => i.ToPostImageResult()).ToList(),
+                PostType = post.PostType,
+                Item = post.Item,
+                ImageUrls = post.ImageUrls,
                 Location = post.Location,
                 ExternalPlaceId = post.ExternalPlaceId,
                 DisplayAddress = post.DisplayAddress,
@@ -106,12 +105,11 @@ Looking for information about {searchText.ToLower()}.";
             return new SearchPostResult
             {
                 Id = post.Id,
-                Author = post.Author?.ToAuthorResult(),
+                Author = post.Author?.ToPostAuthorResult(),
                 Organization = post.Organization?.ToOrganizationOnPost(),
-                PostType = post.PostType.ToString(),
-                ItemName = post.ItemName,
-                Description = post.Description,
-                Images = post.Images.Select(i => i.ToPostImageResult()).ToList(),
+                PostType = post.PostType,
+                Item = post.Item,
+                ImageUrls = post.ImageUrls,
                 Location = post.Location,
                 ExternalPlaceId = post.ExternalPlaceId,
                 DisplayAddress = post.DisplayAddress,

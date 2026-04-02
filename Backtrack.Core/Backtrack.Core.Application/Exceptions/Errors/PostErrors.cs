@@ -17,5 +17,9 @@ namespace Backtrack.Core.Application.Exceptions.Errors
         public static readonly Error LostPostCannotBeAssociatedWithOrganization = new(
             Code: "LostPostCannotBeAssociatedWithOrganization",
             Message: "A lost post cannot be associated with an organization.");
+
+        public static readonly Error ImageFetchFailed = new(
+            Code: "ImageFetchFailed",
+            Message: "Failed to fetch image from the provided URL.");
     }
 }

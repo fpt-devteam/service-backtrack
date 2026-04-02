@@ -8,8 +8,7 @@ public sealed record PostMatchContext
     public required string Description { get; init; }
     public required DateTimeOffset EventTime { get; init; }
     public string? DisplayAddress { get; init; }
-    public string? ImageBase64 { get; init; }
-    public string? ImageMimeType { get; init; }
+    public string? ImageUrl { get; init; }
 }
 
 /// <summary>Pre-computed 0-100 scores for each criterion, passed to LLM for reasoning.</summary>

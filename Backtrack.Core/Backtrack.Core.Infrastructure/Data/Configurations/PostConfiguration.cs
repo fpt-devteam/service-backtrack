@@ -27,14 +27,11 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasConversion<string>()
                 .IsRequired();
 
-            builder.Property(p => p.ItemName)
-                .HasColumnName("item_name")
-                .HasMaxLength(500)
-                .IsRequired();
+            builder.OwnsOne(p => p.Item, owned => owned.ToJson("item"));
 
-            builder.Property(p => p.Description)
-                .HasColumnName("description")
-                .HasMaxLength(2000)
+            builder.Property(p => p.ImageUrls)
+                .HasColumnName("image_urls")
+                .HasColumnType("text[]")
                 .IsRequired();
 
             builder.Property(p => p.AuthorId)
@@ -101,18 +98,8 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                     v == null ? null : v.ToArray()
             );
 
-            builder.Property(p => p.MultimodalEmbedding)
-                .HasColumnName("multimodal_embedding")
-                .HasColumnType("vector(1536)")
-                .HasConversion(embeddingToVectorConverter, embeddingComparer);
-
-            builder.Property(p => p.TextEmbedding)
-                .HasColumnName("text_embedding")
-                .HasColumnType("vector(1536)")
-                .HasConversion(embeddingToVectorConverter, embeddingComparer);
-
-            builder.Property(p => p.ImageEmbedding)
-                .HasColumnName("image_embedding")
+            builder.Property(p => p.Embedding)
+                .HasColumnName("embedding")
                 .HasColumnType("vector(1536)")
                 .HasConversion(embeddingToVectorConverter, embeddingComparer);
 
@@ -121,8 +108,8 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasMaxLength(64)
                 .IsRequired();
 
-            builder.Property(p => p.ContentEmbeddingStatus)
-                .HasColumnName("content_embedding_status")
+            builder.Property(p => p.EmbeddingStatus)
+                .HasColumnName("embedding_status")
                 .HasConversion<string>()
                 .IsRequired();
 
@@ -157,9 +144,9 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasDatabaseName("ix_posts_location")
                 .HasMethod("gist");
 
-            // Vector index for multimodal embedding using HNSW for efficient similarity search
-            builder.HasIndex(p => p.MultimodalEmbedding)
-                .HasDatabaseName("ix_posts_multimodal_embedding")
+            // Vector index for embedding using HNSW for efficient similarity search
+            builder.HasIndex(p => p.Embedding)
+                .HasDatabaseName("ix_posts_embedding")
                 .HasMethod("hnsw")
                 .HasOperators("vector_cosine_ops");
 

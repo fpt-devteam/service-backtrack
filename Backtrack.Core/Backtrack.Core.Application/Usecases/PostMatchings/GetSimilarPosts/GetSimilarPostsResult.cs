@@ -31,10 +31,9 @@ public sealed record SimilarPostCriteria
 public sealed record SimilarPostItem
 {
     public required Guid Id { get; init; }
-    public required string PostType { get; init; }
-    public required string ItemName { get; init; }
-    public required string Description { get; init; }
-    public List<PostImageResult> Images { get; init; } = new();
+    public required PostType PostType { get; init; }
+    public required PostItem Item { get; init; }
+    public List<string> ImageUrls { get; init; } = new();
     public required GeoPoint Location { get; init; }
     public string? ExternalPlaceId { get; init; }
     public string? DisplayAddress { get; init; }

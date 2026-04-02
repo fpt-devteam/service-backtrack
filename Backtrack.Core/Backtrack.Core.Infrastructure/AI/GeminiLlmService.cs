@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Interfaces.AI;
+using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Domain.ValueObjects;
 using Backtrack.Core.Infrastructure.Configurations;
 using Microsoft.Extensions.Options;
@@ -11,6 +12,7 @@ namespace Backtrack.Core.Infrastructure.AI;
 public sealed class GeminiLlmService : ILlmService
 {
     private readonly HttpClient _httpClient;
+    private readonly IImageFetcher _imageFetcher;
     private readonly GeminiSettings _settings;
 
     private const string ModelName = "gemini-2.0-flash";
@@ -66,9 +68,10 @@ public sealed class GeminiLlmService : ILlmService
         }
         """;
 
-    public GeminiLlmService(HttpClient httpClient, IOptions<GeminiSettings> settings)
+    public GeminiLlmService(HttpClient httpClient, IImageFetcher imageFetcher, IOptions<GeminiSettings> settings)
     {
         _httpClient = httpClient;
+        _imageFetcher = imageFetcher;
         _settings = settings.Value;
 
         if (string.IsNullOrWhiteSpace(_settings.ApiKey))
@@ -82,8 +85,11 @@ public sealed class GeminiLlmService : ILlmService
         float distanceMeters,
         CancellationToken cancellationToken = default)
     {
+        var lostImage = await _imageFetcher.FetchAsync(lostPost.ImageUrl, cancellationToken);
+        var foundImage = await _imageFetcher.FetchAsync(foundPost.ImageUrl, cancellationToken);
+
         var userPrompt = BuildUserPrompt(lostPost, foundPost, scores, distanceMeters);
-        var request = BuildRequest(userPrompt, lostPost, foundPost);
+        var request = BuildRequest(userPrompt, lostImage, foundImage);
 
         var url = $"{_settings.BaseUrl}/{ModelName}:generateContent?key={_settings.ApiKey}";
         var response = await _httpClient.PostAsJsonAsync(url, request, cancellationToken);
@@ -94,7 +100,19 @@ public sealed class GeminiLlmService : ILlmService
         var responseText = result?.Candidates?[0].Content?.Parts?[0].Text
             ?? throw new InvalidOperationException("Empty response from Gemini LLM API.");
 
-        return ParseAssessment(responseText);
+        var dto = GeminiResponseParser.Parse<AssessmentDto>(responseText);
+
+        return new PostMatchAssessment
+        {
+            Criteria = new PostMatchCriteriaAssessment
+            {
+                VisualAnalysis = MapPoints(dto.Criteria?.VisualAnalysis),
+                Description = MapPoints(dto.Criteria?.Description),
+                Location = MapPoints(dto.Criteria?.Location),
+                TimeWindow = MapPoints(dto.Criteria?.TimeWindow)
+            },
+            Summary = dto.Summary ?? string.Empty
+        };
     }
 
     private static string BuildUserPrompt(
@@ -128,33 +146,33 @@ public sealed class GeminiLlmService : ILlmService
 
     private static GeminiRequest BuildRequest(
         string userPrompt,
-        PostMatchContext lostPost,
-        PostMatchContext foundPost)
+        FetchedImage? lostImage,
+        FetchedImage? foundImage)
     {
         var parts = new List<GeminiPart> { new() { Text = userPrompt } };
 
-        if (lostPost.ImageBase64 is not null && lostPost.ImageMimeType is not null)
+        if (lostImage is not null)
         {
             parts.Add(new GeminiPart { Text = "Image of the LOST item:" });
             parts.Add(new GeminiPart
             {
                 InlineData = new GeminiInlineData
                 {
-                    MimeType = lostPost.ImageMimeType,
-                    Data = lostPost.ImageBase64
+                    MimeType = lostImage.MimeType,
+                    Data = lostImage.Base64
                 }
             });
         }
 
-        if (foundPost.ImageBase64 is not null && foundPost.ImageMimeType is not null)
+        if (foundImage is not null)
         {
             parts.Add(new GeminiPart { Text = "Image of the FOUND item:" });
             parts.Add(new GeminiPart
             {
                 InlineData = new GeminiInlineData
                 {
-                    MimeType = foundPost.ImageMimeType,
-                    Data = foundPost.ImageBase64
+                    MimeType = foundImage.MimeType,
+                    Data = foundImage.Base64
                 }
             });
         }
@@ -164,31 +182,6 @@ public sealed class GeminiLlmService : ILlmService
             SystemInstruction = new GeminiContent { Parts = [new GeminiPart { Text = SystemPrompt }] },
             Contents = [new GeminiContent { Parts = parts }],
             GenerationConfig = new GeminiGenerationConfig { Temperature = 0.2f, MaxOutputTokens = 1500 }
-        };
-    }
-
-    private static PostMatchAssessment ParseAssessment(string responseText)
-    {
-        var cleaned = responseText.Trim();
-        if (cleaned.StartsWith("```json")) cleaned = cleaned[7..];
-        else if (cleaned.StartsWith("```")) cleaned = cleaned[3..];
-        if (cleaned.EndsWith("```")) cleaned = cleaned[..^3];
-        cleaned = cleaned.Trim();
-
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        var dto = JsonSerializer.Deserialize<AssessmentDto>(cleaned, options)
-            ?? throw new InvalidOperationException($"Failed to parse LLM assessment: {cleaned}");
-
-        return new PostMatchAssessment
-        {
-            Criteria = new PostMatchCriteriaAssessment
-            {
-                VisualAnalysis = MapPoints(dto.Criteria?.VisualAnalysis),
-                Description = MapPoints(dto.Criteria?.Description),
-                Location = MapPoints(dto.Criteria?.Location),
-                TimeWindow = MapPoints(dto.Criteria?.TimeWindow)
-            },
-            Summary = dto.Summary ?? string.Empty
         };
     }
 

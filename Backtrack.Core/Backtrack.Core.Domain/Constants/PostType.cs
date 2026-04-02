@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Backtrack.Core.Domain.Constants
+namespace Backtrack.Core.Domain.Constants;
+
+public enum PostType
 {
-    public enum PostType
-    {
-        Lost,
-        Found
-    }
+    Lost,
+    Found
 }

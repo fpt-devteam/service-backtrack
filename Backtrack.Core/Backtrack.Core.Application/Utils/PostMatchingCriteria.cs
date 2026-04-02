@@ -11,8 +11,7 @@ namespace Backtrack.Core.Application.Utils;
 public static class PostMatchingCriteria
 {
     // ── Weighted MatchScore coefficients (must sum to 1.0) ──────────────────
-    public const float TextSimilarityWeight = 0.40f;
-    public const float ImageSimilarityWeight = 0.35f;
+    public const float EmbeddingSimilarityWeight = 0.75f;
     public const float LocationWeight = 0.25f;
 
     // ── Geographic cap ────────────────────────────────────────────────────────
@@ -46,19 +45,16 @@ public static class PostMatchingCriteria
     // ─────────────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Weighted combination of text similarity, image similarity, and a
-    /// location proximity ratio derived from distanceMeters.
-    /// Both posts are required to have an image embedding (ImageSimilarity is always present).
+    /// Weighted combination of embedding similarity and a location proximity ratio
+    /// derived from distanceMeters.
     /// </summary>
     public static float ComputeWeightedScore(
-        double textSimilarity,
-        double imageSimilarity,
+        double embeddingSimilarity,
         double distanceMeters)
     {
         float locRatio = 1.0f - (float)(Math.Min(distanceMeters, MaxDistanceMeters) / MaxDistanceMeters);
 
-        return (float)textSimilarity * TextSimilarityWeight
-             + (float)imageSimilarity * ImageSimilarityWeight
+        return (float)embeddingSimilarity * EmbeddingSimilarityWeight
              + locRatio * LocationWeight;
     }
 
@@ -66,13 +62,13 @@ public static class PostMatchingCriteria
     // Per-criteria 0-100 display scores
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// <summary>Description score — directly from text embedding cosine similarity.</summary>
-    public static int ComputeDescriptionScore(double textSimilarity)
-        => Clamp100(textSimilarity * 100.0);
+    /// <summary>Description score — derived from embedding similarity.</summary>
+    public static int ComputeDescriptionScore(double embeddingSimilarity)
+        => Clamp100(embeddingSimilarity * 100.0);
 
-    /// <summary>Visual score — directly from image embedding cosine similarity.</summary>
-    public static int ComputeVisualScore(double imageSimilarity)
-        => Clamp100(imageSimilarity * 100.0);
+    /// <summary>Visual score — derived from embedding similarity.</summary>
+    public static int ComputeVisualScore(double embeddingSimilarity)
+        => Clamp100(embeddingSimilarity * 100.0);
 
     /// <summary>
     /// Location score — square-root decay so close distances score very high.

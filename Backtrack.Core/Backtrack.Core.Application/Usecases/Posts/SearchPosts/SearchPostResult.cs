@@ -1,3 +1,4 @@
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 
 namespace Backtrack.Core.Application.Usecases.Posts.SearchPosts;
@@ -5,12 +6,11 @@ namespace Backtrack.Core.Application.Usecases.Posts.SearchPosts;
 public sealed record SearchPostResult
 {
     public required Guid Id { get; init; }
-    public AuthorResult? Author { get; init; }
+    public PostAuthorResult? Author { get; init; }
     public OrganizationOnPost? Organization { get; init; }
-    public required string PostType { get; init; }
-    public required string ItemName { get; init; }
-    public required string Description { get; init; }
-    public List<PostImageResult> Images { get; init; } = new();
+    public required PostType PostType { get; init; }
+    public required PostItem Item { get; init; }
+    public List<string> ImageUrls { get; init; } = new();
     public required GeoPoint Location { get; init; }
     public string? ExternalPlaceId { get; init; }
     public string? DisplayAddress { get; init; }

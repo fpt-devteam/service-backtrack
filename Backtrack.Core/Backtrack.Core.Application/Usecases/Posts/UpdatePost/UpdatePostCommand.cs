@@ -10,10 +10,10 @@ public sealed record UpdatePostCommand : IRequest<PostResult>
     public string AuthorId { get; init; } = string.Empty;
     public Guid? OrganizationId { get; init; }
     public string? PostType { get; init; }
-    public string? ItemName { get; init; }
-    public string? Description { get; init; }
+    public PostItem? Item { get; init; }
     public GeoPoint? Location { get; init; }
     public string? ExternalPlaceId { get; init; }
     public string? DisplayAddress { get; init; }
+    public string[]? ImageUrls { get; init; }
     public DateTimeOffset? EventTime { get; init; }
 }

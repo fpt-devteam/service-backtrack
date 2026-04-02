@@ -19,12 +19,11 @@ public sealed class GetPostsByAuthorIdHandler : IRequestHandler<GetPostsByAuthor
         return posts.Select(post => new PostResult
         {
             Id = post.Id,
-            Author = post.Author?.ToAuthorResult(),
+            Author = post.Author?.ToPostAuthorResult(),
             Organization = post.Organization?.ToOrganizationOnPost(),
-            PostType = post.PostType.ToString(),
-            ItemName = post.ItemName,
-            Description = post.Description,
-            Images = post.Images.Select(i => i.ToPostImageResult()).ToList(),
+            PostType = post.PostType,
+            Item = post.Item,
+            ImageUrls = post.ImageUrls,
             Location = post.Location,
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress = post.DisplayAddress,

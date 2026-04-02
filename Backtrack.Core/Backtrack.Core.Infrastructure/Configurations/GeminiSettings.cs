@@ -9,7 +9,7 @@ namespace Backtrack.Core.Infrastructure.Configurations
 
         public string BaseUrl { get; init; } = "https://generativelanguage.googleapis.com/v1beta/models";
 
-        public string ModelName { get; init; } = "gemini-embedding-2-preview";
+        public string ModelName { get; init; } = "gemini-embedding-001";
 
         public int EmbeddingDimension { get; init; } = 1536;
 

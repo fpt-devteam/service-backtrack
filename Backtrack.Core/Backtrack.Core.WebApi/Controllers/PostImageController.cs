@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Usecases.ImageAnalysis.AnalyzeImage;
+using Backtrack.Core.Application.Usecases.Posts.AnalyzePostImage;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,7 +8,7 @@ namespace Backtrack.Core.WebApi.Controllers;
 /// Controller for AI-powered image analysis operations.
 /// </summary>
 [ApiController]
-[Route("image-analysis")]
+[Route("post-image")]
 public class ImageAnalysisController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -26,8 +26,8 @@ public class ImageAnalysisController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Extracted item information including name and description</returns>
     [HttpPost("analyze")]
-    public async Task<IActionResult> AnalyzeImageAsync(
-        [FromBody] AnalyzeImageCommand command,
+    public async Task<IActionResult> AnalyzePostImageAsync(
+        [FromBody] AnalyzePostImageCommand command,
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);

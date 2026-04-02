@@ -16,7 +16,7 @@ public sealed class GetPostMatchingStatusHandler(IPostRepository postRepository)
         return new GetPostMatchingStatusResult
         {
             PostId = post.Id,
-            EmbeddingStatus = post.ContentEmbeddingStatus.ToString(),
+            EmbeddingStatus = post.EmbeddingStatus.ToString(),
             MatchingStatus = post.PostMatchingStatus.ToString(),
         };
     }

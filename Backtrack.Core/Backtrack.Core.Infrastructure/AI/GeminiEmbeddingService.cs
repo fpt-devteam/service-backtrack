@@ -9,11 +9,6 @@ using System.Text.Json.Serialization;
 
 namespace Backtrack.Core.Infrastructure.AI
 {
-    /// <summary>
-    /// Embedding service using Google's Gemini API.
-    /// Uses gemini-embedding-2-preview which supports multimodal input (text + image)
-    /// and maps all modalities into the same embedding space.
-    /// </summary>
     public sealed class GeminiEmbeddingService : IEmbeddingService
     {
         private readonly HttpClient _httpClient;
@@ -37,11 +32,43 @@ namespace Backtrack.Core.Infrastructure.AI
                 throw new InvalidOperationException("Gemini API key is not configured. Please set 'GeminiSettings__ApiKey' in configuration.");
         }
 
+        #region Text Embedding
         public async Task<float[]> GenerateTextEmbeddingAsync(string text, CancellationToken cancellationToken = default)
         {
-            return await GenerateMultimodalEmbeddingAsync(text, null, null, cancellationToken);
-        }
+            if (string.IsNullOrWhiteSpace(text))
+                return Array.Empty<float>();
 
+            var url = $"{_settings.BaseUrl}/{_settings.ModelName}:embedContent?key={_settings.ApiKey}";
+
+            var request = new EmbedContentRequest
+            {
+                Content = new EmbedContent { Parts = [new EmbedPart { Text = text }] },
+                TaskType = "SEMANTIC_SIMILARITY",
+                OutputDimensionality = EmbeddingDimension
+            };
+
+            var json = JsonSerializer.Serialize(request, SerializerOptions);
+            using var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync(url, httpContent, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogError("Gemini embedContent failed. Response: {ErrorBody}", errorBody);
+                throw new HttpRequestException(
+                    $"Gemini embedContent failed ({(int)response.StatusCode} {response.ReasonPhrase}): {errorBody}");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<GeminiEmbeddingResponse>(cancellationToken);
+            var values = result?.Embedding?.Values;
+            if (values == null || values.Length == 0)
+                throw new InvalidOperationException("Failed to parse response from Gemini API.");
+
+            return values;
+        }
+        #endregion
+
+        #region Multimodal Embedding
         public async Task<float[]> GenerateMultimodalEmbeddingAsync(
             string? text = null,
             string? imageBase64 = null,
@@ -84,11 +111,13 @@ namespace Backtrack.Core.Infrastructure.AI
             }
 
             var result = await response.Content.ReadFromJsonAsync<GeminiEmbeddingResponse>(cancellationToken: cancellationToken);
-            if (result?.Embedding?.Values == null)
+            var values = result?.Embedding?.Values;
+            if (values == null)
                 throw new InvalidOperationException("No embedding returned from Gemini API.");
 
-            return result.Embedding.Values;
+            return values;
         }
+        #endregion
 
         #region Request DTOs
 
@@ -97,7 +126,11 @@ namespace Backtrack.Core.Infrastructure.AI
             [JsonPropertyName("content")]
             public EmbedContent Content { get; set; } = new();
 
-            [JsonPropertyName("output_dimensionality")]
+            [JsonPropertyName("taskType")]
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+            public string? TaskType { get; set; }
+
+            [JsonPropertyName("outputDimensionality")]
             public int? OutputDimensionality { get; set; }
         }
 
@@ -134,13 +167,13 @@ namespace Backtrack.Core.Infrastructure.AI
 
         #region Response DTOs
 
-        private class GeminiEmbeddingResponse
+        private sealed class GeminiEmbeddingResponse
         {
             [JsonPropertyName("embedding")]
             public EmbeddingData Embedding { get; set; } = new();
         }
 
-        private class EmbeddingData
+        private sealed class EmbeddingData
         {
             [JsonPropertyName("values")]
             public float[] Values { get; set; } = Array.Empty<float>();

@@ -9,15 +9,13 @@ public sealed class Post : Entity<Guid>
 {
     public required string AuthorId { get; set; }
     public required PostType PostType { get; set; }
-    public required string ItemName { get; set; }
-    public required string Description { get; set; }
+    public required PostItem Item { get; set; }
     public required GeoPoint Location { get; set; }
     public required string DisplayAddress { get; set; }
+    public List<string> ImageUrls { get; set; } = new();
     public string? ExternalPlaceId { get; set; }
-    public float[]? MultimodalEmbedding { get; set; }
-    public float[]? TextEmbedding { get; set; }
-    public float[]? ImageEmbedding { get; set; }
-    public required ContentEmbeddingStatus ContentEmbeddingStatus { get; set; }
+    public float[]? Embedding { get; set; }
+    public required EmbeddingStatus EmbeddingStatus { get; set; }
     public required PostMatchingStatus PostMatchingStatus { get; set; }
     public required string ContentHash { get; set; }
     public required DateTimeOffset EventTime { get; set; }
@@ -25,5 +23,4 @@ public sealed class Post : Entity<Guid>
     public Guid? OrganizationId { get; set; }
     public User Author { get; set; } = default!;
     public Organization? Organization { get; set; } = null;
-    public ICollection<PostImage> Images { get; set; } = new List<PostImage>();
 }

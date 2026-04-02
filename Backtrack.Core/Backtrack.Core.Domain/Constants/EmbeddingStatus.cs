@@ -3,7 +3,7 @@ namespace Backtrack.Core.Domain.Constants
     /// <summary>
     /// Represents the status of content embedding generation for a post.
     /// </summary>
-    public enum ContentEmbeddingStatus
+    public enum EmbeddingStatus
     {
         /// <summary>
         /// Embedding generation is pending and has not started yet.

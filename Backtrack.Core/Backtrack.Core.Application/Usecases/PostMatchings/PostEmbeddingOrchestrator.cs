@@ -1,6 +1,6 @@
 using Backtrack.Core.Application.Usecases.PostMatchings;
 using Backtrack.Core.Application.Usecases.PostMatchings.FindAndSavePostMatches;
-using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostContentEmbedding;
+using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.PostMatchings;
@@ -16,7 +16,7 @@ public class PostEmbeddingOrchestrator
 
     public async Task GenerateEmbeddingAndFindMatchesAsync(Guid postId)
     {
-        await _mediator.Send(new UpdatePostContentEmbeddingCommand(postId));
+        await _mediator.Send(new UpdatePostEmbeddingCommand(postId));
         await _mediator.Send(new FindAndSavePostMatchesCommand(postId));
     }
 }

@@ -3,11 +3,12 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Utils;
-using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostContentEmbedding;
+using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
+using System.Text.Json;
 using Backtrack.Core.Application.Usecases.PostMatchings;
 
 namespace Backtrack.Core.Application.Usecases.Posts.UpdatePost;
@@ -39,14 +40,9 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         if (post.AuthorId != command.AuthorId) throw new ForbiddenException(PostErrors.Forbidden);
         bool needsReEmbedding = false;
 
-        if (command.PostType != null)
+        if (command.PostType != null && !Enum.TryParse<PostType>(command.PostType, ignoreCase: true, out var postType))
         {
-            if (!Enum.TryParse<PostType>(command.PostType, ignoreCase: true, out var postType)) throw new ValidationException(PostErrors.InvalidPostType);
-            if (post.PostType != postType)
-            {
-                post.PostType = postType;
-                needsReEmbedding = true;
-            }
+            throw new ValidationException(PostErrors.InvalidPostType);
         }
 
         if (command.OrganizationId.HasValue && post.OrganizationId != command.OrganizationId)
@@ -55,9 +51,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
                 ?? throw new NotFoundException(OrganizationErrors.NotFound);
 
             if (await _membershipRepository.GetByOrgAndUserAsync(organization.Id, command.AuthorId) == null)
-            {
                 throw new ValidationException(MembershipErrors.MemberNotFound);
-            }
 
             if (post.PostType == PostType.Lost) throw new ValidationException(PostErrors.LostPostCannotBeAssociatedWithOrganization);
 
@@ -75,15 +69,9 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             needsReEmbedding = true;
         }
 
-        if (command.ItemName != null && post.ItemName != command.ItemName)
+        if (command.Item != null)
         {
-            post.ItemName = command.ItemName;
-            needsReEmbedding = true;
-        }
-
-        if (command.Description != null && post.Description != command.Description)
-        {
-            post.Description = command.Description;
+            post.Item = command.Item;
             needsReEmbedding = true;
         }
 
@@ -101,12 +89,19 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
 
         post.ExternalPlaceId = command.ExternalPlaceId ?? post.ExternalPlaceId;
         post.DisplayAddress = command.DisplayAddress ?? post.DisplayAddress;
+
+        if (command.ImageUrls != null)
+        {
+            post.ImageUrls = command.ImageUrls.ToList();
+            needsReEmbedding = true;
+        }
+
         post.EventTime = command.EventTime.HasValue ? command.EventTime.Value : post.EventTime;
         post.UpdatedAt = DateTimeOffset.UtcNow;
 
         if (needsReEmbedding)
         {
-            post.ContentEmbeddingStatus = ContentEmbeddingStatus.Pending;
+            post.EmbeddingStatus = EmbeddingStatus.Pending;
             post.PostMatchingStatus = PostMatchingStatus.Pending;
         }
         await _postRepository.SaveChangesAsync();
@@ -116,12 +111,11 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         return new PostResult
         {
             Id = post.Id,
-            Author = post.Author?.ToAuthorResult(),
+            Author = post.Author?.ToPostAuthorResult(),
             Organization = post.Organization?.ToOrganizationOnPost(),
-            PostType = post.PostType.ToString(),
-            ItemName = post.ItemName,
-            Description = post.Description,
-            Images = post.Images.Select(i => i.ToPostImageResult()).ToList(),
+            PostType = post.PostType,
+            Item = post.Item,
+            ImageUrls = post.ImageUrls,
             Location = post.Location,
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress = post.DisplayAddress,
