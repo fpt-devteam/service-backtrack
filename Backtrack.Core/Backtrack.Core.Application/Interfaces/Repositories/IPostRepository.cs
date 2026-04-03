@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Usecases;
+using Backtrack.Core.Application.Usecases.PostExplorations;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
@@ -7,6 +8,11 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
 {
     public interface IPostRepository : IGenericRepository<Post, Guid>
     {
+        Task<IEnumerable<Post>> SearchByFullTextAsync(
+            string searchTerm,
+            PostFilters? filters = null,
+            CancellationToken cancellationToken = default);
+
         Task<(IEnumerable<(Post Post, double? DistanceMeters)> Items, int TotalCount)> GetPagedAsync(
             PagedQuery pagedQuery,
             string? searchTerm = null,

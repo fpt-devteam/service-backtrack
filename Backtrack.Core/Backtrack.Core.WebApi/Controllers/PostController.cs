@@ -9,7 +9,7 @@ using Backtrack.Core.Application.Usecases.Posts.DeletePost;
 using Backtrack.Core.Application.Usecases.Posts.GetPostsByAuthorId;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetPostMatchingStatus;
-using Backtrack.Core.Application.Usecases.Posts.SearchPosts;
+using Backtrack.Core.Application.Usecases.PostExplorations.SearchPosts;
 using Backtrack.Core.Application.Usecases.Posts.GetFeed;
 using Backtrack.Core.WebApi.Common;
 
@@ -84,14 +84,7 @@ public class PostController : ControllerBase
     public async Task<IActionResult> SearchPostsAsync([FromBody] SearchPostsCommand command, CancellationToken cancellationToken = default)
     {
         var result = await _mediator.Send(command, cancellationToken);
-
-        var response = PagedResponse<SearchPostResult>.Create(
-            items: result.Items,
-            page: command.Page,
-            pageSize: command.PageSize,
-            totalCount: result.Total);
-
-        return this.ApiOk(response);
+        return this.ApiOk(result);
     }
 
     [HttpPost("feed")]

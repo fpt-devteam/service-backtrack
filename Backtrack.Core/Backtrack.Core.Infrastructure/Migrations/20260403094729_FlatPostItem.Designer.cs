@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -15,9 +16,11 @@ using Pgvector;
 namespace Backtrack.Core.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260403094729_FlatPostItem")]
+    partial class FlatPostItem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -477,7 +480,7 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("tsvector")
                         .HasColumnName("item_search")
-                        .HasComputedColumnSql("setweight(to_tsvector('english', coalesce(item_name, '')),               'A') || setweight(to_tsvector('english', coalesce(item_category, '') || ' ' || coalesce(item_brand, '')), 'B') || setweight(to_tsvector('english', coalesce(item_color, '')     || ' ' || coalesce(item_condition, '') || ' ' || coalesce(item_material, '') || ' ' || coalesce(item_size, '') || ' ' || coalesce(item_distinctive_marks, '')), 'C') || setweight(to_tsvector('english', coalesce(item_additional_details, '')), 'D')", true);
+                        .HasComputedColumnSql("to_tsvector('english', coalesce(item_name, '') || ' ' || coalesce(item_category, '') || ' ' || coalesce(item_color, '') || ' ' || coalesce(item_brand, '') || ' ' || coalesce(item_condition, '') || ' ' || coalesce(item_material, '') || ' ' || coalesce(item_size, '') || ' ' || coalesce(item_distinctive_marks, '') || ' ' || coalesce(item_additional_details, ''))", true);
 
                     b.Property<Point>("Location")
                         .IsRequired()

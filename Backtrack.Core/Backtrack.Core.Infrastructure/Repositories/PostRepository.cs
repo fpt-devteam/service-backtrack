@@ -1,6 +1,8 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases;
+using Backtrack.Core.Application.Usecases.PostExplorations;
 using Backtrack.Core.Application.Utils;
+using static Backtrack.Core.Application.Utils.GeoUtil;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
@@ -19,6 +21,54 @@ namespace Backtrack.Core.Infrastructure.Repositories;
 public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<Post, Guid>(context), IPostRepository
 {
     private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
+
+    private static (string Sql, List<NpgsqlParameter> Parameters) BuildFilters(PostFilters? filters)
+    {
+        var clauses    = new List<string>();
+        var parameters = new List<NpgsqlParameter>();
+
+        if (filters?.PostType != null)
+        {
+            clauses.Add("AND post_type = @postType");
+            parameters.Add(new("@postType", filters.PostType.Value.ToString()));
+        }
+        if (filters?.Category != null)
+        {
+            clauses.Add("AND item_category = @category");
+            parameters.Add(new("@category", filters.Category.Value.ToString()));
+        }
+        if (filters?.Geo != null)
+        {
+            clauses.Add(@"AND ST_DWithin(location::geography,
+                ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography,
+                @radius)");
+            parameters.Add(new("@longitude", filters.Geo.Location.Longitude));
+            parameters.Add(new("@latitude",  filters.Geo.Location.Latitude));
+            parameters.Add(new("@radius",    filters.Geo.RadiusInKm * 1000));
+        }
+        if (filters?.Time != null)
+        {
+            clauses.Add("AND event_time >= @fromTime");
+            clauses.Add("AND event_time <= @toTime");
+            parameters.Add(new("@fromTime", filters.Time.From));
+            parameters.Add(new("@toTime",   filters.Time.To));
+        }
+
+        return (string.Join("\n                ", clauses), parameters);
+    }
+
+    private static PostItem ReadPostItem(IDataReader reader, int startIndex) => new()
+    {
+        ItemName        = reader.GetString(startIndex),
+        Category        = reader.IsDBNull(startIndex + 1) ? ItemCategory.Other : Enum.Parse<ItemCategory>(reader.GetString(startIndex + 1)),
+        Color           = reader.IsDBNull(startIndex + 2) ? null : reader.GetString(startIndex + 2),
+        Brand           = reader.IsDBNull(startIndex + 3) ? null : reader.GetString(startIndex + 3),
+        Condition       = reader.IsDBNull(startIndex + 4) ? null : reader.GetString(startIndex + 4),
+        Material        = reader.IsDBNull(startIndex + 5) ? null : reader.GetString(startIndex + 5),
+        Size            = reader.IsDBNull(startIndex + 6) ? null : reader.GetString(startIndex + 6),
+        DistinctiveMarks    = reader.IsDBNull(startIndex + 7) ? null : reader.GetString(startIndex + 7),
+        AdditionalDetails   = reader.IsDBNull(startIndex + 8) ? null : reader.GetString(startIndex + 8),
+    };
 
     public override async Task<Post?> GetByIdAsync(Guid id, bool isTrack = false)
     {
@@ -95,18 +145,6 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return (items.Select(p => (p, (double?)null)).ToList(), totalCount);
     }
 
-    private static double Haversine(double lat1, double lon1, double lat2, double lon2)
-    {
-        const double R = 6371000;
-        var φ1 = lat1 * Math.PI / 180;
-        var φ2 = lat2 * Math.PI / 180;
-        var Δφ = (lat2 - lat1) * Math.PI / 180;
-        var Δλ = (lon2 - lon1) * Math.PI / 180;
-        var a = Math.Sin(Δφ / 2) * Math.Sin(Δφ / 2) +
-                Math.Cos(φ1) * Math.Cos(φ2) *
-                Math.Sin(Δλ / 2) * Math.Sin(Δλ / 2);
-        return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-    }
 
     public async Task<(IEnumerable<(Post Post, double SimilarityScore, double? DistanceMeters)> Items, int TotalCount)> SearchBySemanticAsync(
         float[] queryEmbedding,
@@ -135,14 +173,19 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                     @radius
                 )" : "";
 
-        // col 0: id, 1: post_type, 2: item (jsonb)
-        // col 3: location, 4: external_place_id, 5: display_address
-        // col 6: event_time, 7: created_at, 8: updated_at
-        // col 9: embedding, 10: content_hash, 11: embedding_status, 12: author_id, 13: image_urls, 14: similarity
+        // col 0:id  1:post_type
+        // col 2:item_name  3:item_category  4:item_color  5:item_brand  6:item_condition
+        //     7:item_material  8:item_size  9:item_distinctive_marks  10:item_additional_details
+        // col 11:location  12:external_place_id  13:display_address
+        // col 14:event_time  15:created_at  16:updated_at
+        // col 17:embedding  18:content_hash  19:embedding_status  20:author_id  21:image_urls
+        // col 22:similarity
         var sql = $@"
             WITH ranked AS (
                 SELECT
-                    id, post_type, item,
+                    id, post_type,
+                    item_name, item_category, item_color, item_brand, item_condition,
+                    item_material, item_size, item_distinctive_marks, item_additional_details,
                     location, external_place_id, display_address,
                     event_time, created_at, updated_at,
                     embedding, content_hash, embedding_status, author_id, image_urls,
@@ -157,7 +200,9 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                     {locationCondition}
             )
             SELECT
-                id, post_type, item,
+                id, post_type,
+                item_name, item_category, item_color, item_brand, item_condition,
+                item_material, item_size, item_distinctive_marks, item_additional_details,
                 location, external_place_id, display_address,
                 event_time, created_at, updated_at,
                 embedding, content_hash, embedding_status, author_id, image_urls,
@@ -211,25 +256,23 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             {
                 var post = new Post
                 {
-                    Id = reader.GetGuid(0),
-                    PostType = Enum.Parse<PostType>(reader.GetString(1)),
-                    Item = JsonSerializer.Deserialize<PostItem>(reader.GetString(2), _jsonOptions)!,
-                    Location = new GeoPoint(
-                        ((Point)reader.GetValue(3)).Y,
-                        ((Point)reader.GetValue(3)).X),
-                    ExternalPlaceId = reader.IsDBNull(4) ? null : reader.GetString(4),
-                    DisplayAddress = reader.IsDBNull(5) ? null : reader.GetString(5),
-                    EventTime = reader.GetFieldValue<DateTimeOffset>(6),
-                    CreatedAt = reader.GetFieldValue<DateTimeOffset>(7),
-                    UpdatedAt = reader.IsDBNull(8) ? null : reader.GetFieldValue<DateTimeOffset>(8),
-                    Embedding = reader.IsDBNull(9) ? null : ((Vector)reader.GetValue(9)).ToArray(),
-                    ContentHash = reader.GetString(10),
-                    EmbeddingStatus = Enum.Parse<EmbeddingStatus>(reader.GetString(11)),
+                    Id              = reader.GetGuid(0),
+                    PostType        = Enum.Parse<PostType>(reader.GetString(1)),
+                    Item            = ReadPostItem(reader, 2),
+                    Location        = new GeoPoint(((Point)reader.GetValue(11)).Y, ((Point)reader.GetValue(11)).X),
+                    ExternalPlaceId = reader.IsDBNull(12) ? null : reader.GetString(12),
+                    DisplayAddress  = reader.IsDBNull(13) ? null : reader.GetString(13),
+                    EventTime       = reader.GetFieldValue<DateTimeOffset>(14),
+                    CreatedAt       = reader.GetFieldValue<DateTimeOffset>(15),
+                    UpdatedAt       = reader.IsDBNull(16) ? null : reader.GetFieldValue<DateTimeOffset>(16),
+                    Embedding       = reader.IsDBNull(17) ? null : ((Vector)reader.GetValue(17)).ToArray(),
+                    ContentHash     = reader.GetString(18),
+                    EmbeddingStatus = Enum.Parse<EmbeddingStatus>(reader.GetString(19)),
                     PostMatchingStatus = PostMatchingStatus.Completed,
-                    AuthorId = reader.GetString(12),
-                    ImageUrls = JsonSerializer.Deserialize<List<string>>(reader.GetString(13), _jsonOptions) ?? new()
+                    AuthorId        = reader.GetString(20),
+                    ImageUrls       = reader.IsDBNull(21) ? [] : reader.GetFieldValue<string[]>(21).ToList()
                 };
-                rawResults.Add((post, reader.GetDouble(14)));
+                rawResults.Add((post, reader.GetDouble(22)));
             }
 
             if (await reader.NextResultAsync(cancellationToken) && await reader.ReadAsync(cancellationToken))
@@ -252,11 +295,13 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         Post post,
         CancellationToken cancellationToken = default)
     {
-        // col 0: id, 1: post_type, 2: item (jsonb)
-        // col 3: location, 4: external_place_id, 5: display_address
-        // col 6: event_time, 7: created_at, 8: updated_at
-        // col 9: content_hash, 10: embedding_status, 11: author_id
-        // col 12: image_urls, 13: similarity, 14: distance_meters
+        // col 0:id  1:post_type
+        // col 2:item_name  3:item_category  4:item_color  5:item_brand  6:item_condition
+        //     7:item_material  8:item_size  9:item_distinctive_marks  10:item_additional_details
+        // col 11:location  12:external_place_id  13:display_address
+        // col 14:event_time  15:created_at  16:updated_at
+        // col 17:content_hash  18:embedding_status  19:author_id  20:image_urls
+        // col 21:similarity  22:distance_meters
 
         var ic = System.Globalization.CultureInfo.InvariantCulture;
         var wEmbed = PostMatchingCriteria.EmbeddingSimilarityWeight.ToString(ic);
@@ -266,7 +311,9 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         var sql = $"""
             WITH candidates AS (
                 SELECT
-                    id, post_type, item,
+                    id, post_type,
+                    item_name, item_category, item_color, item_brand, item_condition,
+                    item_material, item_size, item_distinctive_marks, item_additional_details,
                     location, external_place_id, display_address,
                     event_time, created_at, updated_at,
                     content_hash, embedding_status, author_id, image_urls,
@@ -293,7 +340,9 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                         @maxDistance
                     )
             )
-            SELECT id, post_type, item,
+            SELECT id, post_type,
+                   item_name, item_category, item_color, item_brand, item_condition,
+                   item_material, item_size, item_distinctive_marks, item_additional_details,
                    location, external_place_id, display_address,
                    event_time, created_at, updated_at,
                    content_hash, embedding_status, author_id,
@@ -417,6 +466,53 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             .ToList();
 
         return (items, totalCount);
+    }
+
+    public async Task<IEnumerable<Post>> SearchByFullTextAsync(
+        string searchTerm,
+        PostFilters? filters = null,
+        CancellationToken cancellationToken = default)
+    {
+        var (filterSql, parameters) = BuildFilters(filters);
+
+        var sql = $@"
+            SELECT id,
+                   ts_rank(item_search, websearch_to_tsquery('english', @searchTerm)) AS rank
+            FROM posts
+            WHERE deleted_at IS NULL
+                AND item_search @@ websearch_to_tsquery('english', @searchTerm)
+                {filterSql}
+            ORDER BY rank DESC";
+
+        parameters.Insert(0, new("@searchTerm", searchTerm));
+
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        var rankedIds = new List<Guid>();
+        await using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = sql;
+            cmd.Parameters.AddRange(parameters.ToArray());
+
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+                rankedIds.Add(reader.GetGuid(0));
+        }
+
+        if (rankedIds.Count == 0)
+            return [];
+
+        var posts = await _dbSet
+            .AsNoTracking()
+            .Include(p => p.Author)
+            .Include(p => p.Organization)
+            .Where(p => rankedIds.Contains(p.Id))
+            .ToListAsync(cancellationToken);
+
+        var postMap = posts.ToDictionary(p => p.Id);
+        return rankedIds.Where(id => postMap.ContainsKey(id)).Select(id => postMap[id]);
     }
 
     public async Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)

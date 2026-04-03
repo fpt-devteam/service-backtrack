@@ -72,7 +72,7 @@ public sealed class CreatePostHandler(
         await postRepository.CreateAsync(post);
         await postRepository.SaveChangesAsync();
 
-        backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
+        // backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
         return new PostResult
         {
