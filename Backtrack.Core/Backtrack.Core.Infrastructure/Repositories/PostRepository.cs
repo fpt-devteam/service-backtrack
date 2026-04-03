@@ -53,6 +53,16 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             parameters.Add(new("@fromTime", filters.Time.From));
             parameters.Add(new("@toTime",   filters.Time.To));
         }
+        if (filters?.AuthorId != null)
+        {
+            clauses.Add("AND author_id = @authorId");
+            parameters.Add(new("@authorId", filters.AuthorId));
+        }
+        if (filters?.OrganizationId != null)
+        {
+            clauses.Add("AND organization_id = @organizationId");
+            parameters.Add(new("@organizationId", filters.OrganizationId.Value));
+        }
 
         return (string.Join("\n                ", clauses), parameters);
     }
@@ -83,68 +93,69 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             p.DeletedAt == null);
     }
 
-    public async Task<(IEnumerable<(Post Post, double? DistanceMeters)> Items, int TotalCount)> GetPagedAsync(
+    public async Task<(IEnumerable<Post> Items, int TotalCount)> GetPagedAsync(
         PagedQuery pagedQuery,
-        string? searchTerm = null,
-        PostType? postType = null,
-        Guid? organizationId = null,
-        GeoPoint? location = null,
-        double? radiusInKm = null,
+        PostFilters? filters = null,
         CancellationToken cancellationToken = default)
     {
-        var query = _dbSet.AsQueryable().Where(p => p.DeletedAt == null);
+        var (filterSql, parameters) = BuildFilters(filters);
 
-        if (postType is not null)
-            query = query.Where(p => p.PostType == postType);
+        var countSql = $@"
+            SELECT COUNT(*)
+            FROM posts
+            WHERE deleted_at IS NULL
+                {filterSql}";
 
-        if (organizationId is not null)
-            query = query.Where(p => p.OrganizationId == organizationId);
+        var dataSql = $@"
+            SELECT id
+            FROM posts
+            WHERE deleted_at IS NULL
+                {filterSql}
+            ORDER BY created_at DESC
+            LIMIT @limit OFFSET @offset";
 
-        if (!string.IsNullOrWhiteSpace(searchTerm))
-            query = query.Where(p =>
-                EF.Functions.ILike(p.Item.ItemName, $"%{searchTerm}%") ||
-                EF.Functions.ILike(p.Item.AdditionalDetails ?? "", $"%{searchTerm}%"));
+        parameters.Add(new("@limit", pagedQuery.Limit));
+        parameters.Add(new("@offset", pagedQuery.Offset));
 
-        if (location != null && radiusInKm.HasValue)
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        int totalCount;
+        await using (var countCmd = conn.CreateCommand())
         {
-            var radiusInMeters = radiusInKm.Value * 1000;
-            var ids = await _context.Database
-                .SqlQueryRaw<Guid>(@"
-                    SELECT id FROM posts
-                    WHERE location IS NOT NULL
-                    AND ST_DWithin(
-                        location::geography,
-                        ST_SetSRID(ST_MakePoint({0}, {1}), 4326)::geography,
-                        {2}
-                    )
-                    AND deleted_at IS NULL
-                ", location.Longitude, location.Latitude, radiusInMeters)
-                .ToListAsync(cancellationToken);
-            query = query.Where(p => ids.Contains(p.Id));
+            countCmd.CommandText = countSql;
+            // count query doesn't need limit/offset params — use all except last two
+            countCmd.Parameters.AddRange(parameters.Take(parameters.Count - 2).ToArray());
+            totalCount = Convert.ToInt32(await countCmd.ExecuteScalarAsync(cancellationToken));
         }
 
-        var totalCount = await query.CountAsync(cancellationToken);
+        var ids = new List<Guid>();
+        await using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = dataSql;
+            cmd.Parameters.AddRange(parameters.ToArray());
 
-        var items = await query
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+                ids.Add(reader.GetGuid(0));
+        }
+
+        if (ids.Count == 0)
+            return ([], totalCount);
+
+        var posts = await _dbSet
+            .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Organization)
-            .OrderByDescending(p => p.CreatedAt)
-            .Skip(pagedQuery.Offset)
-            .Take(pagedQuery.Limit)
+            .Where(p => ids.Contains(p.Id))
             .ToListAsync(cancellationToken);
 
-        if (location != null)
-        {
-            var withDistance = items
-                .Select(p => (p, (double?)Haversine(location.Latitude, location.Longitude, p.Location!.Latitude, p.Location.Longitude)))
-                .OrderBy(x => x.Item2)
-                .ToList();
-            return (withDistance, totalCount);
-        }
+        var postMap = posts.ToDictionary(p => p.Id);
+        var ordered = ids.Where(id => postMap.ContainsKey(id)).Select(id => postMap[id]);
 
-        return (items.Select(p => (p, (double?)null)).ToList(), totalCount);
+        return (ordered, totalCount);
     }
-
 
     public async Task<(IEnumerable<(Post Post, double SimilarityScore, double? DistanceMeters)> Items, int TotalCount)> SearchBySemanticAsync(
         float[] queryEmbedding,
@@ -396,78 +407,6 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return results;
     }
 
-    public async Task<(IEnumerable<(Post Post, double DistanceMeters)> Items, int TotalCount)> GetFeedAsync(
-        GeoPoint location,
-        int offset,
-        int limit,
-        CancellationToken cancellationToken = default)
-    {
-        const string countSql = @"
-            SELECT COUNT(*)
-            FROM posts
-            WHERE deleted_at IS NULL
-                AND location IS NOT NULL";
-
-        const string sql = @"
-            SELECT
-                id,
-                ST_Distance(
-                    location::geography,
-                    ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography
-                ) AS dist,
-                event_time
-            FROM posts
-            WHERE deleted_at IS NULL
-                AND location IS NOT NULL
-            ORDER BY dist ASC, event_time DESC
-            LIMIT @limit OFFSET @offset";
-
-        var conn = _context.Database.GetDbConnection();
-        if (conn.State != System.Data.ConnectionState.Open)
-            await _context.Database.OpenConnectionAsync(cancellationToken);
-
-        int totalCount;
-        await using (var countCmd = conn.CreateCommand())
-        {
-            countCmd.CommandText = countSql;
-            totalCount = Convert.ToInt32(await countCmd.ExecuteScalarAsync(cancellationToken));
-        }
-
-        var idDistances = new List<(Guid Id, double Distance)>();
-
-        await using (var cmd = conn.CreateCommand())
-        {
-            cmd.CommandText = sql;
-            cmd.Parameters.Add(new NpgsqlParameter("@longitude", location.Longitude));
-            cmd.Parameters.Add(new NpgsqlParameter("@latitude", location.Latitude));
-            cmd.Parameters.Add(new NpgsqlParameter("@limit", limit));
-            cmd.Parameters.Add(new NpgsqlParameter("@offset", offset));
-
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-                idDistances.Add((reader.GetGuid(0), reader.GetDouble(1)));
-        }
-
-        if (idDistances.Count == 0)
-            return ([], totalCount);
-
-        var ids = idDistances.Select(x => x.Id).ToList();
-        var posts = await _dbSet
-            .Include(p => p.Author)
-            .Include(p => p.Organization)
-            .Where(p => ids.Contains(p.Id))
-            .ToListAsync(cancellationToken);
-
-        var postMap = posts.ToDictionary(p => p.Id);
-
-        var items = idDistances
-            .Where(x => postMap.ContainsKey(x.Id))
-            .Select(x => (postMap[x.Id], x.Distance))
-            .ToList();
-
-        return (items, totalCount);
-    }
-
     public async Task<IEnumerable<Post>> SearchByFullTextAsync(
         string searchTerm,
         PostFilters? filters = null,
@@ -513,16 +452,6 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
 
         var postMap = posts.ToDictionary(p => p.Id);
         return rankedIds.Where(id => postMap.ContainsKey(id)).Select(id => postMap[id]);
-    }
-
-    public async Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)
-    {
-        return await _dbSet
-            .Include(p => p.Author)
-            .Include(p => p.Organization)
-            .Where(p => p.AuthorId == authorId && p.DeletedAt == null)
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync(cancellationToken);
     }
 
 }

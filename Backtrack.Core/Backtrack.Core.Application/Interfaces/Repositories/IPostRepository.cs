@@ -13,13 +13,9 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             PostFilters? filters = null,
             CancellationToken cancellationToken = default);
 
-        Task<(IEnumerable<(Post Post, double? DistanceMeters)> Items, int TotalCount)> GetPagedAsync(
+        Task<(IEnumerable<Post> Items, int TotalCount)> GetPagedAsync(
             PagedQuery pagedQuery,
-            string? searchTerm = null,
-            PostType? postType = null,
-            Guid? organizationId = null,
-            GeoPoint? location = null,
-            double? radiusInKm = null,
+            PostFilters? filters = null,
             CancellationToken cancellationToken = default);
 
         Task<(IEnumerable<(Post Post, double SimilarityScore, double? DistanceMeters)> Items, int TotalCount)> SearchBySemanticAsync(
@@ -35,12 +31,5 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             Post post,
             CancellationToken cancellationToken = default);
 
-        Task<(IEnumerable<(Post Post, double DistanceMeters)> Items, int TotalCount)> GetFeedAsync(
-            GeoPoint location,
-            int offset,
-            int limit,
-            CancellationToken cancellationToken = default);
-
-        Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default);
     }
 }

@@ -13,4 +13,6 @@ public sealed record PostFilters
     public ItemCategory? Category { get; init; }
     public GeoFilter? Geo { get; init; }
     public TimeFilter? Time { get; init; }
+    public string? AuthorId { get; init; }
+    public Guid? OrganizationId { get; init; }
 }

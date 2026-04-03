@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace Backtrack.Core.Application.Usecases.Posts.GetFeed;
+namespace Backtrack.Core.Application.Usecases.PostExplorations.GetFeed;
 
 public sealed class GetFeedQueryValidator : AbstractValidator<GetFeedQuery>
 {

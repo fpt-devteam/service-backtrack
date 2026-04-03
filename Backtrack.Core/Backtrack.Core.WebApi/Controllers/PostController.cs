@@ -10,7 +10,7 @@ using Backtrack.Core.Application.Usecases.Posts.GetPostsByAuthorId;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetPostMatchingStatus;
 using Backtrack.Core.Application.Usecases.PostExplorations.SearchPosts;
-using Backtrack.Core.Application.Usecases.Posts.GetFeed;
+using Backtrack.Core.Application.Usecases.PostExplorations.GetFeed;
 using Backtrack.Core.WebApi.Common;
 
 namespace Backtrack.Core.WebApi.Controllers;

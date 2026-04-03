@@ -1,22 +1,19 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases.PostExplorations;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Posts.GetPostsByAuthorId;
 
-public sealed class GetPostsByAuthorIdHandler : IRequestHandler<GetPostsByAuthorIdQuery, List<PostResult>>
+public sealed class GetPostsByAuthorIdHandler(IPostRepository postRepository)
+    : IRequestHandler<GetPostsByAuthorIdQuery, PagedResult<PostResult>>
 {
-    private readonly IPostRepository _postRepository;
-
-    public GetPostsByAuthorIdHandler(IPostRepository postRepository)
+    public async Task<PagedResult<PostResult>> Handle(GetPostsByAuthorIdQuery query, CancellationToken cancellationToken)
     {
-        _postRepository = postRepository;
-    }
+        var pagedQuery = PagedQuery.FromPage(query.Page, query.PageSize);
+        var filters = new PostFilters { AuthorId = query.AuthorId };
+        var (items, totalCount) = await postRepository.GetPagedAsync(pagedQuery, filters, cancellationToken);
 
-    public async Task<List<PostResult>> Handle(GetPostsByAuthorIdQuery request, CancellationToken cancellationToken)
-    {
-        var posts = await _postRepository.GetByAuthorIdAsync(request.AuthorId, cancellationToken);
-
-        return posts.Select(post => new PostResult
+        var results = items.Select(post => new PostResult
         {
             Id = post.Id,
             Author = post.Author?.ToPostAuthorResult(),
@@ -30,5 +27,7 @@ public sealed class GetPostsByAuthorIdHandler : IRequestHandler<GetPostsByAuthor
             EventTime = post.EventTime,
             CreatedAt = post.CreatedAt
         }).ToList();
+
+        return new PagedResult<PostResult>(totalCount, results);
     }
 }
