@@ -47,8 +47,6 @@ public sealed class CreateP2PHandoverHandler(
             {
                 throw new ValidationException(HandoverErrors.CannotHandoverOwnPost);
             }
-
-            // Resolve OwnerId from OwnerPost
             resolvedOwnerId = ownerPost.AuthorId;
         }
         else
@@ -64,12 +62,7 @@ public sealed class CreateP2PHandoverHandler(
                 throw new ValidationException(HandoverErrors.CannotHandoverOwnPost);
             }
 
-            var owner = await userRepository.GetByIdAsync(command.OwnerId);
-            if (owner == null)
-            {
-                throw new NotFoundException(HandoverErrors.OwnerNotFound);
-            }
-
+            var owner = await userRepository.GetByIdAsync(command.OwnerId) ?? throw new NotFoundException(HandoverErrors.OwnerNotFound);
             resolvedOwnerId = command.OwnerId;
         }
 
@@ -81,10 +74,11 @@ public sealed class CreateP2PHandoverHandler(
             throw new ConflictException(HandoverErrors.AlreadyExists);
         }
 
-        var handover = new Handover
+        var handover = new P2PHandover
         {
             Id = Guid.NewGuid(),
-            Type = HandoverType.P2P,
+            FinderId = command.FinderId,
+            OwnerId = resolvedOwnerId,
             FinderPostId = command.FinderPostId,
             OwnerPostId = command.OwnerPostId,
             Status = HandoverStatus.Pending,
@@ -97,7 +91,7 @@ public sealed class CreateP2PHandoverHandler(
         return new HandoverResult
         {
             Id = handover.Id,
-            Type = handover.Type.ToString(),
+            Type = "P2P",
             FinderPostId = handover.FinderPostId,
             OwnerPostId = handover.OwnerPostId,
             Status = handover.Status.ToString(),

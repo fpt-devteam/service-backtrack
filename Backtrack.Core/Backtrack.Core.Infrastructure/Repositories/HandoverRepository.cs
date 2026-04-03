@@ -12,20 +12,42 @@ public class HandoverRepository : CrudRepositoryBase<Handover, Guid>, IHandoverR
 
     public async Task<Handover?> GetByIdWithExtensionAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _dbSet
-            .Include(h => h.OrgExtension)
+        var orgHandover = await _context.Set<OrgHandover>()
+            .Include(h => h.Organization)
+            .Include(h => h.Staff)
+            .Include(h => h.Finder)
+            .FirstOrDefaultAsync(h => h.Id == id, cancellationToken);
+
+        if (orgHandover != null)
+        {
+            return orgHandover;
+        }
+
+        return await _context.Set<P2PHandover>()
+            .Include(h => h.Finder)
+            .Include(h => h.Owner)
             .FirstOrDefaultAsync(h => h.Id == id, cancellationToken);
     }
 
     public async Task<Handover?> GetByIdWithPostsAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _dbSet
+        var p2pHandover = await _context.Set<P2PHandover>()
             .Include(h => h.FinderPost)
                 .ThenInclude(p => p!.Author)
             .Include(h => h.OwnerPost)
                 .ThenInclude(p => p!.Author)
-            .Include(h => h.OrgExtension)
-                .ThenInclude(e => e!.Organization)
+            .FirstOrDefaultAsync(h => h.Id == id, cancellationToken);
+
+        if (p2pHandover != null)
+        {
+            return p2pHandover;
+        }
+
+        return await _context.Set<OrgHandover>()
+            .Include(h => h.FinderPost)
+                .ThenInclude(p => p!.Author)
+            .Include(h => h.Organization)
+            .Include(h => h.Staff)
             .FirstOrDefaultAsync(h => h.Id == id, cancellationToken);
     }
 
@@ -44,7 +66,7 @@ public class HandoverRepository : CrudRepositoryBase<Handover, Guid>, IHandoverR
         HandoverStatus? status = null,
         CancellationToken cancellationToken = default)
     {
-        var query = _dbSet
+        IQueryable<P2PHandover> p2pQuery = _context.Set<P2PHandover>()
             .Include(h => h.FinderPost)
             .Include(h => h.OwnerPost)
             .Where(h => (h.FinderPost != null && h.FinderPost.AuthorId == userId) ||
@@ -52,15 +74,28 @@ public class HandoverRepository : CrudRepositoryBase<Handover, Guid>, IHandoverR
 
         if (status.HasValue)
         {
-            query = query.Where(h => h.Status == status.Value);
+            p2pQuery = p2pQuery.Where(h => h.Status == status.Value);
         }
 
-        var total = await query.CountAsync(cancellationToken);
-        var items = await query
+        IQueryable<OrgHandover> orgQuery = _context.Set<OrgHandover>()
+            .Include(h => h.FinderPost)
+            .Where(h => h.FinderPost != null && h.FinderPost.AuthorId == userId);
+
+        if (status.HasValue)
+        {
+            orgQuery = orgQuery.Where(h => h.Status == status.Value);
+        }
+
+        var total = await p2pQuery.CountAsync(cancellationToken) + await orgQuery.CountAsync(cancellationToken);
+
+        var allItems = (await p2pQuery.Cast<Handover>().ToListAsync(cancellationToken))
+            .Concat(await orgQuery.Cast<Handover>().ToListAsync(cancellationToken));
+
+        var items = allItems
             .OrderByDescending(h => h.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         return (items, total);
     }
@@ -70,10 +105,20 @@ public class HandoverRepository : CrudRepositoryBase<Handover, Guid>, IHandoverR
         Guid? ownerPostId,
         CancellationToken cancellationToken = default)
     {
-        return await _dbSet.AnyAsync(h =>
+        var p2pExists = await _context.Set<P2PHandover>().AnyAsync(h =>
             h.FinderPostId == finderPostId &&
-            h.OwnerPostId == ownerPostId &&
-            h.Status == HandoverStatus.Pending,
+            h.OwnerPostId == ownerPostId,
             cancellationToken);
+
+        if (ownerPostId.HasValue)
+        {
+            return p2pExists;
+        }
+
+        var orgExists = await _context.Set<OrgHandover>().AnyAsync(h =>
+            h.FinderPostId == finderPostId,
+            cancellationToken);
+
+        return p2pExists || orgExists;
     }
 }

@@ -4,6 +4,7 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Domain.Entities;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Handovers.StaffConfirmHandover;
@@ -18,12 +19,7 @@ public sealed class StaffConfirmHandoverHandler(
         var handover = await handoverRepository.GetByIdWithExtensionAsync(command.HandoverId, cancellationToken)
             ?? throw new NotFoundException(HandoverErrors.NotFound);
 
-        if (handover.Type != HandoverType.Org)
-        {
-            throw new ValidationException(HandoverErrors.InvalidHandoverType);
-        }
-
-        if (handover.OrgExtension == null)
+        if (handover is not OrgHandover orgHandover)
         {
             throw new ValidationException(HandoverErrors.InvalidHandoverType);
         }
@@ -40,14 +36,14 @@ public sealed class StaffConfirmHandoverHandler(
 
         // Verify user is staff of the organization
         var membership = await membershipRepository.GetByOrgAndUserAsync(
-            handover.OrgExtension.OrgId, command.UserId, cancellationToken);
+            orgHandover.OrgId, command.UserId, cancellationToken);
         if (membership == null)
         {
             throw new ForbiddenException(HandoverErrors.StaffNotAuthorized);
         }
 
         // Verify owner has confirmed
-        if (!handover.OrgExtension.OwnerVerified)
+        if (!orgHandover.OwnerVerified)
         {
             throw new ValidationException(HandoverErrors.OwnerNotConfirmed);
         }
@@ -56,8 +52,8 @@ public sealed class StaffConfirmHandoverHandler(
         handover.Status = HandoverStatus.Confirmed;
         handover.ConfirmedAt = DateTimeOffset.UtcNow;
         handover.UpdatedAt = DateTimeOffset.UtcNow;
-        handover.OrgExtension.StaffConfirmedAt = DateTimeOffset.UtcNow;
-        handover.OrgExtension.UpdatedAt = DateTimeOffset.UtcNow;
+        orgHandover.StaffConfirmedAt = DateTimeOffset.UtcNow;
+        orgHandover.UpdatedAt = DateTimeOffset.UtcNow;
 
         await handoverRepository.SaveChangesAsync();
 
@@ -65,12 +61,12 @@ public sealed class StaffConfirmHandoverHandler(
         var handoverWithPosts = await handoverRepository.GetByIdWithPostsAsync(command.HandoverId, cancellationToken);
 
         // Publish event for post closure and points awarding
-        var finderId = handoverWithPosts?.FinderPost?.AuthorId ?? command.UserId ?? string.Empty;
+        var finderId = (handoverWithPosts as OrgHandover)?.FinderPost?.AuthorId ?? command.UserId ?? string.Empty;
         await eventPublisher.PublishHandoverConfirmedAsync(new HandoverConfirmedIntegrationEvent
         {
             HandoverId = handover.Id,
-            FinderPostId = handover.FinderPostId,
-            OwnerPostId = handover.OwnerPostId,
+            FinderPostId = orgHandover.FinderPostId,
+            OwnerPostId = null,
             FinderId = finderId,
             EventTimestamp = DateTimeOffset.UtcNow
         });
@@ -78,22 +74,22 @@ public sealed class StaffConfirmHandoverHandler(
         return new HandoverResult
         {
             Id = handover.Id,
-            Type = handover.Type.ToString(),
-            FinderPostId = handover.FinderPostId,
-            OwnerPostId = handover.OwnerPostId,
+            Type = "Org",
+            FinderPostId = orgHandover.FinderPostId,
+            OwnerPostId = null,
             Status = handover.Status.ToString(),
             ConfirmedAt = handover.ConfirmedAt,
             ExpiresAt = handover.ExpiresAt,
             CreatedAt = handover.CreatedAt,
             OrgExtension = new HandoverOrgExtensionResult
             {
-                Id = handover.OrgExtension.Id,
-                OrgId = handover.OrgExtension.OrgId,
-                StaffId = handover.OrgExtension.StaffId,
-                OwnerVerified = handover.OrgExtension.OwnerVerified,
-                OwnerFormData = handover.OrgExtension.OwnerFormData,
-                StaffConfirmedAt = handover.OrgExtension.StaffConfirmedAt,
-                OwnerConfirmedAt = handover.OrgExtension.OwnerConfirmedAt
+                Id = orgHandover.Id,
+                OrgId = orgHandover.OrgId,
+                StaffId = orgHandover.StaffId,
+                OwnerVerified = orgHandover.OwnerVerified,
+                OwnerFormData = orgHandover.OwnerFormData,
+                StaffConfirmedAt = orgHandover.StaffConfirmedAt,
+                OwnerConfirmedAt = orgHandover.OwnerConfirmedAt
             }
         };
     }

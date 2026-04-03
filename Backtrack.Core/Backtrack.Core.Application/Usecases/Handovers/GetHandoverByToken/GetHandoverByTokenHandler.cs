@@ -3,6 +3,7 @@ using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 
@@ -36,29 +37,30 @@ public sealed class GetHandoverByTokenHandler(
         }
 
         // Get form template if this is an org handover
-        var formTemplate = handover.Type == HandoverType.Org && handover.OrgExtension != null
-            ? await orgFormTemplateRepository.GetByOrgIdAsync(handover.OrgExtension.OrgId, cancellationToken)
+        var orgHandover = handover as OrgHandover;
+        var formTemplate = orgHandover != null
+            ? await orgFormTemplateRepository.GetByOrgIdAsync(orgHandover.OrgId, cancellationToken)
             : null;
 
         return new HandoverDetailResult
         {
             Id = handover.Id,
-            Type = handover.Type.ToString(),
-            FinderPostId = handover.FinderPostId,
-            OwnerPostId = handover.OwnerPostId,
+            Type = handover is OrgHandover ? "Org" : "P2P",
+            FinderPostId = handover is P2PHandover p2p ? p2p.FinderPostId : orgHandover?.FinderPostId,
+            OwnerPostId = handover is P2PHandover p2pOwner ? p2pOwner.OwnerPostId : null,
             Status = handover.Status.ToString(),
             ConfirmedAt = handover.ConfirmedAt,
             ExpiresAt = handover.ExpiresAt,
             CreatedAt = handover.CreatedAt,
-            OrgExtension = handover.OrgExtension != null ? new HandoverOrgExtensionResult
+            OrgExtension = orgHandover != null ? new HandoverOrgExtensionResult
             {
-                Id = handover.OrgExtension.Id,
-                OrgId = handover.OrgExtension.OrgId,
-                StaffId = handover.OrgExtension.StaffId,
-                OwnerVerified = handover.OrgExtension.OwnerVerified,
-                OwnerFormData = handover.OrgExtension.OwnerFormData,
-                StaffConfirmedAt = handover.OrgExtension.StaffConfirmedAt,
-                OwnerConfirmedAt = handover.OrgExtension.OwnerConfirmedAt
+                Id = orgHandover.Id,
+                OrgId = orgHandover.OrgId,
+                StaffId = orgHandover.StaffId,
+                OwnerVerified = orgHandover.OwnerVerified,
+                OwnerFormData = orgHandover.OwnerFormData,
+                StaffConfirmedAt = orgHandover.StaffConfirmedAt,
+                OwnerConfirmedAt = orgHandover.OwnerConfirmedAt
             } : null,
             FormTemplate = formTemplate?.Fields
         };

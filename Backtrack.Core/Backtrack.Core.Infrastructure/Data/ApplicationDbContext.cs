@@ -15,6 +15,11 @@ namespace Backtrack.Core.Infrastructure.Data
         public DbSet<PostMatch> PostMatches { get; set; }
         public DbSet<OrganizationInventory> OrganizationInventories { get; set; }
         public DbSet<FinderContact> FinderContacts { get; set; }
+        public DbSet<PostImage> PostImages { get; set; }
+        public DbSet<Handover> Handovers { get; set; }
+        public DbSet<P2PHandover> P2PHandovers { get; set; }
+        public DbSet<OrgHandover> OrgHandovers { get; set; }
+        public DbSet<OrgFormTemplate> OrgFormTemplates { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -28,6 +33,11 @@ namespace Backtrack.Core.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new PostMatchConfiguration());
             modelBuilder.ApplyConfiguration(new OrganizationInventoryConfiguration());
             modelBuilder.ApplyConfiguration(new FinderContactConfiguration());
+            modelBuilder.ApplyConfiguration(new PostImageConfiguration());
+            modelBuilder.ApplyConfiguration(new HandoverConfiguration());
+            modelBuilder.ApplyConfiguration(new P2PHandoverConfiguration());
+            modelBuilder.ApplyConfiguration(new OrgHandoverConfiguration());
+            modelBuilder.ApplyConfiguration(new OrgFormTemplateConfiguration());
         }
     }
 }

@@ -16,17 +16,6 @@ public class HandoverConfiguration : IEntityTypeConfiguration<Handover>
             .HasColumnName("id")
             .IsRequired();
 
-        builder.Property(h => h.Type)
-            .HasColumnName("type")
-            .HasConversion<string>()
-            .IsRequired();
-
-        builder.Property(h => h.FinderPostId)
-            .HasColumnName("finder_post_id");
-
-        builder.Property(h => h.OwnerPostId)
-            .HasColumnName("owner_post_id");
-
         builder.Property(h => h.Status)
             .HasColumnName("status")
             .HasConversion<string>()
@@ -49,31 +38,7 @@ public class HandoverConfiguration : IEntityTypeConfiguration<Handover>
         builder.Property(h => h.DeletedAt)
             .HasColumnName("deleted_at");
 
-        // Relationships
-        builder.HasOne(h => h.FinderPost)
-            .WithMany()
-            .HasForeignKey(h => h.FinderPostId)
-            .HasConstraintName("fk_handovers_finder_post_id")
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasOne(h => h.OwnerPost)
-            .WithMany()
-            .HasForeignKey(h => h.OwnerPostId)
-            .HasConstraintName("fk_handovers_owner_post_id")
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasOne(h => h.OrgExtension)
-            .WithOne(e => e.Handover)
-            .HasForeignKey<HandoverOrgExtension>(e => e.HandoverId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         // Indexes
-        builder.HasIndex(h => h.FinderPostId)
-            .HasDatabaseName("ix_handovers_finder_post_id");
-
-        builder.HasIndex(h => h.OwnerPostId)
-            .HasDatabaseName("ix_handovers_owner_post_id");
-
         builder.HasIndex(h => h.Status)
             .HasDatabaseName("ix_handovers_status");
 

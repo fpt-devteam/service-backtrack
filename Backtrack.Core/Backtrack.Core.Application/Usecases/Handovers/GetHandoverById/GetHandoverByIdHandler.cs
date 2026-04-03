@@ -1,6 +1,7 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Domain.Entities;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Handovers.GetHandoverById;
@@ -20,11 +21,13 @@ public sealed class GetHandoverByIdHandler(
         var handoverWithPosts = await handoverRepository.GetByIdWithPostsAsync(query.HandoverId, cancellationToken);
         if (handoverWithPosts != null)
         {
-            if (handoverWithPosts.FinderPost?.AuthorId == query.UserId)
+            if (handoverWithPosts is P2PHandover p2p && p2p.FinderPost?.AuthorId == query.UserId)
                 isAuthorized = true;
-            else if (handoverWithPosts.OwnerPost?.AuthorId == query.UserId)
+            else if (handoverWithPosts is P2PHandover p2pOwner && p2pOwner.OwnerPost?.AuthorId == query.UserId)
                 isAuthorized = true;
-            else if (handoverWithPosts.OrgExtension?.StaffId == query.UserId)
+            else if (handoverWithPosts is OrgHandover org && org.StaffId == query.UserId)
+                isAuthorized = true;
+            else if (handoverWithPosts is OrgHandover orgFinder && orgFinder.FinderPost?.AuthorId == query.UserId)
                 isAuthorized = true;
         }
 
@@ -36,22 +39,22 @@ public sealed class GetHandoverByIdHandler(
         return new HandoverResult
         {
             Id = handover.Id,
-            Type = handover.Type.ToString(),
-            FinderPostId = handover.FinderPostId,
-            OwnerPostId = handover.OwnerPostId,
+            Type = handover is OrgHandover ? "Org" : "P2P",
+            FinderPostId = handover is P2PHandover p2pResult ? p2pResult.FinderPostId : ((OrgHandover)handover).FinderPostId,
+            OwnerPostId = handover is P2PHandover p2pOwnerResult ? p2pOwnerResult.OwnerPostId : null,
             Status = handover.Status.ToString(),
             ConfirmedAt = handover.ConfirmedAt,
             ExpiresAt = handover.ExpiresAt,
             CreatedAt = handover.CreatedAt,
-            OrgExtension = handover.OrgExtension != null ? new HandoverOrgExtensionResult
+            OrgExtension = handover is OrgHandover orgResult ? new HandoverOrgExtensionResult
             {
-                Id = handover.OrgExtension.Id,
-                OrgId = handover.OrgExtension.OrgId,
-                StaffId = handover.OrgExtension.StaffId,
-                OwnerVerified = handover.OrgExtension.OwnerVerified,
-                OwnerFormData = handover.OrgExtension.OwnerFormData,
-                StaffConfirmedAt = handover.OrgExtension.StaffConfirmedAt,
-                OwnerConfirmedAt = handover.OrgExtension.OwnerConfirmedAt
+                Id = orgResult.Id,
+                OrgId = orgResult.OrgId,
+                StaffId = orgResult.StaffId,
+                OwnerVerified = orgResult.OwnerVerified,
+                OwnerFormData = orgResult.OwnerFormData,
+                StaffConfirmedAt = orgResult.StaffConfirmedAt,
+                OwnerConfirmedAt = orgResult.OwnerConfirmedAt
             } : null
         };
     }

@@ -27,7 +27,7 @@ public sealed class CreateOrgHandoverHandler(
             ?? throw new NotFoundException(OrganizationErrors.NotFound);
 
         // Validate finder post exists and belongs to the organization
-        var finderPost = await postRepository.GetByIdAsync(command.FinderPostId)
+        var finderPost = await postRepository.GetByIdAsync(command.PostId)
             ?? throw new NotFoundException(HandoverErrors.FinderPostNotFound);
 
         if (finderPost.OrganizationId != command.OrgId)
@@ -42,54 +42,46 @@ public sealed class CreateOrgHandoverHandler(
 
         // Check if active handover already exists
         var exists = await handoverRepository.ExistsActiveHandoverForPostsAsync(
-            command.FinderPostId, null, cancellationToken);
+            command.PostId, null, cancellationToken);
         if (exists)
         {
             throw new ConflictException(HandoverErrors.AlreadyExists);
         }
 
-        var handover = new Handover
+        var handover = new OrgHandover
         {
             Id = Guid.NewGuid(),
-            Type = HandoverType.Org,
-            FinderPostId = command.FinderPostId,
-            OwnerPostId = null,
+            FinderId = finderPost.AuthorId,
+            OrgId = command.OrgId,
+            StaffId = command.UserId,
+            FinderPostId = command.PostId,
+            OwnerVerified = false,
             Status = HandoverStatus.Pending,
             ExpiresAt = DateTimeOffset.UtcNow.AddDays(30)
         };
 
-        var orgExtension = new HandoverOrgExtension
-        {
-            Id = Guid.NewGuid(),
-            HandoverId = handover.Id,
-            OrgId = command.OrgId,
-            StaffId = command.UserId,
-            OwnerVerified = false
-        };
-
         await handoverRepository.CreateAsync(handover);
-        handover.OrgExtension = orgExtension;
         await handoverRepository.SaveChangesAsync();
 
         return new HandoverResult
         {
             Id = handover.Id,
-            Type = handover.Type.ToString(),
+            Type = "Org",
             FinderPostId = handover.FinderPostId,
-            OwnerPostId = handover.OwnerPostId,
+            OwnerPostId = null,
             Status = handover.Status.ToString(),
             ConfirmedAt = handover.ConfirmedAt,
             ExpiresAt = handover.ExpiresAt,
             CreatedAt = handover.CreatedAt,
             OrgExtension = new HandoverOrgExtensionResult
             {
-                Id = orgExtension.Id,
-                OrgId = orgExtension.OrgId,
-                StaffId = orgExtension.StaffId,
-                OwnerVerified = orgExtension.OwnerVerified,
-                OwnerFormData = orgExtension.OwnerFormData,
-                StaffConfirmedAt = orgExtension.StaffConfirmedAt,
-                OwnerConfirmedAt = orgExtension.OwnerConfirmedAt
+                Id = handover.Id,
+                OrgId = handover.OrgId,
+                StaffId = handover.StaffId,
+                OwnerVerified = handover.OwnerVerified,
+                OwnerFormData = handover.OwnerFormData,
+                StaffConfirmedAt = handover.StaffConfirmedAt,
+                OwnerConfirmedAt = handover.OwnerConfirmedAt
             }
         };
     }
