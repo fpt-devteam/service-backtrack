@@ -27,7 +27,7 @@ public sealed class GeminiImageAnalysisService : IImageAnalysisService
         Respond in JSON format:
         {
             "itemName": "Concise item name (3-6 words, e.g., 'Black Leather Wallet', 'Silver iPhone 15 Pro')",
-            "category": "One of: Electronics, Clothing, Accessories, Documents, Bags, Keys, Other",
+            "category": "One of: Electronics, Clothing, Accessories, Documents, Bags, Keys, Wallet, Suitcase, Bags, Keys Other",
             "color": "Primary color, secondary if applicable",
             "brand": "Brand name if visible",
             "condition": "New/Used/Worn/Damaged",
@@ -40,7 +40,7 @@ public sealed class GeminiImageAnalysisService : IImageAnalysisService
         Guidelines:
         1. Only describe what you can actually see - omit unknown attributes or set them to null.
         2. Keep each field short and meaningful.
-        3. For 'category', you MUST use one of these exact values: Electronics, Clothing, Accessories, Documents, Bags, Keys, Other.
+        3. For 'category', you MUST use one of these exact values: Electronics, Clothing, Accessories, Documents, Wallet, Suitcase, Bags, Keys, Other.
         4. If image is unclear, set itemName to "Unidentifiable Item".
 
         Respond ONLY with the JSON object, no markdown.
