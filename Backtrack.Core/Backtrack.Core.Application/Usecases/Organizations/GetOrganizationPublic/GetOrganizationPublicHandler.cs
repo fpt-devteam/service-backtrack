@@ -16,7 +16,7 @@ public sealed class GetOrganizationPublicHandler : IRequestHandler<GetOrganizati
 
     public async Task<OrganizationResult> Handle(GetOrganizationPublicQuery query, CancellationToken cancellationToken)
     {
-        var org = await _organizationRepository.GetByIdAsync(query.OrgId);
+        var org = await _organizationRepository.GetBySlugAsync(query.Slug, cancellationToken);
         if (org is null)
         {
             throw new NotFoundException(OrganizationErrors.NotFound);

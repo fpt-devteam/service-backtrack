@@ -47,8 +47,8 @@ public class FirebaseAuthMiddleware
         // GET /api/qr/public/{publicCode}   — scan QR code (no auth needed)
         new Regex(@"^/api/qr/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
-        // GET /api/core/orgs/{guid}/public  — public org profile, no auth or membership required
-        new Regex(@"^/api/core/orgs/[0-9a-f\-]{36}/public$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        // GET /api/core/orgs/public/{slug}  — public org profile by slug, no auth required
+        new Regex(@"^/api/core/orgs/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
         // GET /api/core/orgs/{guid}/settings/public  — public org settings (required finder contact fields)
         new Regex(@"^/api/core/orgs/[0-9a-f\-]{36}/settings/public$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
