@@ -16,8 +16,8 @@ using Pgvector;
 namespace Backtrack.Core.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260404151957_RenameOrgContractFieldColumns")]
-    partial class RenameOrgContractFieldColumns
+    [Migration("20260404163649_AddOrgContractFieldToOrganization")]
+    partial class AddOrgContractFieldToOrganization
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
