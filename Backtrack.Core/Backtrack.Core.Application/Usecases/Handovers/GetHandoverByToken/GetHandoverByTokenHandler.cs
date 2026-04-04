@@ -39,7 +39,7 @@ public sealed class GetHandoverByTokenHandler(
         // Get form template if this is an org handover
         var orgHandover = handover as OrgHandover;
         var formTemplate = orgHandover != null
-            ? await organizationRepository.GetRequiredOwnerFormFieldsByOrgIdAsync(orgHandover.OrgId, cancellationToken)
+            ? await organizationRepository.GetRequiredOwnerContractFieldsByOrgIdAsync(orgHandover.OrgId, cancellationToken)
             : null;
 
         return new HandoverDetailResult

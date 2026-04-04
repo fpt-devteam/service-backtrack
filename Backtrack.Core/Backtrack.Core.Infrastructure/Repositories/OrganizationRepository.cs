@@ -1,7 +1,6 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
-using Backtrack.Core.Domain.ValueObjects;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,23 +27,23 @@ public class OrganizationRepository : CrudRepositoryBase<Organization, Guid>, IO
         return (items, total);
     }
 
-    public async Task<List<FinderContactField>?> GetRequiredFinderContactFieldsByOrgIdAsync(
+    public async Task<List<OrgContractField>?> GetRequiredFinderContractFieldsByOrgIdAsync(
         Guid orgId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
             .AsNoTracking()
             .Where(o => o.Id == orgId)
-            .Select(o => o.RequiredFinderContactFields)
+            .Select(o => o.RequiredFinderContractFields)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<List<FormFieldDefinition>?> GetRequiredOwnerFormFieldsByOrgIdAsync(
+    public async Task<List<OrgContractField>?> GetRequiredOwnerContractFieldsByOrgIdAsync(
         Guid orgId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
             .AsNoTracking()
             .Where(o => o.Id == orgId)
-            .Select(o => o.RequiredOwnerFormFields)
+            .Select(o => o.RequiredOwnerContractFields)
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

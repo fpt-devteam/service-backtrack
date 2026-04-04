@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -15,9 +16,11 @@ using Pgvector;
 namespace Backtrack.Core.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260404093832_UnifyOwnerFormFieldsToEnum")]
+    partial class UnifyOwnerFormFieldsToEnum
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -316,15 +319,15 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("phone");
 
-                    b.Property<string[]>("RequiredFinderContractFields")
+                    b.Property<string[]>("RequiredFinderContactFields")
                         .IsRequired()
                         .HasColumnType("text[]")
-                        .HasColumnName("required_finder_contract_fields");
+                        .HasColumnName("required_finder_contact_fields");
 
-                    b.Property<string[]>("RequiredOwnerContractFields")
+                    b.Property<string[]>("RequiredOwnerFormFields")
                         .IsRequired()
                         .HasColumnType("text[]")
-                        .HasColumnName("required_owner_contract_fields");
+                        .HasColumnName("required_owner_form_fields");
 
                     b.Property<string>("Slug")
                         .IsRequired()

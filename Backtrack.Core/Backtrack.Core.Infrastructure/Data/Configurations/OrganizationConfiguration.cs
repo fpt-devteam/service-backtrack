@@ -115,37 +115,37 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasColumnType("jsonb")
                 .HasConversion(businessHoursConverter, businessHoursComparer);
 
-            var requiredFinderContactFieldsConverter = new ValueConverter<List<FinderContactField>, string[]>(
+            var requiredOrgContractFieldsConverter = new ValueConverter<List<OrgContractField>, string[]>(
                 toDb => toDb.Select(f => f.ToString()).ToArray(),
-                fromDb => fromDb.Select(s => Enum.Parse<FinderContactField>(s)).ToList()
+                fromDb => fromDb.Select(s => Enum.Parse<OrgContractField>(s)).ToList()
             );
 
-            var requiredFinderContactFieldsComparer = new ValueComparer<List<FinderContactField>>(
+            var requiredOrgContractFieldsComparer = new ValueComparer<List<OrgContractField>>(
                 (a, b) => a != null && b != null && a.SequenceEqual(b),
                 v => v == null ? 0 : v.Aggregate(0, (h, f) => HashCode.Combine(h, f.GetHashCode())),
-                v => v == null ? new List<FinderContactField>() : v.ToList()
+                v => v == null ? new List<OrgContractField>() : v.ToList()
             );
 
-            builder.Property(o => o.RequiredFinderContactFields)
-                .HasColumnName("required_finder_contact_fields")
+            builder.Property(o => o.RequiredFinderContractFields)
+                .HasColumnName("required_finder_contract_fields")
                 .HasColumnType("text[]")
-                .HasConversion(requiredFinderContactFieldsConverter, requiredFinderContactFieldsComparer)
+                .HasConversion(requiredOrgContractFieldsConverter, requiredOrgContractFieldsComparer)
                 .IsRequired();
 
-            var requiredOwnerFormFieldsConverter = new ValueConverter<List<FormFieldDefinition>, string>(
-                toDb => JsonSerializer.Serialize(toDb, jsonOptions),
-                fromDb => JsonSerializer.Deserialize<List<FormFieldDefinition>>(fromDb, jsonOptions) ?? new List<FormFieldDefinition>()
+            var requiredOwnerFormFieldsConverter = new ValueConverter<List<OrgContractField>, string[]>(
+                toDb => toDb.Select(f => f.ToString()).ToArray(),
+                fromDb => fromDb.Select(s => Enum.Parse<OrgContractField>(s)).ToList()
             );
 
-            var requiredOwnerFormFieldsComparer = new ValueComparer<List<FormFieldDefinition>>(
-                (a, b) => JsonSerializer.Serialize(a, jsonOptions) == JsonSerializer.Serialize(b, jsonOptions),
-                v => v == null ? 0 : JsonSerializer.Serialize(v, jsonOptions).GetHashCode(),
-                v => v == null ? new List<FormFieldDefinition>() : JsonSerializer.Deserialize<List<FormFieldDefinition>>(JsonSerializer.Serialize(v, jsonOptions), jsonOptions)!
+            var requiredOwnerFormFieldsComparer = new ValueComparer<List<OrgContractField>>(
+                (a, b) => a != null && b != null && a.SequenceEqual(b),
+                v => v == null ? 0 : v.Aggregate(0, (h, f) => HashCode.Combine(h, f.GetHashCode())),
+                v => v == null ? new List<OrgContractField>() : v.ToList()
             );
 
-            builder.Property(o => o.RequiredOwnerFormFields)
-                .HasColumnName("required_owner_form_fields")
-                .HasColumnType("jsonb")
+            builder.Property(o => o.RequiredOwnerContractFields)
+                .HasColumnName("required_owner_contract_fields")
+                .HasColumnType("text[]")
                 .HasConversion(requiredOwnerFormFieldsConverter, requiredOwnerFormFieldsComparer)
                 .IsRequired();
 

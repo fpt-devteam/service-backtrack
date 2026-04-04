@@ -38,8 +38,8 @@ public sealed class GetOrganizationPublicHandler : IRequestHandler<GetOrganizati
             CoverImageUrl = org.CoverImageUrl,
             LocationNote = org.LocationNote,
             BusinessHours = org.BusinessHours,
-            RequiredFinderContactFields = org.RequiredFinderContactFields,
-            RequiredOwnerFormFields = org.RequiredOwnerFormFields,
+            RequiredFinderContractFields = org.RequiredFinderContractFields,
+            RequiredOwnerContractFields = org.RequiredOwnerContractFields,
             Status = org.Status.ToString(),
             CreatedAt = org.CreatedAt,
         };
