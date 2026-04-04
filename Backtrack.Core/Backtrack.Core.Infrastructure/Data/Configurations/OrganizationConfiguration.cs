@@ -132,20 +132,20 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasConversion(requiredFinderContactFieldsConverter, requiredFinderContactFieldsComparer)
                 .IsRequired();
 
-            var requiredOwnerFormFieldsConverter = new ValueConverter<List<FormFieldDefinition>, string>(
-                toDb => JsonSerializer.Serialize(toDb, jsonOptions),
-                fromDb => JsonSerializer.Deserialize<List<FormFieldDefinition>>(fromDb, jsonOptions) ?? new List<FormFieldDefinition>()
+            var requiredOwnerFormFieldsConverter = new ValueConverter<List<FinderContactField>, string[]>(
+                toDb => toDb.Select(f => f.ToString()).ToArray(),
+                fromDb => fromDb.Select(s => Enum.Parse<FinderContactField>(s)).ToList()
             );
 
-            var requiredOwnerFormFieldsComparer = new ValueComparer<List<FormFieldDefinition>>(
-                (a, b) => JsonSerializer.Serialize(a, jsonOptions) == JsonSerializer.Serialize(b, jsonOptions),
-                v => v == null ? 0 : JsonSerializer.Serialize(v, jsonOptions).GetHashCode(),
-                v => v == null ? new List<FormFieldDefinition>() : JsonSerializer.Deserialize<List<FormFieldDefinition>>(JsonSerializer.Serialize(v, jsonOptions), jsonOptions)!
+            var requiredOwnerFormFieldsComparer = new ValueComparer<List<FinderContactField>>(
+                (a, b) => a != null && b != null && a.SequenceEqual(b),
+                v => v == null ? 0 : v.Aggregate(0, (h, f) => HashCode.Combine(h, f.GetHashCode())),
+                v => v == null ? new List<FinderContactField>() : v.ToList()
             );
 
             builder.Property(o => o.RequiredOwnerFormFields)
                 .HasColumnName("required_owner_form_fields")
-                .HasColumnType("jsonb")
+                .HasColumnType("text[]")
                 .HasConversion(requiredOwnerFormFieldsConverter, requiredOwnerFormFieldsComparer)
                 .IsRequired();
 

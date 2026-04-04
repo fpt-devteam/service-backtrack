@@ -95,17 +95,11 @@ public sealed class UpdateOrganizationCommandValidator : AbstractValidator<Updat
 
         When(x => x.RequiredOwnerFormFields != null, () =>
         {
-            RuleForEach(x => x.RequiredOwnerFormFields!).ChildRules(field =>
-            {
-                field.RuleFor(f => f.Key)
-                    .NotEmpty().WithMessage("Owner form field key is required");
+            RuleFor(x => x.RequiredOwnerFormFields)
+                .NotEmpty().WithMessage("RequiredOwnerFormFields must contain at least one field");
 
-                field.RuleFor(f => f.Label)
-                    .NotEmpty().WithMessage("Owner form field label is required");
-
-                field.RuleFor(f => f.Type)
-                    .IsInEnum().WithMessage("Owner form field type is invalid");
-            });
+            RuleForEach(x => x.RequiredOwnerFormFields)
+                .IsInEnum().WithMessage("Each entry in RequiredOwnerFormFields must be a valid FinderContactField");
         });
     }
 }

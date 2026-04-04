@@ -22,5 +22,5 @@ public sealed record UpdateOrganizationCommand : IRequest<OrganizationResult>
     public string? LocationNote { get; init; }
     public List<DailySchedule>? BusinessHours { get; init; }
     public List<FinderContactField>? RequiredFinderContactFields { get; init; }
-    public List<FormFieldDefinition>? RequiredOwnerFormFields { get; init; }
+    public List<FinderContactField>? RequiredOwnerFormFields { get; init; }
 }

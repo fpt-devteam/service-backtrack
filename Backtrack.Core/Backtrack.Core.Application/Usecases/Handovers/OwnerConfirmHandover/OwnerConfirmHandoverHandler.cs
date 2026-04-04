@@ -104,16 +104,17 @@ public sealed class OwnerConfirmHandoverHandler(
     }
 
     private static void ValidateFormData(
-        List<Domain.ValueObjects.FormFieldDefinition> fields,
+        List<Domain.Constants.FinderContactField> fields,
         Dictionary<string, string>? formData)
     {
-        foreach (var field in fields.Where(f => f.Required))
+        foreach (var field in fields)
         {
+            var key = field.ToString();
             if (formData == null ||
-                !formData.TryGetValue(field.Key, out var value) ||
+                !formData.TryGetValue(key, out var value) ||
                 string.IsNullOrWhiteSpace(value))
             {
-                throw new ValidationException(HandoverErrors.MissingFormField(field.Key));
+                throw new ValidationException(HandoverErrors.MissingFormField(key));
             }
         }
     }
