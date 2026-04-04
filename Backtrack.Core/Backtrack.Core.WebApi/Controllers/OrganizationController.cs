@@ -19,6 +19,7 @@ using Backtrack.Core.Application.Usecases.Organizations.GetInventoryItems;
 using Backtrack.Core.Application.Usecases.Organizations.GetInventoryItemById;
 using Backtrack.Core.Application.Usecases.Organizations.SearchInventoryBySemantic;
 using Backtrack.Core.Application.Usecases.Organizations.GetAllOrganizations;
+using Backtrack.Core.Application.Usecases.Organizations.GetSettingOrganizationById;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -116,6 +117,25 @@ public class OrganizationController : ControllerBase
         [FromRoute] Guid orgId, CancellationToken cancellationToken)
     {
         var query = new GetOrganizationPublicQuery(orgId);
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    /// <summary>
+    /// Get organization settings by ID (public, no authentication required)
+    /// </summary>
+    /// <param name="orgId">The organization ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The organization settings containing required finder contact fields</returns>
+    /// <response code="200">Organization settings found</response>
+    /// <response code="404">Organization not found</response>
+    [HttpGet("{orgId:guid}/settings/public")]
+    [ProducesResponseType(typeof(ApiResponse<OrganizationSettingResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSettingOrganizationByIdAsync(
+        [FromRoute] Guid orgId, CancellationToken cancellationToken)
+    {
+        var query = new GetSettingOrganizationByIdQuery(orgId);
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }

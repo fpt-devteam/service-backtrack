@@ -85,6 +85,37 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.ToTable("finder_contacts", (string)null);
                 });
 
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.Handover", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Handovers");
+
+                    b.UseTptMappingStrategy();
+                });
+
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.JoinInvitation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -211,6 +242,44 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.ToTable("memberships", (string)null);
                 });
 
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.OrgFormTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Fields")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("fields");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_org_form_templates_org_id")
+                        .HasFilter("deleted_at IS NULL");
+
+                    b.ToTable("org_form_templates", (string)null);
+                });
+
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.Organization", b =>
                 {
                     b.Property<Guid>("Id")
@@ -289,6 +358,11 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text[]")
                         .HasColumnName("required_finder_contact_fields");
+
+                    b.Property<string>("RequiredOwnerFormFields")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("required_owner_form_fields");
 
                     b.Property<string>("Slug")
                         .IsRequired()
@@ -689,6 +763,92 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.OrgHandover", b =>
+                {
+                    b.HasBaseType("Backtrack.Core.Domain.Entities.Handover");
+
+                    b.Property<string>("FinderId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("finder_id");
+
+                    b.Property<Guid?>("FinderPostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("finder_post_id");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_id");
+
+                    b.Property<DateTimeOffset?>("OwnerConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("owner_confirmed_at");
+
+                    b.Property<string>("OwnerFormData")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("owner_form_data");
+
+                    b.Property<bool>("OwnerVerified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("owner_verified");
+
+                    b.Property<DateTimeOffset?>("StaffConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("staff_confirmed_at");
+
+                    b.Property<string>("StaffId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("staff_id");
+
+                    b.HasIndex("FinderId")
+                        .HasDatabaseName("ix_org_handovers_finder_id");
+
+                    b.HasIndex("FinderPostId")
+                        .HasDatabaseName("ix_org_handovers_finder_post_id");
+
+                    b.HasIndex("OrgId")
+                        .HasDatabaseName("ix_org_handovers_org_id");
+
+                    b.HasIndex("StaffId")
+                        .HasDatabaseName("ix_org_handovers_staff_id");
+
+                    b.ToTable("org_handovers", (string)null);
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.P2PHandover", b =>
+                {
+                    b.HasBaseType("Backtrack.Core.Domain.Entities.Handover");
+
+                    b.Property<string>("FinderId")
+                        .IsRequired()
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid?>("FinderPostId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid?>("OwnerPostId")
+                        .HasColumnType("uuid");
+
+                    b.HasIndex("FinderId");
+
+                    b.HasIndex("FinderPostId");
+
+                    b.HasIndex("OwnerId");
+
+                    b.HasIndex("OwnerPostId");
+
+                    b.ToTable("P2PHandovers");
+                });
+
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.FinderContact", b =>
                 {
                     b.HasOne("Backtrack.Core.Domain.Entities.OrganizationInventory", "Inventory")
@@ -741,6 +901,18 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Navigation("Organization");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.OrgFormTemplate", b =>
+                {
+                    b.HasOne("Backtrack.Core.Domain.Entities.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_org_form_templates_org_id");
+
+                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.OrganizationInventory", b =>
@@ -883,6 +1055,87 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Navigation("FoundPost");
 
                     b.Navigation("LostPost");
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.OrgHandover", b =>
+                {
+                    b.HasOne("Backtrack.Core.Domain.Entities.User", "Finder")
+                        .WithMany()
+                        .HasForeignKey("FinderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_org_handovers_finder_id");
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "FinderPost")
+                        .WithMany()
+                        .HasForeignKey("FinderPostId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_org_handovers_finder_post_id");
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.Handover", null)
+                        .WithOne()
+                        .HasForeignKey("Backtrack.Core.Domain.Entities.OrgHandover", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_org_handovers_org_id");
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.User", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_org_handovers_staff_id");
+
+                    b.Navigation("Finder");
+
+                    b.Navigation("FinderPost");
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.P2PHandover", b =>
+                {
+                    b.HasOne("Backtrack.Core.Domain.Entities.User", "Finder")
+                        .WithMany()
+                        .HasForeignKey("FinderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "FinderPost")
+                        .WithMany()
+                        .HasForeignKey("FinderPostId");
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.Handover", null)
+                        .WithOne()
+                        .HasForeignKey("Backtrack.Core.Domain.Entities.P2PHandover", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "OwnerPost")
+                        .WithMany()
+                        .HasForeignKey("OwnerPostId");
+
+                    b.Navigation("Finder");
+
+                    b.Navigation("FinderPost");
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("OwnerPost");
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.Organization", b =>

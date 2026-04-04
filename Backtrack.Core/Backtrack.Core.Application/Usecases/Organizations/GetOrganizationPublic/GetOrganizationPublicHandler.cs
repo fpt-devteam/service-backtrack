@@ -39,6 +39,7 @@ public sealed class GetOrganizationPublicHandler : IRequestHandler<GetOrganizati
             LocationNote = org.LocationNote,
             BusinessHours = org.BusinessHours,
             RequiredFinderContactFields = org.RequiredFinderContactFields,
+            RequiredOwnerFormFields = org.RequiredOwnerFormFields,
             Status = org.Status.ToString(),
             CreatedAt = org.CreatedAt,
         };

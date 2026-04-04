@@ -92,5 +92,20 @@ public sealed class UpdateOrganizationCommandValidator : AbstractValidator<Updat
             RuleForEach(x => x.RequiredFinderContactFields)
                 .IsInEnum().WithMessage("Each entry in RequiredFinderContactFields must be a valid FinderContactField");
         });
+
+        When(x => x.RequiredOwnerFormFields != null, () =>
+        {
+            RuleForEach(x => x.RequiredOwnerFormFields!).ChildRules(field =>
+            {
+                field.RuleFor(f => f.Key)
+                    .NotEmpty().WithMessage("Owner form field key is required");
+
+                field.RuleFor(f => f.Label)
+                    .NotEmpty().WithMessage("Owner form field label is required");
+
+                field.RuleFor(f => f.Type)
+                    .IsInEnum().WithMessage("Owner form field type is invalid");
+            });
+        });
     }
 }

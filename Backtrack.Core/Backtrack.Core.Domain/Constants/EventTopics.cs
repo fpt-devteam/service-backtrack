@@ -11,4 +11,6 @@ public static class EventTopics
     {
         public const string Created = "invitation.created";
     }
+
+    public const string HandoverConfirmed = "handover.confirmed";
 }

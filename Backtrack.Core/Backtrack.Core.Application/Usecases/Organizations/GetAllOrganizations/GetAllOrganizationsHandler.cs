@@ -35,6 +35,7 @@ public sealed class GetAllOrganizationsHandler
             LocationNote = o.LocationNote,
             BusinessHours = o.BusinessHours,
             RequiredFinderContactFields = o.RequiredFinderContactFields,
+            RequiredOwnerFormFields = o.RequiredOwnerFormFields,
             Status = o.Status.ToString(),
             CreatedAt = o.CreatedAt,
         }).ToList();

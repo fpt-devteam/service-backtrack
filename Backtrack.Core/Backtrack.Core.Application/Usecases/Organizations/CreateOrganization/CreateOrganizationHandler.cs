@@ -3,6 +3,7 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
+using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Organizations.CreateOrganization;
@@ -49,6 +50,7 @@ public sealed class CreateOrganizationHandler : IRequestHandler<CreateOrganizati
             LocationNote = command.LocationNote,
             BusinessHours = command.BusinessHours,
             RequiredFinderContactFields = command.RequiredFinderContactFields,
+            RequiredOwnerFormFields = command.RequiredOwnerFormFields ?? new List<FormFieldDefinition>(),
             Status = OrganizationStatus.Active,
         };
 
@@ -84,6 +86,7 @@ public sealed class CreateOrganizationHandler : IRequestHandler<CreateOrganizati
             LocationNote = organization.LocationNote,
             BusinessHours = organization.BusinessHours,
             RequiredFinderContactFields = organization.RequiredFinderContactFields,
+            RequiredOwnerFormFields = organization.RequiredOwnerFormFields,
             Status = organization.Status.ToString(),
             CreatedAt = organization.CreatedAt,
         };

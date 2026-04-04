@@ -1,5 +1,7 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
+using Backtrack.Core.Domain.ValueObjects;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,5 +27,24 @@ public class OrganizationRepository : CrudRepositoryBase<Organization, Guid>, IO
             .ToListAsync(cancellationToken);
         return (items, total);
     }
-}
 
+    public async Task<List<FinderContactField>?> GetRequiredFinderContactFieldsByOrgIdAsync(
+        Guid orgId, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(o => o.Id == orgId)
+            .Select(o => o.RequiredFinderContactFields)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<List<FormFieldDefinition>?> GetRequiredOwnerFormFieldsByOrgIdAsync(
+        Guid orgId, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(o => o.Id == orgId)
+            .Select(o => o.RequiredOwnerFormFields)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+}

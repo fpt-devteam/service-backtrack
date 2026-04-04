@@ -132,6 +132,23 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasConversion(requiredFinderContactFieldsConverter, requiredFinderContactFieldsComparer)
                 .IsRequired();
 
+            var requiredOwnerFormFieldsConverter = new ValueConverter<List<FormFieldDefinition>, string>(
+                toDb => JsonSerializer.Serialize(toDb, jsonOptions),
+                fromDb => JsonSerializer.Deserialize<List<FormFieldDefinition>>(fromDb, jsonOptions) ?? new List<FormFieldDefinition>()
+            );
+
+            var requiredOwnerFormFieldsComparer = new ValueComparer<List<FormFieldDefinition>>(
+                (a, b) => JsonSerializer.Serialize(a, jsonOptions) == JsonSerializer.Serialize(b, jsonOptions),
+                v => v == null ? 0 : JsonSerializer.Serialize(v, jsonOptions).GetHashCode(),
+                v => v == null ? new List<FormFieldDefinition>() : JsonSerializer.Deserialize<List<FormFieldDefinition>>(JsonSerializer.Serialize(v, jsonOptions), jsonOptions)!
+            );
+
+            builder.Property(o => o.RequiredOwnerFormFields)
+                .HasColumnName("required_owner_form_fields")
+                .HasColumnType("jsonb")
+                .HasConversion(requiredOwnerFormFieldsConverter, requiredOwnerFormFieldsComparer)
+                .IsRequired();
+
             builder.Property(o => o.Status)
                 .HasColumnName("status")
                 .HasConversion<string>()

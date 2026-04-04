@@ -50,6 +50,9 @@ public class FirebaseAuthMiddleware
         // GET /api/core/orgs/{guid}/public  — public org profile, no auth or membership required
         new Regex(@"^/api/core/orgs/[0-9a-f\-]{36}/public$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
+        // GET /api/core/orgs/{guid}/settings/public  — public org settings (required finder contact fields)
+        new Regex(@"^/api/core/orgs/[0-9a-f\-]{36}/settings/public$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+
         // GET /api/core/posts/{guid}                  — post detail, no auth required
         new Regex(@"^/api/core/posts/[0-9a-f\-]{36}$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
@@ -57,6 +60,12 @@ public class FirebaseAuthMiddleware
         new Regex(@"^/api/core/posts/[0-9a-f\-]{36}/similar$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
         // GET /api/core/posts/{guid}/matching-status  — post matching status, no auth required
         new Regex(@"^/api/core/posts/[0-9a-f\-]{36}/matching-status$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+
+        // GET /api/core/handovers/token/{token}  — handover by token (owner opens link, no auth required)
+        new Regex(@"^/api/core/handovers/token/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+
+        // PATCH /api/core/handovers/{guid}/owner-confirm  — owner confirms (no auth for org handovers)
+        new Regex(@"^/api/core/handovers/[0-9a-f\-]{36}/owner-confirm$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
     ];
 
     private const string AuthHeaderName = "Authorization";
