@@ -11,7 +11,7 @@ namespace Backtrack.Core.Application.Usecases.Handovers.OwnerConfirmHandover;
 
 public sealed class OwnerConfirmHandoverHandler(
     IHandoverRepository handoverRepository,
-    IOrgFormTemplateRepository orgFormTemplateRepository,
+    IOrganizationRepository organizationRepository,
     IEventPublisher eventPublisher) : IRequestHandler<OwnerConfirmHandoverCommand, HandoverResult>
 {
     public async Task<HandoverResult> Handle(OwnerConfirmHandoverCommand command, CancellationToken cancellationToken)
@@ -58,13 +58,13 @@ public sealed class OwnerConfirmHandoverHandler(
         }
         else if (handover is OrgHandover orgHandover)
         {
-            // For Org handovers, validate form data against template
-            var formTemplate = await orgFormTemplateRepository.GetByOrgIdAsync(
+            // For Org handovers, validate form data against organization owner form settings
+            var ownerRequiredFields = await organizationRepository.GetRequiredOwnerFormFieldsByOrgIdAsync(
                 orgHandover.OrgId, cancellationToken);
 
-            if (formTemplate != null)
+            if (ownerRequiredFields != null)
             {
-                ValidateFormData(formTemplate.Fields, command.OwnerFormData);
+                ValidateFormData(ownerRequiredFields, command.OwnerFormData);
             }
 
             // Store owner form data and mark as owner confirmed (pending staff confirmation)

@@ -11,7 +11,7 @@ namespace Backtrack.Core.Application.Usecases.Handovers.GetHandoverByToken;
 
 public sealed class GetHandoverByTokenHandler(
     IHandoverRepository handoverRepository,
-    IOrgFormTemplateRepository orgFormTemplateRepository,
+    IOrganizationRepository organizationRepository,
     IConfiguration configuration) : IRequestHandler<GetHandoverByTokenQuery, HandoverDetailResult>
 {
     public async Task<HandoverDetailResult> Handle(GetHandoverByTokenQuery query, CancellationToken cancellationToken)
@@ -39,7 +39,7 @@ public sealed class GetHandoverByTokenHandler(
         // Get form template if this is an org handover
         var orgHandover = handover as OrgHandover;
         var formTemplate = orgHandover != null
-            ? await orgFormTemplateRepository.GetByOrgIdAsync(orgHandover.OrgId, cancellationToken)
+            ? await organizationRepository.GetRequiredOwnerFormFieldsByOrgIdAsync(orgHandover.OrgId, cancellationToken)
             : null;
 
         return new HandoverDetailResult
@@ -62,7 +62,7 @@ public sealed class GetHandoverByTokenHandler(
                 StaffConfirmedAt = orgHandover.StaffConfirmedAt,
                 OwnerConfirmedAt = orgHandover.OwnerConfirmedAt
             } : null,
-            FormTemplate = formTemplate?.Fields
+            FormTemplate = formTemplate
         };
     }
 

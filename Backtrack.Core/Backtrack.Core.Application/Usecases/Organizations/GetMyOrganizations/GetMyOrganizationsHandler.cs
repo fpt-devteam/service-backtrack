@@ -33,6 +33,7 @@ public sealed class GetMyOrganizationsHandler : IRequestHandler<GetMyOrganizatio
             LocationNote = m.Organization.LocationNote,
             BusinessHours = m.Organization.BusinessHours,
             RequiredFinderContactFields = m.Organization.RequiredFinderContactFields,
+            RequiredOwnerFormFields = m.Organization.RequiredOwnerFormFields,
             OrgStatus = m.Organization.Status.ToString(),
             MyRole = m.Role.ToString(),
             JoinedAt = m.JoinedAt,

@@ -24,7 +24,8 @@ public sealed class GetSettingOrganizationByIdHandler : IRequestHandler<GetSetti
 
         return new OrganizationSettingResult
         {
-            RequiredFinderContactFields = org.RequiredFinderContactFields
+            RequiredFinderContactFields = org.RequiredFinderContactFields,
+            RequiredOwnerFormFields = org.RequiredOwnerFormFields
         };
     }
 }

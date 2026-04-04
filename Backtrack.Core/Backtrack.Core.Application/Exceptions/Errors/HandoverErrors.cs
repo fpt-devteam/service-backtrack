@@ -58,10 +58,6 @@ public static class HandoverErrors
         Code: "PostTypeMismatch",
         Message: "Finder post must be FOUND type and owner post must be LOST type.");
 
-    public static readonly Error OrgFormTemplateNotFound = new(
-        Code: "OrgFormTemplateNotFound",
-        Message: "Organization form template not found.");
-
     public static readonly Error OwnerIdRequired = new(
         Code: "OwnerIdRequired",
         Message: "OwnerId is required when OwnerPostId is not provided.");

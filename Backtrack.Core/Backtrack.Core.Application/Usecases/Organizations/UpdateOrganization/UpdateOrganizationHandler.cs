@@ -64,6 +64,7 @@ public sealed class UpdateOrganizationHandler : IRequestHandler<UpdateOrganizati
         org.LocationNote = command.LocationNote ?? org.LocationNote;
         org.BusinessHours = command.BusinessHours ?? org.BusinessHours;
         org.RequiredFinderContactFields = command.RequiredFinderContactFields ?? org.RequiredFinderContactFields;
+        org.RequiredOwnerFormFields = command.RequiredOwnerFormFields ?? org.RequiredOwnerFormFields;
 
         _organizationRepository.Update(org);
         await _organizationRepository.SaveChangesAsync();
@@ -85,6 +86,7 @@ public sealed class UpdateOrganizationHandler : IRequestHandler<UpdateOrganizati
             LocationNote = org.LocationNote,
             BusinessHours = org.BusinessHours,
             RequiredFinderContactFields = org.RequiredFinderContactFields,
+            RequiredOwnerFormFields = org.RequiredOwnerFormFields,
             Status = org.Status.ToString(),
             CreatedAt = org.CreatedAt,
         };
