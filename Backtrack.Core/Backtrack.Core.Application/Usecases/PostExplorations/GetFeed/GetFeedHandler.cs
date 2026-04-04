@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases.PostExplorations;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Utils;
 using Backtrack.Core.Domain.Constants;
@@ -12,7 +13,8 @@ public sealed class GetFeedHandler(IPostRepository postRepository)
     public async Task<FeedPostResult> Handle(GetFeedQuery query, CancellationToken cancellationToken)
     {
         var pagedQuery = PagedQuery.FromPage(query.Page, query.PageSize);
-        var (items, _) = await postRepository.GetPagedAsync(pagedQuery, cancellationToken: cancellationToken);
+        var filters = query.PostType.HasValue ? new PostFilters { PostType = query.PostType } : null;
+        var (items, _) = await postRepository.GetPagedAsync(pagedQuery, filters, cancellationToken);
 
         var grouped = items
             .Select(post => new FeedPostItem
