@@ -34,8 +34,8 @@ public sealed class GetAllOrganizationsHandler
             CoverImageUrl = o.CoverImageUrl,
             LocationNote = o.LocationNote,
             BusinessHours = o.BusinessHours,
-            RequiredFinderContactFields = o.RequiredFinderContactFields,
-            RequiredOwnerFormFields = o.RequiredOwnerFormFields,
+            RequiredFinderContractFields = o.RequiredFinderContractFields,
+            RequiredOwnerContractFields = o.RequiredOwnerContractFields,
             Status = o.Status.ToString(),
             CreatedAt = o.CreatedAt,
         }).ToList();

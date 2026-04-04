@@ -1,6 +1,6 @@
 namespace Backtrack.Core.Domain.Constants;
 
-public enum FinderContactField
+public enum OrgContractField
 {
     Email,
     Phone,

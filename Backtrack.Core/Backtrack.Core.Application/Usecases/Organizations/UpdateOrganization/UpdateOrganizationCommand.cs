@@ -21,6 +21,6 @@ public sealed record UpdateOrganizationCommand : IRequest<OrganizationResult>
     public string? CoverImageUrl { get; init; }
     public string? LocationNote { get; init; }
     public List<DailySchedule>? BusinessHours { get; init; }
-    public List<FinderContactField>? RequiredFinderContactFields { get; init; }
-    public List<FinderContactField>? RequiredOwnerFormFields { get; init; }
+    public List<OrgContractField>? RequiredFinderContractFields { get; init; }
+    public List<OrgContractField>? RequiredOwnerContractFields { get; init; }
 }

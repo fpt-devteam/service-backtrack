@@ -19,8 +19,8 @@ public sealed record MyOrganizationResult
     public string? CoverImageUrl { get; init; }
     public string? LocationNote { get; init; }
     public List<DailySchedule>? BusinessHours { get; init; }
-    public required List<FinderContactField> RequiredFinderContactFields { get; init; }
-    public required List<FinderContactField> RequiredOwnerFormFields { get; init; }
+    public required List<OrgContractField> RequiredFinderContractFields { get; init; }
+    public required List<OrgContractField> RequiredOwnerContractFields { get; init; }
     public required string OrgStatus { get; init; }
     public required string MyRole { get; init; }
     public required DateTimeOffset JoinedAt { get; init; }

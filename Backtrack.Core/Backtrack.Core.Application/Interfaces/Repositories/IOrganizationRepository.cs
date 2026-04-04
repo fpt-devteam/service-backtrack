@@ -11,10 +11,10 @@ public interface IOrganizationRepository : IGenericRepository<Organization, Guid
     /// <summary>
     /// Get only required finder contact fields for an organization (efficient projection query)
     /// </summary>
-    Task<List<FinderContactField>?> GetRequiredFinderContactFieldsByOrgIdAsync(Guid orgId, CancellationToken cancellationToken = default);
+    Task<List<OrgContractField>?> GetRequiredFinderContractFieldsByOrgIdAsync(Guid orgId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get only required owner form fields for an organization (efficient projection query)
     /// </summary>
-    Task<List<FinderContactField>?> GetRequiredOwnerFormFieldsByOrgIdAsync(Guid orgId, CancellationToken cancellationToken = default);
+    Task<List<OrgContractField>?> GetRequiredOwnerContractFieldsByOrgIdAsync(Guid orgId, CancellationToken cancellationToken = default);
 }

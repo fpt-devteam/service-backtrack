@@ -22,6 +22,6 @@ public sealed record CreateOrganizationCommand : IRequest<OrganizationResult>
     public string? CoverImageUrl { get; init; }
     public string? LocationNote { get; init; }
     public List<DailySchedule>? BusinessHours { get; init; }
-    public required List<FinderContactField> RequiredFinderContactFields { get; init; }
-    public required List<FinderContactField> RequiredOwnerFormFields { get; init; }
+    public required List<OrgContractField> RequiredFinderContractFields { get; init; }
+    public required List<OrgContractField> RequiredOwnerContractFields { get; init; }
 }

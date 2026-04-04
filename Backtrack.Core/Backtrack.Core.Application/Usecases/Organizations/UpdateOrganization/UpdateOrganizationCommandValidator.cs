@@ -84,22 +84,22 @@ public sealed class UpdateOrganizationCommandValidator : AbstractValidator<Updat
             })
             .When(x => x.BusinessHours != null);
 
-        When(x => x.RequiredFinderContactFields != null, () =>
+        When(x => x.RequiredFinderContractFields != null, () =>
         {
-            RuleFor(x => x.RequiredFinderContactFields)
-                .NotEmpty().WithMessage("RequiredFinderContactFields must contain at least one field");
+            RuleFor(x => x.RequiredFinderContractFields)
+                .NotEmpty().WithMessage("RequiredFinderContractFields must contain at least one field");
 
-            RuleForEach(x => x.RequiredFinderContactFields)
-                .IsInEnum().WithMessage("Each entry in RequiredFinderContactFields must be a valid FinderContactField");
+            RuleForEach(x => x.RequiredFinderContractFields)
+                .IsInEnum().WithMessage("Each entry in RequiredFinderContractFields must be a valid OrgContractField");
         });
 
-        When(x => x.RequiredOwnerFormFields != null, () =>
+        When(x => x.RequiredOwnerContractFields != null, () =>
         {
-            RuleFor(x => x.RequiredOwnerFormFields)
-                .NotEmpty().WithMessage("RequiredOwnerFormFields must contain at least one field");
+            RuleFor(x => x.RequiredOwnerContractFields)
+                .NotEmpty().WithMessage("RequiredOwnerContractFields must contain at least one field");
 
-            RuleForEach(x => x.RequiredOwnerFormFields)
-                .IsInEnum().WithMessage("Each entry in RequiredOwnerFormFields must be a valid FinderContactField");
+            RuleForEach(x => x.RequiredOwnerContractFields)
+                .IsInEnum().WithMessage("Each entry in RequiredOwnerContractFields must be a valid OrgContractField");
         });
     }
 }

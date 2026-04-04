@@ -37,5 +37,5 @@ public sealed record HandoverDetailResult
     public required DateTimeOffset ExpiresAt { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
     public HandoverOrgExtensionResult? OrgExtension { get; init; }
-    public List<FinderContactField>? FormTemplate { get; init; }
+    public List<OrgContractField>? FormTemplate { get; init; }
 }
