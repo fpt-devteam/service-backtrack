@@ -8,6 +8,9 @@ using Backtrack.Core.Application.Usecases.ReturnReport.CreateC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.CreateOrgReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportById;
 using Backtrack.Core.Application.Usecases.ReturnReport.OwnerConfirmC2CReturnReport;
+using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportsByUserId;
+using Backtrack.Core.Application.Usecases;
+using Backtrack.Core.Domain.Constants;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -54,6 +57,21 @@ public class ReturnReportController : ControllerBase
         command = command with { UserId = userId, OrgId = orgId };
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiCreated(result);
+    }
+
+    /// <summary>Get all C2C return reports for the current user</summary>
+    [HttpGet("c2c")]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<C2CReturnReportResult>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetC2CReturnReportsByUserIdAsync(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] ReturnReportStatus? status = null,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var query = new GetC2CReturnReportsByUserIdQuery { UserId = userId, Page = page, PageSize = pageSize, Status = status };
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
     }
 
     /// <summary>Get a C2C return report by ID</summary>

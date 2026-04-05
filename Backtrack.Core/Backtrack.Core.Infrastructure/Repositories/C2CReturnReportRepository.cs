@@ -68,10 +68,13 @@ public class ReturnReportRepository : CrudRepositoryBase<C2CReturnReport, Guid>,
         CancellationToken cancellationToken = default)
     {
         IQueryable<C2CReturnReport> c2cQuery = _context.Set<C2CReturnReport>()
+            .Include(h => h.Finder)
+            .Include(h => h.Owner)
             .Include(h => h.FinderPost)
+                .ThenInclude(p => p!.Author)
             .Include(h => h.OwnerPost)
-            .Where(h => (h.FinderPost != null && h.FinderPost.AuthorId == userId) ||
-                       (h.OwnerPost != null && h.OwnerPost.AuthorId == userId));
+                .ThenInclude(p => p!.Author)
+            .Where(h => h.FinderId == userId || h.OwnerId == userId);
 
         if (status.HasValue)
         {
@@ -80,13 +83,11 @@ public class ReturnReportRepository : CrudRepositoryBase<C2CReturnReport, Guid>,
 
         var total = await c2cQuery.CountAsync(cancellationToken);
 
-        var allItems = (await c2cQuery.Cast<C2CReturnReport>().ToListAsync(cancellationToken));
-
-        var items = allItems
+        var items = await c2cQuery
             .OrderByDescending(h => h.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .ToList();
+            .ToListAsync(cancellationToken);
 
         return (items, total);
     }
