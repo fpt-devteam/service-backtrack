@@ -1,9 +1,12 @@
+using System.Text.Json.Serialization;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Posts.DeletePost;
 
 public sealed record DeletePostCommand : IRequest
 {
+    [JsonIgnore]
     public required Guid PostId { get; init; }
-    public string AuthorId { get; init; } = string.Empty;
+    [JsonIgnore]
+    public string UserId { get; init; } = string.Empty;
 }

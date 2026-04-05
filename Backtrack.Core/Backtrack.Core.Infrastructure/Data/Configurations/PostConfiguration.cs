@@ -28,6 +28,12 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .HasConversion<string>()
                 .IsRequired();
 
+            builder.Property(p => p.Status)
+                .HasColumnName("status")
+                .HasConversion<string>()
+                .HasDefaultValue(Domain.Constants.PostStatus.Active)
+                .IsRequired();
+
             builder.OwnsOne(p => p.Item, owned =>
             {
                 owned.Property(i => i.ItemName)

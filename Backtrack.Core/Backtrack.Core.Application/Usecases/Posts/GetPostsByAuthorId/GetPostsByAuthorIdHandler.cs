@@ -19,6 +19,7 @@ public sealed class GetPostsByAuthorIdHandler(IPostRepository postRepository)
             Author = post.Author?.ToPostAuthorResult(),
             Organization = post.Organization?.ToOrganizationOnPost(),
             PostType = post.PostType,
+            Status = post.Status,
             Item = post.Item,
             ImageUrls = post.ImageUrls,
             Location = post.Location,

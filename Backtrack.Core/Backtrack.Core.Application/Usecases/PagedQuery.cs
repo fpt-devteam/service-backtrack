@@ -9,6 +9,8 @@ public sealed record PagedQuery
     public int Offset { get; init; }
     public int Limit { get; init; }
 
+    public static PagedQuery Default { get; } = new() { Offset = 0, Limit = 20 };
+
     public static PagedQuery FromPage(int page, int pageSize)
     {
         if (page < 1 || pageSize < 1) throw new Exceptions.ValidationException(PaginationErrors.InvalidPagedQuery);

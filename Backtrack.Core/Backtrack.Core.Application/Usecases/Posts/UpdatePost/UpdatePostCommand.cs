@@ -6,10 +6,13 @@ namespace Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 
 public sealed record UpdatePostCommand : IRequest<PostResult>
 {
+    [System.Text.Json.Serialization.JsonIgnore]
     public Guid PostId { get; init; }
-    public string AuthorId { get; init; } = string.Empty;
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string UserId { get; init; } = string.Empty;
     public Guid? OrganizationId { get; init; }
     public string? PostType { get; init; }
+    public string? Status { get; init; }
     public PostItem? Item { get; init; }
     public GeoPoint? Location { get; init; }
     public string? ExternalPlaceId { get; init; }

@@ -24,14 +24,11 @@ public sealed class CreatePostHandler(
 {
     public async Task<PostResult> Handle(CreatePostCommand command, CancellationToken cancellationToken)
     {
-        if (!Enum.TryParse<PostType>(command.PostType, ignoreCase: true, out var postType))
-        {
-            throw new ValidationException(PostErrors.InvalidPostType);
-        }
-
-        GeoPoint location = command.Location;
-        string displayAddress = command.DisplayAddress;
+        PostType postType;
+        GeoPoint? location = command.Location;
+        string? displayAddress = command.DisplayAddress;
         string? externalPlaceId = command.ExternalPlaceId;
+        var status = PostStatus.Active;
 
         if (command.OrganizationId.HasValue)
         {
@@ -39,15 +36,18 @@ public sealed class CreatePostHandler(
                 ?? throw new NotFoundException(OrganizationErrors.NotFound);
 
             if (await membershipRepository.GetByOrgAndUserAsync(organization.Id, command.AuthorId) == null)
-            {
-                throw new ValidationException(MembershipErrors.MemberNotFound);
-            }
+                throw new ForbiddenException(MembershipErrors.NotAMember);
 
-            if (postType == PostType.Lost) throw new ValidationException(PostErrors.LostPostCannotBeAssociatedWithOrganization);
-
+            postType = PostType.Found;
+            status = PostStatus.InStorage;
             location = organization.Location;
-            displayAddress = organization.DisplayAddress;
+            displayAddress = command.DisplayAddress ?? organization.DisplayAddress;
             externalPlaceId = organization.ExternalPlaceId;
+        }
+        else
+        {
+            if (!Enum.TryParse<PostType>(command.PostType, ignoreCase: true, out postType))
+                throw new ValidationException(PostErrors.InvalidPostType);
         }
 
         var post = new Post
@@ -56,15 +56,16 @@ public sealed class CreatePostHandler(
             AuthorId = command.AuthorId,
             OrganizationId = command.OrganizationId,
             PostType = postType,
+            Status = status,
             Item = command.Item,
-            Location = location,
+            Location = location!,
             ExternalPlaceId = externalPlaceId,
-            DisplayAddress = displayAddress,
+            DisplayAddress = displayAddress!,
             Embedding = null,
             EmbeddingStatus = EmbeddingStatus.Pending,
             PostMatchingStatus = PostMatchingStatus.Pending,
             ContentHash = hasher.HashStrings(JsonSerializer.Serialize(command.Item)),
-            EventTime = command.EventTime,
+            EventTime = command.EventTime ?? DateTimeOffset.UtcNow,
             ImageUrls = command.ImageUrls.ToList(),
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -79,6 +80,7 @@ public sealed class CreatePostHandler(
             Id = post.Id,
             Organization = post.Organization?.ToOrganizationOnPost(),
             PostType = post.PostType,
+            Status = post.Status,
             Item = post.Item,
             ImageUrls = post.ImageUrls,
             Location = post.Location,

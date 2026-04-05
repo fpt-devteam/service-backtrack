@@ -6,46 +6,33 @@ using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Posts.DeletePost;
 
-public sealed class DeletePostHandler : IRequestHandler<DeletePostCommand>
+public sealed class DeletePostHandler(
+    IPostRepository postRepository,
+    IPostMatchRepository postMatchRepository,
+    IMembershipRepository membershipRepository) : IRequestHandler<DeletePostCommand>
 {
-    private readonly IPostRepository _postRepository;
-    private readonly IPostMatchRepository _postMatchRepository;
-
-    public DeletePostHandler(
-        IPostRepository postRepository,
-        IPostMatchRepository postMatchRepository)
-    {
-        _postRepository = postRepository;
-        _postMatchRepository = postMatchRepository;
-    }
-
     public async Task<Unit> Handle(DeletePostCommand command, CancellationToken cancellationToken)
     {
-        var post = await _postRepository.GetByIdAsync(command.PostId, true);
+        var post = await postRepository.GetByIdAsync(command.PostId, true)
+            ?? throw new NotFoundException(PostErrors.NotFound);
 
-        if (post == null)
+        if (post.OrganizationId.HasValue)
         {
-            throw new NotFoundException(PostErrors.NotFound);
-        }
-
-        if (post.AuthorId != command.AuthorId)
-        {
-            throw new ForbiddenException(PostErrors.Forbidden);
-        }
-
-        // Delete matches involving this post
-        if (post.PostType == PostType.Lost)
-        {
-            await _postMatchRepository.DeleteByLostPostIdsAsync(new[] { post.Id }, cancellationToken);
+            var membership = await membershipRepository.GetByOrgAndUserAsync(post.OrganizationId.Value, command.UserId, cancellationToken);
+            if (membership is null) throw new ForbiddenException(PostErrors.Forbidden);
         }
         else
         {
-            await _postMatchRepository.DeleteByFoundPostIdsAsync(new[] { post.Id }, cancellationToken);
+            if (post.AuthorId != command.UserId) throw new ForbiddenException(PostErrors.Forbidden);
         }
 
-        // Delete all images for this post
-        await _postRepository.DeleteAsync(command.PostId);
-        await _postRepository.SaveChangesAsync();
+        if (post.PostType == PostType.Lost)
+            await postMatchRepository.DeleteByLostPostIdsAsync(new[] { post.Id }, cancellationToken);
+        else
+            await postMatchRepository.DeleteByFoundPostIdsAsync(new[] { post.Id }, cancellationToken);
+
+        await postRepository.DeleteAsync(command.PostId);
+        await postRepository.SaveChangesAsync();
 
         return Unit.Value;
     }

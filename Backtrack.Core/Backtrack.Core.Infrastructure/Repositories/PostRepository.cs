@@ -53,6 +53,11 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             parameters.Add(new("@fromTime", filters.Time.From));
             parameters.Add(new("@toTime",   filters.Time.To));
         }
+        if (filters?.Status != null)
+        {
+            clauses.Add("AND status = @status");
+            parameters.Add(new("@status", filters.Status.Value.ToString()));
+        }
         if (filters?.AuthorId != null)
         {
             clauses.Add("AND author_id = @authorId");
@@ -407,33 +412,54 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return results;
     }
 
-    public async Task<IEnumerable<Post>> SearchByFullTextAsync(
+    public async Task<(IEnumerable<Post> Items, int TotalCount)> SearchByFullTextAsync(
         string searchTerm,
+        PagedQuery pagedQuery,
         PostFilters? filters = null,
         CancellationToken cancellationToken = default)
     {
         var (filterSql, parameters) = BuildFilters(filters);
 
-        var sql = $@"
+        parameters.Insert(0, new("@searchTerm", searchTerm));
+
+        var countSql = $@"
+            SELECT COUNT(*)
+            FROM posts
+            WHERE deleted_at IS NULL
+                AND item_search @@ websearch_to_tsquery('english', @searchTerm)
+                {filterSql}";
+
+        var dataSql = $@"
             SELECT id,
                    ts_rank(item_search, websearch_to_tsquery('english', @searchTerm)) AS rank
             FROM posts
             WHERE deleted_at IS NULL
                 AND item_search @@ websearch_to_tsquery('english', @searchTerm)
                 {filterSql}
-            ORDER BY rank DESC";
+            ORDER BY rank DESC
+            LIMIT @limit OFFSET @offset";
 
-        parameters.Insert(0, new("@searchTerm", searchTerm));
+        var dataParameters = parameters.Select(p => new NpgsqlParameter(p.ParameterName, p.Value)).ToList();
+        dataParameters.Add(new("@limit", pagedQuery.Limit));
+        dataParameters.Add(new("@offset", pagedQuery.Offset));
 
         var conn = _context.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
             await _context.Database.OpenConnectionAsync(cancellationToken);
 
+        int totalCount;
+        await using (var countCmd = conn.CreateCommand())
+        {
+            countCmd.CommandText = countSql;
+            countCmd.Parameters.AddRange(parameters.ToArray());
+            totalCount = Convert.ToInt32(await countCmd.ExecuteScalarAsync(cancellationToken));
+        }
+
         var rankedIds = new List<Guid>();
         await using (var cmd = conn.CreateCommand())
         {
-            cmd.CommandText = sql;
-            cmd.Parameters.AddRange(parameters.ToArray());
+            cmd.CommandText = dataSql;
+            cmd.Parameters.AddRange(dataParameters.ToArray());
 
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
@@ -441,7 +467,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         }
 
         if (rankedIds.Count == 0)
-            return [];
+            return ([], totalCount);
 
         var posts = await _dbSet
             .AsNoTracking()
@@ -451,7 +477,8 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             .ToListAsync(cancellationToken);
 
         var postMap = posts.ToDictionary(p => p.Id);
-        return rankedIds.Where(id => postMap.ContainsKey(id)).Select(id => postMap[id]);
+        var ordered = rankedIds.Where(id => postMap.ContainsKey(id)).Select(id => postMap[id]);
+        return (ordered, totalCount);
     }
 
 }

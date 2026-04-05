@@ -65,7 +65,7 @@ public class PostController : ControllerBase
             organizationId = parsedOrgId;
         }
 
-        command = command with { PostId = postId, AuthorId = authorId, OrganizationId = organizationId };
+        command = command with { PostId = postId, UserId = authorId, OrganizationId = organizationId };
 
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
@@ -143,7 +143,7 @@ public class PostController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var command = new DeletePostCommand { PostId = postId, AuthorId = authorId };
+        var command = new DeletePostCommand { PostId = postId, UserId = authorId };
         await _mediator.Send(command, cancellationToken);
         return NoContent();
     }

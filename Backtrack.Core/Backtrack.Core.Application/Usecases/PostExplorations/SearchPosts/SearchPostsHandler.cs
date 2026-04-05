@@ -11,8 +11,9 @@ public sealed class SearchPostsHandler(IPostRepository postRepository)
 {
     public async Task<IEnumerable<SearchPostResult>> Handle(SearchPostsCommand command, CancellationToken cancellationToken)
     {
-        var posts = await postRepository.SearchByFullTextAsync(
+        var (posts, _) = await postRepository.SearchByFullTextAsync(
             command.Query,
+            PagedQuery.Default,
             command.Filters,
             cancellationToken);
 
