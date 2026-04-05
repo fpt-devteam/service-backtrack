@@ -15,6 +15,11 @@ public class OrganizationRepository : CrudRepositoryBase<Organization, Guid>, IO
         return await _dbSet.AnyAsync(o => o.Slug == slug, cancellationToken);
     }
 
+    public async Task<Organization?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet.AsNoTracking().FirstOrDefaultAsync(o => o.Slug == slug, cancellationToken);
+    }
+
     public async Task<(List<Organization> Items, int Total)> GetAllAsync(
         int page, int pageSize, CancellationToken cancellationToken = default)
     {

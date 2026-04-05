@@ -26,11 +26,9 @@ public sealed class CreateOrganizationHandler : IRequestHandler<CreateOrganizati
         {
             throw new InvalidOperationException("UserId is not provided when initializing CreateOrganizationCommand.");
         }
-        var slugExists = await _organizationRepository.SlugExistsAsync(command.Slug, cancellationToken);
-        if (slugExists)
-        {
+
+        if (await _organizationRepository.SlugExistsAsync(command.Slug, cancellationToken))
             throw new ConflictException(OrganizationErrors.SlugAlreadyExists);
-        }
 
         var organization = new Organization
         {
