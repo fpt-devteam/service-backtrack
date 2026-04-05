@@ -59,7 +59,7 @@ public sealed class OwnerConfirmHandoverHandler(
         else if (handover is OrgHandover orgHandover)
         {
             // For Org handovers, validate form data against organization owner form settings
-            var ownerRequiredFields = await organizationRepository.GetRequiredOwnerFormFieldsByOrgIdAsync(
+            var ownerRequiredFields = await organizationRepository.GetRequiredOwnerContractFieldsByOrgIdAsync(
                 orgHandover.OrgId, cancellationToken);
 
             if (ownerRequiredFields != null)
@@ -104,16 +104,17 @@ public sealed class OwnerConfirmHandoverHandler(
     }
 
     private static void ValidateFormData(
-        List<Domain.ValueObjects.FormFieldDefinition> fields,
+        List<Domain.Constants.OrgContractField> fields,
         Dictionary<string, string>? formData)
     {
-        foreach (var field in fields.Where(f => f.Required))
+        foreach (var field in fields)
         {
+            var key = field.ToString();
             if (formData == null ||
-                !formData.TryGetValue(field.Key, out var value) ||
+                !formData.TryGetValue(key, out var value) ||
                 string.IsNullOrWhiteSpace(value))
             {
-                throw new ValidationException(HandoverErrors.MissingFormField(field.Key));
+                throw new ValidationException(HandoverErrors.MissingFormField(key));
             }
         }
     }

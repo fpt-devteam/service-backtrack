@@ -50,8 +50,8 @@ public sealed class GetOrganizationHandler : IRequestHandler<GetOrganizationQuer
             CoverImageUrl = org.CoverImageUrl,
             LocationNote = org.LocationNote,
             BusinessHours = org.BusinessHours,
-            RequiredFinderContactFields = org.RequiredFinderContactFields,
-            RequiredOwnerFormFields = org.RequiredOwnerFormFields,
+            RequiredFinderContractFields = org.RequiredFinderContractFields,
+            RequiredOwnerContractFields = org.RequiredOwnerContractFields,
             Status = org.Status.ToString(),
             CreatedAt = org.CreatedAt,
         };

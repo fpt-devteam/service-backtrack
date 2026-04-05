@@ -18,8 +18,8 @@ public sealed class Organization : Entity<Guid>
     public string? CoverImageUrl { get; set; }
     public string? LocationNote { get; set; }
     public List<DailySchedule>? BusinessHours { get; set; }
-    public required List<FinderContactField> RequiredFinderContactFields { get; set; }
-    public List<FormFieldDefinition> RequiredOwnerFormFields { get; set; } = new();
+    public required List<OrgContractField> RequiredFinderContractFields { get; set; }
+    public required List<OrgContractField> RequiredOwnerContractFields { get; set; }
     public required OrganizationStatus Status { get; set; } = OrganizationStatus.Active;
 
     public ICollection<Membership> Memberships { get; set; } = new List<Membership>();

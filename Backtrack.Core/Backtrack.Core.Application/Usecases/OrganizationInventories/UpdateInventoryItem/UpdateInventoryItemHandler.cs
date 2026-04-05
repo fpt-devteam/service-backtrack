@@ -71,7 +71,7 @@ public sealed class UpdateInventoryItemHandler(
             var org = await organizationRepository.GetByIdAsync(command.OrgId)
                 ?? throw new NotFoundException(OrganizationErrors.NotFound);
 
-            ValidateFinderContactRequiredFields(org.RequiredFinderContactFields, command.FinderContact);
+            ValidateFinderContactRequiredFields(org.RequiredFinderContractFields, command.FinderContact);
 
             if (inventory.FinderContact != null)
             {
@@ -143,22 +143,22 @@ Description: {inventory.Description}";
     }
 
     private static void ValidateFinderContactRequiredFields(
-        List<FinderContactField> requiredFields,
+        List<OrgContractField> requiredFields,
         FinderContactInfo contact)
     {
         foreach (var field in requiredFields)
         {
             var missing = field switch
             {
-                FinderContactField.Email => string.IsNullOrWhiteSpace(contact.Email),
-                FinderContactField.Phone => string.IsNullOrWhiteSpace(contact.Phone),
-                FinderContactField.NationalId => string.IsNullOrWhiteSpace(contact.NationalId),
-                FinderContactField.OrgMemberId => string.IsNullOrWhiteSpace(contact.OrgMemberId),
+                OrgContractField.Email => string.IsNullOrWhiteSpace(contact.Email),
+                OrgContractField.Phone => string.IsNullOrWhiteSpace(contact.Phone),
+                OrgContractField.NationalId => string.IsNullOrWhiteSpace(contact.NationalId),
+                OrgContractField.OrgMemberId => string.IsNullOrWhiteSpace(contact.OrgMemberId),
                 _ => false
             };
 
             if (missing)
-                throw new ValidationException(OrganizationInventoryErrors.MissingRequiredFinderContactField(field.ToString()));
+                throw new ValidationException(OrganizationInventoryErrors.MissingRequiredOrgContractField(field.ToString()));
         }
     }
 }
