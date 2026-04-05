@@ -74,18 +74,17 @@ Dependency flows inward: `WebApi → Application → Domain`, with `Infrastructu
 
 ```
 Backtrack.Core.Domain        # Entities, value objects, enums — no dependencies
-Backtrack.Core.Application   # CQRS handlers, repository interfaces, exceptions
+Backtrack.Core.Application   # CQRS commands/queries/handlers, repository interfaces, exceptions
 Backtrack.Core.Infrastructure # EF Core, repositories, RabbitMQ, Redis, Hangfire, AI
-Backtrack.Core.Contract      # Request/Response DTOs
 Backtrack.Core.WebApi        # Controllers, middleware, DI entry point
 ```
 
-CQRS structure: `Usecases/{Feature}/Commands|Queries/{OperationName}/` — each operation folder contains Command/Query record, Handler, and optional FluentValidation Validator. Repository interfaces are co-located with their feature (e.g., `Usecases/Posts/IPostRepository.cs`).
+CQRS structure: `Usecases/{Feature}/{OperationName}/` — each operation folder contains Command/Query record, Handler, and optional FluentValidation Validator. Repository interfaces are co-located with their feature (e.g., `Usecases/Posts/IPostRepository.cs`). Commands/queries are used directly as request bodies in controllers (no separate DTO/Contract layer).
 
 Key conventions:
 - **Response envelope**: All responses use `ApiResponse<T>`. Controllers call `this.ApiOk(result)` / `this.ApiCreated(result)` (extension methods in `ControllerExtensions.cs`).
 - **Auth**: Controllers extract auth headers and enrich commands via `with` expressions (`command with { AuthorId = userId }`).
-- **Errors**: Custom exceptions extend `DomainException` (carries `Error` record with `Code`/`Message`). `ExceptionHandlingMiddleware` maps them: `NotFoundException`→404, `ConflictException`→409, `ValidationException`→400, `ForbiddenException`→403. Predefined error constants in `Application/Exceptions/Errors/`.
+- **Errors**: Custom exceptions extend `DomainException` (carries `Error` record with `Code`/`Message`). `ExceptionHandlingMiddleware` maps them: `NotFoundException`→404, `ConflictException`→409, `ValidationException`→400, `ForbiddenException`→403, `UnauthorizedException`→401. Predefined error constants in `Application/Exceptions/Errors/`.
 - **Entities**: Base class `Entity<TKey>` provides `Id`, `CreatedAt`, `UpdatedAt`, `DeletedAt` (soft delete via partial unique indexes).
 - **Pagination**: `PagedQuery.FromPage(page, pageSize)` → `PagedResult<T>`.
 - **RBAC**: Authorization checks happen inside handlers, not middleware. Loads `Membership` entity and checks `Role` (OrgAdmin/OrgStaff).

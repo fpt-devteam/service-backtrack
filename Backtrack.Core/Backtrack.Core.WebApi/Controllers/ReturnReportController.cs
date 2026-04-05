@@ -1,0 +1,88 @@
+using Microsoft.AspNetCore.Mvc;
+using MediatR;
+using Backtrack.Core.WebApi.Constants;
+using Backtrack.Core.WebApi.Common;
+using Backtrack.Core.WebApi.Utils;
+using Backtrack.Core.Application.Usecases.ReturnReport;
+using Backtrack.Core.Application.Usecases.ReturnReport.CreateC2CReturnReport;
+using Backtrack.Core.Application.Usecases.ReturnReport.CreateOrgReturnReport;
+using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportById;
+using Backtrack.Core.Application.Usecases.ReturnReport.OwnerConfirmC2CReturnReport;
+
+namespace Backtrack.Core.WebApi.Controllers;
+
+[ApiController]
+[Route("return-reports")]
+[Produces("application/json")]
+public class ReturnReportController : ControllerBase
+{
+    private readonly IMediator _mediator;
+
+    public ReturnReportController(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
+    /// <summary>Create a C2C return report (user to user)</summary>
+    [HttpPost("c2c")]
+    [ProducesResponseType(typeof(ApiResponse<C2CReturnReportResult>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> CreateC2CReturnReportAsync(
+        [FromBody] CreateC2CReturnReportCommand command, CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        command = command with { FinderId = userId };
+        var result = await _mediator.Send(command, cancellationToken);
+        return this.ApiCreated(result);
+    }
+
+    /// <summary>Create an org return report (staff on behalf of organization)</summary>
+    [HttpPost("org/{orgId:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<OrgReturnReportResult>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> CreateOrgReturnReportAsync(
+        [FromRoute] Guid orgId,
+        [FromBody] CreateOrgReturnReportCommand command,
+        CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        command = command with { UserId = userId, OrgId = orgId };
+        var result = await _mediator.Send(command, cancellationToken);
+        return this.ApiCreated(result);
+    }
+
+    /// <summary>Get a C2C return report by ID</summary>
+    [HttpGet("c2c/{id:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<C2CReturnReportResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetC2CReturnReportByIdAsync(
+        [FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var query = new GetC2CReturnReportByIdQuery { UserId = userId, C2CReturnReportId = id };
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    /// <summary>Owner confirms a C2C return report</summary>
+    [HttpPatch("c2c/{id:guid}/owner-confirm")]
+    [ProducesResponseType(typeof(ApiResponse<C2CReturnReportResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> OwnerConfirmC2CReturnReportAsync(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var command = new OwnerConfirmC2CReturnReportCommand { UserId = userId, C2CReturnReportId = id };
+        var result = await _mediator.Send(command, cancellationToken);
+        return this.ApiOk(result);
+    }
+}
