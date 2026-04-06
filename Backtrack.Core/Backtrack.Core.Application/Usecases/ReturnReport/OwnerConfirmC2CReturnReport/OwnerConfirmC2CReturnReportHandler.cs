@@ -13,6 +13,7 @@ namespace Backtrack.Core.Application.Usecases.ReturnReport.OwnerConfirmC2CReturn
 
 public sealed class OwnerConfirmC2CReturnReportHandler(
     IC2CReturnReportRepository returnReportRepository,
+    IPostRepository postRepository,
     IEventPublisher eventPublisher) : IRequestHandler<OwnerConfirmC2CReturnReportCommand, C2CReturnReportResult>
 {
     public async Task<C2CReturnReportResult> Handle(OwnerConfirmC2CReturnReportCommand command, CancellationToken cancellationToken)
@@ -40,6 +41,18 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
         // Confirm the return report
         returnReport.Status = ReturnReportStatus.Confirmed;
         returnReport.ConfirmedAt = DateTimeOffset.UtcNow;
+
+        if (returnReport.FinderPost != null)
+        {
+            returnReport.FinderPost.Status = PostStatus.Returned;
+            postRepository.Update(returnReport.FinderPost);
+        }
+
+        if (returnReport.OwnerPost != null)
+        {
+            returnReport.OwnerPost.Status = PostStatus.Returned;
+            postRepository.Update(returnReport.OwnerPost);
+        }
 
         await returnReportRepository.SaveChangesAsync();
 

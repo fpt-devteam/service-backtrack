@@ -24,4 +24,27 @@ public class OrgReturnReportRepository : CrudRepositoryBase<OrgReturnReport, Gui
         return await _context.Set<OrgReturnReport>()
             .AnyAsync(r => r.PostId == postId && r.DeletedAt == null, cancellationToken);
     }
+
+    public async Task<(List<OrgReturnReport> Items, int Total)> GetByOrgAsync(
+        Guid orgId, string? staffId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Set<OrgReturnReport>()
+            .Include(r => r.Staff)
+            .Include(r => r.Post)
+                .ThenInclude(p => p!.Author)
+            .Where(r => r.OrgId == orgId && r.DeletedAt == null);
+
+        if (staffId != null)
+            query = query.Where(r => r.StaffId == staffId);
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, total);
+    }
 }

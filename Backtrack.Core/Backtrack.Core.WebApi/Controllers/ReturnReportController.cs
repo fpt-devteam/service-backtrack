@@ -9,6 +9,8 @@ using Backtrack.Core.Application.Usecases.ReturnReport.CreateOrgReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportById;
 using Backtrack.Core.Application.Usecases.ReturnReport.OwnerConfirmC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportsByUserId;
+using Backtrack.Core.Application.Usecases.ReturnReport.GetOrgReturnReports;
+using Backtrack.Core.Application.Usecases.ReturnReport.GetOrgReturnReportById;
 using Backtrack.Core.Application.Usecases;
 using Backtrack.Core.Domain.Constants;
 
@@ -39,6 +41,37 @@ public class ReturnReportController : ControllerBase
         command = command with { FinderId = userId };
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiCreated(result);
+    }
+
+    /// <summary>Get org return reports. Admins see all; staff see only their own.</summary>
+    [HttpGet("org/{orgId:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<OrgReturnReportResult>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetOrgReturnReportsAsync(
+        [FromRoute] Guid orgId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var query = new GetOrgReturnReportsQuery { UserId = userId, OrgId = orgId, Page = page, PageSize = pageSize };
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    /// <summary>Get org return report detail by ID</summary>
+    [HttpGet("org/{orgId:guid}/{id:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<OrgReturnReportResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetOrgReturnReportByIdAsync(
+        [FromRoute] Guid orgId, [FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var query = new GetOrgReturnReportByIdQuery { UserId = userId, OrgId = orgId, ReturnReportId = id };
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
     }
 
     /// <summary>Create an org return report (staff on behalf of organization)</summary>

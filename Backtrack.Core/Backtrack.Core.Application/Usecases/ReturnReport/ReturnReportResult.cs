@@ -25,4 +25,6 @@ public sealed record OrgReturnReportResult
     public required UserResult Staff { get; init; }
     public OwnerInfo? OwnerInfo { get; init; }
     public PostResult? Post { get; init; }
+    public required DateTimeOffset ExpiresAt { get; init; }
+    public required DateTimeOffset CreatedAt { get; init; }
 }

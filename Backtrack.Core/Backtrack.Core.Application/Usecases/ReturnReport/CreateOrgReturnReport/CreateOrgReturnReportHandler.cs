@@ -6,6 +6,7 @@ using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Users;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
+using Backtrack.Core.Application.Usecases.Posts;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.ReturnReport.CreateOrgReturnReport;
@@ -25,7 +26,7 @@ public sealed class CreateOrgReturnReportHandler(
         var org = await organizationRepository.GetByIdAsync(command.OrgId)
             ?? throw new NotFoundException(OrganizationErrors.NotFound);
 
-        var post = await postRepository.GetByIdAsync(command.PostId)
+        var post = await postRepository.GetByIdAsync(command.PostId, isTrack: true)
             ?? throw new NotFoundException(ReturnReportErrors.FinderPostNotFound);
 
         if (post.OrganizationId != command.OrgId)
@@ -57,6 +58,9 @@ public sealed class CreateOrgReturnReportHandler(
             ExpiresAt = DateTimeOffset.UtcNow.AddDays(30)
         };
 
+        post.Status = PostStatus.Returned;
+        postRepository.Update(post);
+
         await orgReturnReportRepository.CreateAsync(returnReport);
         await orgReturnReportRepository.SaveChangesAsync();
 
@@ -86,7 +90,9 @@ public sealed class CreateOrgReturnReportHandler(
             },
             Staff = staff.ToUserResult(),
             OwnerInfo = returnReport.OwnerInfo,
-            Post = post.ToPostResult()
+            Post = post.ToPostResult(),
+            ExpiresAt = returnReport.ExpiresAt,
+            CreatedAt = returnReport.CreatedAt
         };
     }
 }
