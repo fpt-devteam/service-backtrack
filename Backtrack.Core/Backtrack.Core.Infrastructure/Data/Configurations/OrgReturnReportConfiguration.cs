@@ -77,6 +77,8 @@ public class OrgReturnReportConfiguration : IEntityTypeConfiguration<OrgReturnRe
             .HasConstraintName("fk_org_return_reports_post_id")
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasQueryFilter(r => r.DeletedAt == null);
+
         builder.HasIndex(r => r.OrgId)
             .HasDatabaseName("ix_org_return_reports_org_id");
 

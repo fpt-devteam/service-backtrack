@@ -10,6 +10,7 @@ public sealed record PostResult
     public PostAuthorResult? Author { get; init; }
     public OrganizationOnPost? Organization { get; init; }
     public required PostType PostType { get; init; }
+    public required PostStatus Status { get; init; }
     public required PostItem Item { get; init; }
     public List<string> ImageUrls { get; init; } = new();
     public required GeoPoint Location { get; init; }
@@ -30,6 +31,7 @@ public static class PostResultMapper
             Organization = post.Organization?.ToOrganizationOnPost(),
             PostType = post.PostType,
             Item = post.Item,
+            Status = post.Status,
             ImageUrls = post.ImageUrls,
             Location = post.Location,
             ExternalPlaceId = post.ExternalPlaceId,

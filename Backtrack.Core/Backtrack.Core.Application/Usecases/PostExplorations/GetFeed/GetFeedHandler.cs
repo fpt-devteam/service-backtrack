@@ -13,7 +13,11 @@ public sealed class GetFeedHandler(IPostRepository postRepository)
     public async Task<FeedPostResult> Handle(GetFeedQuery query, CancellationToken cancellationToken)
     {
         var pagedQuery = PagedQuery.FromPage(query.Page, query.PageSize);
-        var filters = query.PostType.HasValue ? new PostFilters { PostType = query.PostType } : null;
+        var filters = new PostFilters
+        {
+            PostType = query.PostType,
+            Status = Domain.Constants.PostStatus.Active
+        };
         var (items, _) = await postRepository.GetPagedAsync(pagedQuery, filters, cancellationToken);
 
         var grouped = items

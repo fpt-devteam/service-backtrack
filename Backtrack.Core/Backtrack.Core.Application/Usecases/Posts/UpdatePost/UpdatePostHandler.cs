@@ -37,7 +37,17 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
     {
         var post = await _postRepository.GetByIdAsync(command.PostId, true);
         if (post == null) throw new NotFoundException(PostErrors.NotFound);
-        if (post.AuthorId != command.AuthorId) throw new ForbiddenException(PostErrors.Forbidden);
+
+        if (post.OrganizationId.HasValue)
+        {
+            var membership = await _membershipRepository.GetByOrgAndUserAsync(post.OrganizationId.Value, command.UserId);
+            if (membership is null) throw new ForbiddenException(PostErrors.Forbidden);
+        }
+        else
+        {
+            if (post.AuthorId != command.UserId) throw new ForbiddenException(PostErrors.Forbidden);
+        }
+
         bool needsReEmbedding = false;
 
         if (command.PostType != null && !Enum.TryParse<PostType>(command.PostType, ignoreCase: true, out var postType))
@@ -50,7 +60,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             var organization = await _organizationRepository.GetByIdAsync(command.OrganizationId.Value)
                 ?? throw new NotFoundException(OrganizationErrors.NotFound);
 
-            if (await _membershipRepository.GetByOrgAndUserAsync(organization.Id, command.AuthorId) == null)
+            if (await _membershipRepository.GetByOrgAndUserAsync(organization.Id, command.UserId) == null)
                 throw new ValidationException(MembershipErrors.MemberNotFound);
 
             if (post.PostType == PostType.Lost) throw new ValidationException(PostErrors.LostPostCannotBeAssociatedWithOrganization);
@@ -97,6 +107,10 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         }
 
         post.EventTime = command.EventTime.HasValue ? command.EventTime.Value : post.EventTime;
+
+        if (command.Status is not null && Enum.TryParse<PostStatus>(command.Status, ignoreCase: true, out var parsedStatus))
+            post.Status = parsedStatus;
+
         post.UpdatedAt = DateTimeOffset.UtcNow;
 
         if (needsReEmbedding)
@@ -114,6 +128,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             Author = post.Author?.ToPostAuthorResult(),
             Organization = post.Organization?.ToOrganizationOnPost(),
             PostType = post.PostType,
+            Status = post.Status,
             Item = post.Item,
             ImageUrls = post.ImageUrls,
             Location = post.Location,

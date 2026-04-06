@@ -76,6 +76,8 @@ public class C2CReturnReportConfiguration : IEntityTypeConfiguration<C2CReturnRe
             .HasConstraintName("fk_c2c_return_reports_owner_post_id")
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder.HasQueryFilter(r => r.DeletedAt == null);
+
         builder.HasIndex(r => r.FinderId)
             .HasDatabaseName("ix_c2c_return_reports_finder_id");
 

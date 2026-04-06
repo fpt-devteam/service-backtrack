@@ -8,8 +8,9 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
 {
     public interface IPostRepository : IGenericRepository<Post, Guid>
     {
-        Task<IEnumerable<Post>> SearchByFullTextAsync(
+        Task<(IEnumerable<Post> Items, int TotalCount)> SearchByFullTextAsync(
             string searchTerm,
+            PagedQuery pagedQuery,
             PostFilters? filters = null,
             CancellationToken cancellationToken = default);
 
