@@ -12,8 +12,8 @@ public sealed class C2CReturnReport : Entity<Guid>
     public Guid? OwnerPostId { get; set; }
     public DateTimeOffset? ConfirmedAt { get; set; }
 
-    public User Finder { get; set; } = default!;
-    public User Owner { get; set; } = default!;
+    public User? Finder { get; set; }
+    public User? Owner { get; set; }
     public Post? FinderPost { get; set; }
     public Post? OwnerPost { get; set; }
 }

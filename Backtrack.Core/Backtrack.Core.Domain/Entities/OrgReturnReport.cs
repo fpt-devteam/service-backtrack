@@ -9,7 +9,7 @@ public sealed class OrgReturnReport : Entity<Guid>
     public required Guid PostId { get; set; }
     public OwnerInfo? OwnerInfo { get; set; }
 
-    public Organization Organization { get; set; } = default!;
-    public User Staff { get; set; } = default!;
+    public Organization? Organization { get; set; }
+    public User? Staff { get; set; }
     public Post? Post { get; set; }
 }
