@@ -24,8 +24,9 @@ public sealed class CapEventPublisher : IEventPublisher
         await _capPublisher.PublishAsync(EventTopics.Invitation.Created, @event);
     }
 
-    public async Task PublishHandoverConfirmedAsync(HandoverConfirmedIntegrationEvent @event)
+
+    public async Task PublishReturnReportConfirmedAsync(ReturnReportConfirmedIntegrationEvent @event)
     {
-        await _capPublisher.PublishAsync(EventTopics.HandoverConfirmed, @event);
+        await _capPublisher.PublishAsync(EventTopics.ReturnReportConfirmed, @event);
     }
 }

@@ -47,6 +47,7 @@ public sealed class UpdateInventoryItemCommandValidator : AbstractValidator<Upda
             RuleFor(x => x.FinderContact!.OrgMemberId)
                 .MaximumLength(100).WithMessage("FinderContact.OrgMemberId must not exceed 100 characters")
                 .When(x => x.FinderContact?.OrgMemberId != null);
+
         });
     }
 }
