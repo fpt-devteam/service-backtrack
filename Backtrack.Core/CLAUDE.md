@@ -15,8 +15,6 @@ dotnet run --project Backtrack.Core.WebApi
 dotnet run --project Backtrack.Core.WebApi --urls "http://localhost:8080"
 ```
 
-No test projects exist yet.
-
 ## EF Core Migrations
 
 Run from `Backtrack.Core.Infrastructure/`:

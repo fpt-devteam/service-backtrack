@@ -1,3 +1,4 @@
+using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 
@@ -17,4 +18,25 @@ public sealed record PostResult
     public string? DisplayAddress { get; init; }
     public required DateTimeOffset EventTime { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
+}
+
+public static class PostResultMapper
+{
+    public static PostResult ToPostResult(this Post post)
+    {
+        return new PostResult
+        {
+            Id = post.Id,
+            Author = post.Author?.ToPostAuthorResult(),
+            Organization = post.Organization?.ToOrganizationOnPost(),
+            PostType = post.PostType,
+            Item = post.Item,
+            ImageUrls = post.ImageUrls,
+            Location = post.Location,
+            ExternalPlaceId = post.ExternalPlaceId,
+            DisplayAddress = post.DisplayAddress,
+            EventTime = post.EventTime,
+            CreatedAt = post.CreatedAt
+        };
+    }
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -15,9 +16,11 @@ using Pgvector;
 namespace Backtrack.Core.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260405090553_AddC2CReturnReportOrgReturnReportTable")]
+    partial class AddC2CReturnReportOrgReturnReportTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -303,9 +306,10 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("org_id");
 
-                    b.Property<string>("OwnerInfo")
+                    b.Property<string>("OwnerRequiredInfo")
+                        .IsRequired()
                         .HasColumnType("jsonb")
-                        .HasColumnName("owner_info");
+                        .HasColumnName("owner_required_info");
 
                     b.Property<Guid>("PostId")
                         .HasColumnType("uuid")
@@ -992,7 +996,7 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_posts_organization_id_organizations_id");
 
-                    b.OwnsOne("Backtrack.Core.Domain.Entities.Post.Item#Backtrack.Core.Domain.ValueObjects.PostItem", "Item", b1 =>
+                    b.OwnsOne("Backtrack.Core.Domain.ValueObjects.PostItem", "Item", b1 =>
                         {
                             b1.Property<Guid>("PostId")
                                 .HasColumnType("uuid");
@@ -1046,7 +1050,7 @@ namespace Backtrack.Core.Infrastructure.Migrations
 
                             b1.HasKey("PostId");
 
-                            b1.ToTable("posts", (string)null);
+                            b1.ToTable("posts");
 
                             b1.WithOwner()
                                 .HasForeignKey("PostId");
