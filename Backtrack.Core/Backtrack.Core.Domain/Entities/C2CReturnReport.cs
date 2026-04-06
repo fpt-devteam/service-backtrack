@@ -4,8 +4,8 @@ namespace Backtrack.Core.Domain.Entities;
 
 public sealed class C2CReturnReport : Entity<Guid>
 {
-    public required string FinderId { get; set; }
-    public required string OwnerId { get; set; }
+    public string FinderId { get; set; } = default!;
+    public string OwnerId { get; set; } = default!;
     public required ReturnReportStatus Status { get; set; }
     public required DateTimeOffset ExpiresAt { get; set; }
     public Guid? FinderPostId { get; set; }

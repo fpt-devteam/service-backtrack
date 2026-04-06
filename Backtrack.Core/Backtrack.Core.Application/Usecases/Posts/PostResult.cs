@@ -31,6 +31,7 @@ public static class PostResultMapper
             Organization = post.Organization?.ToOrganizationOnPost(),
             PostType = post.PostType,
             Item = post.Item,
+            Status = post.Status,
             ImageUrls = post.ImageUrls,
             Location = post.Location,
             ExternalPlaceId = post.ExternalPlaceId,
