@@ -27,6 +27,9 @@ interface ConversationAggRow {
     conversationId: Types.ObjectId | string;
     type?: string;
     orgId?: string | null;
+    orgName?: string | null;
+    orgSlug?: string | null;
+    orgLogoUrl?: string | null;
     status?: ConversationStatus | null;
     staffAssignId?: string | null;
     lastMessageContent?: string | null;
@@ -546,9 +549,9 @@ const formatSupportResult = (results: ConversationAggRow[], limit: number): Supp
         conversations: items.map((c: ConversationAggRow): SupportConversationResponse => ({
             conversationId: c.conversationId.toString(),
             orgId: c.orgId!,
-            orgName: (c as any).orgName ?? null,
-            orgSlug: (c as any).orgSlug ?? null,
-            orgLogoUrl: (c as any).orgLogoUrl ?? null,
+            orgName: c.orgName ?? null,
+            orgSlug: c.orgSlug ?? null,
+            orgLogoUrl: c.orgLogoUrl ?? null,
             status: c.status!,
             assignedStaffId: c.staffAssignId ?? null,
             partner: c.partner
@@ -641,6 +644,9 @@ interface MixedConversationAggRow {
     conversationId:      string;
     type:                string;             // 'direct' | 'support'
     orgId:               string | null;
+    orgName:             string | null;
+    orgSlug:             string | null;
+    orgLogoUrl:          string | null;
     status:              ConversationStatus | null;
     staffAssignId:       string | null;
     lastMessageAt:       Date | null;
@@ -780,6 +786,9 @@ export const listAllConversationsByUserId = async (
     const [directBranch, supportBranch] = await Promise.all([
         buildConvBranch('directconversations', 'direct', userId, cursorFilter, {
             orgId:         { $literal: null },
+            orgName:       { $literal: null },
+            orgSlug:       { $literal: null },
+            orgLogoUrl:    { $literal: null },
             status:        { $literal: null },
             staffAssignId: { $literal: null },
         }),
@@ -812,9 +821,9 @@ export const listAllConversationsByUserId = async (
             conversationId:  c.conversationId,
             type:            c.type,
             orgId:           c.orgId,
-            orgName:         (c as any).orgName ?? null,
-            orgSlug:         (c as any).orgSlug ?? null,
-            orgLogoUrl:      (c as any).orgLogoUrl ?? null,
+            orgName:         c.orgName ?? null,
+            orgSlug:         c.orgSlug ?? null,
+            orgLogoUrl:      c.orgLogoUrl ?? null,
             status:          c.status,
             assignedStaffId: c.staffAssignId,
             partner: c.partner
