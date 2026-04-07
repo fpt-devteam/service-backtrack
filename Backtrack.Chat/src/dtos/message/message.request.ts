@@ -44,6 +44,9 @@ export type SendDirectMessageRequest = z.output<typeof SendDirectMessageSchema>;
 export const SendSupportMessageSchema = MessageBodySchema.extend({
   conversationId: z.string().min(1).optional(),
   orgId: z.string().min(1).optional(),
+  orgName: z.string().optional(),
+  orgSlug: z.string().optional(),
+  orgLogoUrl: z.string().optional(),
 }).refine(
   d => d.conversationId || d.orgId,
   { message: 'One of conversationId or orgId is required for a support message' },

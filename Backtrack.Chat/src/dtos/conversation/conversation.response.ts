@@ -43,6 +43,9 @@ export interface SupportConversationResponse {
   conversationId: string;
   /** Organisation this conversation belongs to */
   orgId: string;
+  orgName: string | null;
+  orgSlug: string | null;
+  orgLogoUrl: string | null;
   /** Current lifecycle status */
   status: ConversationStatus;
   /** Staff member currently handling this conversation, null if in queue */
@@ -66,6 +69,9 @@ export interface ConversationResponse {
   /** 'Direct' = DM, 'organization' = support channel */
   type: string;
   orgId: string | null;
+  orgName: string | null;
+  orgSlug: string | null;
+  orgLogoUrl: string | null;
   status: ConversationStatus | null;
   assignedStaffId: string | null;
   partner: ConversationPartner | null;

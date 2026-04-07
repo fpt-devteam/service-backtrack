@@ -14,6 +14,9 @@ export interface ISupportConversation {
 	senderId: string | null;
 	staffAssignId: string | null;
 	orgId: string;
+	orgName: string | null;
+	orgSlug: string | null;
+	orgLogoUrl: string | null;
 	status: ConversationStatus;
 	createdAt: Date;
 	updatedAt: Date;
