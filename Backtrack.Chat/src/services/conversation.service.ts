@@ -192,11 +192,18 @@ export const findDirectConversationByPartnerId = async (
 export const findOrCreateOrgConversation = async (
   userId: string,
   orgId: string,
+  orgMeta?: { orgName?: string; orgSlug?: string; orgLogoUrl?: string },
 ): Promise<SupportConversationResponse> => {
   const existingConv = await findExistingOrgConversation(userId, orgId);
   if (existingConv) return toSupportConversationResponse(existingConv);
 
-  const conversation = new Conversation({ orgId, status: ConversationStatus.IN_QUEUE });
+  const conversation = new Conversation({
+    orgId,
+    orgName: orgMeta?.orgName ?? null,
+    orgSlug: orgMeta?.orgSlug ?? null,
+    orgLogoUrl: orgMeta?.orgLogoUrl ?? null,
+    status: ConversationStatus.IN_QUEUE,
+  });
   await conversation.save();
   const conversationId = toStringOrNull(conversation._id);
   if (!conversationId) throw ConversationErrors.NotFound;
@@ -262,6 +269,9 @@ export const getConversationById = async (
         return {
             conversationId:  s._id.toString(),
             orgId:           s.orgId ?? null,
+            orgName:         s.orgName ?? null,
+            orgSlug:         s.orgSlug ?? null,
+            orgLogoUrl:      s.orgLogoUrl ?? null,
             status:          s.status ?? ConversationStatus.IN_QUEUE,
             assignedStaffId: s.staffAssignId ?? null,
             partner,
@@ -316,6 +326,9 @@ const toDirectConversationResponse = (doc: ToLeanDoc<IDirectConversation>, partn
 const toSupportConversationResponse = (doc: ToLeanDoc<ISupportConversation>): SupportConversationResponse => ({
     conversationId: doc._id.toString(),
     orgId: doc.orgId,
+    orgName: doc.orgName ?? null,
+    orgSlug: doc.orgSlug ?? null,
+    orgLogoUrl: doc.orgLogoUrl ?? null,
     status: doc.status ?? ConversationStatus.IN_QUEUE,
     assignedStaffId: doc.staffAssignId ?? null,
     partner: null,     // populated downstream (controller/list query)
@@ -421,9 +434,12 @@ export const lookupPartnerStages = (userId: string) => [
 export const projectConversationStage = {
     $project: {
         conversationId: '$conversation._id',
-        orgId:         { $ifNull: ['$conversation.orgId', null] },         
-        status:        { $ifNull: ['$conversation.status', null] },        
-        staffAssignId: { $ifNull: ['$conversation.staffAssignId', null] }, 
+        orgId:         { $ifNull: ['$conversation.orgId',         null] },
+        orgName:       { $ifNull: ['$conversation.orgName',       null] },
+        orgSlug:       { $ifNull: ['$conversation.orgSlug',       null] },
+        orgLogoUrl:    { $ifNull: ['$conversation.orgLogoUrl',    null] },
+        status:        { $ifNull: ['$conversation.status',        null] },
+        staffAssignId: { $ifNull: ['$conversation.staffAssignId', null] },
         lastMessageContent:  '$conversation.lastMessageContent',
         lastMessageAt:       '$conversation.lastMessageAt',
         lastMessageSenderId: '$conversation.senderId',
@@ -529,8 +545,11 @@ const formatSupportResult = (results: ConversationAggRow[], limit: number): Supp
     return {
         conversations: items.map((c: ConversationAggRow): SupportConversationResponse => ({
             conversationId: c.conversationId.toString(),
-            orgId: c.orgId!,                       
-            status: c.status!,                     
+            orgId: c.orgId!,
+            orgName: (c as any).orgName ?? null,
+            orgSlug: (c as any).orgSlug ?? null,
+            orgLogoUrl: (c as any).orgLogoUrl ?? null,
+            status: c.status!,
             assignedStaffId: c.staffAssignId ?? null,
             partner: c.partner
                 ? {
@@ -766,6 +785,9 @@ export const listAllConversationsByUserId = async (
         }),
         buildConvBranch('supportconversations', 'support', userId, cursorFilter, {
             orgId:         { $ifNull: ['$conv.orgId',         null] },
+            orgName:       { $ifNull: ['$conv.orgName',       null] },
+            orgSlug:       { $ifNull: ['$conv.orgSlug',       null] },
+            orgLogoUrl:    { $ifNull: ['$conv.orgLogoUrl',    null] },
             status:        { $ifNull: ['$conv.status',        null] },
             staffAssignId: { $ifNull: ['$conv.staffAssignId', null] },
         }),
@@ -790,6 +812,9 @@ export const listAllConversationsByUserId = async (
             conversationId:  c.conversationId,
             type:            c.type,
             orgId:           c.orgId,
+            orgName:         (c as any).orgName ?? null,
+            orgSlug:         (c as any).orgSlug ?? null,
+            orgLogoUrl:      (c as any).orgLogoUrl ?? null,
             status:          c.status,
             assignedStaffId: c.staffAssignId,
             partner: c.partner

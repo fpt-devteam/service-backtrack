@@ -189,6 +189,11 @@ export function registerMessageHandlers(socket: Socket): void {
         const conv = await conversationService.findOrCreateOrgConversation(
           authUserId,
           validated.orgId!,
+          {
+            orgName:     validated.orgName,
+            orgSlug:     validated.orgSlug,
+            orgLogoUrl:  validated.orgLogoUrl,
+          },
         );
         conversationId = conv.conversationId;
         isNewRoom = true;

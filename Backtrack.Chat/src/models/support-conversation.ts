@@ -9,11 +9,14 @@ const ConversationSchema = new Schema<ISupportConversation>(
 		lastMessageContent: { type: String, default: null },
 		senderId: { type: String, default: null }, 
 		staffAssignId: { type: String, default: null, index: true },
-		orgId: { 
-			type: String, 
+		orgId: {
+			type: String,
 			required: true,
-			index: true 
+			index: true
 		},
+		orgName: { type: String, default: null },
+		orgSlug: { type: String, default: null },
+		orgLogoUrl: { type: String, default: null },
 		status: { 
 			type: String, 
 			enum: Object.values(ConversationStatus), 
