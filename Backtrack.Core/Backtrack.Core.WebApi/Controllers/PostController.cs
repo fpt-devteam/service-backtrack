@@ -9,7 +9,8 @@ using Backtrack.Core.Application.Usecases.Posts.DeletePost;
 using Backtrack.Core.Application.Usecases.Posts.GetPostsByAuthorId;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetPostMatchingStatus;
-using Backtrack.Core.Application.Usecases.PostExplorations.SearchPosts;
+using Backtrack.Core.Application.Usecases.PostExplorations.FullTextSearchPost;
+using Backtrack.Core.Application.Usecases.PostExplorations.SemanticSearchPost;
 using Backtrack.Core.Application.Usecases.PostExplorations.GetFeed;
 using Backtrack.Core.WebApi.Common;
 
@@ -81,7 +82,7 @@ public class PostController : ControllerBase
     }
 
     [HttpPost("search")]
-    public async Task<IActionResult> SearchPostsAsync([FromBody] SearchPostsCommand command, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> SearchPostsAsync([FromBody] SemanticSearchPostCommand command, CancellationToken cancellationToken = default)
     {
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiOk(result);

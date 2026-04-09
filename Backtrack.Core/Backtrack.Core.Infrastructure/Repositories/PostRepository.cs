@@ -8,10 +8,8 @@ using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using Npgsql;
-using NpgsqlTypes;
 using Pgvector;
 using System.Data;
 using System.Text.Json;
@@ -162,149 +160,62 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return (ordered, totalCount);
     }
 
-    public async Task<(IEnumerable<(Post Post, double SimilarityScore, double? DistanceMeters)> Items, int TotalCount)> SearchBySemanticAsync(
+    public async Task<IEnumerable<(Post Post, double SimilarityScore)>> SearchBySemanticAsync(
         float[] queryEmbedding,
-        PagedQuery pagedQuery,
-        PostType? postType = null,
-        GeoPoint? location = null,
-        double? radiusInKm = null,
-        Guid? organizationId = null,
+        PostFilters? filters = null,
         CancellationToken cancellationToken = default)
     {
-        const double MinimumSimilarityThreshold = 0.5;
+        const double MinimumSimilarityThreshold = 0.1;
 
+        var (filterSql, filterParams) = BuildFilters(filters);
         var embeddingArrayLiteral = "[" + string.Join(",", queryEmbedding.Select(f => f.ToString(System.Globalization.CultureInfo.InvariantCulture))) + "]";
 
-        var postTypeCondition = postType.HasValue ? $"AND post_type = '{postType.Value}'" : "";
-        var orgCondition = organizationId.HasValue ? $"AND organization_id = '{organizationId.Value}'" : "";
-
-        var hasLocation = location != null && radiusInKm.HasValue;
-        double? radiusInMeters = hasLocation ? radiusInKm!.Value * 1000 : null;
-
-        var locationCondition = hasLocation ? @"
-                AND location IS NOT NULL
-                AND ST_DWithin(
-                    location::geography,
-                    ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography,
-                    @radius
-                )" : "";
-
-        // col 0:id  1:post_type
-        // col 2:item_name  3:item_category  4:item_color  5:item_brand  6:item_condition
-        //     7:item_material  8:item_size  9:item_distinctive_marks  10:item_additional_details
-        // col 11:location  12:external_place_id  13:display_address
-        // col 14:event_time  15:created_at  16:updated_at
-        // col 17:embedding  18:content_hash  19:embedding_status  20:author_id  21:image_urls
-        // col 22:similarity
         var sql = $@"
-            WITH ranked AS (
-                SELECT
-                    id, post_type,
-                    item_name, item_category, item_color, item_brand, item_condition,
-                    item_material, item_size, item_distinctive_marks, item_additional_details,
-                    location, external_place_id, display_address,
-                    event_time, created_at, updated_at,
-                    embedding, content_hash, embedding_status, author_id, image_urls,
-                    (embedding <=> @queryEmbedding::vector) AS distance,
-                    (1.0 - (embedding <=> @queryEmbedding::vector)) AS similarity
-                FROM posts
-                WHERE deleted_at IS NULL
-                    AND embedding_status = 'Ready'
-                    AND embedding IS NOT NULL
-                    {postTypeCondition}
-                    {orgCondition}
-                    {locationCondition}
-            )
-            SELECT
-                id, post_type,
-                item_name, item_category, item_color, item_brand, item_condition,
-                item_material, item_size, item_distinctive_marks, item_additional_details,
-                location, external_place_id, display_address,
-                event_time, created_at, updated_at,
-                embedding, content_hash, embedding_status, author_id, image_urls,
-                similarity
-            FROM ranked
-            WHERE similarity >= @minSimilarity
-            ORDER BY distance ASC, id ASC
-            OFFSET @offset
-            LIMIT @limit;
-
-            SELECT COUNT(*)::int
+            SELECT id, (1.0 - (embedding <=> @queryEmbedding::vector)) AS similarity
             FROM posts
             WHERE deleted_at IS NULL
                 AND embedding_status = 'Ready'
                 AND embedding IS NOT NULL
-                {postTypeCondition}
-                {orgCondition}
-                {locationCondition}
-                AND (1.0 - (embedding <=> @queryEmbedding::vector)) >= @minSimilarity;
-        ";
+                {filterSql}
+                AND (1.0 - (embedding <=> @queryEmbedding::vector)) >= @minSimilarity
+            ORDER BY similarity DESC";
 
-        var parameters = new List<NpgsqlParameter>
+        var parameters = new List<NpgsqlParameter>(filterParams)
         {
             new("@queryEmbedding", embeddingArrayLiteral),
             new("@minSimilarity", MinimumSimilarityThreshold),
-            new("@offset", pagedQuery.Offset),
-            new("@limit", pagedQuery.Limit)
         };
 
-        if (hasLocation)
-        {
-            parameters.Add(new("@longitude", location!.Longitude));
-            parameters.Add(new("@latitude", location.Latitude));
-            parameters.Add(new("@radius", radiusInMeters!.Value));
-        }
-
         var conn = _context.Database.GetDbConnection();
-        if (conn.State != System.Data.ConnectionState.Open)
+        if (conn.State != ConnectionState.Open)
             await _context.Database.OpenConnectionAsync(cancellationToken);
 
-        using var command = conn.CreateCommand();
-        command.CommandText = sql;
-        command.Parameters.AddRange(parameters.ToArray());
-
-        var rawResults = new List<(Post Post, double SimilarityScore)>();
-        int totalCount = 0;
-
-        using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+        var rankedIds = new List<(Guid Id, double Similarity)>();
+        await using (var command = conn.CreateCommand())
         {
+            command.CommandText = sql;
+            command.Parameters.AddRange(parameters.ToArray());
+
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
-            {
-                var post = new Post
-                {
-                    Id              = reader.GetGuid(0),
-                    PostType        = Enum.Parse<PostType>(reader.GetString(1)),
-                    Item            = ReadPostItem(reader, 2),
-                    Location        = new GeoPoint(((Point)reader.GetValue(11)).Y, ((Point)reader.GetValue(11)).X),
-                    ExternalPlaceId = reader.IsDBNull(12) ? null : reader.GetString(12),
-                    DisplayAddress  = reader.IsDBNull(13) ? null : reader.GetString(13),
-                    EventTime       = reader.GetFieldValue<DateTimeOffset>(14),
-                    CreatedAt       = reader.GetFieldValue<DateTimeOffset>(15),
-                    UpdatedAt       = reader.IsDBNull(16) ? null : reader.GetFieldValue<DateTimeOffset>(16),
-                    Embedding       = reader.IsDBNull(17) ? null : ((Vector)reader.GetValue(17)).ToArray(),
-                    ContentHash     = reader.GetString(18),
-                    EmbeddingStatus = Enum.Parse<EmbeddingStatus>(reader.GetString(19)),
-                    PostMatchingStatus = PostMatchingStatus.Completed,
-                    AuthorId        = reader.GetString(20),
-                    ImageUrls       = reader.IsDBNull(21) ? [] : reader.GetFieldValue<string[]>(21).ToList()
-                };
-                rawResults.Add((post, reader.GetDouble(22)));
-            }
-
-            if (await reader.NextResultAsync(cancellationToken) && await reader.ReadAsync(cancellationToken))
-                totalCount = reader.GetInt32(0);
+                rankedIds.Add((reader.GetGuid(0), reader.GetDouble(1)));
         }
 
-        if (location != null)
-        {
-            var withDistance = rawResults
-                .Select(r => (r.Post, r.SimilarityScore, (double?)Haversine(location.Latitude, location.Longitude, r.Post.Location!.Latitude, r.Post.Location.Longitude)))
-                .OrderBy(r => r.Item3)
-                .ToList();
-            return (withDistance, totalCount);
-        }
+        if (rankedIds.Count == 0)
+            return [];
 
-        return (rawResults.Select(r => (r.Post, r.SimilarityScore, (double?)null)).ToList(), totalCount);
+        var ids = rankedIds.Select(r => r.Id).ToList();
+        var posts = await _dbSet
+            .AsNoTracking()
+            .Include(p => p.Author)
+            .Include(p => p.Organization)
+            .Where(p => ids.Contains(p.Id))
+            .ToListAsync(cancellationToken);
+
+        var postMap = posts.ToDictionary(p => p.Id);
+        return rankedIds
+            .Where(r => postMap.ContainsKey(r.Id))
+            .Select(r => (postMap[r.Id], r.Similarity));
     }
 
     public async Task<IEnumerable<(Post Post, double Similarity, double DistanceMeters)>> GetSimilarPostsAsync(
@@ -412,54 +323,31 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return results;
     }
 
-    public async Task<(IEnumerable<Post> Items, int TotalCount)> SearchByFullTextAsync(
+    public async Task<IEnumerable<Post>> SearchByFullTextAsync(
         string searchTerm,
-        PagedQuery pagedQuery,
         PostFilters? filters = null,
         CancellationToken cancellationToken = default)
     {
         var (filterSql, parameters) = BuildFilters(filters);
-
         parameters.Insert(0, new("@searchTerm", searchTerm));
 
-        var countSql = $@"
-            SELECT COUNT(*)
-            FROM posts
-            WHERE deleted_at IS NULL
-                AND item_search @@ websearch_to_tsquery('english', @searchTerm)
-                {filterSql}";
-
         var dataSql = $@"
-            SELECT id,
-                   ts_rank(item_search, websearch_to_tsquery('english', @searchTerm)) AS rank
+            SELECT id
             FROM posts
             WHERE deleted_at IS NULL
                 AND item_search @@ websearch_to_tsquery('english', @searchTerm)
                 {filterSql}
-            ORDER BY rank DESC
-            LIMIT @limit OFFSET @offset";
-
-        var dataParameters = parameters.Select(p => new NpgsqlParameter(p.ParameterName, p.Value)).ToList();
-        dataParameters.Add(new("@limit", pagedQuery.Limit));
-        dataParameters.Add(new("@offset", pagedQuery.Offset));
+            ORDER BY ts_rank(item_search, websearch_to_tsquery('english', @searchTerm)) DESC";
 
         var conn = _context.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
             await _context.Database.OpenConnectionAsync(cancellationToken);
 
-        int totalCount;
-        await using (var countCmd = conn.CreateCommand())
-        {
-            countCmd.CommandText = countSql;
-            countCmd.Parameters.AddRange(parameters.ToArray());
-            totalCount = Convert.ToInt32(await countCmd.ExecuteScalarAsync(cancellationToken));
-        }
-
         var rankedIds = new List<Guid>();
         await using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = dataSql;
-            cmd.Parameters.AddRange(dataParameters.ToArray());
+            cmd.Parameters.AddRange(parameters.ToArray());
 
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
@@ -467,7 +355,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         }
 
         if (rankedIds.Count == 0)
-            return ([], totalCount);
+            return [];
 
         var posts = await _dbSet
             .AsNoTracking()
@@ -477,8 +365,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             .ToListAsync(cancellationToken);
 
         var postMap = posts.ToDictionary(p => p.Id);
-        var ordered = rankedIds.Where(id => postMap.ContainsKey(id)).Select(id => postMap[id]);
-        return (ordered, totalCount);
+        return rankedIds.Where(id => postMap.ContainsKey(id)).Select(id => postMap[id]);
     }
 
 }

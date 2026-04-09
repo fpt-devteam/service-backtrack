@@ -30,7 +30,9 @@ public class FirebaseAuthMiddleware
             "/api/core/invitations/check",
 
             "/api/core/posts/feed",
-            "/api/core/posts/search"
+            "/api/core/posts/search",
+            "/api/core/post-image/analyze",
+
         };
 
     /// <summary>

@@ -32,7 +32,18 @@
       "Bash(xargs cat:*)",
       "Bash(xargs grep:*)",
       "Bash(dotnet tool:*)",
-      "Bash(export PATH=\"$PATH:$HOME/.dotnet/tools\")"
+      "Bash(export PATH=\"$PATH:$HOME/.dotnet/tools\")",
+      "Bash(docker network:*)",
+      "Bash(nvidia-smi --query-gpu=name --format=noheader)",
+      "Bash(git -C /home/nhatthang/Fptu/service-backtrack mv /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SearchPosts /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/FullTextSearchPost)",
+      "Bash(git -C /home/nhatthang/Fptu/service-backtrack mv /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/FullTextSearchPost/SearchPostsCommand.cs /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/FullTextSearchPost/FullTextSearchPostCommand.cs)",
+      "Bash(git -C /home/nhatthang/Fptu/service-backtrack mv /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/FullTextSearchPost/SearchPostsCommandValidator.cs /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/FullTextSearchPost/FullTextSearchPostCommandValidator.cs)",
+      "Bash(git -C /home/nhatthang/Fptu/service-backtrack mv /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/FullTextSearchPost/SearchPostsHandler.cs /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/FullTextSearchPost/FullTextSearchPostHandler.cs)",
+      "Bash(git -C /home/nhatthang/Fptu/service-backtrack mv /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearch /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearchPost)",
+      "Bash(mkdir -p /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearchPost)",
+      "Bash(mv /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearch/SemanticSearchCommand.cs /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearchPost/SemanticSearchPostCommand.cs)",
+      "Bash(mv /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearch/SemanticSearchHandler.cs /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearchPost/SemanticSearchPostHandler.cs)",
+      "Bash(rmdir /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearch)"
     ],
     "deny": [],
     "ask": []

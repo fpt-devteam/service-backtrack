@@ -1,19 +1,17 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Usecases.PostExplorations;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Utils;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.PostExplorations.SearchPosts;
+namespace Backtrack.Core.Application.Usecases.PostExplorations.FullTextSearchPost;
 
-public sealed class SearchPostsHandler(IPostRepository postRepository)
-    : IRequestHandler<SearchPostsCommand, IEnumerable<SearchPostResult>>
+public sealed class FullTextSearchPostHandler(IPostRepository postRepository)
+    : IRequestHandler<FullTextSearchPostCommand, IEnumerable<SearchPostResult>>
 {
-    public async Task<IEnumerable<SearchPostResult>> Handle(SearchPostsCommand command, CancellationToken cancellationToken)
+    public async Task<IEnumerable<SearchPostResult>> Handle(FullTextSearchPostCommand command, CancellationToken cancellationToken)
     {
-        var (posts, _) = await postRepository.SearchByFullTextAsync(
+        var posts = await postRepository.SearchByFullTextAsync(
             command.Query,
-            PagedQuery.Default,
             command.Filters,
             cancellationToken);
 

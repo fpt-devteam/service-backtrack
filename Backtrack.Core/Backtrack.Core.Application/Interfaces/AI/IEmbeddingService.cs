@@ -7,9 +7,16 @@ namespace Backtrack.Core.Application.Interfaces.AI
     public interface IEmbeddingService
     {
         /// <summary>
-        /// Generates an embedding vector from a single text input.
+        /// Generates an embedding for a search query (RETRIEVAL_QUERY task type).
+        /// Must be paired with documents embedded via <see cref="GenerateDocumentEmbeddingAsync"/>.
         /// </summary>
-        Task<float[]> GenerateTextEmbeddingAsync(string text, CancellationToken cancellationToken = default);
+        Task<float[]> GenerateQueryEmbeddingAsync(string query, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Generates an embedding for a document/post to be indexed (RETRIEVAL_DOCUMENT task type).
+        /// Must be paired with queries embedded via <see cref="GenerateQueryEmbeddingAsync"/>.
+        /// </summary>
+        Task<float[]> GenerateDocumentEmbeddingAsync(string document, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Generates an embedding vector from text and optional image input.

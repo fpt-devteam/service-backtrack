@@ -35,6 +35,7 @@ public class Program
 
         builder.Services.AddDatabase(builder.Configuration);
         builder.Services.AddGemini(builder.Configuration);
+        builder.Services.AddQwenReranker(builder.Configuration);
         builder.Services.AddConfiguredCors(builder.Configuration);
         builder.Services.AddServiceConfigurations(builder.Configuration);
         builder.Services.AddHangfire(builder.Configuration);

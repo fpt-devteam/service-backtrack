@@ -1,18 +1,15 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
-using Backtrack.Core.Application.Interfaces.AI;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Domain.Constants;
 using MediatR;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Backtrack.Core.Application.Usecases.PostExplorations.SearchInventories;
 
 public sealed class SearchInventoriesHandler(
     IPostRepository postRepository,
-    IMembershipRepository membershipRepository,
-    IEmbeddingService embeddingService) : IRequestHandler<SearchInventoriesCommand, PagedResult<SearchInventoryResult>>
+    IMembershipRepository membershipRepository) : IRequestHandler<SearchInventoriesCommand, PagedResult<SearchInventoryResult>>
 {
     public async Task<PagedResult<SearchInventoryResult>> Handle(SearchInventoriesCommand command, CancellationToken cancellationToken)
     {
@@ -33,14 +30,13 @@ public sealed class SearchInventoriesHandler(
 
         if (!string.IsNullOrWhiteSpace(command.Query))
         {
-            var (items, count) = await postRepository.SearchByFullTextAsync(
+            var allItems = (await postRepository.SearchByFullTextAsync(
                 searchTerm: command.Query,
-                pagedQuery: pagedQuery,
                 filters: filters,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken)).ToList();
 
-            totalCount = count;
-            results = items.Select(MapToResult).ToList();
+            totalCount = allItems.Count;
+            results = allItems.Skip(pagedQuery.Offset).Take(pagedQuery.Limit).Select(MapToResult).ToList();
         }
         else
         {

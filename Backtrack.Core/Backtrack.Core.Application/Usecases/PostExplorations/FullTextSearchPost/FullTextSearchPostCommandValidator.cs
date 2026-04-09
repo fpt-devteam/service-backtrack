@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace Backtrack.Core.Application.Usecases.PostExplorations.SearchPosts;
+namespace Backtrack.Core.Application.Usecases.PostExplorations.FullTextSearchPost;
 
-public sealed class SearchPostsCommandValidator : AbstractValidator<SearchPostsCommand>
+public sealed class FullTextSearchPostCommandValidator : AbstractValidator<FullTextSearchPostCommand>
 {
-    public SearchPostsCommandValidator()
+    public FullTextSearchPostCommandValidator()
     {
         RuleFor(x => x.Query)
             .NotEmpty().WithMessage("Query is required")

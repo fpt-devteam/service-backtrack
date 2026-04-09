@@ -7,6 +7,7 @@ using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Text;
 using System.Text.Json;
 
 namespace Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
@@ -64,7 +65,7 @@ public sealed class UpdatePostEmbeddingHandler(
         try
         {
             var content = BuildContent(post);
-            var embedding = await embeddingService.GenerateTextEmbeddingAsync(content, cancellationToken);
+            var embedding = await embeddingService.GenerateDocumentEmbeddingAsync(content, cancellationToken);
             var newContentHash = hasher.HashStrings(JsonSerializer.Serialize(post.Item));
 
             post.Embedding = embedding;
@@ -93,5 +94,35 @@ public sealed class UpdatePostEmbeddingHandler(
     // -------------------------------------------------------------------------
 
     private static string BuildContent(Post post)
-        => JsonSerializer.Serialize(post.Item);
+    {
+        var item = post.Item;
+        var sb = new StringBuilder();
+
+        sb.Append($"A {item.Category.ToString()} item called {item.ItemName}");
+
+        if (!string.IsNullOrWhiteSpace(item.Brand))
+            sb.Append($" made by {item.Brand}");
+
+        sb.Append('.');
+
+        if (!string.IsNullOrWhiteSpace(item.Color))
+            sb.Append($" It is {item.Color} in color.");
+
+        if (!string.IsNullOrWhiteSpace(item.Material))
+            sb.Append($" Made of {item.Material}.");
+
+        if (!string.IsNullOrWhiteSpace(item.Size))
+            sb.Append($" Size is {item.Size}.");
+
+        if (!string.IsNullOrWhiteSpace(item.Condition))
+            sb.Append($" Condition: {item.Condition}.");
+
+        if (!string.IsNullOrWhiteSpace(item.DistinctiveMarks))
+            sb.Append($" It has distinctive marks: {item.DistinctiveMarks}.");
+
+        if (!string.IsNullOrWhiteSpace(item.AdditionalDetails))
+            sb.Append($" {item.AdditionalDetails}");
+
+        return sb.ToString().Trim();
+    }
 }

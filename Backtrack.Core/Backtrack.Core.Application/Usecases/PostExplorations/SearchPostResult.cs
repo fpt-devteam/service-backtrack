@@ -2,7 +2,7 @@ using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 
-namespace Backtrack.Core.Application.Usecases.PostExplorations.SearchPosts;
+namespace Backtrack.Core.Application.Usecases.PostExplorations;
 
 public sealed record SearchPostResult
 {

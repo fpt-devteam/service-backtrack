@@ -33,7 +33,16 @@ namespace Backtrack.Core.Infrastructure.AI
         }
 
         #region Text Embedding
-        public async Task<float[]> GenerateTextEmbeddingAsync(string text, CancellationToken cancellationToken = default)
+
+        /// <summary>Uses RETRIEVAL_QUERY — asymmetric search query side.</summary>
+        public Task<float[]> GenerateQueryEmbeddingAsync(string query, CancellationToken cancellationToken = default)
+            => EmbedTextAsync(query, "RETRIEVAL_QUERY", cancellationToken);
+
+        /// <summary>Uses RETRIEVAL_DOCUMENT — asymmetric document/post indexing side.</summary>
+        public Task<float[]> GenerateDocumentEmbeddingAsync(string document, CancellationToken cancellationToken = default)
+            => EmbedTextAsync(document, "RETRIEVAL_DOCUMENT", cancellationToken);
+
+        private async Task<float[]> EmbedTextAsync(string text, string taskType, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(text))
                 return Array.Empty<float>();
@@ -43,7 +52,7 @@ namespace Backtrack.Core.Infrastructure.AI
             var request = new EmbedContentRequest
             {
                 Content = new EmbedContent { Parts = [new EmbedPart { Text = text }] },
-                TaskType = "SEMANTIC_SIMILARITY",
+                TaskType = taskType,
                 OutputDimensionality = EmbeddingDimension
             };
 
@@ -54,7 +63,7 @@ namespace Backtrack.Core.Infrastructure.AI
             if (!response.IsSuccessStatusCode)
             {
                 var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("Gemini embedContent failed. Response: {ErrorBody}", errorBody);
+                _logger.LogError("Gemini embedContent failed (taskType={TaskType}). Response: {ErrorBody}", taskType, errorBody);
                 throw new HttpRequestException(
                     $"Gemini embedContent failed ({(int)response.StatusCode} {response.ReasonPhrase}): {errorBody}");
             }
@@ -66,6 +75,7 @@ namespace Backtrack.Core.Infrastructure.AI
 
             return values;
         }
+
         #endregion
 
         #region Multimodal Embedding
