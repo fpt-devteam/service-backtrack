@@ -30,7 +30,7 @@ export const ensureUserExists = async (userData: {
 			userData.id,
 			{
 				$set: {
-					email: userData.email,
+					email: userData.email || null,
 					displayName: userData.displayName,
 					avatarUrl: userData.avatarUrl,
 					globalRole: userData.globalRole,

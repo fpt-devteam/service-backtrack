@@ -29,4 +29,9 @@ public sealed class CapEventPublisher : IEventPublisher
     {
         await _capPublisher.PublishAsync(EventTopics.ReturnReportConfirmed, @event);
     }
+
+    public async Task PublishOrgEnsureExistAsync(OrgEnsureExistIntegrationEvent @event)
+    {
+        await _capPublisher.PublishAsync(EventTopics.Org.EnsureExist, @event);
+    }
 }
