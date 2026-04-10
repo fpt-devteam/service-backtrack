@@ -14,6 +14,7 @@ import {
     SupportConversationsListResult,
 } from '@/dtos/conversation/conversation.response';
 import User from "@/models/user.model";
+import Org from "@/models/org.model";
 import { Constants } from '@/config/constants';
 import { buildPaginatedResult, CursorPaginationParams } from '@/utils/pagination';
 import { toStringOrNull, ToLeanDoc } from '@/utils/object-id';
@@ -162,30 +163,38 @@ const findExistingOrgConversation = async (
 };
 
 /**
- * Find an existing Direct conversation between two users — read-only, no creation.
+ * Find an existing Direct or Support conversation between two parties — read-only, no creation.
  * Returns null if no active conversation exists between the two parties.
  */
 export const findDirectConversationByPartnerId = async (
   userId: string,
   partnerId: string,
-): Promise<DirectConversationResponse | null> => {
-  const duplicate = await ConversationParticipant.aggregate([
-    { $match: { memberId: { $in: [userId, partnerId] }, deletedAt: null } },
-    { $group: { _id: '$conversationId', count: { $sum: 1 } } },
-    { $match: { count: 2 } },
-    { $limit: 1 },
+): Promise<DirectConversationResponse | SupportConversationResponse | null> => {
+  const [duplicate, supportConv] = await Promise.all([
+    ConversationParticipant.aggregate([
+      { $match: { memberId: { $in: [userId, partnerId] }, deletedAt: null } },
+      { $group: { _id: '$conversationId', count: { $sum: 1 } } },
+      { $match: { count: 2 } },
+      { $limit: 1 },
+    ]),
+    findExistingOrgConversation(userId, partnerId),
   ]);
 
-  if (!duplicate.length) return null;
+  if (duplicate.length > 0) {
+    const [existing, partner] = await Promise.all([
+      DirectConversation.findById(duplicate[0]._id).lean().exec(),
+      fetchPartnerUser(partnerId),
+    ]);
+    if (existing && !existing.deletedAt) {
+      return toDirectConversationResponse(existing, partner);
+    }
+  }
 
-  const [existing, partner] = await Promise.all([
-    DirectConversation.findById(duplicate[0]._id).lean().exec(),
-    fetchPartnerUser(partnerId),
-  ]);
+  if (supportConv) {
+    return toSupportConversationResponse(supportConv);
+  }
 
-  if (!existing || existing.deletedAt) return null;
-
-  return toDirectConversationResponse(existing, partner);
+  return null;
 };
 
 /**
@@ -195,16 +204,17 @@ export const findDirectConversationByPartnerId = async (
 export const findOrCreateOrgConversation = async (
   userId: string,
   orgId: string,
-  orgMeta?: { orgName?: string; orgSlug?: string; orgLogoUrl?: string },
 ): Promise<SupportConversationResponse> => {
   const existingConv = await findExistingOrgConversation(userId, orgId);
   if (existingConv) return toSupportConversationResponse(existingConv);
 
+  const org = await Org.findById(orgId).lean().exec();
+  if (!org) throw ConversationErrors.OrgNotFound;
   const conversation = new Conversation({
     orgId,
-    orgName: orgMeta?.orgName ?? null,
-    orgSlug: orgMeta?.orgSlug ?? null,
-    orgLogoUrl: orgMeta?.orgLogoUrl ?? null,
+    orgName: org.name,
+    orgSlug: org.slug,
+    orgLogoUrl: org.logoUrl,
     status: ConversationStatus.IN_QUEUE,
   });
   await conversation.save();
@@ -385,8 +395,8 @@ export const deleteConversation = async (id: string, userId: string): Promise<vo
     }
 
     const conversation = await Conversation.findByIdAndUpdate(
-        id, 
-        { deletedAt: new Date() }, 
+        id,
+        { deletedAt: new Date() },
         { new: true }
     ).exec();
 
@@ -593,7 +603,7 @@ export const listConversationsQueueByStaff = async (
             $match: {
                 orgId,
                 status: ConversationStatus.IN_QUEUE,
-                staffAssignId: null,      
+                staffAssignId: null,
                 deletedAt: null,
                 ...(params.cursor && {
                     lastMessageAt: { $lt: new Date(params.cursor) }
@@ -619,7 +629,7 @@ export const listConversationsAssignedByStaff = async (
     const results = await Conversation.aggregate([
         {
             $match: {
-                staffAssignId: staffId,   
+                staffAssignId: staffId,
                 status: ConversationStatus.IN_PROGRESS,
                 deletedAt: null,
                 ...(params.cursor && {

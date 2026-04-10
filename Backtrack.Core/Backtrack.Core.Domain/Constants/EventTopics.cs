@@ -13,4 +13,9 @@ public static class EventTopics
     }
 
     public const string ReturnReportConfirmed = "return-report.confirmed";
+
+    public static class Org
+    {
+        public const string EnsureExist = "org.ensure-exist";
+    }
 }
