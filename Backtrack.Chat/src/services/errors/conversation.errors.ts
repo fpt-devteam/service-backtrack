@@ -36,4 +36,9 @@ export const ConversationErrors = {
     code: "ConversationNotAssigned",
     message: "This staff member is not currently assigned to this conversation.",
   } as Error,
+  OrgNotFound: {
+    kind: "NotFound",
+    code: "OrgNotFound",
+    message: "The organization was not found. It may not have been synced yet.",
+  } as Error,
 } as const satisfies Record<string, Error>;

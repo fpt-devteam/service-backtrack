@@ -1,5 +1,7 @@
+using Backtrack.Core.Application.Events;
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
+using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
@@ -11,13 +13,16 @@ public sealed class UpdateOrganizationHandler : IRequestHandler<UpdateOrganizati
 {
     private readonly IOrganizationRepository _organizationRepository;
     private readonly IMembershipRepository _membershipRepository;
+    private readonly IEventPublisher _eventPublisher;
 
     public UpdateOrganizationHandler(
         IOrganizationRepository organizationRepository,
-        IMembershipRepository membershipRepository)
+        IMembershipRepository membershipRepository,
+        IEventPublisher eventPublisher)
     {
         _organizationRepository = organizationRepository;
         _membershipRepository = membershipRepository;
+        _eventPublisher = eventPublisher;
     }
 
     public async Task<OrganizationResult> Handle(UpdateOrganizationCommand command, CancellationToken cancellationToken)
@@ -68,6 +73,15 @@ public sealed class UpdateOrganizationHandler : IRequestHandler<UpdateOrganizati
 
         _organizationRepository.Update(org);
         await _organizationRepository.SaveChangesAsync();
+
+        await _eventPublisher.PublishOrgEnsureExistAsync(new OrgEnsureExistIntegrationEvent
+        {
+            Id = org.Id.ToString(),
+            Name = org.Name,
+            Slug = org.Slug,
+            LogoUrl = org.LogoUrl,
+            EventTimestamp = DateTimeOffset.UtcNow,
+        });
 
         return new OrganizationResult
         {

@@ -4,7 +4,7 @@ import * as messageService from '@/services/message.service';
 import { SendDirectMessageSchema, SendSupportMessageSchema } from '@/dtos/message/message.request';
 import { isAppError } from '@/utils/api-error';
 
-import { conversationParticipantService, conversationService } from '@/services';
+import { conversationParticipantService } from '@/services';
 import ConversationParticipant from '@/models/conversation-participant';
 import { getIO } from '@/config/websocket';
 
@@ -115,11 +115,9 @@ export function registerMessageHandlers(socket: Socket): void {
   // ─── Send direct / DM message ────────────────────────────────────────────
   //
   // Event: message:send
-  // Payload: { conversationId?, recipientId, content, type?, attachments? }
+  // Payload: { conversationId, content, type?, attachments? }
   //
-  // Supply EITHER:
-  //   • conversationId  → send to an existing Direct conversation
-  //   • recipientId     → find-or-create a DM with that user, then send
+  // Conversation must be created beforehand via REST POST /conversations/direct.
   socket.on('message:send', async (data: unknown) => {
     try {
       if (!authUserId) {
@@ -129,27 +127,7 @@ export function registerMessageHandlers(socket: Socket): void {
 
       const validated = SendDirectMessageSchema.parse({ ...(data as object), senderId: authUserId });
 
-      let conversationId: string;
-      let isNewRoom = false;
-
-      if (validated.conversationId) {
-        conversationId = validated.conversationId;
-      } else {
-        // recipientId is guaranteed by schema refine
-        const conv = await conversationService.findOrCreateDirectConversation(
-          authUserId,
-          validated.recipientId!,
-        );
-        conversationId = conv.conversationId;
-        isNewRoom = true;
-      }
-
-      if (!conversationId) {
-        socket.emit('message:send:error', { code: 'INTERNAL_ERROR', message: 'Failed to resolve conversation' });
-        return;
-      }
-
-      await persistAndBroadcast(socket, authUserId, conversationId, validated, isNewRoom, 'message:send:success');
+      await persistAndBroadcast(socket, authUserId, validated.conversationId, validated, false, 'message:send:success');
     } catch (error) {
       logger.error('Error sending direct message:', { error: String(error) });
       if (isAppError(error)) {
@@ -163,13 +141,9 @@ export function registerMessageHandlers(socket: Socket): void {
   // ─── Send org / support message ──────────────────────────────────────────
   //
   // Event: message:send:support
-  // Payload: { conversationId?, orgId, content, type?, attachments? }
+  // Payload: { conversationId, content, type?, attachments? }
   //
-  // Supply EITHER:
-  //   • conversationId  → send to the caller's existing support thread
-  //   • orgId           → find-or-create the caller's support thread with that org, then send
-  //
-  // Only the customer creates the conversation; staff reply to an existing one.
+  // Conversation must be created beforehand via REST POST /conversations/org.
   socket.on('message:send:support', async (data: unknown) => {
     try {
       if (!authUserId) {
@@ -179,32 +153,7 @@ export function registerMessageHandlers(socket: Socket): void {
 
       const validated = SendSupportMessageSchema.parse({ ...(data as object), senderId: authUserId });
 
-      let conversationId: string;
-      let isNewRoom = false;
-
-      if (validated.conversationId) {
-        conversationId = validated.conversationId;
-      } else {
-        // orgId is guaranteed by schema refine
-        const conv = await conversationService.findOrCreateOrgConversation(
-          authUserId,
-          validated.orgId!,
-          {
-            orgName:     validated.orgName,
-            orgSlug:     validated.orgSlug,
-            orgLogoUrl:  validated.orgLogoUrl,
-          },
-        );
-        conversationId = conv.conversationId;
-        isNewRoom = true;
-      }
-
-      if (!conversationId) {
-        socket.emit('message:send:support:error', { code: 'INTERNAL_ERROR', message: 'Failed to resolve support conversation' });
-        return;
-      }
-
-      await persistAndBroadcast(socket, authUserId, conversationId, validated, isNewRoom, 'message:send:support:success');
+      await persistAndBroadcast(socket, authUserId, validated.conversationId, validated, false, 'message:send:support:success');
     } catch (error) {
       logger.error('Error sending support message:', { error: String(error) });
       if (isAppError(error)) {

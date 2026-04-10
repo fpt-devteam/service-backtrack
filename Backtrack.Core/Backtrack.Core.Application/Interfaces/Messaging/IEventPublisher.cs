@@ -7,4 +7,5 @@ public interface IEventPublisher
     Task PublishUserEnsureExistAsync(UserEnsureExistIntegrationEvent @event);
     Task PublishInvitationCreatedAsync(InvitationCreatedIntegrationEvent @event);
     Task PublishReturnReportConfirmedAsync(ReturnReportConfirmedIntegrationEvent @event);
+    Task PublishOrgEnsureExistAsync(OrgEnsureExistIntegrationEvent @event);
 }

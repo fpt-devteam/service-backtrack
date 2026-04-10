@@ -7,3 +7,4 @@ export * from './interfaces/message.interface';
 export * from './interfaces/support-conversation-assignment.interface';
 export * from './direct-conversation';
 export * from './interfaces/direct-conversation.interface';
+export * from './interfaces/org.interface';

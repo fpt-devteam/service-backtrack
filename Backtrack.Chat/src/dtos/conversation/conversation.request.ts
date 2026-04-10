@@ -1,4 +1,3 @@
-import { ConversationStatus } from '@/models';
 import { z } from 'zod';
 
 export const CreationDirectConversationSchema = z.object({
@@ -9,7 +8,7 @@ export type CreationDirectConversationRequest = z.infer<typeof CreationDirectCon
 
 export const CreationOrganizationConversationSchema = z.object({
     orgId: z.string().min(1, 'orgId is required'),
-    status: z.enum([ConversationStatus.IN_QUEUE, ConversationStatus.IN_PROGRESS, ConversationStatus.CLOSED]),
+    // status: z.enum([ConversationStatus.IN_QUEUE, ConversationStatus.IN_PROGRESS, ConversationStatus.CLOSED]),
 });
 
 export type CreationSupportConversationRequest = z.infer<typeof CreationOrganizationConversationSchema>;

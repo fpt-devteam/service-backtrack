@@ -23,34 +23,21 @@ const MessageBodySchema = z.object({
 
 /**
  * Direct / DM message  —  WebSocket event: message:send
- * Supply either an existing `conversationId` or a `recipientId`
- * (find-or-create semantics).
+ * Requires an existing `conversationId` (create conversation via REST endpoint first).
  */
 export const SendDirectMessageSchema = MessageBodySchema.extend({
-  conversationId: z.string().min(1).optional(),
-  recipientId: z.string().min(1).optional(),
-}).refine(
-  d => d.conversationId || d.recipientId,
-  { message: 'One of conversationId or recipientId is required for a direct message' },
-);
+  conversationId: z.string().min(1),
+});
 
 export type SendDirectMessageRequest = z.output<typeof SendDirectMessageSchema>;
 
 /**
  * Org / support message  —  WebSocket event: message:send:support
- * Supply either an existing `conversationId` or an `orgId`
- * (find-or-create semantics for the customer's support thread).
+ * Requires an existing `conversationId` (create conversation via REST endpoint first).
  */
 export const SendSupportMessageSchema = MessageBodySchema.extend({
-  conversationId: z.string().min(1).optional(),
-  orgId: z.string().min(1).optional(),
-  orgName: z.string().optional(),
-  orgSlug: z.string().optional(),
-  orgLogoUrl: z.string().optional(),
-}).refine(
-  d => d.conversationId || d.orgId,
-  { message: 'One of conversationId or orgId is required for a support message' },
-);
+  conversationId: z.string().min(1),
+});
 
 export type SendSupportMessageRequest = z.output<typeof SendSupportMessageSchema>;
 
