@@ -1,8 +1,7 @@
 using Backtrack.Core.Application.Usecases.Organizations;
 using Backtrack.Core.Application.Usecases.Organizations.CreateOrganization;
 using Backtrack.Core.Application.Usecases.Organizations.GetMyOrganizations;
-using Backtrack.Core.Application.Usecases.Organizations.GetOrganization;
-using Backtrack.Core.Application.Usecases.Organizations.GetSettingOrganizationById;
+using Backtrack.Core.Application.Usecases.Organizations.GetOrganizationById;
 using Backtrack.Core.Application.Usecases.Organizations.UpdateOrganization;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Constants;
@@ -36,18 +35,7 @@ public class OrganizationController(IMediator mediator) : ControllerBase
         [FromRoute] Guid orgId, CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var query = new GetOrganizationQuery(orgId, userId);
-        var result = await mediator.Send(query, cancellationToken);
-        return this.ApiOk(result);
-    }
-
-    [HttpGet("{orgId:guid}/settings/public")]
-    [ProducesResponseType(typeof(ApiResponse<OrganizationSettingResult>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetSettingOrganizationByIdAsync(
-        [FromRoute] Guid orgId, CancellationToken cancellationToken)
-    {
-        var query = new GetSettingOrganizationByIdQuery(orgId);
+        var query = new GetOrganizationByIdQuery(orgId, userId);
         var result = await mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }

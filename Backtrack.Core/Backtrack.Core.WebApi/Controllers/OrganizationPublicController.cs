@@ -1,6 +1,8 @@
 using Backtrack.Core.Application.Usecases.Organizations;
+using Backtrack.Core.Application.Usecases.Organizations.CheckSlugExist;
 using Backtrack.Core.Application.Usecases.Organizations.GetAllOrganizations;
-using Backtrack.Core.Application.Usecases.Organizations.GetOrganizationPublic;
+using Backtrack.Core.Application.Usecases.Organizations.GetOrganizationBySlug;
+using Backtrack.Core.Application.Usecases.Organizations.GetOrganizationSetting;
 using Backtrack.Core.WebApi.Common;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +27,25 @@ public class OrganizationPublicController(IMediator mediator) : ControllerBase
         return this.ApiOk(response);
     }
 
+    [HttpGet("slug/{slug}/exists")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> CheckSlugExistAsync(
+        [FromRoute] string slug, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new CheckSlugExistQuery(slug), cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("{orgId:guid}/settings")]
+    [ProducesResponseType(typeof(ApiResponse<OrganizationSettingResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetOrganizationSettingAsync(
+        [FromRoute] Guid orgId, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetOrganizationSettingQuery(orgId), cancellationToken);
+        return this.ApiOk(result);
+    }
+
     [HttpGet("{slug}")]
     [ProducesResponseType(typeof(ApiResponse<OrganizationResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -32,7 +53,7 @@ public class OrganizationPublicController(IMediator mediator) : ControllerBase
         [FromRoute] string slug,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetOrganizationPublicQuery(slug);
+        var query = new GetOrganizationBySlugQuery(slug);
         var result = await mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }

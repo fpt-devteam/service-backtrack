@@ -49,11 +49,14 @@ public class FirebaseAuthMiddleware
         // GET /api/qr/public/{publicCode}   — scan QR code (no auth needed)
         new Regex(@"^/api/qr/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
-        // GET /api/core/orgs/public/{slug}  — public org profile by slug, no auth required
+        // GET /api/core/orgs/public/{slug}              — public org profile by slug, no auth required
         new Regex(@"^/api/core/orgs/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
-        // GET /api/core/orgs/{guid}/settings/public  — public org settings (required finder contact fields)
-        new Regex(@"^/api/core/orgs/[0-9a-f\-]{36}/settings/public$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        // GET /api/core/orgs/public/{orgId}/settings   — public org settings, no auth required
+        new Regex(@"^/api/core/orgs/public/[0-9a-f\-]{36}/settings$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+
+        // GET /api/core/orgs/public/slug/{slug}/exists — check slug availability, no auth required
+        new Regex(@"^/api/core/orgs/public/slug/[^/]+/exists$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
         // GET /api/core/posts/{guid}                  — post detail, no auth required
         new Regex(@"^/api/core/posts/[0-9a-f\-]{36}$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
