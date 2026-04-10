@@ -17,6 +17,6 @@ public class PostEmbeddingOrchestrator
     public async Task GenerateEmbeddingAndFindMatchesAsync(Guid postId)
     {
         await _mediator.Send(new UpdatePostEmbeddingCommand(postId));
-        // await _mediator.Send(new FindAndSavePostMatchesCommand(postId));
+        await _mediator.Send(new FindAndSavePostMatchesCommand(postId));
     }
 }

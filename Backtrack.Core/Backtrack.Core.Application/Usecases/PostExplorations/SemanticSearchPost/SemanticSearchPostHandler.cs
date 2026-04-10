@@ -2,7 +2,6 @@ using Backtrack.Core.Application.Interfaces.AI;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Utils;
-using Backtrack.Core.Domain.Entities;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.PostExplorations.SemanticSearchPost;
@@ -33,7 +32,7 @@ public sealed class SemanticSearchPostHandler(
             return [];
 
         // 2. Build flat text documents for cross-encoder scoring
-        var documents = candidates.Select(c => BuildDocument(c.Post)).ToList();
+        var documents = candidates.Select(c => PostDocumentUtil.BuildDocument(c.Post)).ToList();
 
         // 3. Cross-encoder reranking — single Qwen3-Reranker call for the whole batch
         // var scores = await crossEncoder.ScoreAsync(command.Query, documents, cancellationToken);
@@ -65,39 +64,4 @@ public sealed class SemanticSearchPostHandler(
             });
     }
 
-    /// <summary>
-    /// Builds a natural-language description of a post for Qwen3-Reranker input.
-    /// Natural prose scores significantly better than key-value strings on cross-encoders.
-    /// </summary>
-    private static string BuildDocument(Post post)
-    {
-        var item = post.Item;
-        var sb   = new System.Text.StringBuilder();
-
-        sb.Append($"{post.PostType} item: {item.ItemName}.");
-
-        var attrs = new List<string>();
-        if (!string.IsNullOrWhiteSpace(item.Color))    attrs.Add(item.Color);
-        if (!string.IsNullOrWhiteSpace(item.Brand))    attrs.Add(item.Brand);
-        if (!string.IsNullOrWhiteSpace(item.Material)) attrs.Add(item.Material);
-        if (!string.IsNullOrWhiteSpace(item.Size))     attrs.Add($"{item.Size} size");
-        if (item.Category != default)                   attrs.Add(item.Category.ToString());
-
-        if (attrs.Count > 0)
-            sb.Append($" It is a {string.Join(", ", attrs)} item.");
-
-        if (!string.IsNullOrWhiteSpace(item.Condition))
-            sb.Append($" Condition: {item.Condition}.");
-
-        if (!string.IsNullOrWhiteSpace(item.DistinctiveMarks))
-            sb.Append($" Distinctive marks: {item.DistinctiveMarks}.");
-
-        if (!string.IsNullOrWhiteSpace(item.AdditionalDetails))
-            sb.Append($" Additional details: {item.AdditionalDetails}.");
-
-        if (!string.IsNullOrWhiteSpace(post.DisplayAddress))
-            sb.Append($" Found/lost at: {post.DisplayAddress}.");
-
-        return sb.ToString();
-    }
 }

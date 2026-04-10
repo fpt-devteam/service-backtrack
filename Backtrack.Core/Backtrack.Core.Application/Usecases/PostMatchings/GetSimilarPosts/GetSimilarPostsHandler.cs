@@ -2,6 +2,7 @@ using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.AI;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Utils;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
@@ -14,19 +15,19 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
 {
     private readonly IPostRepository _postRepository;
     private readonly IPostMatchRepository _postMatchRepository;
-    private readonly ILlmService _llmService;
+    private readonly IPostMatchAssessor _assessor;
     private readonly ILogger<GetSimilarPostsHandler> _logger;
 
     public GetSimilarPostsHandler(
         IPostRepository postRepository,
         IPostMatchRepository postMatchRepository,
-        ILlmService llmService,
+        IPostMatchAssessor assessor,
         ILogger<GetSimilarPostsHandler> logger)
     {
-        _postRepository = postRepository;
+        _postRepository      = postRepository;
         _postMatchRepository = postMatchRepository;
-        _llmService = llmService;
-        _logger = logger;
+        _assessor            = assessor;
+        _logger              = logger;
     }
 
     public async Task<GetSimilarPostsResult> Handle(GetSimilarPostsQuery request, CancellationToken cancellationToken)
@@ -43,9 +44,8 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
         if (unassessed.Count > 0)
         {
             foreach (var match in unassessed)
-            {
                 await TryRunAssessmentAsync(match, sourcePost, cancellationToken);
-            }
+
             await _postMatchRepository.SaveChangesAsync();
         }
 
@@ -59,25 +59,25 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
         {
             var targetPost = sourcePost.PostType == PostType.Lost ? match.FoundPost : match.LostPost;
 
-            var (lostCtx, foundCtx) = sourcePost.PostType == PostType.Lost
-                ? (BuildContext(sourcePost), BuildContext(targetPost))
-                : (BuildContext(targetPost), BuildContext(sourcePost));
+            var (lostPost, foundPost) = sourcePost.PostType == PostType.Lost
+                ? (sourcePost, targetPost)
+                : (targetPost, sourcePost);
 
-            var scores = new PostMatchScores
+            var timeGapDays = Math.Abs((lostPost.EventTime - foundPost.EventTime).TotalDays);
+
+            var assessment = await _assessor.AssessAsync(new PostMatchContext
             {
-                DescriptionScore = match.DescriptionScore,
-                VisualScore = match.VisualScore,
-                LocationScore = match.LocationScore,
-                TimeWindowScore = match.TimeWindowScore,
-            };
+                LostDescription  = PostDocumentUtil.BuildDocument(lostPost),
+                FoundDescription = PostDocumentUtil.BuildDocument(foundPost),
+                DistanceMeters   = match.DistanceMeters,
+                TimeGapDays      = timeGapDays,
+                MatchScore       = match.MatchScore,
+                MatchingLevel    = match.MatchingLevel
+            }, cancellationToken);
 
-            var assessment = await _llmService.AssessPostMatchAsync(
-                lostCtx, foundCtx, scores, match.DistanceMeters, cancellationToken);
-
-            match.IsAssessed = true;
+            match.IsAssessed        = true;
             match.AssessmentSummary = assessment.Summary;
-            match.CriteriaAssessment = assessment.Criteria;
-            match.UpdatedAt = DateTimeOffset.UtcNow;
+            match.UpdatedAt         = DateTimeOffset.UtcNow;
         }
         catch (Exception ex)
         {
@@ -85,62 +85,26 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
         }
     }
 
-    private static PostMatchContext BuildContext(Post post)
-    {
-        return new PostMatchContext
-        {
-            ItemName = post.Item.ItemName,
-            Description = post.Item.AdditionalDetails,
-            EventTime = post.EventTime,
-            DisplayAddress = post.DisplayAddress,
-            ImageUrl = post.ImageUrls.FirstOrDefault()
-        };
-    }
-
     private static SimilarPostItem ToSimilarPostItem(PostMatch match, Post sourcePost)
     {
         var targetPost = sourcePost.PostType == PostType.Lost ? match.FoundPost : match.LostPost;
 
-        var criteria = new SimilarPostCriteria
-        {
-            VisualAnalysis = new CriterionResult
-            {
-                Score = match.VisualScore,
-                Points = match.CriteriaAssessment?.VisualAnalysis
-            },
-            Description = new CriterionResult
-            {
-                Score = match.DescriptionScore,
-                Points = match.CriteriaAssessment?.Description
-            },
-            Location = new CriterionResult
-            {
-                Score = match.LocationScore,
-                Points = match.CriteriaAssessment?.Location
-            },
-            TimeWindow = new CriterionResult
-            {
-                Score = match.TimeWindowScore,
-                Points = match.CriteriaAssessment?.TimeWindow
-            }
-        };
-
         return new SimilarPostItem
         {
-            Id = targetPost.Id,
-            PostType = targetPost.PostType,
-            Item = targetPost.Item,
-            ImageUrls = targetPost.ImageUrls,
-            Location = targetPost.Location,
-            ExternalPlaceId = targetPost.ExternalPlaceId,
-            DisplayAddress = targetPost.DisplayAddress,
-            EventTime = targetPost.EventTime,
-            MatchScore = match.MatchScore,
-            DistanceMeters = match.DistanceMeters,
-            MatchingLevel = match.MatchingLevel,
-            IsAssessed = match.IsAssessed,
-            AssessmentSummary = match.AssessmentSummary,
-            Criteria = criteria
+            Id                = targetPost.Id,
+            PostType          = targetPost.PostType,
+            Item              = targetPost.Item,
+            ImageUrls         = targetPost.ImageUrls,
+            Location          = targetPost.Location,
+            ExternalPlaceId   = targetPost.ExternalPlaceId,
+            DisplayAddress    = targetPost.DisplayAddress,
+            EventTime         = targetPost.EventTime,
+            MatchScore        = match.MatchScore,
+            DistanceMeters    = match.DistanceMeters,
+            TimeGapDays       = match.TimeGapDays,
+            MatchingLevel     = match.MatchingLevel,
+            IsAssessed        = match.IsAssessed,
+            AssessmentSummary = match.AssessmentSummary
         };
     }
 }

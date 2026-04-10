@@ -13,7 +13,7 @@ namespace Backtrack.Core.Application.Usecases.PostMatchings.FindAndSavePostMatch
 public sealed class FindAndSavePostMatchesHandler(
     IPostRepository postRepository,
     IPostMatchRepository postMatchRepository,
-    ILlmService llmService,
+    IPostMatchAssessor assessor,
     ILogger<FindAndSavePostMatchesHandler> logger) : IRequestHandler<FindAndSavePostMatchesCommand>
 {
     public async Task<Unit> Handle(FindAndSavePostMatchesCommand request, CancellationToken cancellationToken)
@@ -29,7 +29,7 @@ public sealed class FindAndSavePostMatchesHandler(
             return Unit.Value;
         }
 
-        // ── 2. Hash check — skip if matching already completed for current content ──
+        // ── 2. Skip if matching already completed ─────────────────────────────
         if (sourcePost.PostMatchingStatus == PostMatchingStatus.Completed)
         {
             logger.LogDebug("Post {PostId} matching already up-to-date, skipping.", sourcePost.Id);
@@ -52,57 +52,48 @@ public sealed class FindAndSavePostMatchesHandler(
 
             // ── 5. Find similar posts ─────────────────────────────────────────
             var similarPosts = await postRepository.GetSimilarPostsAsync(sourcePost, cancellationToken);
+            var postMatches  = new List<PostMatch>();
 
-            var sourceContext = BuildPostContext(sourcePost);
-            var postMatches = new List<PostMatch>();
-
-            foreach (var (candidatePost, similarity, distanceMeters) in similarPosts)
+            foreach (var (candidatePost, similarity) in similarPosts)
             {
-                // ── 6. Compute per-criteria scores ────────────────────────────
-                var matchScore       = PostMatchingCriteria.ComputeWeightedScore(similarity, distanceMeters);
-                var descriptionScore = PostMatchingCriteria.ComputeDescriptionScore(similarity);
-                var visualScore      = PostMatchingCriteria.ComputeVisualScore(similarity);
-                var locationScore    = PostMatchingCriteria.ComputeLocationScore(distanceMeters);
+                var distanceMeters = GeoUtil.Haversine(sourcePost.Location, candidatePost.Location);
+                var matchScore     = (float)similarity;
+                var matchingLevel  = PostMatchingUtils.ComputeMatchingLevel(matchScore);
 
-                // Determine lost/found roles and build candidate context
+                // Determine lost/found roles
                 Guid lostPostId, foundPostId;
-                PostMatchContext lostContext, foundContext;
+                Post lostPost, foundPost;
 
                 if (sourcePost.PostType == PostType.Lost)
                 {
-                    lostPostId   = sourcePost.Id;
-                    foundPostId  = candidatePost.Id;
-                    lostContext  = sourceContext;
-                    foundContext = BuildPostContext(candidatePost);
+                    lostPostId  = sourcePost.Id;   lostPost  = sourcePost;
+                    foundPostId = candidatePost.Id; foundPost = candidatePost;
                 }
                 else
                 {
-                    lostPostId   = candidatePost.Id;
-                    foundPostId  = sourcePost.Id;
-                    lostContext  = BuildPostContext(candidatePost);
-                    foundContext = sourceContext;
+                    lostPostId  = candidatePost.Id; lostPost  = candidatePost;
+                    foundPostId = sourcePost.Id;    foundPost = sourcePost;
                 }
 
-                var timeWindowScore = PostMatchingCriteria.ComputeTimeWindowScore(
-                    lostContext.EventTime,
-                    foundContext.EventTime);
+                var timeGapDays = Math.Abs((lostPost.EventTime - foundPost.EventTime).TotalDays);
 
-                // ── 7. LLM assessment per match ───────────────────────────────
-                PostMatchAssessment? assessment = null;
+                // ── 6. LLM assessment ─────────────────────────────────────────
+                var assessmentSummary = string.Empty;
+                var isAssessed        = false;
                 try
                 {
-                    assessment = await llmService.AssessPostMatchAsync(
-                        lostContext,
-                        foundContext,
-                        new PostMatchScores
-                        {
-                            DescriptionScore = descriptionScore,
-                            VisualScore      = visualScore,
-                            LocationScore    = locationScore,
-                            TimeWindowScore  = timeWindowScore
-                        },
-                        (float)distanceMeters,
-                        cancellationToken);
+                    var assessment = await assessor.AssessAsync(new PostMatchContext
+                    {
+                        LostDescription  = PostDocumentUtil.BuildDocument(lostPost),
+                        FoundDescription = PostDocumentUtil.BuildDocument(foundPost),
+                        DistanceMeters   = (float)distanceMeters,
+                        TimeGapDays      = timeGapDays,
+                        MatchScore       = matchScore,
+                        MatchingLevel    = matchingLevel
+                    }, cancellationToken);
+
+                    assessmentSummary = assessment.Summary;
+                    isAssessed        = true;
                 }
                 catch (Exception ex)
                 {
@@ -113,24 +104,20 @@ public sealed class FindAndSavePostMatchesHandler(
 
                 postMatches.Add(new PostMatch
                 {
-                    Id                 = Guid.NewGuid(),
-                    LostPostId         = lostPostId,
-                    FoundPostId        = foundPostId,
-                    MatchScore         = matchScore,
-                    MatchingLevel      = PostMatchingCriteria.ComputeMatchingLevel(matchScore),
-                    DistanceMeters     = (float)distanceMeters,
-                    DescriptionScore   = descriptionScore,
-                    VisualScore        = visualScore,
-                    LocationScore      = locationScore,
-                    TimeWindowScore    = timeWindowScore,
-                    IsAssessed         = assessment is not null,
-                    AssessmentSummary  = assessment?.Summary,
-                    CriteriaAssessment = assessment?.Criteria,
-                    CreatedAt          = DateTimeOffset.UtcNow
+                    Id                = Guid.NewGuid(),
+                    LostPostId        = lostPostId,
+                    FoundPostId       = foundPostId,
+                    MatchScore        = matchScore,
+                    MatchingLevel     = matchingLevel,
+                    DistanceMeters    = (float)distanceMeters,
+                    TimeGapDays       = timeGapDays,
+                    IsAssessed        = isAssessed,
+                    AssessmentSummary = assessmentSummary,
+                    CreatedAt         = DateTimeOffset.UtcNow
                 });
             }
 
-            // ── 8. Persist matches ────────────────────────────────────────────
+            // ── 7. Persist matches ────────────────────────────────────────────
             if (postMatches.Count > 0)
             {
                 await postMatchRepository.CreateRangeAsync(postMatches, cancellationToken);
@@ -153,23 +140,9 @@ public sealed class FindAndSavePostMatchesHandler(
             postRepository.Update(sourcePost);
             await postRepository.SaveChangesAsync();
 
-            throw; // Re-throw to allow Hangfire to retry
+            throw;
         }
 
         return Unit.Value;
-    }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private static PostMatchContext BuildPostContext(Post post)
-    {
-        return new PostMatchContext
-        {
-            ItemName      = post.Item.ItemName,
-            Description   = post.Item.AdditionalDetails,
-            EventTime     = post.EventTime,
-            DisplayAddress = post.DisplayAddress,
-            ImageUrl      = post.ImageUrls.FirstOrDefault()
-        };
     }
 }

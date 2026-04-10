@@ -9,7 +9,7 @@ public sealed record PagedQuery
     public int Offset { get; init; }
     public int Limit { get; init; }
 
-    public static PagedQuery Default { get; } = new() { Offset = 0, Limit = 20 };
+    public static PagedQuery Default { get; } = new() { Offset = 0, Limit = 200 };
 
     public static PagedQuery FromPage(int page, int pageSize)
     {

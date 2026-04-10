@@ -21,7 +21,7 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             PostFilters? filters = null,
             CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<(Post Post, double Similarity, double DistanceMeters)>> GetSimilarPostsAsync(
+        Task<IEnumerable<(Post Post, double SimilarityScore)>> GetSimilarPostsAsync(
             Post post,
             CancellationToken cancellationToken = default);
 

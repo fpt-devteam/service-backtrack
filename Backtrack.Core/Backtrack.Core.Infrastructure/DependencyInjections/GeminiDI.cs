@@ -33,7 +33,7 @@ namespace Backtrack.Core.Infrastructure.DependencyInjections
                 }
             });
 
-            services.AddHttpClient<ILlmService, GeminiLlmService>((serviceProvider, client) =>
+            services.AddHttpClient<IPostMatchAssessor, GeminiPostMatchAssessor>((serviceProvider, client) =>
             {
                 var geminiSettings = configuration.GetSection("GeminiSettings").Get<GeminiSettings>();
                 if (geminiSettings != null)

@@ -9,25 +9,6 @@ public sealed record GetSimilarPostsResult
     public IEnumerable<SimilarPostItem> SimilarPosts { get; init; } = Array.Empty<SimilarPostItem>();
 }
 
-/// <summary>
-/// A single criterion combining the pre-computed 0-100 score with LLM reasoning points.
-/// Score is always present (computed from embeddings/formulas). Points are null when LLM has not run yet.
-/// </summary>
-public sealed record CriterionResult
-{
-    public required int Score { get; init; }
-    public CriterionPoint[]? Points { get; init; }
-}
-
-/// <summary>All four match criteria for a similar post.</summary>
-public sealed record SimilarPostCriteria
-{
-    public required CriterionResult VisualAnalysis { get; init; }
-    public required CriterionResult Description { get; init; }
-    public required CriterionResult Location { get; init; }
-    public required CriterionResult TimeWindow { get; init; }
-}
-
 public sealed record SimilarPostItem
 {
     public required Guid Id { get; init; }
@@ -40,8 +21,8 @@ public sealed record SimilarPostItem
     public required DateTimeOffset EventTime { get; init; }
     public required float MatchScore { get; init; }
     public required float DistanceMeters { get; init; }
+    public required double TimeGapDays { get; init; }
     public required MatchingLevel MatchingLevel { get; init; }
     public bool IsAssessed { get; init; }
-    public string? AssessmentSummary { get; init; }
-    public SimilarPostCriteria? Criteria { get; init; }
+    public string AssessmentSummary { get; init; } = string.Empty;
 }

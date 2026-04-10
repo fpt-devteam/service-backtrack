@@ -48,7 +48,7 @@ namespace Backtrack.Core.Infrastructure.Repositories
             if (post.PostType == Backtrack.Core.Domain.Constants.PostType.Lost)
             {
                 return await _dbSet
-                    .Include(pm => pm.FoundPost).ThenInclude(p => p.ImageUrls)
+                    .Include(pm => pm.FoundPost)
                     .Where(pm => pm.LostPostId == postId && pm.DeletedAt == null)
                     .OrderByDescending(pm => pm.MatchScore)
                     .ToListAsync(cancellationToken);
@@ -56,7 +56,7 @@ namespace Backtrack.Core.Infrastructure.Repositories
             else
             {
                 return await _dbSet
-                    .Include(pm => pm.LostPost).ThenInclude(p => p.ImageUrls)
+                    .Include(pm => pm.LostPost)
                     .Where(pm => pm.FoundPostId == postId && pm.DeletedAt == null)
                     .OrderByDescending(pm => pm.MatchScore)
                     .ToListAsync(cancellationToken);
