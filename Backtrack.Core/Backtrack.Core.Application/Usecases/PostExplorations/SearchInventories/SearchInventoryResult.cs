@@ -18,4 +18,5 @@ public sealed record SearchInventoryResult
     public string? DisplayAddress { get; init; }
     public required DateTimeOffset EventTime { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
+    public FinderInfo? FinderInfo { get; init; }
 }

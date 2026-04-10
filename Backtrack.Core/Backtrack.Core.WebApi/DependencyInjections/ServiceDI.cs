@@ -34,6 +34,7 @@ public static class ServiceDI
         services.AddScoped<IPostMatchRepository, PostMatchRepository>();
         services.AddScoped<IC2CReturnReportRepository, ReturnReportRepository>();
         services.AddScoped<IOrgReturnReportRepository, OrgReturnReportRepository>();
+        services.AddScoped<IOrgReceiveReportRepository, OrgReceiveReportRepository>();
         services.AddScoped(typeof(IGenericRepository<,>), typeof(CrudRepositoryBase<,>));
 
         // Messaging

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -15,9 +16,11 @@ using Pgvector;
 namespace Backtrack.Core.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260410050922_AddReceiveReportTable")]
+    partial class AddReceiveReportTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -220,58 +223,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasFilter("deleted_at IS NULL");
 
                     b.ToTable("memberships", (string)null);
-                });
-
-            modelBuilder.Entity("Backtrack.Core.Domain.Entities.OrgReceiveReport", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<string>("FinderInfo")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("finder_info");
-
-                    b.Property<Guid>("OrgId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("org_id");
-
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("post_id");
-
-                    b.Property<string>("StaffId")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("staff_id");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrgId")
-                        .HasDatabaseName("ix_org_receive_reports_org_id");
-
-                    b.HasIndex("PostId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_org_receive_reports_post_id");
-
-                    b.HasIndex("StaffId")
-                        .HasDatabaseName("ix_org_receive_reports_staff_id");
-
-                    b.ToTable("org_receive_reports", (string)null);
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.OrgReturnReport", b =>
@@ -652,6 +603,58 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.ToTable("post_matches", (string)null);
                 });
 
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.ReceiveReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("FinderInfo")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("finder_info");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_id");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<string>("StaffId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("staff_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId")
+                        .HasDatabaseName("ix_receive_reports_org_id");
+
+                    b.HasIndex("PostId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_receive_reports_post_id");
+
+                    b.HasIndex("StaffId")
+                        .HasDatabaseName("ix_receive_reports_staff_id");
+
+                    b.ToTable("receive_reports", (string)null);
+                });
+
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.User", b =>
                 {
                     b.Property<string>("Id")
@@ -800,36 +803,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Backtrack.Core.Domain.Entities.OrgReceiveReport", b =>
-                {
-                    b.HasOne("Backtrack.Core.Domain.Entities.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrgId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_org_receive_reports_org_id");
-
-                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_org_receive_reports_post_id");
-
-                    b.HasOne("Backtrack.Core.Domain.Entities.User", "Staff")
-                        .WithMany()
-                        .HasForeignKey("StaffId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_org_receive_reports_staff_id");
-
-                    b.Navigation("Organization");
-
-                    b.Navigation("Post");
-
-                    b.Navigation("Staff");
-                });
-
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.OrgReturnReport", b =>
                 {
                     b.HasOne("Backtrack.Core.Domain.Entities.Organization", "Organization")
@@ -962,6 +935,36 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Navigation("FoundPost");
 
                     b.Navigation("LostPost");
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.ReceiveReport", b =>
+                {
+                    b.HasOne("Backtrack.Core.Domain.Entities.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_receive_reports_org_id");
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_receive_reports_post_id");
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.User", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_receive_reports_staff_id");
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.Organization", b =>

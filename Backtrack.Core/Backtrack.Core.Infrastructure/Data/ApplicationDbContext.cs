@@ -15,6 +15,7 @@ namespace Backtrack.Core.Infrastructure.Data
         public DbSet<PostMatch> PostMatches { get; set; }
         public DbSet<C2CReturnReport> C2CReturnReports { get; set; }
         public DbSet<OrgReturnReport> OrgReturnReports { get; set; }
+        public DbSet<OrgReceiveReport> OrgReceiveReports { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -28,6 +29,7 @@ namespace Backtrack.Core.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new PostMatchConfiguration());
             modelBuilder.ApplyConfiguration(new C2CReturnReportConfiguration());
             modelBuilder.ApplyConfiguration(new OrgReturnReportConfiguration());
+            modelBuilder.ApplyConfiguration(new OrgReceiveReportConfiguration());
         }
     }
 }

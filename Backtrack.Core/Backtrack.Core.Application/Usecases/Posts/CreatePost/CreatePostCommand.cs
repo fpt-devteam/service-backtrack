@@ -17,4 +17,7 @@ public sealed record CreatePostCommand : IRequest<PostResult>
     public string? DisplayAddress { get; init; }
     public string? ExternalPlaceId { get; init; }
     public DateTimeOffset? EventTime { get; init; }
+
+    // Only used when creating an org inventory item — captures who brought the item in
+    public FinderInfo? FinderInfo { get; init; }
 }

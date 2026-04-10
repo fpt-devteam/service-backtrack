@@ -18,6 +18,7 @@ public sealed class CreatePostHandler(
     IPostRepository postRepository,
     IOrganizationRepository organizationRepository,
     IMembershipRepository membershipRepository,
+    IOrgReceiveReportRepository receiveReportRepository,
     IHasher hasher,
     IBackgroundJobService backgroundJobService,
     ILogger<CreatePostHandler> logger) : IRequestHandler<CreatePostCommand, PostResult>
@@ -37,6 +38,8 @@ public sealed class CreatePostHandler(
 
             if (await membershipRepository.GetByOrgAndUserAsync(organization.Id, command.AuthorId) == null)
                 throw new ForbiddenException(MembershipErrors.NotAMember);
+
+            ValidateFinderInfo(command.FinderInfo, organization.RequiredFinderContractFields);
 
             postType = PostType.Found;
             status = PostStatus.InStorage;
@@ -71,6 +74,21 @@ public sealed class CreatePostHandler(
         };
 
         await postRepository.CreateAsync(post);
+
+        if (command.OrganizationId.HasValue)
+        {
+            var receiveReport = new OrgReceiveReport
+            {
+                Id = Guid.NewGuid(),
+                OrgId = command.OrganizationId.Value,
+                StaffId = command.AuthorId,
+                PostId = post.Id,
+                FinderInfo = command.FinderInfo,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            await receiveReportRepository.CreateAsync(receiveReport);
+        }
+
         await postRepository.SaveChangesAsync();
 
         backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
@@ -89,5 +107,39 @@ public sealed class CreatePostHandler(
             EventTime = post.EventTime,
             CreatedAt = post.CreatedAt
         };
+    }
+
+    private static void ValidateFinderInfo(FinderInfo? finderInfo, List<OrgContractField> requiredFields)
+    {
+        if (requiredFields.Count == 0)
+            return;
+
+        if (finderInfo is null)
+            throw new ValidationException(new Error(
+                "FinderInfoRequired",
+                "FinderInfo is required for organization inventory items."));
+
+        var missingFields = new List<string>();
+
+        foreach (var field in requiredFields)
+        {
+            var isEmpty = field switch
+            {
+                OrgContractField.Email => string.IsNullOrWhiteSpace(finderInfo.Email),
+                OrgContractField.Phone => string.IsNullOrWhiteSpace(finderInfo.Phone),
+                OrgContractField.NationalId => string.IsNullOrWhiteSpace(finderInfo.NationalId),
+                OrgContractField.OrgMemberId => string.IsNullOrWhiteSpace(finderInfo.OrgMemberId),
+                OrgContractField.FullName => string.IsNullOrWhiteSpace(finderInfo.FinderName),
+                _ => false
+            };
+
+            if (isEmpty)
+                missingFields.Add(field.ToString());
+        }
+
+        if (missingFields.Count > 0)
+            throw new ValidationException(new Error(
+                "FinderInfoMissingRequiredFields",
+                $"FinderInfo is missing required fields: {string.Join(", ", missingFields)}."));
     }
 }

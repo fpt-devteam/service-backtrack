@@ -7,7 +7,8 @@ namespace Backtrack.Core.Application.Usecases.Posts.GetPostById;
 
 public sealed class GetPostByIdHandler(
     IPostRepository postRepository,
-    IMembershipRepository membershipRepository) : IRequestHandler<GetPostByIdQuery, PostResult>
+    IMembershipRepository membershipRepository,
+    IOrgReceiveReportRepository receiveReportRepository) : IRequestHandler<GetPostByIdQuery, PostResult>
 {
     public async Task<PostResult> Handle(GetPostByIdQuery query, CancellationToken cancellationToken)
     {
@@ -19,6 +20,10 @@ public sealed class GetPostByIdHandler(
             var membership = await membershipRepository.GetByOrgAndUserAsync(post.OrganizationId.Value, query.UserId, cancellationToken);
             if (membership is null) throw new ForbiddenException(PostErrors.Forbidden);
         }
+
+        var receiveReport = post.OrganizationId.HasValue
+            ? await receiveReportRepository.GetByPostIdAsync(post.Id, cancellationToken)
+            : null;
 
         return new PostResult
         {
@@ -33,7 +38,8 @@ public sealed class GetPostByIdHandler(
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress  = post.DisplayAddress,
             EventTime       = post.EventTime,
-            CreatedAt       = post.CreatedAt
+            CreatedAt       = post.CreatedAt,
+            FinderInfo      = receiveReport?.FinderInfo
         };
     }
 }

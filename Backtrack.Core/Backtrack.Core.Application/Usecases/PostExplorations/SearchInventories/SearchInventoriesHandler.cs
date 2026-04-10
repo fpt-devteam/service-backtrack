@@ -3,13 +3,16 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Domain.Entities;
+using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.PostExplorations.SearchInventories;
 
 public sealed class SearchInventoriesHandler(
     IPostRepository postRepository,
-    IMembershipRepository membershipRepository) : IRequestHandler<SearchInventoriesCommand, PagedResult<SearchInventoryResult>>
+    IMembershipRepository membershipRepository,
+    IOrgReceiveReportRepository receiveReportRepository) : IRequestHandler<SearchInventoriesCommand, PagedResult<SearchInventoryResult>>
 {
     public async Task<PagedResult<SearchInventoryResult>> Handle(SearchInventoriesCommand command, CancellationToken cancellationToken)
     {
@@ -25,7 +28,7 @@ public sealed class SearchInventoriesHandler(
             Status         = command.Filters?.Status,
         };
 
-        List<SearchInventoryResult> results;
+        List<Post> posts;
         int totalCount;
 
         if (!string.IsNullOrWhiteSpace(command.Query))
@@ -36,20 +39,28 @@ public sealed class SearchInventoriesHandler(
                 cancellationToken: cancellationToken)).ToList();
 
             totalCount = allItems.Count;
-            results = allItems.Skip(pagedQuery.Offset).Take(pagedQuery.Limit).Select(MapToResult).ToList();
+            posts = allItems.Skip(pagedQuery.Offset).Take(pagedQuery.Limit).ToList();
         }
         else
         {
             var (items, count) = await postRepository.GetPagedAsync(pagedQuery, filters, cancellationToken);
-
             totalCount = count;
-            results = items.Select(MapToResult).ToList();
+            posts = items.ToList();
         }
+
+        var receiveReports = await receiveReportRepository.GetByPostIdsAsync(
+            posts.Select(p => p.Id), cancellationToken);
+
+        var results = posts.Select(p =>
+        {
+            receiveReports.TryGetValue(p.Id, out var report);
+            return MapToResult(p, report?.FinderInfo);
+        }).ToList();
 
         return new PagedResult<SearchInventoryResult>(totalCount, results);
     }
 
-    private static SearchInventoryResult MapToResult(Domain.Entities.Post post) => new()
+    private static SearchInventoryResult MapToResult(Post post, FinderInfo? finderInfo) => new()
     {
         Id              = post.Id,
         Author          = post.Author?.ToPostAuthorResult(),
@@ -62,6 +73,7 @@ public sealed class SearchInventoriesHandler(
         ExternalPlaceId = post.ExternalPlaceId,
         DisplayAddress  = post.DisplayAddress,
         EventTime       = post.EventTime,
-        CreatedAt       = post.CreatedAt
+        CreatedAt       = post.CreatedAt,
+        FinderInfo      = finderInfo
     };
 }
