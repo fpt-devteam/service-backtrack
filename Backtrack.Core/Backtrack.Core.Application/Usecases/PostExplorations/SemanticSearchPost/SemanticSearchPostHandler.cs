@@ -8,42 +8,43 @@ namespace Backtrack.Core.Application.Usecases.PostExplorations.SemanticSearchPos
 
 public sealed class SemanticSearchPostHandler(
     IPostRepository postRepository,
-    IEmbeddingService embeddingService,
-    ICrossEncoderService crossEncoder)
+    IEmbeddingService embeddingService)
     : IRequestHandler<SemanticSearchPostCommand, IEnumerable<SearchPostResult>>
 {
-    /// <summary>Max candidates pulled from vector search before reranking.</summary>
-    private const int CandidateLimit = 20;
-
-    /// <summary>Minimum rerank score to include in final results.</summary>
-    private const double RerankThreshold = 0.1;
-
     public async Task<IEnumerable<SearchPostResult>> Handle(
         SemanticSearchPostCommand command,
         CancellationToken cancellationToken)
     {
-        // 1. Retrieve candidates via embedding similarity
+        if (string.IsNullOrWhiteSpace(command.Query))
+        {
+            var result = await postRepository.GetPagedAsync(
+                PagedQuery.Default,
+                new PostFilters { Status = Domain.Constants.PostStatus.Active },
+                cancellationToken);
+            return result.Items.Select(p => new SearchPostResult
+            {
+                Id = p.Id,
+                Author = p.Author?.ToPostAuthorResult(),
+                Organization = p.Organization?.ToOrganizationOnPost(),
+                PostType = p.PostType,
+                Item = p.Item,
+                ImageUrls = p.ImageUrls,
+                Location = p.Location,
+                ExternalPlaceId = p.ExternalPlaceId,
+                DisplayAddress = p.DisplayAddress,
+                EventTime = p.EventTime,
+                CreatedAt = p.CreatedAt,
+                Score = 0,
+                DistanceInMeters = null
+            });
+        }
+
         var embedding  = await embeddingService.GenerateQueryEmbeddingAsync(command.Query, cancellationToken);
-        var candidates = (await postRepository.SearchBySemanticAsync(embedding, command.Filters, cancellationToken))
-            .Take(CandidateLimit)
-            .ToList();
+        var candidates = await postRepository.SearchBySemanticAsync(embedding, command.Filters, cancellationToken);
 
-        if (candidates.Count == 0)
-            return [];
-
-        // 2. Build flat text documents for cross-encoder scoring
-        var documents = candidates.Select(c => PostDocumentUtil.BuildDocument(c.Post)).ToList();
-
-        // 3. Cross-encoder reranking — single Qwen3-Reranker call for the whole batch
-        // var scores = await crossEncoder.ScoreAsync(command.Query, documents, cancellationToken);
-
-        // 4. Merge scores and sort by cross-encoder relevance descending
         var searchLocation = command.Filters?.Geo?.Location;
 
         return candidates
-            .Select((c, i) => (Post: c.Post, SemanticScore: c.SimilarityScore, RerankScore: 1))
-            // .Where(x => x.RerankScore >= RerankThreshold)
-            .OrderByDescending(x => x.RerankScore)
             .Select(x => new SearchPostResult
             {
                 Id               = x.Post.Id,
@@ -57,11 +58,14 @@ public sealed class SemanticSearchPostHandler(
                 DisplayAddress   = x.Post.DisplayAddress,
                 EventTime        = x.Post.EventTime,
                 CreatedAt        = x.Post.CreatedAt,
-                Score            = x.SemanticScore,
+                Score            = x.SimilarityScore,
                 DistanceInMeters = searchLocation != null && x.Post.Location != null
                     ? GeoUtil.Haversine(searchLocation, x.Post.Location)
                     : null
-            });
+            })
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.DistanceInMeters ?? double.MaxValue)
+            .ToList();
     }
 
 }

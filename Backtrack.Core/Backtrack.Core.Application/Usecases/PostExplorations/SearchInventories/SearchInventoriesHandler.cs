@@ -25,7 +25,7 @@ public sealed class SearchInventoriesHandler(
             OrganizationId = command.OrgId,
             PostType       = PostType.Found,
             Category       = command.Filters?.Category,
-            Status         = command.Filters?.Status,
+            Status         = command.Filters?.Status
         };
 
         List<Post> posts;

@@ -145,8 +145,6 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         PostFilters? filters = null,
         CancellationToken cancellationToken = default)
     {
-        const double MinimumSimilarityThreshold = 0.1;
-
         var (filterSql, filterParams) = BuildFilters(filters);
         var embeddingArrayLiteral = "[" + string.Join(",", queryEmbedding.Select(f => f.ToString(System.Globalization.CultureInfo.InvariantCulture))) + "]";
 
@@ -163,7 +161,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         var parameters = new List<NpgsqlParameter>(filterParams)
         {
             new("@queryEmbedding", embeddingArrayLiteral),
-            new("@minSimilarity", MinimumSimilarityThreshold),
+            new("@minSimilarity", PostSimilarityThresholds.MinDescriptionSimilarity),
         };
 
         var conn = _context.Database.GetDbConnection();
@@ -209,6 +207,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                 AND id != @postId
                 AND embedding_status = 'Ready'
                 AND embedding IS NOT NULL
+                AND status = 'Active'
                 AND location IS NOT NULL
                 AND post_type != @postType
                 AND author_id != @authorId

@@ -28,6 +28,8 @@ public class FirebaseAuthMiddleware
 
             "/api/core/orgs/public",
             "/api/core/invitations/check",
+            "/api/core/subscription-plans",
+            "/api/core/webhooks/stripe",
 
             "/api/core/posts/feed",
             "/api/core/posts/search",
@@ -46,8 +48,11 @@ public class FirebaseAuthMiddleware
         // GET /api/core/users/{userId}/posts  — user's public posts
         new Regex(@"^/api/core/users/(?!me(/|$))[^/]+/posts$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
-        // GET /api/qr/public/{publicCode}   — scan QR code (no auth needed)
+        // GET /api/qr/public/{publicCode}   — scan QR code via old QR service (no auth needed)
         new Regex(@"^/api/qr/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+
+        // GET /api/core/qr/public/{publicCode}  — scan QR code via Core service (no auth needed)
+        new Regex(@"^/api/core/qr/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
         // GET /api/core/orgs/public/{slug}              — public org profile by slug, no auth required
         new Regex(@"^/api/core/orgs/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),

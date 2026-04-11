@@ -38,19 +38,6 @@ services:
     networks:
       - backtrack-network
 
-  backtrack-qr-api:
-    image: backtrack-qr-api:latest
-    build:
-      context: .
-      dockerfile: dockerfiles/Dockerfile.backtrack-qr-api
-    container_name: backtrack-qr-api
-    ports:
-      - "4000:4000"
-    env_file:
-      - ./env/backtrack-qr-api.docker.env
-    networks:
-      - backtrack-network
-
   backtrack-notification-api:
     image: backtrack-notification-api:latest
     build:
@@ -82,21 +69,38 @@ services:
       - backtrack-core-db-data:/var/lib/postgresql/data
     networks:
       - backtrack-network
-  
-  backtrack-qr-db:
+
+  backtrack-chat-db:
     image: mongo:7-jammy
-    container_name: backtrack-qr-db
-    hostname: backtrack-qr-db
+    container_name: backtrack-chat-db
+    hostname: backtrack-chat-db
     ports:
-      - "27018:27017"
+      - "27017:27017"
     environment:
-      - MONGO_INITDB_DATABASE=backtrack-qr-db
+      - MONGO_INITDB_DATABASE=backtrack-chat
       - MONGO_INITDB_ROOT_USERNAME=mongo
       - MONGO_INITDB_ROOT_PASSWORD=mongo123
     volumes:
-      - backtrack-qr-db-data:/data/db
+      - backtrack-chat-db-data:/data/db
     networks:
       - backtrack-network
+    restart: unless-stopped
+
+  backtrack-notification-db:
+    image: mongo:7-jammy
+    container_name: backtrack-notification-db
+    hostname: backtrack-notification-db
+    ports:
+      - "27019:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=backtrack-notification
+      - MONGO_INITDB_ROOT_USERNAME=mongo
+      - MONGO_INITDB_ROOT_PASSWORD=mongo123
+    volumes:
+      - backtrack-notification-db-data:/data/db
+    networks:
+      - backtrack-network
+    restart: unless-stopped
 
   backtrack-message-broker:
     image: rabbitmq:3.13-management-alpine
@@ -121,46 +125,13 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  backtrack-chat-db:
-    image: mongo:7-jammy
-    container_name: backtrack-chat-db
-    hostname: backtrack-chat-db
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_DATABASE=backtrack-chat
-      - MONGO_INITDB_ROOT_USERNAME=mongo
-      - MONGO_INITDB_ROOT_PASSWORD=mongo123
-    volumes:
-      - backtrack-chat-db-data:/data/db
-    networks:
-      - backtrack-network
-    restart: unless-stopped
-  
-  backtrack-notification-db:
-    image: mongo:7-jammy
-    container_name: backtrack-notification-db
-    hostname: backtrack-notification-db
-    ports:
-      - "27019:27017"
-    environment:
-      - MONGO_INITDB_DATABASE=backtrack-notification
-      - MONGO_INITDB_ROOT_USERNAME=mongo
-      - MONGO_INITDB_ROOT_PASSWORD=mongo123
-    volumes:
-      - backtrack-notification-db-data:/data/db
-    networks:
-      - backtrack-network
-    restart: unless-stopped
-
 networks:
   backtrack-network:
     driver: bridge
 
 volumes:
   backtrack-core-db-data:
-  backtrack-message-broker-data:
   backtrack-chat-db-data:
-  backtrack-qr-db-data:
   backtrack-notification-db-data:
+  backtrack-message-broker-data:
 
