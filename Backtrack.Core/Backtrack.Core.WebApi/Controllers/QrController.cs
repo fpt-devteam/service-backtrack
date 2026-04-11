@@ -30,7 +30,7 @@ public class QrController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("public/{publicCode}")]
-    [ProducesResponseType(typeof(ApiResponse<QrCodeResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<QrPublicResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetQrByPublicCodeAsync(
         [FromRoute] string publicCode, CancellationToken cancellationToken)

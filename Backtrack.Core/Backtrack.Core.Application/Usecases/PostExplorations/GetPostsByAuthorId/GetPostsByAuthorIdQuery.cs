@@ -1,6 +1,7 @@
+using Backtrack.Core.Application.Usecases.Posts;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts.GetPostsByAuthorId;
+namespace Backtrack.Core.Application.Usecases.PostExplorations.GetPostsByAuthorId;
 
 public sealed record GetPostsByAuthorIdQuery(string AuthorId) : IRequest<PagedResult<PostResult>>
 {
