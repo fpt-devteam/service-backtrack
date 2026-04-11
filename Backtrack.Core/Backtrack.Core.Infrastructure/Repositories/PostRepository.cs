@@ -161,7 +161,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         var parameters = new List<NpgsqlParameter>(filterParams)
         {
             new("@queryEmbedding", embeddingArrayLiteral),
-            new("@minSimilarity", PostSimilarityThresholds.MinDescriptionSimilarity),
+            new("@minSimilarity", PostSimilarityThresholds.LowSimilarityThreshold),
         };
 
         var conn = _context.Database.GetDbConnection();
@@ -239,7 +239,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             command.Parameters.Add(new NpgsqlParameter("@maxDistance",    PostSimilarityThresholds.MaxDistanceMeters));
             command.Parameters.Add(new NpgsqlParameter("@eventTime",      post.EventTime));
             command.Parameters.Add(new NpgsqlParameter("@timeWindowDays", PostSimilarityThresholds.TimeWindowDays));
-            command.Parameters.Add(new NpgsqlParameter("@minSimilarity",  PostSimilarityThresholds.MinDescriptionSimilarity));
+            command.Parameters.Add(new NpgsqlParameter("@minSimilarity",  PostSimilarityThresholds.MediumSimilarityThreshold));
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
