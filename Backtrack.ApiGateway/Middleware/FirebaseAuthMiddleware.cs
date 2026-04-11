@@ -18,11 +18,6 @@ public class FirebaseAuthMiddleware
             "/swagger",
             "/auth/check-email",
 
-            "/api/qr/public",
-            "/api/qr/health",
-            "/api/qr/webhooks/stripe",
-            "/api/qr/subscriptions/plans",
-
             "/api/core/swagger",
             "/api/core/hangfire",
 
@@ -48,10 +43,7 @@ public class FirebaseAuthMiddleware
         // GET /api/core/users/{userId}/posts  — user's public posts
         new Regex(@"^/api/core/users/(?!me(/|$))[^/]+/posts$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
-        // GET /api/qr/public/{publicCode}   — scan QR code via old QR service (no auth needed)
-        new Regex(@"^/api/qr/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
-
-        // GET /api/core/qr/public/{publicCode}  — scan QR code via Core service (no auth needed)
+        // GET /api/core/qr/public/{publicCode}  — scan QR code (no auth needed)
         new Regex(@"^/api/core/qr/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
         // GET /api/core/orgs/public/{slug}              — public org profile by slug, no auth required
