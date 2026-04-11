@@ -15,7 +15,7 @@ public class QrCodeConfiguration : IEntityTypeConfiguration<QrCode>
         builder.Property(q => q.Id).HasColumnName("id").IsRequired();
         builder.Property(q => q.UserId).HasColumnName("user_id").HasMaxLength(128).IsRequired();
         builder.Property(q => q.PublicCode).HasColumnName("public_code").HasMaxLength(13).IsRequired(); // BTK-XXXXXXXX
-        builder.Property(q => q.Note).HasColumnName("note").HasMaxLength(500);
+        builder.Property(q => q.Note).HasColumnName("note").HasMaxLength(500).IsRequired();
         builder.Property(q => q.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(q => q.UpdatedAt).HasColumnName("updated_at");
         builder.Property(q => q.DeletedAt).HasColumnName("deleted_at");

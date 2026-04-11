@@ -1,8 +1,8 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Usecases.PostExplorations;
+using Backtrack.Core.Application.Usecases.Posts;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts.GetPostsByAuthorId;
+namespace Backtrack.Core.Application.Usecases.PostExplorations.GetPostsByAuthorId;
 
 public sealed class GetPostsByAuthorIdHandler(IPostRepository postRepository)
     : IRequestHandler<GetPostsByAuthorIdQuery, PagedResult<PostResult>>
