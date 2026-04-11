@@ -140,6 +140,7 @@ public sealed class CreateC2CReturnReportHandler(
             FinderPost = finderPost?.ToPostResult(),
             OwnerPost = ownerPost?.ToPostResult(),
             Status = returnReport.Status.ToString(),
+            ActivatedByRole = null,
             ConfirmedAt = returnReport.ConfirmedAt,
             ExpiresAt = returnReport.ExpiresAt,
             CreatedAt = returnReport.CreatedAt

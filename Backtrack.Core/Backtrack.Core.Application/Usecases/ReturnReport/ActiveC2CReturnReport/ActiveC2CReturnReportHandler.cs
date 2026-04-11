@@ -54,6 +54,7 @@ public sealed class ActiveC2CReturnReportHandler(
             FinderPost = returnReport.FinderPost?.ToPostResult(),
             OwnerPost = returnReport.OwnerPost?.ToPostResult(),
             Status = returnReport.Status.ToString(),
+            ActivatedByRole = returnReport.FinderId == command.UserId ? "Finder" : "Owner",
             ConfirmedAt = returnReport.ConfirmedAt,
             ExpiresAt = returnReport.ExpiresAt,
             CreatedAt = returnReport.CreatedAt

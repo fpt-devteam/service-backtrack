@@ -23,6 +23,9 @@ public sealed class GetC2CReturnReportsByUserIdHandler(
             FinderPost = r.FinderPost?.ToPostResult(),
             OwnerPost = r.OwnerPost?.ToPostResult(),
             Status = r.Status.ToString(),
+            ActivatedByRole = r.ActivatedById == r.FinderId ? "Finder"
+                            : r.ActivatedById == r.OwnerId ? "Owner"
+                            : null,
             ConfirmedAt = r.ConfirmedAt,
             ExpiresAt = r.ExpiresAt,
             CreatedAt = r.CreatedAt

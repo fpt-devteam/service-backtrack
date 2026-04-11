@@ -13,6 +13,8 @@ public sealed record C2CReturnReportResult
     public PostResult? FinderPost { get; init; }
     public PostResult? OwnerPost { get; init; }
     public required string Status { get; init; }
+    /// <summary>"Finder" | "Owner" | null — who activated this return report.</summary>
+    public string? ActivatedByRole { get; init; }
     public DateTimeOffset? ConfirmedAt { get; init; }
     public required DateTimeOffset ExpiresAt { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
