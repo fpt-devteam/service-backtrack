@@ -1241,7 +1241,7 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_posts_organization_id_organizations_id");
 
-                    b.OwnsOne("Backtrack.Core.Domain.ValueObjects.PostItem", "Item", b1 =>
+                    b.OwnsOne("Backtrack.Core.Domain.Entities.Post.Item#Backtrack.Core.Domain.ValueObjects.PostItem", "Item", b1 =>
                         {
                             b1.Property<Guid>("PostId")
                                 .HasColumnType("uuid");
@@ -1295,7 +1295,7 @@ namespace Backtrack.Core.Infrastructure.Migrations
 
                             b1.HasKey("PostId");
 
-                            b1.ToTable("posts");
+                            b1.ToTable("posts", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("PostId");

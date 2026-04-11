@@ -7,6 +7,7 @@ using Backtrack.Core.Application.Usecases.ReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.CreateC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.CreateOrgReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportById;
+using Backtrack.Core.Application.Usecases.ReturnReport.ActiveC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.OwnerConfirmC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportsByUserId;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetOrgReturnReports;
@@ -38,7 +39,7 @@ public class ReturnReportController : ControllerBase
         [FromBody] CreateC2CReturnReportCommand command, CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        command = command with { FinderId = userId };
+        command = command with { InitiatorId = userId };
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiCreated(result);
     }
@@ -121,13 +122,30 @@ public class ReturnReportController : ControllerBase
         return this.ApiOk(result);
     }
 
-    /// <summary>Owner confirms a C2C return report</summary>
-    [HttpPatch("c2c/{id:guid}/owner-confirm")]
+    /// <summary>Activate a C2C return report (either finder or owner). The counterpart must then confirm.</summary>
+    [HttpPatch("c2c/{id:guid}/activate")]
     [ProducesResponseType(typeof(ApiResponse<C2CReturnReportResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> OwnerConfirmC2CReturnReportAsync(
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ActiveC2CReturnReportAsync(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var command = new ActiveC2CReturnReportCommand { UserId = userId, C2CReturnReportId = id };
+        var result = await _mediator.Send(command, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    /// <summary>Confirm a C2C return report. Must be called by the counterpart of whoever activated it.</summary>
+    [HttpPatch("c2c/{id:guid}/confirm")]
+    [ProducesResponseType(typeof(ApiResponse<C2CReturnReportResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ConfirmC2CReturnReportAsync(
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {

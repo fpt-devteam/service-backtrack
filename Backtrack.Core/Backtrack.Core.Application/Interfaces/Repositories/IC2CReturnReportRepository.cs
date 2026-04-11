@@ -7,12 +7,13 @@ public interface IC2CReturnReportRepository : IGenericRepository<C2CReturnReport
 {
     Task<C2CReturnReport?> GetByIdWithExtensionAsync(Guid id, CancellationToken cancellationToken = default);
     Task<C2CReturnReport?> GetByIdWithPostsAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<List<C2CReturnReport>> GetExpiredPendingReturnReportsAsync(CancellationToken cancellationToken = default);
+    // Task<List<C2CReturnReport>> GetExpiredPendingReturnReportsAsync(CancellationToken cancellationToken = default);
     Task<(List<C2CReturnReport> Items, int Total)> GetByUserAsync(
         string userId,
         int page,
         int pageSize,
         ReturnReportStatus? status = null,
         CancellationToken cancellationToken = default);
-    Task<bool> ExistsActiveReturnReportForPostsAsync(Guid finderPostId, Guid ownerPostId, CancellationToken cancellationToken = default);
+    Task<bool> ExistsActiveReturnReportForFinderPostAsync(Guid finderPostId, CancellationToken cancellationToken = default);
+    Task<bool> ExistsActiveReturnReportForOwnerPostAsync(Guid ownerPostId, CancellationToken cancellationToken = default);
 }
