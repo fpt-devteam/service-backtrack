@@ -67,14 +67,20 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
             EventTimestamp = DateTimeOffset.UtcNow
         });
 
+        var finder = returnReport.FinderPost?.Author ?? returnReport.Finder!;
+        var owner = returnReport.OwnerPost?.Author ?? returnReport.Owner!;
+
         return new C2CReturnReportResult
         {
             Id = returnReport.Id,
-            Finder = returnReport.FinderPost!.Author.ToUserResult(),
-            Owner = returnReport.OwnerPost!.Author.ToUserResult(),
-            FinderPost = returnReport.FinderPost.ToPostResult(),
-            OwnerPost = returnReport.OwnerPost.ToPostResult(),
+            Finder = finder.ToUserResult(),
+            Owner = owner.ToUserResult(),
+            FinderPost = returnReport.FinderPost?.ToPostResult(),
+            OwnerPost = returnReport.OwnerPost?.ToPostResult(),
             Status = returnReport.Status.ToString(),
+            ActivatedByRole = returnReport.ActivatedById == returnReport.FinderId ? "Finder"
+                            : returnReport.ActivatedById == returnReport.OwnerId ? "Owner"
+                            : null,
             ConfirmedAt = returnReport.ConfirmedAt,
             ExpiresAt = returnReport.ExpiresAt,
             CreatedAt = returnReport.CreatedAt
