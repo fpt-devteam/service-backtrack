@@ -26,6 +26,7 @@ public sealed class GetMyQrCodeHandler(IQrCodeRepository qrCodeRepository)
                 Id = Guid.NewGuid(),
                 UserId = query.UserId,
                 PublicCode = publicCode,
+                Note = "If you found something that belongs to me, please reach out — I'd really appreciate it!",
             });
             await qrCodeRepository.SaveChangesAsync();
         }
