@@ -14,6 +14,14 @@ public static class ReturnReportErrors
         Code: "ReturnReportAlreadyExists",
         Message: "An active ReturnReport already exists for these posts.");
 
+    public static readonly Error FinderPostAlreadyInReport = new(
+        Code: "FinderPostAlreadyInReport",
+        Message: "This finder post already has an active return report.");
+
+    public static readonly Error OwnerPostAlreadyInReport = new(
+        Code: "OwnerPostAlreadyInReport",
+        Message: "This owner post already has an active return report.");
+
     public static readonly Error AlreadyConfirmed = new(
         Code: "ReturnReportAlreadyConfirmed",
         Message: "This ReturnReport has already been confirmed.");
@@ -62,7 +70,19 @@ public static class ReturnReportErrors
         Code: "OwnerIdRequired",
         Message: "OwnerId is required when OwnerPostId is not provided.");
 
+    public static readonly Error FinderIdRequired = new(
+        Code: "FinderIdRequired",
+        Message: "FinderId is required when FinderPostId is not provided.");
+
     public static readonly Error OwnerNotFound = new(
         Code: "OwnerNotFound",
         Message: "Owner user not found.");
+
+    public static readonly Error FinderNotFound = new(
+        Code: "FinderNotFound",
+        Message: "Finder user not found.");
+
+    public static readonly Error NotParticipant = new(
+        Code: "NotParticipant",
+        Message: "You must be the finder or owner of one of the provided posts to create a return report.");
 }
