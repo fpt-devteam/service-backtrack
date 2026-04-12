@@ -23,7 +23,22 @@ const findConversationById = async (conversationId: string) => {
   return null;
 };
 
-export const sendMessage = async (data: SendMessagePayload): Promise<MessageResponse> => {
+export interface ConversationUnreadUpdate {
+  memberId: string;
+  unreadCount: number;
+  lastMessage: {
+    senderId: string;
+    content: string;
+    timestamp: Date;
+  };
+}
+
+export interface SendMessageResult {
+  message: MessageResponse;
+  unreadUpdates: ConversationUnreadUpdate[];
+}
+
+export const sendMessage = async (data: SendMessagePayload): Promise<SendMessageResult> => {
   // Verify conversation exists (direct or support)
   const found = await findConversationById(data.conversationId);
   if (!found) {
@@ -68,23 +83,48 @@ export const sendMessage = async (data: SendMessagePayload): Promise<MessageResp
       memberId: { $ne: data.senderId },
       deletedAt: null,
     },
-    {
-      $inc: { unreadCount: 1 },
-    }
+    { $inc: { unreadCount: 1 } }
   ).exec();
+
+  // Fetch updated unread counts to push real-time to each participant
+  const updatedParticipants = await ConversationParticipant.find(
+    {
+      conversationId: data.conversationId,
+      memberId: { $ne: data.senderId },
+      deletedAt: null,
+    },
+    { memberId: 1, unreadCount: 1 }
+  ).lean().exec();
+
+  const lastMessage = {
+    senderId: data.senderId,
+    content: data.content,
+    timestamp: message.createdAt,
+  };
+
+  const unreadUpdates: ConversationUnreadUpdate[] = updatedParticipants
+    .filter(p => p.memberId != null)
+    .map(p => ({
+      memberId: p.memberId as string,
+      unreadCount: p.unreadCount ?? 0,
+      lastMessage,
+    }));
 
   logger.info(`Message sent in conversation ${data.conversationId} by ${data.senderId}`);
 
   return {
-    id: message._id.toString(),
-    conversationId: message.conversationId.toString(),
-    senderId: message.senderId,
-    type: message.type,
-    content: message.content,
-    attachments: message.attachments ?? undefined,
-    status: message.status!,
-    createdAt: message.createdAt,
-    updatedAt: message.updatedAt,
+    message: {
+      id: message._id.toString(),
+      conversationId: message.conversationId.toString(),
+      senderId: message.senderId,
+      type: message.type,
+      content: message.content,
+      attachments: message.attachments ?? undefined,
+      status: message.status!,
+      createdAt: message.createdAt,
+      updatedAt: message.updatedAt,
+    },
+    unreadUpdates,
   };
 };
 

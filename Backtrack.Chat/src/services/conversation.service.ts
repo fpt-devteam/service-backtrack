@@ -504,6 +504,7 @@ export const listConversationsByUserId = async (
         {
             $match: {
                 'conversation.deletedAt': null,
+                'conversation.lastMessageContent': { $ne: null },
                 ...(params.cursor && {
                     'conversation.lastMessageAt': { $lt: new Date(params.cursor) }
                 })
@@ -747,8 +748,9 @@ const buildConvBranch = (
                 let:  { cid: '$conversationId' },
                 pipeline: [{
                     $match: {
-                        $expr:     { $eq: ['$_id', { $toObjectId: '$$cid' }] },
-                        deletedAt: null,
+                        $expr:            { $eq: ['$_id', { $toObjectId: '$$cid' }] },
+                        deletedAt:        null,
+                        lastMessageContent: { $ne: null },
                     },
                 }],
                 as: 'conv',
