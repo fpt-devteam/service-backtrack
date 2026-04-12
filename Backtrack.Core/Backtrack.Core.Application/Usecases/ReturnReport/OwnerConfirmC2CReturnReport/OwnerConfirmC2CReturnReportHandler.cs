@@ -6,7 +6,6 @@ using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Users;
 using Backtrack.Core.Domain.Constants;
-using Backtrack.Core.Domain.Entities;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.ReturnReport.OwnerConfirmC2CReturnReport;
@@ -23,20 +22,21 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
             ?? throw new NotFoundException(ReturnReportErrors.NotFound);
 
         if (returnReport.Status == ReturnReportStatus.Confirmed)
-        {
             throw new ValidationException(ReturnReportErrors.AlreadyConfirmed);
-        }
 
         if (returnReport.Status == ReturnReportStatus.Expired)
-        {
             throw new ValidationException(ReturnReportErrors.AlreadyExpired);
-        }
 
-        // Only the owner of the lost post can confirm the return
-        if (returnReport.OwnerPost?.AuthorId != command.UserId)
-        {
-            throw new ForbiddenException(new Error("NotOwner", "Only the owner can confirm this return report."));
-        }
+        if (returnReport.Status != ReturnReportStatus.Active)
+            throw new ValidationException(new Error("NotActive", "Only an Active return report can be confirmed."));
+
+        var isParticipant = returnReport.FinderId == command.UserId || returnReport.OwnerId == command.UserId;
+        if (!isParticipant)
+            throw new ForbiddenException(ReturnReportErrors.NotParticipant);
+
+        // The counterpart (not the activator) must confirm
+        if (returnReport.ActivatedById == command.UserId)
+            throw new ForbiddenException(new Error("ActivatorCannotConfirm", "The person who activated this return report cannot confirm it. Wait for the counterpart."));
 
         // Confirm the return report
         returnReport.Status = ReturnReportStatus.Confirmed;
@@ -67,14 +67,20 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
             EventTimestamp = DateTimeOffset.UtcNow
         });
 
+        var finder = returnReport.FinderPost?.Author ?? returnReport.Finder!;
+        var owner = returnReport.OwnerPost?.Author ?? returnReport.Owner!;
+
         return new C2CReturnReportResult
         {
             Id = returnReport.Id,
-            Finder = returnReport.FinderPost!.Author.ToUserResult(),
-            Owner = returnReport.OwnerPost!.Author.ToUserResult(),
-            FinderPost = returnReport.FinderPost.ToPostResult(),
-            OwnerPost = returnReport.OwnerPost.ToPostResult(),
+            Finder = finder.ToUserResult(),
+            Owner = owner.ToUserResult(),
+            FinderPost = returnReport.FinderPost?.ToPostResult(),
+            OwnerPost = returnReport.OwnerPost?.ToPostResult(),
             Status = returnReport.Status.ToString(),
+            ActivatedByRole = returnReport.ActivatedById == returnReport.FinderId ? "Finder"
+                            : returnReport.ActivatedById == returnReport.OwnerId ? "Owner"
+                            : null,
             ConfirmedAt = returnReport.ConfirmedAt,
             ExpiresAt = returnReport.ExpiresAt,
             CreatedAt = returnReport.CreatedAt

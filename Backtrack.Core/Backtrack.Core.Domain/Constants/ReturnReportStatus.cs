@@ -2,7 +2,9 @@ namespace Backtrack.Core.Domain.Constants;
 
 public enum ReturnReportStatus
 {
-    Pending = 1,
-    Confirmed = 2,
-    Expired = 3
+    Draft = 1,
+    Active = 2,
+    Confirmed = 3,
+    Rejected = 4,
+    Expired = 5,
 }

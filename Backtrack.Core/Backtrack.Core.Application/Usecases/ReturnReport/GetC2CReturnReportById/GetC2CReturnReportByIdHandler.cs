@@ -25,6 +25,9 @@ public sealed class GetC2CReturnReportByIdHandler(
             Finder = returnReport.Finder.ToUserResult(),
             Owner = returnReport.Owner.ToUserResult(),
             Status = returnReport.Status.ToString(),
+            ActivatedByRole = returnReport.ActivatedById == returnReport.FinderId ? "Finder"
+                            : returnReport.ActivatedById == returnReport.OwnerId ? "Owner"
+                            : null,
             ConfirmedAt = returnReport.ConfirmedAt,
             ExpiresAt = returnReport.ExpiresAt,
             CreatedAt = returnReport.CreatedAt

@@ -17,87 +17,115 @@ public sealed class CreateC2CReturnReportHandler(
 {
     public async Task<C2CReturnReportResult> Handle(CreateC2CReturnReportCommand command, CancellationToken cancellationToken)
     {
-        string resolvedOwnerId;
+        if (command.Status != ReturnReportStatus.Draft && command.Status != ReturnReportStatus.Active)
+            throw new ValidationException(new Error("InvalidStatus", "Status must be Draft or Active."));
+
         Post? finderPost = null;
         Post? ownerPost = null;
-        User? owner = null;
 
+        // Load and validate finder post (must be Found type)
         if (command.FinderPostId.HasValue)
         {
             finderPost = await postRepository.GetByIdAsync(command.FinderPostId.Value)
                 ?? throw new NotFoundException(ReturnReportErrors.FinderPostNotFound);
 
-            if (finderPost.AuthorId != command.FinderId)
-            {
-                throw new ForbiddenException(new Error("NotPostOwner", "You can only create returnReports for your own posts."));
-            }
-
             if (finderPost.PostType != PostType.Found)
-            {
                 throw new ValidationException(ReturnReportErrors.PostTypeMismatch);
-            }
         }
 
-        // Validate owner post if provided (Case 1, 2)
+        // Load and validate owner post (must be Lost type)
         if (command.OwnerPostId.HasValue)
         {
             ownerPost = await postRepository.GetByIdAsync(command.OwnerPostId.Value)
                 ?? throw new NotFoundException(ReturnReportErrors.OwnerPostNotFound);
 
             if (ownerPost.PostType != PostType.Lost)
-            {
                 throw new ValidationException(ReturnReportErrors.PostTypeMismatch);
-            }
+        }
 
-            if (ownerPost.AuthorId == command.FinderId)
+        // Determine initiator's role based on post ownership or explicit body fields
+        bool initiatorIsFinder = DetermineInitiatorRole(command.InitiatorId, finderPost, ownerPost, command.FinderId, command.OwnerId);
+
+        string resolvedFinderId;
+        string resolvedOwnerId;
+
+        if (initiatorIsFinder)
+        {
+            resolvedFinderId = command.InitiatorId;
+
+            if (ownerPost != null)
             {
-                throw new ValidationException(ReturnReportErrors.CannotReturnReportOwnPost);
+                if (ownerPost.AuthorId == command.InitiatorId)
+                    throw new ValidationException(ReturnReportErrors.CannotReturnReportOwnPost);
+
+                resolvedOwnerId = ownerPost.AuthorId;
             }
-            resolvedOwnerId = ownerPost.AuthorId;
+            else
+            {
+                if (string.IsNullOrWhiteSpace(command.OwnerId))
+                    throw new ValidationException(ReturnReportErrors.OwnerIdRequired);
+
+                if (command.OwnerId == command.InitiatorId)
+                    throw new ValidationException(ReturnReportErrors.CannotReturnReportOwnPost);
+
+                resolvedOwnerId = command.OwnerId;
+            }
         }
         else
         {
-            // OwnerPostId is null (Case 3, 4) - OwnerId is required
-            if (string.IsNullOrWhiteSpace(command.OwnerId))
-            {
-                throw new ValidationException(ReturnReportErrors.OwnerIdRequired);
-            }
+            // Initiator is the Owner
+            resolvedOwnerId = command.InitiatorId;
 
-            if (command.OwnerId == command.FinderId)
+            if (finderPost != null)
             {
-                throw new ValidationException(ReturnReportErrors.CannotReturnReportOwnPost);
-            }
+                if (finderPost.AuthorId == command.InitiatorId)
+                    throw new ValidationException(ReturnReportErrors.CannotReturnReportOwnPost);
 
-            owner = await userRepository.GetByIdAsync(command.OwnerId) ?? throw new NotFoundException(ReturnReportErrors.OwnerNotFound);
-            resolvedOwnerId = command.OwnerId;
+                resolvedFinderId = finderPost.AuthorId;
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(command.FinderId))
+                    throw new ValidationException(ReturnReportErrors.FinderIdRequired);
+
+                if (command.FinderId == command.InitiatorId)
+                    throw new ValidationException(ReturnReportErrors.CannotReturnReportOwnPost);
+
+                resolvedFinderId = command.FinderId;
+            }
         }
 
-        var finder = await userRepository.GetByIdAsync(command.FinderId)
-            ?? throw new NotFoundException(UserErrors.NotFound);
+        var finder = await userRepository.GetByIdAsync(resolvedFinderId)
+            ?? throw new NotFoundException(ReturnReportErrors.FinderNotFound);
 
-        owner ??= await userRepository.GetByIdAsync(resolvedOwnerId)
+        var owner = await userRepository.GetByIdAsync(resolvedOwnerId)
             ?? throw new NotFoundException(ReturnReportErrors.OwnerNotFound);
 
-        if (command.FinderPostId.HasValue && command.OwnerPostId.HasValue)
+        // Only block the initiator's own post — the counterpart's post remains free for others to use
+        if (initiatorIsFinder && command.FinderPostId.HasValue)
         {
-            // Check if active returnReport already exists for this finder-owner pair
-            var exists = await returnReportRepository.ExistsActiveReturnReportForPostsAsync(
-                command.FinderPostId.Value, command.OwnerPostId.Value, cancellationToken);
-            if (exists)
-            {
-                throw new ConflictException(ReturnReportErrors.AlreadyExists);
-            }
+            var finderPostTaken = await returnReportRepository.ExistsActiveReturnReportForFinderPostAsync(
+                command.FinderPostId.Value, cancellationToken);
+            if (finderPostTaken)
+                throw new ConflictException(ReturnReportErrors.FinderPostAlreadyInReport);
         }
-       
+
+        if (!initiatorIsFinder && command.OwnerPostId.HasValue)
+        {
+            var ownerPostTaken = await returnReportRepository.ExistsActiveReturnReportForOwnerPostAsync(
+                command.OwnerPostId.Value, cancellationToken);
+            if (ownerPostTaken)
+                throw new ConflictException(ReturnReportErrors.OwnerPostAlreadyInReport);
+        }
 
         var returnReport = new C2CReturnReport
         {
             Id = Guid.NewGuid(),
-            FinderId = command.FinderId,
+            FinderId = resolvedFinderId,
             OwnerId = resolvedOwnerId,
             FinderPostId = command.FinderPostId,
             OwnerPostId = command.OwnerPostId,
-            Status = ReturnReportStatus.Pending,
+            Status = command.Status,
             ExpiresAt = DateTimeOffset.UtcNow.AddDays(7)
         };
 
@@ -112,9 +140,39 @@ public sealed class CreateC2CReturnReportHandler(
             FinderPost = finderPost?.ToPostResult(),
             OwnerPost = ownerPost?.ToPostResult(),
             Status = returnReport.Status.ToString(),
+            ActivatedByRole = null,
             ConfirmedAt = returnReport.ConfirmedAt,
             ExpiresAt = returnReport.ExpiresAt,
             CreatedAt = returnReport.CreatedAt
         };
+    }
+
+    /// <summary>
+    /// Determines whether the initiator is the Finder or Owner.
+    /// Priority: if initiator owns the finder post → Finder; if initiator owns the owner post → Owner.
+    /// When only one post is provided, the initiator must own that post.
+    /// When no posts are provided, the presence of OwnerId implies Finder role, FinderId implies Owner role.
+    /// </summary>
+    private static bool DetermineInitiatorRole(string initiatorId, Post? finderPost, Post? ownerPost, string? finderId, string? ownerId)
+    {
+        if (finderPost != null && finderPost.AuthorId == initiatorId)
+            return true;  // initiator owns the Found post → Finder
+
+        if (ownerPost != null && ownerPost.AuthorId == initiatorId)
+            return false; // initiator owns the Lost post → Owner
+
+        // Neither post is owned by initiator
+        if (finderPost != null || ownerPost != null)
+            throw new ForbiddenException(ReturnReportErrors.NotParticipant);
+
+        // No posts provided: determine role from which explicit ID is in the body
+        // OwnerId present → initiator is Finder; FinderId present → initiator is Owner
+        if (!string.IsNullOrWhiteSpace(ownerId))
+            return true;
+
+        if (!string.IsNullOrWhiteSpace(finderId))
+            return false;
+
+        throw new ValidationException(new Error("CounterpartRequired", "Provide either OwnerId (if you are the finder) or FinderId (if you are the owner)."));
     }
 }

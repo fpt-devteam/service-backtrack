@@ -25,6 +25,10 @@ public class C2CReturnReportConfiguration : IEntityTypeConfiguration<C2CReturnRe
             .HasMaxLength(255)
             .IsRequired();
 
+        builder.Property(r => r.ActivatedById)
+            .HasColumnName("activated_by_id")
+            .HasMaxLength(255);
+
         builder.Property(r => r.Status)
             .HasColumnName("status")
             .HasConversion<string>()
