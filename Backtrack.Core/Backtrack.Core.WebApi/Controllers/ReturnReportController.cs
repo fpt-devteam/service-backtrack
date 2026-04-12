@@ -9,6 +9,7 @@ using Backtrack.Core.Application.Usecases.ReturnReport.CreateOrgReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportById;
 using Backtrack.Core.Application.Usecases.ReturnReport.ActiveC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.OwnerConfirmC2CReturnReport;
+using Backtrack.Core.Application.Usecases.ReturnReport.RejectC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportsByUserId;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetOrgReturnReports;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetOrgReturnReportById;
@@ -135,6 +136,22 @@ public class ReturnReportController : ControllerBase
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var command = new ActiveC2CReturnReportCommand { UserId = userId, C2CReturnReportId = id };
+        var result = await _mediator.Send(command, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    /// <summary>Reject a C2C return report. Can be called by either the finder or the owner at any non-terminal status.</summary>
+    [HttpPatch("c2c/{id:guid}/reject")]
+    [ProducesResponseType(typeof(ApiResponse<C2CReturnReportResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RejectC2CReturnReportAsync(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var command = new RejectC2CReturnReportCommand { UserId = userId, C2CReturnReportId = id };
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
     }
