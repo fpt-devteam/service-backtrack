@@ -22,6 +22,15 @@ public sealed class CreateSubscriptionHandler(
     {
         var subscriber = command.Subscriber!;
 
+        var plan = await planRepository.GetByIdAsync(command.PlanId)
+            ?? throw new NotFoundException(SubscriptionErrors.PlanNotFound);
+
+        if (plan.SubscriberType != subscriber.SubscriberType)
+            throw new ForbiddenException(SubscriptionErrors.PlanSubscriberTypeMismatch);
+
+        if (subscriber.SubscriberType == SubscriberType.Organization && plan.Price == 0)
+            throw new ForbiddenException(SubscriptionErrors.CannotSubscribeToFreePlan);
+
         // Resolve email — for org, also verify caller is OrgAdmin
         string email;
         if (subscriber.SubscriberType == SubscriberType.User)
@@ -64,12 +73,6 @@ public sealed class CreateSubscriptionHandler(
             _ => false
         };
         if (hasActive) throw new ConflictException(SubscriptionErrors.AlreadyActive);
-
-        var plan = await planRepository.GetByIdAsync(command.PlanId)
-            ?? throw new NotFoundException(SubscriptionErrors.PlanNotFound);
-
-        if (plan.SubscriberType != subscriber.SubscriberType)
-            throw new ForbiddenException(SubscriptionErrors.Forbidden);
 
         // Ensure Stripe customer
         var externalId = subscriber.SubscriberType == SubscriberType.User

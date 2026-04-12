@@ -20,9 +20,11 @@ public class SubscriptionController(IMediator mediator) : ControllerBase
 {
     [HttpGet("me")]
     [ProducesResponseType(typeof(ApiResponse<SubscriptionResult>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetSubscriptionAsync(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetSubscriptionAsync(
+        [FromQuery] Guid? organizationId,
+        CancellationToken cancellationToken)
     {
-        var subscriber = ResolveSubscriber();
+        var subscriber = ResolveSubscriber(organizationId);
         var result = await mediator.Send(new GetSubscriptionQuery { Subscriber = subscriber }, cancellationToken);
         return this.ApiOk(result);
     }
@@ -50,7 +52,7 @@ public class SubscriptionController(IMediator mediator) : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<PagedResult<PaymentHistoryResult>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetPaymentHistoriesAsync(
-        [FromQuery] Guid? orgId = null,
+        [FromQuery] Guid? organizationId = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
@@ -58,9 +60,9 @@ public class SubscriptionController(IMediator mediator) : ControllerBase
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var subscriber = new SubscriberContext
         {
-            SubscriberType = orgId.HasValue ? SubscriberType.Organization : SubscriberType.User,
+            SubscriberType = organizationId.HasValue ? SubscriberType.Organization : SubscriberType.User,
             UserId = userId,
-            OrganizationId = orgId,
+            OrganizationId = organizationId,
         };
         var result = await mediator.Send(new GetPaymentHistoriesQuery
         {
@@ -91,26 +93,36 @@ public class SubscriptionController(IMediator mediator) : ControllerBase
 
     /// <summary>
     /// Resolves subscriber context for endpoints that have no request body (GET).
-    /// orgId comes from the X-Organization-Id header set by the gateway.
+    /// organizationId can come from query param or the X-Organization-Id header set by the gateway.
     /// UserId is always included so handlers know the caller identity.
     /// </summary>
-    private SubscriberContext ResolveSubscriber()
+    private SubscriberContext ResolveSubscriber(Guid? queryOrganizationId = null)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var orgIdHeader = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.OrgId);
-
-        if (!string.IsNullOrEmpty(orgIdHeader) && Guid.TryParse(orgIdHeader, out var orgId))
+        
+        // Prioritize query parameter over header
+        var organizationId = queryOrganizationId;
+        if (!organizationId.HasValue)
         {
-            // orgId present → org subscription; look up by orgId, not by userId
+            var orgIdHeader = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.OrgId);
+            if (!string.IsNullOrEmpty(orgIdHeader) && Guid.TryParse(orgIdHeader, out var parsedId))
+            {
+                organizationId = parsedId;
+            }
+        }
+
+        if (organizationId.HasValue)
+        {
+            // organizationId present → org subscription; look up by organizationId, not by userId
             return new SubscriberContext
             {
                 SubscriberType = SubscriberType.Organization,
                 UserId = userId,
-                OrganizationId = orgId,
+                OrganizationId = organizationId,
             };
         }
 
-        // no orgId → user subscription; look up by userId
+        // no organizationId → user subscription; look up by userId
         return new SubscriberContext
         {
             SubscriberType = SubscriberType.User,

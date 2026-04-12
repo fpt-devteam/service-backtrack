@@ -14,6 +14,14 @@ public static class SubscriptionErrors
         Code: "SubscriptionPlanNotFound",
         Message: "Subscription plan not found.");
 
+    public static readonly Error PlanSubscriberTypeMismatch = new(
+        Code: "SubscriptionPlanSubscriberTypeMismatch",
+        Message: "The plan's subscriber type does not match the requester's subscriber type.");
+
+    public static readonly Error CannotSubscribeToFreePlan = new(
+        Code: "CannotSubscribeToFreePlan",
+        Message: "Organizations cannot explicitly subscribe to a free plan tier.");
+
     public static readonly Error Forbidden = new(
         Code: "SubscriptionForbidden",
         Message: "You are not authorized to perform this action on this subscription.");
