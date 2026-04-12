@@ -4,6 +4,7 @@ using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Application.Usecases.Posts.DeletePost;
 using Backtrack.Core.Application.Usecases.Posts.GetPostById;
+using Backtrack.Core.Application.Usecases.Posts.PublishInventoryPost;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.WebApi.Common;
@@ -86,6 +87,19 @@ public class OrganizationInventoryController(IMediator mediator) : ControllerBas
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         command = command with { PostId = id, UserId = userId };
+        var result = await mediator.Send(command, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpPost("{id:guid}/publish")]
+    [ProducesResponseType(typeof(ApiResponse<PostResult>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> PublishInventoryItemAsync(
+        [FromRoute] Guid orgId,
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var command = new PublishInventoryPostCommand { PostId = id, UserId = userId, OrgId = orgId };
         var result = await mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
     }

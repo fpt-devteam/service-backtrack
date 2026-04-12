@@ -21,5 +21,9 @@ namespace Backtrack.Core.Application.Exceptions.Errors
         public static readonly Error ImageFetchFailed = new(
             Code: "ImageFetchFailed",
             Message: "Failed to fetch image from the provided URL.");
+
+        public static readonly Error NotInStorage = new(
+            Code: "PostNotInStorage",
+            Message: "Post must be in 'InStorage' status to be published.");
     }
 }
