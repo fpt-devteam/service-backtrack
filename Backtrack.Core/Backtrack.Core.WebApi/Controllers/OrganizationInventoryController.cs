@@ -45,6 +45,24 @@ public class OrganizationInventoryController(IMediator mediator) : ControllerBas
         return this.ApiOk(result);
     }
 
+    [HttpPost("me/search")]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<SearchInventoryResult>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMyInventoryItemsAsync(
+        [FromRoute] Guid orgId,
+        [FromBody] SearchInventoriesCommand command,
+        CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        command = command with
+        {
+            OrgId = orgId,
+            UserId = userId,
+            Filters = (command.Filters ?? new InventoryFilter()) with { StaffId = userId }
+        };
+        var result = await mediator.Send(command, cancellationToken);
+        return this.ApiOk(result);
+    }
+
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ApiResponse<PostResult>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetInventoryItemByIdAsync(

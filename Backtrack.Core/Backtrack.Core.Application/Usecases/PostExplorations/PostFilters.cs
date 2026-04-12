@@ -5,7 +5,7 @@ namespace Backtrack.Core.Application.Usecases.PostExplorations;
 
 public sealed record GeoFilter(GeoPoint Location, double RadiusInKm);
 
-public sealed record TimeFilter(DateTimeOffset From, DateTimeOffset To);
+public sealed record TimeFilter(DateTimeOffset? From, DateTimeOffset? To);
 
 public sealed record PostFilters
 {

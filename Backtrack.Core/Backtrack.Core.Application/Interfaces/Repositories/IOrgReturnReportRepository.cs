@@ -7,4 +7,5 @@ public interface IOrgReturnReportRepository : IGenericRepository<OrgReturnReport
     Task<OrgReturnReport?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> ExistsActiveForPostAsync(Guid postId, CancellationToken cancellationToken = default);
     Task<(List<OrgReturnReport> Items, int Total)> GetByOrgAsync(Guid orgId, string? staffId, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<Dictionary<Guid, OrgReturnReport>> GetByPostIdsAsync(IEnumerable<Guid> postIds, CancellationToken cancellationToken = default);
 }

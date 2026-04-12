@@ -91,7 +91,8 @@ public sealed class CreatePostHandler(
 
         await postRepository.SaveChangesAsync();
 
-        backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
+        if (!command.OrganizationId.HasValue)
+            backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
         return new PostResult
         {

@@ -37,12 +37,15 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             parameters.Add(new("@latitude",  filters.Geo.Location.Latitude));
             parameters.Add(new("@radius",    filters.Geo.RadiusInKm * 1000));
         }
-        if (filters?.Time != null)
+        if (filters?.Time?.From != null)
         {
             clauses.Add("AND event_time >= @fromTime");
+            parameters.Add(new("@fromTime", filters.Time.From.Value));
+        }
+        if (filters?.Time?.To != null)
+        {
             clauses.Add("AND event_time <= @toTime");
-            parameters.Add(new("@fromTime", filters.Time.From));
-            parameters.Add(new("@toTime",   filters.Time.To));
+            parameters.Add(new("@toTime", filters.Time.To.Value));
         }
         if (filters?.Status != null)
         {
@@ -81,7 +84,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         PostFilters? filters = null,
         CancellationToken cancellationToken = default)
     {
-        var (filterSql, parameters) = BuildFilters(filters);
+        var (filterSql, _) = BuildFilters(filters);
 
         var countSql = $@"
             SELECT COUNT(*)
@@ -97,9 +100,6 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             ORDER BY created_at DESC
             LIMIT @limit OFFSET @offset";
 
-        parameters.Add(new("@limit", pagedQuery.Limit));
-        parameters.Add(new("@offset", pagedQuery.Offset));
-
         var conn = _context.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
             await _context.Database.OpenConnectionAsync(cancellationToken);
@@ -108,8 +108,8 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         await using (var countCmd = conn.CreateCommand())
         {
             countCmd.CommandText = countSql;
-            // count query doesn't need limit/offset params — use all except last two
-            countCmd.Parameters.AddRange(parameters.Take(parameters.Count - 2).ToArray());
+            var (_, countParams) = BuildFilters(filters);
+            countCmd.Parameters.AddRange(countParams.ToArray());
             totalCount = Convert.ToInt32(await countCmd.ExecuteScalarAsync(cancellationToken));
         }
 
@@ -117,7 +117,10 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         await using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = dataSql;
-            cmd.Parameters.AddRange(parameters.ToArray());
+            var (_, dataParams) = BuildFilters(filters);
+            dataParams.Add(new("@limit",  pagedQuery.Limit));
+            dataParams.Add(new("@offset", pagedQuery.Offset));
+            cmd.Parameters.AddRange(dataParams.ToArray());
 
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
@@ -200,6 +203,8 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         Post post,
         CancellationToken cancellationToken = default)
     {
+        if (post.Status != PostStatus.Active || post.EmbeddingStatus != EmbeddingStatus.Ready || post.Embedding == null)
+            return [];
         const string sql = """
             SELECT id, (1.0 - (embedding <=> @embedding)) AS similarity
             FROM posts

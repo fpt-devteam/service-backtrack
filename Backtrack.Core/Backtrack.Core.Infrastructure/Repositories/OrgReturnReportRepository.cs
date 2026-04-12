@@ -47,4 +47,12 @@ public class OrgReturnReportRepository : CrudRepositoryBase<OrgReturnReport, Gui
 
         return (items, total);
     }
+
+    public async Task<Dictionary<Guid, OrgReturnReport>> GetByPostIdsAsync(
+        IEnumerable<Guid> postIds, CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<OrgReturnReport>()
+            .Where(r => postIds.Contains(r.PostId) && r.DeletedAt == null)
+            .ToDictionaryAsync(r => r.PostId, cancellationToken);
+    }
 }

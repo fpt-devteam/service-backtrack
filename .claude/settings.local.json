@@ -43,7 +43,10 @@
       "Bash(mkdir -p /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearchPost)",
       "Bash(mv /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearch/SemanticSearchCommand.cs /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearchPost/SemanticSearchPostCommand.cs)",
       "Bash(mv /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearch/SemanticSearchHandler.cs /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearchPost/SemanticSearchPostHandler.cs)",
-      "Bash(rmdir /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearch)"
+      "Bash(rmdir /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearch)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet --list-sdks)",
+      "Bash(dotnet --list-runtimes)"
     ],
     "deny": [],
     "ask": []
