@@ -18,6 +18,14 @@ public class SubscriptionRepository : CrudRepositoryBase<Subscription, Guid>, IS
         => await _dbSet
             .FirstOrDefaultAsync(s => s.OrganizationId == organizationId && s.Status == SubscriptionStatus.Active, cancellationToken);
 
+    public async Task<Subscription?> GetIncompleteByUserIdAsync(string userId, Guid planId, CancellationToken cancellationToken = default)
+        => await _dbSet
+            .FirstOrDefaultAsync(s => s.UserId == userId && s.PlanId == planId && s.Status == SubscriptionStatus.Incomplete, cancellationToken);
+
+    public async Task<Subscription?> GetIncompleteByOrganizationIdAsync(Guid organizationId, Guid planId, CancellationToken cancellationToken = default)
+        => await _dbSet
+            .FirstOrDefaultAsync(s => s.OrganizationId == organizationId && s.PlanId == planId && s.Status == SubscriptionStatus.Incomplete, cancellationToken);
+
     public async Task<Subscription?> GetByProviderSubscriptionIdAsync(string providerSubscriptionId, CancellationToken cancellationToken = default)
         => await _dbSet
             .FirstOrDefaultAsync(s => s.ProviderSubscriptionId == providerSubscriptionId, cancellationToken);

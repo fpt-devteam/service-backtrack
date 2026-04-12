@@ -41,6 +41,7 @@ public sealed class GetUserDetailHandler(
                 Status            = p.Status,
                 PaymentDate       = p.PaymentDate,
                 ProviderInvoiceId = p.ProviderInvoiceId,
+                InvoiceUrl        = p.InvoiceUrl,
                 PlanName          = p.Subscription?.PlanSnapshot?.Name
             }).ToList()
         };

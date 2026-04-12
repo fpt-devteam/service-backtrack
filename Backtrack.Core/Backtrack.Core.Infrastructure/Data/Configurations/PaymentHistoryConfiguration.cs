@@ -22,6 +22,7 @@ public class PaymentHistoryConfiguration : IEntityTypeConfiguration<PaymentHisto
         builder.Property(p => p.Currency).HasColumnName("currency").HasMaxLength(3).IsRequired();
         builder.Property(p => p.Status).HasColumnName("status").HasConversion<string>().IsRequired();
         builder.Property(p => p.PaymentDate).HasColumnName("payment_date").IsRequired();
+        builder.Property(p => p.InvoiceUrl).HasColumnName("invoice_url").HasMaxLength(2048);
         builder.Property(p => p.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(p => p.UpdatedAt).HasColumnName("updated_at");
         builder.Property(p => p.DeletedAt).HasColumnName("deleted_at");

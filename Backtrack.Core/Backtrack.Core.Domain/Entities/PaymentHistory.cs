@@ -14,6 +14,7 @@ public sealed class PaymentHistory : Entity<Guid>
     public required string Currency { get; set; }
     public required PaymentStatus Status { get; set; }
     public required DateTimeOffset PaymentDate { get; set; }
+    public string? InvoiceUrl { get; set; }
 
     public Subscription Subscription { get; set; } = default!;
 }

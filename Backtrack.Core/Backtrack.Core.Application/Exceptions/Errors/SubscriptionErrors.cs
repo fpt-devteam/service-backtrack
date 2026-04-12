@@ -18,6 +18,10 @@ public static class SubscriptionErrors
         Code: "SubscriptionForbidden",
         Message: "You are not authorized to perform this action on this subscription.");
 
+    public static readonly Error NotAdmin = new(
+        Code: "SubscriptionNotAdmin",
+        Message: "Only organization admins can manage subscriptions.");
+
     public static readonly Error WebhookSignatureInvalid = new(
         Code: "WebhookSignatureInvalid",
         Message: "Stripe webhook signature validation failed.");

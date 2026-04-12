@@ -15,10 +15,13 @@ public sealed class CancelSubscriptionHandler(
 {
     public async Task<SubscriptionResult> Handle(CancelSubscriptionCommand command, CancellationToken cancellationToken)
     {
+        // Rule: orgId present → find by org; no orgId → find by user.
         Subscription? subscription = command.Subscriber.SubscriberType switch
         {
-            SubscriberType.User => await subscriptionRepository.GetActiveByUserIdAsync(command.Subscriber.UserId!, cancellationToken),
-            SubscriberType.Organization => await subscriptionRepository.GetActiveByOrganizationIdAsync(command.Subscriber.OrganizationId!.Value, cancellationToken),
+            SubscriberType.Organization => await subscriptionRepository.GetActiveByOrganizationIdAsync(
+                command.Subscriber.OrganizationId!.Value, cancellationToken),
+            SubscriberType.User => await subscriptionRepository.GetActiveByUserIdAsync(
+                command.Subscriber.UserId!, cancellationToken),
             _ => null
         };
 

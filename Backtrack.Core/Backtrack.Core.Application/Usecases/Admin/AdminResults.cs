@@ -64,5 +64,6 @@ public sealed record PaymentHistoryResult
     public required PaymentStatus Status { get; init; }
     public required DateTimeOffset PaymentDate { get; init; }
     public required string ProviderInvoiceId { get; init; }
+    public string? InvoiceUrl { get; init; }
     public string? PlanName { get; init; }
 }

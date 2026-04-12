@@ -5,13 +5,15 @@ using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Backtrack.Core.Application.Usecases.StripeWebhooks.HandleStripeEvent;
 
 public sealed class HandleStripeEventHandler(
     IStripeService stripeService,
     ISubscriptionRepository subscriptionRepository,
-    IPaymentHistoryRepository paymentHistoryRepository)
+    IPaymentHistoryRepository paymentHistoryRepository,
+    ILogger<HandleStripeEventHandler> logger)
     : IRequestHandler<HandleStripeEventCommand>
 {
     public async Task<Unit> Handle(HandleStripeEventCommand command, CancellationToken cancellationToken)
@@ -21,8 +23,9 @@ public sealed class HandleStripeEventHandler(
         {
             webhookEvent = await stripeService.ParseWebhookEventAsync(command.Json, command.Signature);
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Stripe webhook validation failed");
             throw new UnauthorizedException(SubscriptionErrors.WebhookSignatureInvalid);
         }
 
@@ -35,6 +38,8 @@ public sealed class HandleStripeEventHandler(
 
             case "invoice.payment_succeeded":
             case "invoice.payment_failed":
+            case "invoice_payment.paid":   // Stripe API 2025-05-28.basil
+            case "invoice_payment.failed":
                 await HandleInvoiceAsync(webhookEvent, cancellationToken);
                 break;
         }
@@ -64,12 +69,23 @@ public sealed class HandleStripeEventHandler(
 
     private async Task HandleInvoiceAsync(StripeWebhookEvent ev, CancellationToken cancellationToken)
     {
-        if (ev.ProviderSubscriptionId is null || ev.ProviderInvoiceId is null) return;
+        if (ev.ProviderSubscriptionId is null || ev.ProviderInvoiceId is null)
+        {
+            logger.LogWarning("HandleInvoice skipped: ProviderSubscriptionId={SubId}, ProviderInvoiceId={InvId}",
+                ev.ProviderSubscriptionId, ev.ProviderInvoiceId);
+            return;
+        }
 
         var subscription = await subscriptionRepository.GetByProviderSubscriptionIdAsync(ev.ProviderSubscriptionId, cancellationToken);
-        if (subscription is null) return;
+        if (subscription is null)
+        {
+            logger.LogWarning("HandleInvoice skipped: no subscription found for ProviderSubscriptionId={SubId}", ev.ProviderSubscriptionId);
+            return;
+        }
 
-        var status = ev.Type == "invoice.payment_succeeded" ? PaymentStatus.Succeeded : PaymentStatus.Failed;
+        var status = ev.Type is "invoice.payment_succeeded" or "invoice_payment.paid"
+            ? PaymentStatus.Succeeded
+            : PaymentStatus.Failed;
 
         await paymentHistoryRepository.CreateAsync(new PaymentHistory
         {
@@ -83,8 +99,11 @@ public sealed class HandleStripeEventHandler(
             Currency = ev.InvoiceCurrency ?? "usd",
             Status = status,
             PaymentDate = ev.EventCreatedAt,
+            InvoiceUrl = ev.InvoiceUrl,
         });
 
         await paymentHistoryRepository.SaveChangesAsync();
+        logger.LogInformation("Payment record created: InvoiceId={InvoiceId}, Status={Status}, Amount={Amount}",
+            ev.ProviderInvoiceId, status, (ev.InvoiceAmountPaid ?? 0) / 100m);
     }
 }

@@ -10,10 +10,16 @@ public sealed class GetSubscriptionHandler(ISubscriptionRepository subscriptionR
 {
     public async Task<SubscriptionResult?> Handle(GetSubscriptionQuery query, CancellationToken cancellationToken)
     {
-        Subscription? subscription = query.Subscriber.SubscriberType switch
+        var subscriber = query.Subscriber;
+
+        // Rule: orgId present → find by org; no orgId → find by user.
+        // Never mix: an org subscription is NOT the caller's personal subscription.
+        Subscription? subscription = subscriber.SubscriberType switch
         {
-            SubscriberType.User => await subscriptionRepository.GetActiveByUserIdAsync(query.Subscriber.UserId!, cancellationToken),
-            SubscriberType.Organization => await subscriptionRepository.GetActiveByOrganizationIdAsync(query.Subscriber.OrganizationId!.Value, cancellationToken),
+            SubscriberType.Organization => await subscriptionRepository.GetActiveByOrganizationIdAsync(
+                subscriber.OrganizationId!.Value, cancellationToken),
+            SubscriberType.User => await subscriptionRepository.GetActiveByUserIdAsync(
+                subscriber.UserId!, cancellationToken),
             _ => null
         };
 
