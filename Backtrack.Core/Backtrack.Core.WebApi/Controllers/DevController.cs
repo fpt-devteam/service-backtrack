@@ -32,9 +32,6 @@ public class DevController(IMediator mediator, IWebHostEnvironment env) : Contro
         [FromBody] SeedSubscriptionPlansCommand command,
         CancellationToken cancellationToken)
     {
-        if (!env.IsDevelopment())
-            return NotFound();
-
         var result = await mediator.Send(command, cancellationToken);
         return this.ApiCreated(result);
     }
