@@ -41,7 +41,7 @@ async function persistAndBroadcast(
   }
 
   // Persist (also updates lastMessage + increments unreadCount for others)
-  const message = await messageService.sendMessage({
+  const { message, unreadUpdates } = await messageService.sendMessage({
     conversationId,
     senderId: authUserId,
     type: payload.type,
@@ -51,6 +51,28 @@ async function persistAndBroadcast(
 
   // Broadcast to everyone else in the room
   socket.to(`conversation:${conversationId}`).emit('message:new', message);
+
+  // Push unreadCount + lastMessage to each participant's user room
+  // This allows the conversation list to update without being in the conversation room
+  const io = getIO();
+  for (const { memberId, unreadCount, lastMessage: last } of unreadUpdates) {
+    io.to(`user:${memberId}`).emit('conversation:updated', {
+      conversationId,
+      unreadCount,
+      lastMessage: last,
+    });
+  }
+
+  // Also notify the sender so their own conversation list updates lastMessage
+  socket.emit('conversation:updated', {
+    conversationId,
+    unreadCount: 0,
+    lastMessage: {
+      senderId: authUserId,
+      content: payload.content,
+      timestamp: message.createdAt,
+    },
+  });
 
   // Acknowledge to the sender
   socket.emit(successEvent, { conversationId, message, isNewConversation: isNewRoom });
@@ -172,10 +194,18 @@ export function registerMessageHandlers(socket: Socket): void {
       await conversationParticipantService.resetUnreadCount(data.conversationId, authUserId);
       await messageService.markMessagesAsSeen(data.conversationId, authUserId);
 
+      // Notify other participants that this user has read the conversation
       socket.to(`conversation:${data.conversationId}`).emit('message:seen', {
         conversationId: data.conversationId,
         readBy: authUserId,
         readAt: new Date(),
+      });
+
+      // Push unreadCount = 0 to the reader's own user room (sync other tabs/devices)
+      const io = getIO();
+      io.to(`user:${authUserId}`).emit('conversation:updated', {
+        conversationId: data.conversationId,
+        unreadCount: 0,
       });
     } catch (error) {
       logger.error('Error marking conversation as read:', { error: String(error) });

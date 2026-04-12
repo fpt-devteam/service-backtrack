@@ -26,6 +26,11 @@ export function initializeWebSocket(httpServer: HttpServer): SocketIOServer {
   io.on('connection', (socket: Socket) => {
     logger.info(`WebSocket client connected: ${socket.id} (user: ${socket.data.userId})`);
 
+    // Each socket joins its own user room so we can push targeted events (e.g. unreadCount)
+    if (socket.data.userId) {
+      socket.join(`user:${socket.data.userId}`);
+    }
+
     registerSocketHandlers(socket);
 
     socket.on('disconnect', (reason) => {
