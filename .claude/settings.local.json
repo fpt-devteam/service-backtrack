@@ -46,7 +46,8 @@
       "Bash(rmdir /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Application/Usecases/PostExplorations/SemanticSearch)",
       "Bash(dotnet --version)",
       "Bash(dotnet --list-sdks)",
-      "Bash(dotnet --list-runtimes)"
+      "Bash(dotnet --list-runtimes)",
+      "Bash(grep \".cs$\")"
     ],
     "deny": [],
     "ask": []

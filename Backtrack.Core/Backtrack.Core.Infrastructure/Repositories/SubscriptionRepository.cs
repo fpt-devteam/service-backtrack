@@ -21,4 +21,31 @@ public class SubscriptionRepository : CrudRepositoryBase<Subscription, Guid>, IS
     public async Task<Subscription?> GetByProviderSubscriptionIdAsync(string providerSubscriptionId, CancellationToken cancellationToken = default)
         => await _dbSet
             .FirstOrDefaultAsync(s => s.ProviderSubscriptionId == providerSubscriptionId, cancellationToken);
+
+    public async Task<(int UserCount, int OrgCount)> GetActiveCountsAsync(CancellationToken cancellationToken = default)
+    {
+        var counts = await _dbSet
+            .Where(s => s.Status == SubscriptionStatus.Active)
+            .GroupBy(s => s.SubscriberType)
+            .Select(g => new { Type = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var userCount = counts.FirstOrDefault(c => c.Type == SubscriberType.User)?.Count ?? 0;
+        var orgCount  = counts.FirstOrDefault(c => c.Type == SubscriberType.Organization)?.Count ?? 0;
+        return (userCount, orgCount);
+    }
+
+    public async Task<decimal> GetMrrAsync(CancellationToken cancellationToken = default)
+    {
+        var snapshots = await _dbSet
+            .AsNoTracking()
+            .Where(s => s.Status == SubscriptionStatus.Active)
+            .Select(s => new { s.PlanSnapshot.Price, s.PlanSnapshot.BillingInterval })
+            .ToListAsync(cancellationToken);
+
+        return snapshots.Sum(s =>
+            s.BillingInterval == SubscriptionBillingInterval.Monthly
+                ? s.Price
+                : s.Price / 12m);
+    }
 }

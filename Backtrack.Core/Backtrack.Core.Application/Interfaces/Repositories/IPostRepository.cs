@@ -1,5 +1,6 @@
 using Backtrack.Core.Application.Usecases;
 using Backtrack.Core.Application.Usecases.PostExplorations;
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 
 namespace Backtrack.Core.Application.Interfaces.Repositories
@@ -25,5 +26,15 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             Post post,
             CancellationToken cancellationToken = default);
 
+        Task<int> CountAsync(
+            PostFilters? filters = null,
+            CancellationToken cancellationToken = default);
+
+        Task<Dictionary<(PostType Type, PostStatus Status), int>> GetBreakdownAsync(
+            CancellationToken cancellationToken = default);
+
+        Task<List<(string Period, int Count)>> GetGrowthChartAsync(
+            int months,
+            CancellationToken cancellationToken = default);
     }
 }

@@ -54,4 +54,7 @@ public class MembershipRepository : CrudRepositoryBase<Membership, Guid>, IMembe
             .Include(m => m.User)
             .FirstOrDefaultAsync(m => m.OrganizationId == orgId && m.User.Email == email, cancellationToken);
     }
+
+    public async Task<int> CountByOrgAsync(Guid orgId, CancellationToken cancellationToken = default)
+        => await _dbSet.CountAsync(m => m.OrganizationId == orgId, cancellationToken);
 }

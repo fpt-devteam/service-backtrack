@@ -17,4 +17,7 @@ public class QrCodeRepository : CrudRepositoryBase<QrCode, Guid>, IQrCodeReposit
 
     public async Task<bool> PublicCodeExistsAsync(string publicCode, CancellationToken cancellationToken = default)
         => await _dbSet.AnyAsync(q => q.PublicCode == publicCode, cancellationToken);
+
+    public async Task<int> CountByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+        => await _dbSet.CountAsync(q => q.UserId == userId, cancellationToken);
 }

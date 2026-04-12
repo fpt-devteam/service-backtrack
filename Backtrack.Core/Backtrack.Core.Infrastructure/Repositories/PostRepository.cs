@@ -268,6 +268,65 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             .Select(r => (postMap[r.Id], r.Similarity));
     }
 
+    public async Task<Dictionary<(PostType Type, PostStatus Status), int>> GetBreakdownAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var data = await _dbSet
+            .AsNoTracking()
+            .Where(p => p.DeletedAt == null)
+            .GroupBy(p => new { p.PostType, p.Status })
+            .Select(g => new { g.Key.PostType, g.Key.Status, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        return data.ToDictionary(d => (d.PostType, d.Status), d => d.Count);
+    }
+
+    public async Task<List<(string Period, int Count)>> GetGrowthChartAsync(
+        int months,
+        CancellationToken cancellationToken = default)
+    {
+        var cutoff = DateTimeOffset.UtcNow.AddMonths(-months);
+        const string sql = @"
+            SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS period,
+                   COUNT(*)::int AS count
+            FROM posts
+            WHERE created_at >= @cutoff
+              AND deleted_at IS NULL
+            GROUP BY DATE_TRUNC('month', created_at)
+            ORDER BY 1";
+
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        var result = new List<(string, int)>();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.Add(new NpgsqlParameter("@cutoff", cutoff));
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            result.Add((reader.GetString(0), reader.GetInt32(1)));
+
+        return result;
+    }
+
+    public async Task<int> CountAsync(
+        PostFilters? filters = null,
+        CancellationToken cancellationToken = default)
+    {
+        var (filterSql, parameters) = BuildFilters(filters);
+        var sql = $@"SELECT COUNT(*) FROM posts WHERE deleted_at IS NULL {filterSql}";
+
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddRange(parameters.ToArray());
+        return Convert.ToInt32(await cmd.ExecuteScalarAsync(cancellationToken));
+    }
+
     public async Task<IEnumerable<Post>> SearchByFullTextAsync(
         string searchTerm,
         PostFilters? filters = null,
