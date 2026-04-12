@@ -7,13 +7,20 @@ namespace Backtrack.Core.Application.Usecases.QrCodes.GetQrByPublicCode;
 
 public sealed class GetQrByPublicCodeHandler(
     IQrCodeRepository qrCodeRepository,
-    IUserRepository userRepository)
+    IUserRepository userRepository,
+    ISubscriptionRepository subscriptionRepository)
     : IRequestHandler<GetQrByPublicCodeQuery, QrPublicResult>
 {
     public async Task<QrPublicResult> Handle(GetQrByPublicCodeQuery query, CancellationToken cancellationToken)
     {
         var qrCode = await qrCodeRepository.GetByPublicCodeAsync(query.PublicCode, cancellationToken)
             ?? throw new NotFoundException(QrErrors.NotFound);
+
+        var subscription = await subscriptionRepository.GetActiveByUserIdAsync(qrCode.UserId, cancellationToken);
+        if (subscription == null)
+        {
+            throw new NotFoundException(QrErrors.NotFound);
+        }
 
         var user = await userRepository.GetByIdAsync(qrCode.UserId)
             ?? throw new NotFoundException(UserErrors.NotFound);
