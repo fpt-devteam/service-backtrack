@@ -613,7 +613,7 @@ export const listConversationsQueueByStaff = async (
         },
         { $sort: { lastMessageAt: -1 } },
         { $limit: limit + 1 },
-        { $addFields: { conversationId: '$_id', conversation: '$$ROOT' } },
+        { $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
         ...lookupPartnerStages(orgId),
         projectConversationStage,
     ]);
@@ -640,7 +640,7 @@ export const listConversationsAssignedByStaff = async (
         },
         { $sort: { lastMessageAt: -1 } },
         { $limit: limit + 1 },
-        { $addFields: { conversationId: '$_id', conversation: '$$ROOT' } },
+        { $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
         ...lookupPartnerStages(staffId),
         projectConversationStage,
     ]);
