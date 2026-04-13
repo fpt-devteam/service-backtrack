@@ -10,16 +10,13 @@ namespace Backtrack.Core.WebApi.Controllers;
 
 [ApiController]
 [Route("dev")]
-public class DevController(IMediator mediator, IWebHostEnvironment env) : ControllerBase
+public class DevController(IMediator mediator) : ControllerBase
 {
     [HttpPost("join-organization")]
     public async Task<IActionResult> JoinOrganizationAsync(
         [FromBody] DevJoinOrganizationCommand command,
         CancellationToken cancellationToken)
     {
-        if (!env.IsDevelopment())
-            return NotFound();
-
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         command = command with { UserId = userId };
 
