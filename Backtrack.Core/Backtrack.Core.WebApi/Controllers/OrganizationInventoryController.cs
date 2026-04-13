@@ -86,7 +86,7 @@ public class OrganizationInventoryController(IMediator mediator) : ControllerBas
         CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        command = command with { PostId = id, UserId = userId };
+        command = command with { PostId = id, UserId = userId, OrganizationId = orgId };
         var result = await mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
     }
