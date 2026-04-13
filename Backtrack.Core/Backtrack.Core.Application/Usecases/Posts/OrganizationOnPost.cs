@@ -14,6 +14,7 @@ public sealed record OrganizationOnPost
     public string? ExternalPlaceId { get; init; }
     public required string Phone { get; init; }
     public required string IndustryType { get; init; }
+    public required string LogoUrl { get; set; }
 }
 
 public static class OrganizationOnPostMapper
@@ -29,7 +30,8 @@ public static class OrganizationOnPostMapper
             DisplayAddress = organization.DisplayAddress,
             ExternalPlaceId = organization.ExternalPlaceId,
             Phone = organization.Phone,
-            IndustryType = organization.IndustryType
+            IndustryType = organization.IndustryType,
+            LogoUrl = organization.LogoUrl
         };
     }
 }
