@@ -2,6 +2,7 @@ using Backtrack.Core.Application.Interfaces.AI;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Utils;
+using Backtrack.Core.Domain.Constants;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.PostExplorations.SemanticSearchPost;
@@ -17,9 +18,13 @@ public sealed class SemanticSearchPostHandler(
     {
         if (string.IsNullOrWhiteSpace(command.Query))
         {
+            var filter = command.Filters;
+            if (filter is null)
+                filter = new PostFilters { Status = PostStatus.Active };
+
             var result = await postRepository.GetPagedAsync(
                 PagedQuery.Default,
-                new PostFilters { Status = Domain.Constants.PostStatus.Active },
+                filter,
                 cancellationToken);
             return result.Items.Select(p => new SearchPostResult
             {
