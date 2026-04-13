@@ -26,6 +26,10 @@ public static class ReturnReportErrors
         Code: "ReturnReportAlreadyConfirmed",
         Message: "This ReturnReport has already been confirmed.");
 
+    public static readonly Error AlreadyRejected = new(
+        Code: "ReturnReportAlreadyRejected",
+        Message: "This ReturnReport has already been rejected.");
+
     public static readonly Error AlreadyExpired = new(
         Code: "ReturnReportAlreadyExpired",
         Message: "This ReturnReport has expired.");
