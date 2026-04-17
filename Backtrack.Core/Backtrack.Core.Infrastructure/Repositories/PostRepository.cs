@@ -62,6 +62,16 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             clauses.Add("AND organization_id = @organizationId");
             parameters.Add(new("@organizationId", filters.OrganizationId.Value));
         }
+        if (filters?.SubcategoryCode != null)
+        {
+            clauses.Add("AND subcategory_id = (SELECT id FROM subcategories WHERE code = @subcategoryCode AND deleted_at IS NULL LIMIT 1)");
+            parameters.Add(new("@subcategoryCode", filters.SubcategoryCode));
+        }
+        if (filters?.SubcategoryId != null)
+        {
+            clauses.Add("AND subcategory_id = @subcategoryId");
+            parameters.Add(new("@subcategoryId", filters.SubcategoryId.Value));
+        }
 
         return (string.Join("\n                ", clauses), parameters);
     }
@@ -205,24 +215,34 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
     {
         if (post.Status != PostStatus.Active || post.EmbeddingStatus != EmbeddingStatus.Ready || post.Embedding == null)
             return [];
-        const string sql = """
+
+        var window  = TimeSpan.FromDays(PostSimilarityThresholds.TimeWindowDays);
+        var filters = new PostFilters
+        {
+            Status        = PostStatus.Active,
+            SubcategoryId = post.SubcategoryId,
+            Geo           = post.Location != null
+                ? new GeoFilter(post.Location, PostSimilarityThresholds.MaxDistanceMeters / 1000.0)
+                : null,
+            Time          = new TimeFilter(
+                From: post.EventTime - window,
+                To:   post.EventTime + window)
+        };
+
+        var (filterSql, filterParams) = BuildFilters(filters);
+
+        var sql = $"""
             SELECT id, (1.0 - (embedding <=> @embedding)) AS similarity
             FROM posts
             WHERE deleted_at IS NULL
                 AND id != @postId
                 AND embedding_status = 'Ready'
                 AND embedding IS NOT NULL
-                AND status = 'Active'
                 AND location IS NOT NULL
                 AND post_type != @postType
                 AND author_id != @authorId
-                AND ST_DWithin(
-                    location::geography,
-                    ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography,
-                    @maxDistance
-                )
-                AND ABS(EXTRACT(EPOCH FROM (event_time - @eventTime)) / 86400) <= @timeWindowDays
                 AND (1.0 - (embedding <=> @embedding)) >= @minSimilarity
+                {filterSql}
             ORDER BY similarity DESC
             """;
 
@@ -235,16 +255,12 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         await using (var command = conn.CreateCommand())
         {
             command.CommandText = sql;
-            command.Parameters.Add(new NpgsqlParameter("@postId",         post.Id));
-            command.Parameters.Add(new NpgsqlParameter("@embedding",      embeddingVec));
-            command.Parameters.Add(new NpgsqlParameter("@postType",       post.PostType.ToString()));
-            command.Parameters.Add(new NpgsqlParameter("@authorId",       post.AuthorId));
-            command.Parameters.Add(new NpgsqlParameter("@longitude",      post.Location?.Longitude ?? 0));
-            command.Parameters.Add(new NpgsqlParameter("@latitude",       post.Location?.Latitude  ?? 0));
-            command.Parameters.Add(new NpgsqlParameter("@maxDistance",    PostSimilarityThresholds.MaxDistanceMeters));
-            command.Parameters.Add(new NpgsqlParameter("@eventTime",      post.EventTime));
-            command.Parameters.Add(new NpgsqlParameter("@timeWindowDays", PostSimilarityThresholds.TimeWindowDays));
-            command.Parameters.Add(new NpgsqlParameter("@minSimilarity",  PostSimilarityThresholds.MediumSimilarityThreshold));
+            command.Parameters.Add(new NpgsqlParameter("@postId",        post.Id));
+            command.Parameters.Add(new NpgsqlParameter("@embedding",     embeddingVec));
+            command.Parameters.Add(new NpgsqlParameter("@postType",      post.PostType.ToString()));
+            command.Parameters.Add(new NpgsqlParameter("@authorId",      post.AuthorId));
+            command.Parameters.Add(new NpgsqlParameter("@minSimilarity", PostSimilarityThresholds.MediumSimilarityThreshold));
+            command.Parameters.AddRange(filterParams.ToArray());
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))

@@ -44,7 +44,10 @@ public class SubcategoryConfiguration : IEntityTypeConfiguration<Subcategory>
         builder.Property(s => s.UpdatedAt).HasColumnName("updated_at");
         builder.Property(s => s.DeletedAt).HasColumnName("deleted_at");
 
-        // Unique per (category, code)
+        builder.HasIndex(s => s.Code)
+            .HasDatabaseName("ix_subcategories_code")
+            .IsUnique();
+
         builder.HasIndex(s => new { s.Category, s.Code })
             .HasDatabaseName("ix_subcategories_category_code")
             .IsUnique();

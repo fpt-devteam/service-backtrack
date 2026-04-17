@@ -24,6 +24,7 @@ public class FirebaseAuthMiddleware
             "/api/core/orgs/public",
             "/api/core/invitations/check",
             "/api/core/subscription-plans",
+            "/api/core/subcategories",
             "/api/core/webhooks/stripe",
 
             "/api/core/posts/feed",

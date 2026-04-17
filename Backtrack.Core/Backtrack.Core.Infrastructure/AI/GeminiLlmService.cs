@@ -25,7 +25,18 @@ public sealed class GeminiLlmService(
         {
             new() { Text = request.UserPrompt }
         };
-        if (!string.IsNullOrWhiteSpace(request.ImageBase64) && !string.IsNullOrWhiteSpace(request.ImageMimeType))
+
+        if (request.Images is { Count: > 0 })
+        {
+            foreach (var img in request.Images)
+            {
+                parts.Add(new GeminiGeneratePart
+                {
+                    InlineData = new GeminiInlineData { MimeType = img.MimeType, Data = img.Base64 }
+                });
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(request.ImageBase64) && !string.IsNullOrWhiteSpace(request.ImageMimeType))
         {
             parts.Add(new GeminiGeneratePart
             {

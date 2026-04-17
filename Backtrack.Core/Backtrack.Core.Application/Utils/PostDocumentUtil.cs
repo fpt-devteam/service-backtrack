@@ -21,7 +21,6 @@ public static class PostDocumentUtil
                 if (!string.IsNullOrWhiteSpace(d.Brand))  sb.Append($" Brand: {d.Brand}.");
                 if (!string.IsNullOrWhiteSpace(d.Color))  sb.Append($" Color: {d.Color}.");
                 if (!string.IsNullOrWhiteSpace(d.Material)) sb.Append($" Material: {d.Material}.");
-                if (!string.IsNullOrWhiteSpace(d.Size))   sb.Append($" Size: {d.Size}.");
                 if (!string.IsNullOrWhiteSpace(d.Condition)) sb.Append($" Condition: {d.Condition}.");
                 if (!string.IsNullOrWhiteSpace(d.DistinctiveMarks)) sb.Append($" Distinctive marks: {d.DistinctiveMarks}.");
                 if (!string.IsNullOrWhiteSpace(d.AiDescription)) sb.Append($" {d.AiDescription}");
@@ -29,11 +28,11 @@ public static class PostDocumentUtil
                 break;
 
             case ItemCategory.Cards when post.CardDetail is { } c:
-                if (!string.IsNullOrWhiteSpace(c.HolderName)) sb.Append($" Holder: {c.HolderName}.");
-                if (!string.IsNullOrWhiteSpace(c.IssuingAuthority)) sb.Append($" Issued by: {c.IssuingAuthority}.");
-                if (!string.IsNullOrWhiteSpace(c.AiDescription)) sb.Append($" {c.AiDescription}");
-                if (!string.IsNullOrWhiteSpace(c.OcrText)) sb.Append($" OCR: {c.OcrText}.");
-                break;
+                // if (!string.IsNullOrWhiteSpace(c.HolderName)) sb.Append($" Holder: {c.HolderName}.");
+                // if (!string.IsNullOrWhiteSpace(c.IssuingAuthority)) sb.Append($" Issued by: {c.IssuingAuthority}.");
+                // if (!string.IsNullOrWhiteSpace(c.AiDescription)) sb.Append($" {c.AiDescription}");
+                // if (!string.IsNullOrWhiteSpace(c.OcrText)) sb.Append($" OCR: {c.OcrText}.");
+                throw new InvalidOperationException("Card details are not included in the document content for embedding/reranking, as they often contain personally identifiable information. This is a deliberate design choice to protect user privacy and comply with data protection regulations. If you need to include card details for specific use cases, please implement a secure handling mechanism that ensures sensitive information is properly anonymized or encrypted before processing.");
 
             case ItemCategory.Electronics when post.ElectronicDetail is { } e:
                 if (!string.IsNullOrWhiteSpace(e.Brand)) sb.Append($" Brand: {e.Brand}.");

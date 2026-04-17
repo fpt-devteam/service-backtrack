@@ -29,5 +29,17 @@ namespace Backtrack.Core.Application.Exceptions.Errors
         public static readonly Error NotInStorage = new(
             Code: "PostNotInStorage",
             Message: "Post must be in 'InStorage' status to be published.");
+
+        public static readonly Error SubcategoryNotFound = new(
+            Code: "SubcategoryNotFound",
+            Message: "Subcategory not found.");
+
+        public static readonly Error ImagesNotConsistent = new(
+            Code: "ImagesNotConsistent",
+            Message: "The provided images do not all show the same item.");
+
+        public static readonly Error ImageDoesNotMatchSubcategory = new(
+            Code: "ImageDoesNotMatchSubcategory",
+            Message: "The item in the image does not match the specified subcategory.");
     }
 }

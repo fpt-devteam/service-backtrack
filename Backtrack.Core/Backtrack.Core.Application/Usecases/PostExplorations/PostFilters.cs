@@ -16,4 +16,6 @@ public sealed record PostFilters
     public PostStatus? Status { get; init; }
     public string? AuthorId { get; init; }
     public Guid? OrganizationId { get; init; }
+    public string? SubcategoryCode { get; init; }
+    public Guid? SubcategoryId { get; init; }
 }

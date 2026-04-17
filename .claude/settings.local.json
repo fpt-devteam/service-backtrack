@@ -51,7 +51,10 @@
       "Bash(ls /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Infrastructure/Migrations/*.cs)",
       "Bash(dotnet ef *)",
       "Bash(ls ../Backtrack.Core.Infrastructure/Migrations/*CategoryCTIRefactor.cs)",
-      "Bash(ls Migrations/*CategoryCTIRefactor.cs)"
+      "Bash(ls Migrations/*CategoryCTIRefactor.cs)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); mcps=d.get\\('mcpServers',{}\\); print\\(json.dumps\\(mcps.get\\('gitnexus',{}\\), indent=2\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('mcpServers',{}\\).get\\('gitnexus',{}\\), indent=2\\)\\)\")",
+      "Bash(python3 *)"
     ],
     "deny": [],
     "ask": []

@@ -78,57 +78,6 @@ namespace Backtrack.Core.Infrastructure.AI
 
         #endregion
 
-        #region Multimodal Embedding
-        public async Task<float[]> GenerateMultimodalEmbeddingAsync(
-            string? text = null,
-            string? imageBase64 = null,
-            string? mimeType = null,
-            CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(text) && string.IsNullOrWhiteSpace(imageBase64))
-                throw new ArgumentException("At least text or image must be provided.");
-
-            var url = $"{_settings.BaseUrl}/{_settings.ModelName}:embedContent?key={_settings.ApiKey}";
-
-            var parts = new List<EmbedPart>();
-
-            if (!string.IsNullOrWhiteSpace(text))
-                parts.Add(new EmbedPart { Text = text });
-
-            if (!string.IsNullOrWhiteSpace(imageBase64) && !string.IsNullOrWhiteSpace(mimeType))
-                parts.Add(new EmbedPart { InlineData = new InlineData { MimeType = mimeType, Data = imageBase64 } });
-
-            var request = new EmbedContentRequest
-            {
-                Content = new EmbedContent { Parts = parts },
-                OutputDimensionality = EmbeddingDimension
-            };
-
-            var json = JsonSerializer.Serialize(request, SerializerOptions);
-            _logger.LogWarning("Gemini embedContent request body: {RequestBody}", json);
-
-            using var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PostAsync(url, httpContent, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("Gemini embedContent failed. URL: {Url} | Body sent: {RequestBody} | Response: {ErrorBody}",
-                    $"...embedContent?key=***", json, errorBody);
-                throw new HttpRequestException(
-                    $"Gemini embedContent failed ({(int)response.StatusCode} {response.ReasonPhrase}): {errorBody}");
-            }
-
-            var result = await response.Content.ReadFromJsonAsync<GeminiEmbeddingResponse>(cancellationToken: cancellationToken);
-            var values = result?.Embedding?.Values;
-            if (values == null)
-                throw new InvalidOperationException("No embedding returned from Gemini API.");
-
-            return values;
-        }
-        #endregion
-
         #region Request DTOs
 
         private class EmbedContentRequest

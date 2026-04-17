@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Interfaces.AI;
+using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Usecases.Posts;
 using System.Text.Json.Serialization;
 
@@ -19,7 +20,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             "size":            "size estimate (small/medium/large or dimensions), or null",
             "condition":       "new/used/worn/damaged, or null",
             "distinctiveMarks":"unique features, stickers, scratches, patterns, or null",
-            "aiDescription":   "2-3 sentence detailed description of the item"
+            "aiDescription":   "Write 2-3 sentences highlighting the most identifiable traits: item type, color, brand, material, and any distinctive marks. Optimized for semantic search — omit filler, focus on specifics a finder or owner would search for."
         }
         Only describe what is visible. Respond ONLY with the JSON object, no markdown.
         """;
@@ -39,7 +40,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             "screenCondition":       "perfect/scratched/cracked/unknown, or null",
             "lockScreenDescription": "describe lock screen wallpaper/content if visible, or null",
             "distinguishingFeatures":"stickers, dents, engravings, or null",
-            "aiDescription":         "2-3 sentence detailed description of the device"
+            "aiDescription":         "Write 2-3 sentences describing the device: device type, brand, model, color, case presence, and the single most identifying visual feature (e.g. cracked screen, unique sticker, engraving). Optimized for semantic search — be specific, skip generic phrases."
         }
         Only describe what is visible. Respond ONLY with the JSON object, no markdown.
         """;
@@ -52,7 +53,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
         {
             "itemIdentifier": "concise name of what this item IS (e.g. 'Sapiens book', 'hugging pillow', 'red umbrella')",
             "primaryColor":   "primary color, or null",
-            "aiDescription":  "2-3 sentence detailed description of the item"
+            "aiDescription":  "One concise sentence naming the item and its most searchable traits: type, color, shape, size, brand if visible, and any unique markings. Optimized for semantic search — a person searching for this lost item should be able to find it from this sentence alone."
         }
         Only describe what is visible. Respond ONLY with the JSON object, no markdown.
         """;
@@ -78,7 +79,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             Size             = dto.Size,
             Condition        = dto.Condition,
             DistinctiveMarks = dto.DistinctiveMarks,
-            AdditionalDetails = dto.AiDescription   // AI description goes into AdditionalDetails for now
+            AiDescription    = dto.AiDescription
         };
     }
 
@@ -105,7 +106,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             ScreenCondition        = dto.ScreenCondition,
             LockScreenDescription  = dto.LockScreenDescription,
             DistinguishingFeatures = dto.DistinguishingFeatures,
-            AdditionalDetails      = dto.AiDescription
+            AiDescription          = dto.AiDescription
         };
     }
 
@@ -126,8 +127,69 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
         {
             ItemIdentifier = dto.ItemIdentifier ?? "Unknown item",
             PrimaryColor   = dto.PrimaryColor,
-            Notes          = dto.AiDescription
+            AiDescription  = dto.AiDescription
         };
+    }
+
+    // ── Consistency verification ───────────────────────────────────────────
+    private const string ConsistencySystemPrompt = """
+        You are a validation assistant for a lost-and-found platform.
+        You will receive one or more images and an expected subcategory code.
+
+        Your task:
+        Determine whether the item(s) in the images belong to the expected subcategory.
+
+        Available subcategories (use these exact codes in your response):
+
+        Category: Electronics
+          phone, laptop, smartwatch, charger_adapter, mouse, keyboard, powerbank, power_outlet, headphone, earphone
+
+        Category: Cards
+          identification_card, passport, driver_license, personal_card, bank_card, student_card, company_card
+
+        Category: PersonalBelongings
+          wallets, keys, suitcases, backpack, clothings, jewelry
+
+        Category: Others (exception/fallback — use ONLY when the item clearly does not fit any category above)
+          others
+
+        Rules:
+        - "matchesSubcategory" is false if the item does not belong to the expected subcategory code.
+        - "suggestedSubcategoryCode" must be the EXACT code from the list above that best fits the item in the images.
+          Set it even when "matchesSubcategory" is true (confirm the correct code).
+          Use "others" if the item does not fit any specific subcategory above. Only set null if no item is identifiable at all.
+        - "reason" must be one clear sentence explaining the result, and if wrong must tell the user which subcategory to pick.
+
+        Respond ONLY with JSON (no markdown):
+        {
+            "matchesSubcategory": true or false,
+            "suggestedSubcategoryCode": "exact_code or null",
+            "reason": "one sentence explanation"
+        }
+        """;
+
+    public async Task<ItemConsistencyResult> VerifyItemConsistencyAsync(
+        IReadOnlyList<FetchedImage> images,
+        string subcategoryName,
+        CancellationToken cancellationToken = default)
+    {
+        var llmImages = images
+            .Select(img => new LlmImage(img.Base64, img.MimeType))
+            .ToList();
+
+        var dto = await llmService.CompleteAsync<ConsistencyDto>(new LlmRequest
+        {
+            SystemPrompt    = ConsistencySystemPrompt,
+            UserPrompt      = $"Expected subcategory: \"{subcategoryName}\". Verify the image(s) against this subcategory.",
+            Images          = llmImages,
+            Temperature     = 0.1f,
+            MaxOutputTokens = 256
+        }, cancellationToken);
+
+        return new ItemConsistencyResult(
+            MatchesSubcategory:       dto.MatchesSubcategory ?? false,
+            Reason:                   dto.Reason,
+            SuggestedSubcategoryCode: dto.SuggestedSubcategoryCode);
     }
 
     // ── Private DTOs ────────────────────────────────────────────────────────
@@ -160,5 +222,12 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
         [JsonPropertyName("itemIdentifier")] public string? ItemIdentifier { get; set; }
         [JsonPropertyName("primaryColor")]   public string? PrimaryColor { get; set; }
         [JsonPropertyName("aiDescription")]  public string? AiDescription { get; set; }
+    }
+
+    private sealed class ConsistencyDto
+    {
+        [JsonPropertyName("matchesSubcategory")]       public bool? MatchesSubcategory { get; set; }
+        [JsonPropertyName("suggestedSubcategoryCode")] public string? SuggestedSubcategoryCode { get; set; }
+        [JsonPropertyName("reason")]                   public string? Reason { get; set; }
     }
 }

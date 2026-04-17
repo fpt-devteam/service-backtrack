@@ -19,12 +19,6 @@ namespace Backtrack.Core.Application.Interfaces.AI
         Task<float[]> GenerateDocumentEmbeddingAsync(string document, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Generates an embedding vector from text and optional image input.
-        /// Uses gemini-embedding-2-preview which maps all modalities into the same embedding space.
-        /// </summary>
-        Task<float[]> GenerateMultimodalEmbeddingAsync(string? text = null, string? imageBase64 = null, string? mimeType = null, CancellationToken cancellationToken = default);
-
-        /// <summary>
         /// The dimension size of the embedding vectors produced by this service.
         /// </summary>
         int EmbeddingDimension { get; }

@@ -100,9 +100,10 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         {
             return new ApiError
             {
-                Code = dex.Error.Code,
+                Code    = dex.Error.Code,
                 Message = dex.Error.Message,
-                Details = null
+                Details = dex.Details as Dictionary<string, string[]>
+                       ?? dex.Details?.ToDictionary(kv => kv.Key, kv => kv.Value)
             };
         }
 

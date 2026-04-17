@@ -8,6 +8,7 @@ public sealed record PersonalBelongingDetailInput
     public string? Size { get; init; }
     public string? Condition { get; init; }
     public string? DistinctiveMarks { get; init; }
+    public string? AiDescription { get; init; }
     public string? AdditionalDetails { get; init; }
 }
 
@@ -34,6 +35,7 @@ public sealed record ElectronicDetailInput
     public string? ScreenCondition { get; init; }
     public string? LockScreenDescription { get; init; }
     public string? DistinguishingFeatures { get; init; }
+    public string? AiDescription { get; init; }
     public string? AdditionalDetails { get; init; }
 }
 
@@ -41,5 +43,6 @@ public sealed record OtherDetailInput
 {
     public required string ItemIdentifier { get; init; }
     public string? PrimaryColor { get; init; }
+    public string? AiDescription { get; init; }
     public string? Notes { get; init; }
 }

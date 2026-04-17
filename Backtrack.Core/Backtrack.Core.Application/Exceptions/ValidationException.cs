@@ -4,6 +4,6 @@ namespace Backtrack.Core.Application.Exceptions
 {
     public sealed class ValidationException : DomainException
     {
-        public ValidationException(Error error) : base(error) { }
+        public ValidationException(Error error, IReadOnlyDictionary<string, string[]>? details = null) : base(error, details) { }
     }
 }

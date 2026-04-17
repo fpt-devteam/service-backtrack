@@ -1,5 +1,7 @@
+using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Infrastructure.Configurations;
 using Backtrack.Core.Infrastructure.Data;
+using Backtrack.Core.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +28,8 @@ namespace Backtrack.Core.Infrastructure.DependencyInjections
                     o.UseNetTopologySuite();
                     o.UseVector();
                 }));
+
+            services.AddScoped<ISubcategoryRepository, SubcategoryRepository>();
         }
     }
 }
