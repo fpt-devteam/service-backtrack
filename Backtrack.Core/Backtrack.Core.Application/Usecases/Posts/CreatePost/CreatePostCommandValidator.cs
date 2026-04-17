@@ -7,21 +7,13 @@ public sealed class CreatePostCommandValidator : AbstractValidator<CreatePostCom
 {
     public CreatePostCommandValidator()
     {
-        RuleFor(x => x.Item)
-            .NotNull().WithMessage("Item is required");
+        RuleFor(x => x.Category)
+            .NotEmpty().WithMessage("Category is required")
+            .Must(c => Enum.TryParse<ItemCategory>(c, ignoreCase: true, out _))
+            .WithMessage($"Category must be one of: {string.Join(", ", Enum.GetNames<ItemCategory>())}");
 
-        When(x => x.Item != null, () =>
-        {
-            RuleFor(x => x.Item.ItemName)
-                .NotEmpty().WithMessage("Item.ItemName is required")
-                .MaximumLength(500).WithMessage("Item.ItemName must not exceed 500 characters");
-
-            RuleFor(x => x.Item.Category)
-                .IsInEnum().WithMessage($"Item.Category must be one of: {string.Join(", ", Enum.GetNames<ItemCategory>())}");
-
-            RuleFor(x => x.Item.AdditionalDetails)
-                .MaximumLength(2000).WithMessage("Item.AdditionalDetails must not exceed 2000 characters");
-        });
+        RuleFor(x => x.SubcategoryId)
+            .NotEmpty().WithMessage("SubcategoryId must be a valid subcategory reference");
 
         RuleFor(x => x.ImageUrls)
             .NotEmpty().WithMessage("At least one image is required")

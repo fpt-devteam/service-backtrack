@@ -18,28 +18,28 @@ public sealed class SemanticSearchPostHandler(
     {
         if (string.IsNullOrWhiteSpace(command.Query))
         {
-            var filter = command.Filters;
-            if (filter is null)
-                filter = new PostFilters { Status = PostStatus.Active };
+            var filter = command.Filters ?? new PostFilters { Status = PostStatus.Active };
 
-            var result = await postRepository.GetPagedAsync(
-                PagedQuery.Default,
-                filter,
-                cancellationToken);
+            var result = await postRepository.GetPagedAsync(PagedQuery.Default, filter, cancellationToken);
             return result.Items.Select(p => new SearchPostResult
             {
-                Id = p.Id,
-                Author = p.Author?.ToPostAuthorResult(),
-                Organization = p.Organization?.ToOrganizationOnPost(),
-                PostType = p.PostType,
-                Item = p.Item,
-                ImageUrls = p.ImageUrls,
-                Location = p.Location,
-                ExternalPlaceId = p.ExternalPlaceId,
-                DisplayAddress = p.DisplayAddress,
-                EventTime = p.EventTime,
-                CreatedAt = p.CreatedAt,
-                Score = 0,
+                Id               = p.Id,
+                Author           = p.Author?.ToPostAuthorResult(),
+                Organization     = p.Organization?.ToOrganizationOnPost(),
+                PostType         = p.PostType,
+                Category         = p.Category,
+                SubcategoryId    = p.SubcategoryId,
+                PersonalBelongingDetail = p.PersonalBelongingDetail,
+                CardDetail       = p.CardDetail,
+                ElectronicDetail = p.ElectronicDetail,
+                OtherDetail      = p.OtherDetail,
+                ImageUrls        = p.ImageUrls,
+                Location         = p.Location,
+                ExternalPlaceId  = p.ExternalPlaceId,
+                DisplayAddress   = p.DisplayAddress,
+                EventTime        = p.EventTime,
+                CreatedAt        = p.CreatedAt,
+                Score            = 0,
                 DistanceInMeters = null
             });
         }
@@ -56,7 +56,12 @@ public sealed class SemanticSearchPostHandler(
                 Author           = x.Post.Author?.ToPostAuthorResult(),
                 Organization     = x.Post.Organization?.ToOrganizationOnPost(),
                 PostType         = x.Post.PostType,
-                Item             = x.Post.Item,
+                Category         = x.Post.Category,
+                SubcategoryId    = x.Post.SubcategoryId,
+                PersonalBelongingDetail = x.Post.PersonalBelongingDetail,
+                CardDetail       = x.Post.CardDetail,
+                ElectronicDetail = x.Post.ElectronicDetail,
+                OtherDetail      = x.Post.OtherDetail,
                 ImageUrls        = x.Post.ImageUrls,
                 Location         = x.Post.Location,
                 ExternalPlaceId  = x.Post.ExternalPlaceId,
@@ -72,5 +77,4 @@ public sealed class SemanticSearchPostHandler(
             .ThenBy(x => x.DistanceInMeters ?? double.MaxValue)
             .ToList();
     }
-
 }

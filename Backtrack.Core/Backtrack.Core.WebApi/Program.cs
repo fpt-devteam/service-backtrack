@@ -1,5 +1,7 @@
+using Backtrack.Core.Infrastructure.Configurations;
 using Backtrack.Core.Infrastructure.Data;
 using Backtrack.Core.Infrastructure.DependencyInjections;
+using Microsoft.Extensions.Options;
 using Backtrack.Core.WebApi.DependencyInjections;
 using Backtrack.Core.WebApi.Middlewares;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +36,7 @@ public class Program
             .AddEnvironmentVariables();
 
         builder.Services.AddDatabase(builder.Configuration);
+        builder.Services.AddFirebase(builder.Configuration);
         builder.Services.AddGemini(builder.Configuration);
         builder.Services.AddQwenReranker(builder.Configuration);
         builder.Services.AddStripe(builder.Configuration);
@@ -49,6 +52,7 @@ public class Program
         WebApplication app = builder.Build();
 
         await MigrateDatabaseAsync(app);
+        await SeedDatabaseAsync(app);
 
         app.UseMiddleware<RequestLoggingMiddleware>();
         app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -76,9 +80,7 @@ public class Program
             var logger = services.GetRequiredService<ILogger<Program>>();
 
             logger.LogInformation("Starting database migration...");
-
             await context.Database.MigrateAsync();
-
             logger.LogInformation("Database migration completed successfully.");
         }
         catch (Exception ex)
@@ -86,6 +88,28 @@ public class Program
             var logger = services.GetRequiredService<ILogger<Program>>();
             logger.LogError(ex, "An error occurred while migrating the database.");
             throw;
+        }
+    }
+
+    private static async Task SeedDatabaseAsync(WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        var services = scope.ServiceProvider;
+
+        try
+        {
+            var context    = services.GetRequiredService<ApplicationDbContext>();
+            var logger     = services.GetRequiredService<ILogger<Program>>();
+            var stripe     = services.GetRequiredService<IOptions<StripeSettings>>().Value;
+            var superAdmin = services.GetRequiredService<IOptions<SuperAdminSettings>>().Value;
+
+            await DataSeeder.SeedAsync(context, logger, stripe, superAdmin);
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "An error occurred while seeding the database.");
+            // Do not re-throw — seeding failures should not crash the service.
         }
     }
 }

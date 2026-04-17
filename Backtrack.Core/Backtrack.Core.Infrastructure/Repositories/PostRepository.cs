@@ -25,7 +25,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         }
         if (filters?.Category != null)
         {
-            clauses.Add("AND item_category = @category");
+            clauses.Add("AND category = @category");
             parameters.Add(new("@category", filters.Category.Value.ToString()));
         }
         if (filters?.Geo != null)

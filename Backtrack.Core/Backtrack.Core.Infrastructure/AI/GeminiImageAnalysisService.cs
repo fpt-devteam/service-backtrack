@@ -1,217 +1,164 @@
 using Backtrack.Core.Application.Interfaces.AI;
-using Backtrack.Core.Domain.Constants;
-using Backtrack.Core.Domain.ValueObjects;
-using Backtrack.Core.Infrastructure.Configurations;
-using Microsoft.Extensions.Options;
-using System.Net.Http.Json;
-using System.Text.Json;
+using Backtrack.Core.Application.Usecases.Posts;
 using System.Text.Json.Serialization;
 
 namespace Backtrack.Core.Infrastructure.AI;
 
-/// <summary>
-/// Implementation of image analysis service using Google's Gemini Vision API.
-/// Analyzes images to extract item information for lost and found posts.
-/// </summary>
-public sealed class GeminiImageAnalysisService : IImageAnalysisService
+public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageAnalysisService
 {
-    private readonly HttpClient _httpClient;
-    private readonly GeminiSettings _settings;
+    // ── PersonalBelongings ──────────────────────────────────────────────────
+    private const string PersonalBelongingSystemPrompt = """
+        You are an AI assistant for a lost-and-found platform analyzing personal belonging items
+        (wallets, bags, clothing, keys, jewelry, etc.).
 
-    private const string VisionModelName = "gemini-2.0-flash";
-
-    private const string AnalysisPrompt = """
-        You are an AI assistant specialized in analyzing images of lost or found items.
-        Analyze the image and extract item information for a lost and found platform.
-
-        Respond in JSON format:
+        Analyze the image and extract:
         {
-            "itemName": "Concise item name (3-6 words, e.g., 'Black Leather Wallet', 'Silver iPhone 15 Pro')",
-            "category": "One of: Electronics, Clothing, Accessories, Documents, Bags, Keys, Wallet, Suitcase, Bags, Keys Other",
-            "color": "Primary color, secondary if applicable",
-            "brand": "Brand name if visible",
-            "condition": "New/Used/Worn/Damaged",
-            "material": "Leather/Fabric/Metal/Plastic/etc.",
-            "size": "Small/Medium/Large or dimensions",
-            "distinctiveMarks": "Unique features, scratches, stickers, patterns",
-            "additionalDetails": "Any other relevant info that doesn't fit in other fields"
+            "color":           "primary color(s)",
+            "brand":           "brand name if visible, or null",
+            "material":        "material type (leather, fabric, metal, plastic…), or null",
+            "size":            "size estimate (small/medium/large or dimensions), or null",
+            "condition":       "new/used/worn/damaged, or null",
+            "distinctiveMarks":"unique features, stickers, scratches, patterns, or null",
+            "aiDescription":   "2-3 sentence detailed description of the item"
         }
-
-        Guidelines:
-        1. Only describe what you can actually see - omit unknown attributes or set them to null.
-        2. Keep each field short and meaningful.
-        3. For 'category', you MUST use one of these exact values: Electronics, Clothing, Accessories, Documents, Wallet, Suitcase, Bags, Keys, Other.
-        4. If image is unclear, set itemName to "Unidentifiable Item".
-
-        Respond ONLY with the JSON object, no markdown.
+        Only describe what is visible. Respond ONLY with the JSON object, no markdown.
         """;
 
-    public GeminiImageAnalysisService(HttpClient httpClient, IOptions<GeminiSettings> settings)
-    {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
+    // ── Electronics ────────────────────────────────────────────────────────
+    private const string ElectronicSystemPrompt = """
+        You are an AI assistant for a lost-and-found platform analyzing electronic devices
+        (phones, laptops, tablets, headphones, chargers, etc.).
 
-        if (string.IsNullOrWhiteSpace(_settings.ApiKey))
-            throw new InvalidOperationException("Gemini API key is not configured. Please set 'GeminiSettings__ApiKey' in configuration.");
-    }
-
-    public async Task<PostItem> AnalyzeImageAsync(
-        string imageBase64,
-        string mimeType,
-        CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(imageBase64))
-            throw new ArgumentException("Image data cannot be null or empty.", nameof(imageBase64));
-
-        if (string.IsNullOrWhiteSpace(mimeType))
-            throw new ArgumentException("MIME type cannot be null or empty.", nameof(mimeType));
-
-        var url = $"{_settings.BaseUrl}/{VisionModelName}:generateContent?key={_settings.ApiKey}";
-
-        var request = new GeminiVisionRequest
+        Analyze the image and extract:
         {
-            Contents = new List<GeminiContent>
-            {
-                new GeminiContent
-                {
-                    Parts = new List<GeminiPart>
-                    {
-                        new GeminiPart
-                        {
-                            Text = AnalysisPrompt
-                        },
-                        new GeminiPart
-                        {
-                            InlineData = new GeminiInlineData
-                            {
-                                MimeType = mimeType,
-                                Data = imageBase64
-                            }
-                        }
-                    }
-                }
-            },
-            GenerationConfig = new GeminiGenerationConfig
-            {
-                Temperature = 0.2f,
-                MaxOutputTokens = 1024
-            }
-        };
+            "brand":                 "device brand (Apple, Samsung, Sony…), or null",
+            "model":                 "model name/number if identifiable, or null",
+            "color":                 "primary color",
+            "hasCase":               true/false/null,
+            "caseDescription":       "case color/type if present, or null",
+            "screenCondition":       "perfect/scratched/cracked/unknown, or null",
+            "lockScreenDescription": "describe lock screen wallpaper/content if visible, or null",
+            "distinguishingFeatures":"stickers, dents, engravings, or null",
+            "aiDescription":         "2-3 sentence detailed description of the device"
+        }
+        Only describe what is visible. Respond ONLY with the JSON object, no markdown.
+        """;
 
-        var response = await _httpClient.PostAsJsonAsync(url, request, cancellationToken);
-        response.EnsureSuccessStatusCode();
+    // ── Others ─────────────────────────────────────────────────────────────
+    private const string OtherSystemPrompt = """
+        You are an AI assistant for a lost-and-found platform analyzing miscellaneous items.
 
-        var result = await response.Content.ReadFromJsonAsync<GeminiVisionResponse>(cancellationToken);
-
-        if (result?.Candidates == null || result.Candidates.Count == 0)
-            throw new InvalidOperationException("No response returned from Gemini Vision API.");
-
-        var responseText = result.Candidates[0].Content?.Parts?[0]?.Text;
-        if (string.IsNullOrWhiteSpace(responseText))
-            throw new InvalidOperationException("Empty response text from Gemini Vision API.");
-
-        // Parse the JSON response
-        var analysisResult = GeminiResponseParser.Parse<ImageAnalysisJsonResponse>(responseText);
-
-        return new PostItem
+        Analyze the image and extract:
         {
-            ItemName = analysisResult.ItemName,
-            Category = analysisResult.Category ?? ItemCategory.Other,
-            Color = analysisResult.Color,
-            Brand = analysisResult.Brand,
-            Condition = analysisResult.Condition,
-            Material = analysisResult.Material,
-            Size = analysisResult.Size,
-            DistinctiveMarks = analysisResult.DistinctiveMarks,
-            AdditionalDetails = analysisResult.AdditionalDetails
+            "itemIdentifier": "concise name of what this item IS (e.g. 'Sapiens book', 'hugging pillow', 'red umbrella')",
+            "primaryColor":   "primary color, or null",
+            "aiDescription":  "2-3 sentence detailed description of the item"
+        }
+        Only describe what is visible. Respond ONLY with the JSON object, no markdown.
+        """;
+
+    public async Task<PersonalBelongingDetailInput> AnalyzePersonalBelongingAsync(
+        string imageBase64, string mimeType, CancellationToken cancellationToken = default)
+    {
+        var dto = await llmService.CompleteAsync<PersonalBelongingDto>(new LlmRequest
+        {
+            SystemPrompt  = PersonalBelongingSystemPrompt,
+            UserPrompt    = "Analyze this personal belonging item.",
+            ImageBase64   = imageBase64,
+            ImageMimeType = mimeType,
+            Temperature   = 0.2f,
+            MaxOutputTokens = 512
+        }, cancellationToken);
+
+        return new PersonalBelongingDetailInput
+        {
+            Color            = dto.Color,
+            Brand            = dto.Brand,
+            Material         = dto.Material,
+            Size             = dto.Size,
+            Condition        = dto.Condition,
+            DistinctiveMarks = dto.DistinctiveMarks,
+            AdditionalDetails = dto.AiDescription   // AI description goes into AdditionalDetails for now
         };
     }
 
-    #region Request/Response DTOs
-
-    private sealed class GeminiVisionRequest
+    public async Task<ElectronicDetailInput> AnalyzeElectronicAsync(
+        string imageBase64, string mimeType, CancellationToken cancellationToken = default)
     {
-        [JsonPropertyName("contents")]
-        public List<GeminiContent> Contents { get; set; } = new();
+        var dto = await llmService.CompleteAsync<ElectronicDto>(new LlmRequest
+        {
+            SystemPrompt  = ElectronicSystemPrompt,
+            UserPrompt    = "Analyze this electronic device.",
+            ImageBase64   = imageBase64,
+            ImageMimeType = mimeType,
+            Temperature   = 0.2f,
+            MaxOutputTokens = 512
+        }, cancellationToken);
 
-        [JsonPropertyName("generationConfig")]
-        public GeminiGenerationConfig? GenerationConfig { get; set; }
+        return new ElectronicDetailInput
+        {
+            Brand                  = dto.Brand,
+            Model                  = dto.Model,
+            Color                  = dto.Color,
+            HasCase                = dto.HasCase,
+            CaseDescription        = dto.CaseDescription,
+            ScreenCondition        = dto.ScreenCondition,
+            LockScreenDescription  = dto.LockScreenDescription,
+            DistinguishingFeatures = dto.DistinguishingFeatures,
+            AdditionalDetails      = dto.AiDescription
+        };
     }
 
-    private sealed class GeminiContent
+    public async Task<OtherDetailInput> AnalyzeOtherAsync(
+        string imageBase64, string mimeType, CancellationToken cancellationToken = default)
     {
-        [JsonPropertyName("parts")]
-        public List<GeminiPart> Parts { get; set; } = new();
+        var dto = await llmService.CompleteAsync<OtherDto>(new LlmRequest
+        {
+            SystemPrompt  = OtherSystemPrompt,
+            UserPrompt    = "Analyze this item.",
+            ImageBase64   = imageBase64,
+            ImageMimeType = mimeType,
+            Temperature   = 0.2f,
+            MaxOutputTokens = 512
+        }, cancellationToken);
+
+        return new OtherDetailInput
+        {
+            ItemIdentifier = dto.ItemIdentifier ?? "Unknown item",
+            PrimaryColor   = dto.PrimaryColor,
+            Notes          = dto.AiDescription
+        };
     }
 
-    private sealed class GeminiPart
+    // ── Private DTOs ────────────────────────────────────────────────────────
+    private sealed class PersonalBelongingDto
     {
-        [JsonPropertyName("text")]
-        public string? Text { get; set; }
-
-        [JsonPropertyName("inlineData")]
-        public GeminiInlineData? InlineData { get; set; }
+        [JsonPropertyName("color")]            public string? Color { get; set; }
+        [JsonPropertyName("brand")]            public string? Brand { get; set; }
+        [JsonPropertyName("material")]         public string? Material { get; set; }
+        [JsonPropertyName("size")]             public string? Size { get; set; }
+        [JsonPropertyName("condition")]        public string? Condition { get; set; }
+        [JsonPropertyName("distinctiveMarks")] public string? DistinctiveMarks { get; set; }
+        [JsonPropertyName("aiDescription")]    public string? AiDescription { get; set; }
     }
 
-    private sealed class GeminiInlineData
+    private sealed class ElectronicDto
     {
-        [JsonPropertyName("mimeType")]
-        public string MimeType { get; set; } = string.Empty;
-
-        [JsonPropertyName("data")]
-        public string Data { get; set; } = string.Empty;
+        [JsonPropertyName("brand")]                  public string? Brand { get; set; }
+        [JsonPropertyName("model")]                  public string? Model { get; set; }
+        [JsonPropertyName("color")]                  public string? Color { get; set; }
+        [JsonPropertyName("hasCase")]                public bool? HasCase { get; set; }
+        [JsonPropertyName("caseDescription")]        public string? CaseDescription { get; set; }
+        [JsonPropertyName("screenCondition")]        public string? ScreenCondition { get; set; }
+        [JsonPropertyName("lockScreenDescription")]  public string? LockScreenDescription { get; set; }
+        [JsonPropertyName("distinguishingFeatures")] public string? DistinguishingFeatures { get; set; }
+        [JsonPropertyName("aiDescription")]          public string? AiDescription { get; set; }
     }
 
-    private sealed class GeminiGenerationConfig
+    private sealed class OtherDto
     {
-        [JsonPropertyName("temperature")]
-        public float Temperature { get; set; }
-
-        [JsonPropertyName("maxOutputTokens")]
-        public int MaxOutputTokens { get; set; }
+        [JsonPropertyName("itemIdentifier")] public string? ItemIdentifier { get; set; }
+        [JsonPropertyName("primaryColor")]   public string? PrimaryColor { get; set; }
+        [JsonPropertyName("aiDescription")]  public string? AiDescription { get; set; }
     }
-
-    private sealed class GeminiVisionResponse
-    {
-        [JsonPropertyName("candidates")]
-        public List<GeminiCandidate> Candidates { get; set; } = new();
-    }
-
-    private sealed class GeminiCandidate
-    {
-        [JsonPropertyName("content")]
-        public GeminiContent? Content { get; set; }
-    }
-
-    private sealed class ImageAnalysisJsonResponse
-    {
-        [JsonPropertyName("itemName")]
-        public string ItemName { get; set; } = string.Empty;
-
-        [JsonPropertyName("category")]
-        public ItemCategory? Category { get; set; }
-
-        [JsonPropertyName("color")]
-        public string? Color { get; set; }
-
-        [JsonPropertyName("brand")]
-        public string? Brand { get; set; }
-
-        [JsonPropertyName("condition")]
-        public string? Condition { get; set; }
-
-        [JsonPropertyName("material")]
-        public string? Material { get; set; }
-
-        [JsonPropertyName("size")]
-        public string? Size { get; set; }
-
-        [JsonPropertyName("distinctiveMarks")]
-        public string? DistinctiveMarks { get; set; }
-
-        [JsonPropertyName("additionalDetails")]
-        public string? AdditionalDetails { get; set; }
-    }
-
-    #endregion
 }

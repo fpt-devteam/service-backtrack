@@ -1,3 +1,4 @@
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 
 namespace Backtrack.Core.Application.Utils;
@@ -7,35 +8,53 @@ public static class PostDocumentUtil
     /// <summary>
     /// Builds a natural-language description of a post for embedding/reranking input.
     /// Natural prose scores significantly better than key-value strings on cross-encoders.
+    /// The content is built from the category-specific detail table.
     /// </summary>
     public static string BuildDocument(Post post)
     {
-        var item = post.Item;
-        var sb   = new System.Text.StringBuilder();
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"{post.PostType} item (Category: {post.Category}).");
 
-        sb.Append($"{post.PostType} item: {item.ItemName}.");
+        switch (post.Category)
+        {
+            case ItemCategory.PersonalBelongings when post.PersonalBelongingDetail is { } d:
+                if (!string.IsNullOrWhiteSpace(d.Brand))  sb.Append($" Brand: {d.Brand}.");
+                if (!string.IsNullOrWhiteSpace(d.Color))  sb.Append($" Color: {d.Color}.");
+                if (!string.IsNullOrWhiteSpace(d.Material)) sb.Append($" Material: {d.Material}.");
+                if (!string.IsNullOrWhiteSpace(d.Size))   sb.Append($" Size: {d.Size}.");
+                if (!string.IsNullOrWhiteSpace(d.Condition)) sb.Append($" Condition: {d.Condition}.");
+                if (!string.IsNullOrWhiteSpace(d.DistinctiveMarks)) sb.Append($" Distinctive marks: {d.DistinctiveMarks}.");
+                if (!string.IsNullOrWhiteSpace(d.AiDescription)) sb.Append($" {d.AiDescription}");
+                if (!string.IsNullOrWhiteSpace(d.AdditionalDetails)) sb.Append($" Additional details: {d.AdditionalDetails}.");
+                break;
 
-        var attrs = new List<string>();
-        if (!string.IsNullOrWhiteSpace(item.Color))    attrs.Add(item.Color);
-        if (!string.IsNullOrWhiteSpace(item.Brand))    attrs.Add(item.Brand);
-        if (!string.IsNullOrWhiteSpace(item.Material)) attrs.Add(item.Material);
-        if (!string.IsNullOrWhiteSpace(item.Size))     attrs.Add($"{item.Size} size");
-        if (item.Category != default)                   attrs.Add(item.Category.ToString());
+            case ItemCategory.Cards when post.CardDetail is { } c:
+                if (!string.IsNullOrWhiteSpace(c.HolderName)) sb.Append($" Holder: {c.HolderName}.");
+                if (!string.IsNullOrWhiteSpace(c.IssuingAuthority)) sb.Append($" Issued by: {c.IssuingAuthority}.");
+                if (!string.IsNullOrWhiteSpace(c.AiDescription)) sb.Append($" {c.AiDescription}");
+                if (!string.IsNullOrWhiteSpace(c.OcrText)) sb.Append($" OCR: {c.OcrText}.");
+                break;
 
-        if (attrs.Count > 0)
-            sb.Append($" It is a {string.Join(", ", attrs)} item.");
+            case ItemCategory.Electronics when post.ElectronicDetail is { } e:
+                if (!string.IsNullOrWhiteSpace(e.Brand)) sb.Append($" Brand: {e.Brand}.");
+                if (!string.IsNullOrWhiteSpace(e.Model)) sb.Append($" Model: {e.Model}.");
+                if (!string.IsNullOrWhiteSpace(e.Color)) sb.Append($" Color: {e.Color}.");
+                if (!string.IsNullOrWhiteSpace(e.LockScreenDescription)) sb.Append($" Lock screen: {e.LockScreenDescription}.");
+                if (!string.IsNullOrWhiteSpace(e.DistinguishingFeatures)) sb.Append($" Features: {e.DistinguishingFeatures}.");
+                if (!string.IsNullOrWhiteSpace(e.AiDescription)) sb.Append($" {e.AiDescription}");
+                if (!string.IsNullOrWhiteSpace(e.AdditionalDetails)) sb.Append($" Additional details: {e.AdditionalDetails}.");
+                break;
 
-        if (!string.IsNullOrWhiteSpace(item.Condition))
-            sb.Append($" Condition: {item.Condition}.");
-
-        if (!string.IsNullOrWhiteSpace(item.DistinctiveMarks))
-            sb.Append($" Distinctive marks: {item.DistinctiveMarks}.");
-
-        if (!string.IsNullOrWhiteSpace(item.AdditionalDetails))
-            sb.Append($" Additional details: {item.AdditionalDetails}.");
+            case ItemCategory.Others when post.OtherDetail is { } o:
+                sb.Append($" Item: {o.ItemIdentifier}.");
+                if (!string.IsNullOrWhiteSpace(o.PrimaryColor)) sb.Append($" Color: {o.PrimaryColor}.");
+                if (!string.IsNullOrWhiteSpace(o.AiDescription)) sb.Append($" {o.AiDescription}");
+                if (!string.IsNullOrWhiteSpace(o.Notes)) sb.Append($" Notes: {o.Notes}.");
+                break;
+        }
 
         if (!string.IsNullOrWhiteSpace(post.DisplayAddress))
-            sb.Append($" Found/lost at: {post.DisplayAddress}.");
+            sb.Append($" Location: {post.DisplayAddress}.");
 
         return sb.ToString();
     }

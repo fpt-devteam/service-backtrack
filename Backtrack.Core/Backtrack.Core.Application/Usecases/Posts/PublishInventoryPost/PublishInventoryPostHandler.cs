@@ -36,20 +36,6 @@ public sealed class PublishInventoryPostHandler(
         backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(
             orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
-        return new PostResult
-        {
-            Id              = post.Id,
-            Author          = post.Author?.ToPostAuthorResult(),
-            Organization    = post.Organization?.ToOrganizationOnPost(),
-            PostType        = post.PostType,
-            Status          = post.Status,
-            Item            = post.Item,
-            ImageUrls       = post.ImageUrls,
-            Location        = post.Location,
-            ExternalPlaceId = post.ExternalPlaceId,
-            DisplayAddress  = post.DisplayAddress,
-            EventTime       = post.EventTime,
-            CreatedAt       = post.CreatedAt
-        };
+        return post.ToPostResult();
     }
 }

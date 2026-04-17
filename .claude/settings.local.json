@@ -47,7 +47,11 @@
       "Bash(dotnet --version)",
       "Bash(dotnet --list-sdks)",
       "Bash(dotnet --list-runtimes)",
-      "Bash(grep \".cs$\")"
+      "Bash(grep \".cs$\")",
+      "Bash(ls /home/nhatthang/Fptu/service-backtrack/Backtrack.Core/Backtrack.Core.Infrastructure/Migrations/*.cs)",
+      "Bash(dotnet ef *)",
+      "Bash(ls ../Backtrack.Core.Infrastructure/Migrations/*CategoryCTIRefactor.cs)",
+      "Bash(ls Migrations/*CategoryCTIRefactor.cs)"
     ],
     "deny": [],
     "ask": []

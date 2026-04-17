@@ -26,21 +26,7 @@ public sealed class GetPostsByOrgIdHandler(
 
         var (items, totalCount) = await postRepository.GetPagedAsync(pagedQuery, filters, cancellationToken);
 
-        var results = items.Select(post => new PostResult
-        {
-            Id = post.Id,
-            Author = post.Author?.ToPostAuthorResult(),
-            Organization = post.Organization?.ToOrganizationOnPost(),
-            PostType = post.PostType,
-            Status = post.Status,
-            Item = post.Item,
-            ImageUrls = post.ImageUrls,
-            Location = post.Location,
-            ExternalPlaceId = post.ExternalPlaceId,
-            DisplayAddress = post.DisplayAddress,
-            EventTime = post.EventTime,
-            CreatedAt = post.CreatedAt,
-        }).ToList();
+        var results = items.Select(post => post.ToPostResult()).ToList();
 
         return new PagedResult<PostResult>(totalCount, results);
     }

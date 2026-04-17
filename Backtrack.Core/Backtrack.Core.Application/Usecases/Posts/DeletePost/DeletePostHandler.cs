@@ -26,10 +26,10 @@ public sealed class DeletePostHandler(
             if (post.AuthorId != command.UserId) throw new ForbiddenException(PostErrors.Forbidden);
         }
 
-        if (post.PostType == PostType.Lost)
-            await postMatchRepository.DeleteByLostPostIdsAsync(new[] { post.Id }, cancellationToken);
-        else
-            await postMatchRepository.DeleteByFoundPostIdsAsync(new[] { post.Id }, cancellationToken);
+        // Delete all matches where this post is the source
+        await postMatchRepository.DeleteBySourcePostIdsAsync(new[] { post.Id }, cancellationToken);
+        // Also delete matches where this post is a candidate
+        await postMatchRepository.DeleteByCandidatePostIdsAsync(new[] { post.Id }, cancellationToken);
 
         await postRepository.DeleteAsync(command.PostId);
         await postRepository.SaveChangesAsync();

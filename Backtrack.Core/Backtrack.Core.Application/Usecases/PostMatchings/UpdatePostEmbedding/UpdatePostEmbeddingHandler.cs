@@ -3,12 +3,11 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.AI;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Utils;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using System.Text;
-using System.Text.Json;
 
 namespace Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 
@@ -34,23 +33,15 @@ public sealed class UpdatePostEmbeddingHandler(
         return Unit.Value;
     }
 
-    // -------------------------------------------------------------------------
-    // Steps
-    // -------------------------------------------------------------------------
-
     private async Task<Post> GetPostOrThrowAsync(Guid postId)
     {
         return await postRepository.GetByIdAsync(postId, true)
             ?? throw new NotFoundException(PostErrors.NotFound);
     }
 
-    private bool IsEmbeddingUpToDate(Post post)
+    private static bool IsEmbeddingUpToDate(Post post)
     {
-        var currentHash = hasher.HashStrings(JsonSerializer.Serialize(post.Item));
-
-        return post.ContentHash == currentHash
-            && post.Embedding is not null
-            && post.EmbeddingStatus == EmbeddingStatus.Ready;
+        return post.Embedding is not null && post.EmbeddingStatus == EmbeddingStatus.Ready;
     }
 
     private async Task MarkAsProcessingAsync(Post post)
@@ -64,12 +55,11 @@ public sealed class UpdatePostEmbeddingHandler(
     {
         try
         {
-            var content = BuildContent(post);
+            var content = PostDocumentUtil.BuildDocument(post);
             var embedding = await embeddingService.GenerateDocumentEmbeddingAsync(content, cancellationToken);
-            var newContentHash = hasher.HashStrings(JsonSerializer.Serialize(post.Item));
 
             post.Embedding = embedding;
-            post.ContentHash = newContentHash;
+            post.ContentHash = hasher.HashStrings($"{post.Category}:{post.SubcategoryId}");
             post.EmbeddingStatus = EmbeddingStatus.Ready;
 
             postRepository.Update(post);
@@ -85,44 +75,7 @@ public sealed class UpdatePostEmbeddingHandler(
             postRepository.Update(post);
             await postRepository.SaveChangesAsync();
 
-            throw; // Re-throw so Hangfire can retry
+            throw;
         }
-    }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
-    private static string BuildContent(Post post)
-    {
-        var item = post.Item;
-        var sb = new StringBuilder();
-
-        sb.Append($"A {item.Category.ToString()} item called {item.ItemName}");
-
-        if (!string.IsNullOrWhiteSpace(item.Brand))
-            sb.Append($" made by {item.Brand}");
-
-        sb.Append('.');
-
-        if (!string.IsNullOrWhiteSpace(item.Color))
-            sb.Append($" It is {item.Color} in color.");
-
-        if (!string.IsNullOrWhiteSpace(item.Material))
-            sb.Append($" Made of {item.Material}.");
-
-        if (!string.IsNullOrWhiteSpace(item.Size))
-            sb.Append($" Size is {item.Size}.");
-
-        if (!string.IsNullOrWhiteSpace(item.Condition))
-            sb.Append($" Condition: {item.Condition}.");
-
-        if (!string.IsNullOrWhiteSpace(item.DistinctiveMarks))
-            sb.Append($" It has distinctive marks: {item.DistinctiveMarks}.");
-
-        if (!string.IsNullOrWhiteSpace(item.AdditionalDetails))
-            sb.Append($" {item.AdditionalDetails}");
-
-        return sb.ToString().Trim();
     }
 }

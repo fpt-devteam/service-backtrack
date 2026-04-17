@@ -5,215 +5,182 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
-using NpgsqlTypes;
 using Pgvector;
 using System.Collections;
 
-namespace Backtrack.Core.Infrastructure.Data.Configurations
+namespace Backtrack.Core.Infrastructure.Data.Configurations;
+
+public class PostConfiguration : IEntityTypeConfiguration<Post>
 {
-    public class PostConfiguration : IEntityTypeConfiguration<Post>
+    public void Configure(EntityTypeBuilder<Post> builder)
     {
-        public void Configure(EntityTypeBuilder<Post> builder)
-        {
-            builder.ToTable("posts");
+        builder.ToTable("posts");
+        builder.HasKey(p => p.Id);
 
-            builder.HasKey(p => p.Id);
+        builder.Property(p => p.Id)
+            .HasColumnName("id")
+            .IsRequired();
 
-            builder.Property(p => p.Id)
-                .HasColumnName("id")
-                .IsRequired();
+        builder.Property(p => p.PostType)
+            .HasColumnName("post_type")
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
 
-            builder.Property(p => p.PostType)
-                .HasColumnName("post_type")
-                .HasConversion<string>()
-                .IsRequired();
+        // Top-level category (enum)
+        builder.Property(p => p.Category)
+            .HasColumnName("category")
+            .HasConversion<string>()
+            .HasMaxLength(50)
+            .IsRequired();
 
-            builder.Property(p => p.Status)
-                .HasColumnName("status")
-                .HasConversion<string>()
-                .HasDefaultValue(Domain.Constants.PostStatus.Active)
-                .IsRequired();
+        // Subcategory (FK to subcategories lookup)
+        builder.Property(p => p.SubcategoryId)
+            .HasColumnName("subcategory_id")
+            .IsRequired();
 
-            builder.OwnsOne(p => p.Item, owned =>
-            {
-                owned.Property(i => i.ItemName)
-                    .HasColumnName("item_name")
-                    .HasMaxLength(500)
-                    .IsRequired();
+        builder.HasOne(p => p.Subcategory)
+            .WithMany()
+            .HasForeignKey(p => p.SubcategoryId)
+            .HasConstraintName("fk_posts_subcategory_id_subcategories_id")
+            .OnDelete(DeleteBehavior.Restrict);
 
-                owned.Property(i => i.Category)
-                    .HasColumnName("item_category")
-                    .HasConversion<string>()
-                    .HasMaxLength(50);
+        builder.HasIndex(p => p.SubcategoryId)
+            .HasDatabaseName("ix_posts_subcategory_id");
 
-                owned.Property(i => i.Color)
-                    .HasColumnName("item_color")
-                    .HasMaxLength(100);
+        builder.Property(p => p.Status)
+            .HasColumnName("status")
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .HasDefaultValue(Domain.Constants.PostStatus.Active)
+            .IsRequired();
 
-                owned.Property(i => i.Brand)
-                    .HasColumnName("item_brand")
-                    .HasMaxLength(100);
+        // Author
+        builder.Property(p => p.AuthorId)
+            .HasColumnName("author_id")
+            .HasColumnType("text")
+            .IsRequired();
 
-                owned.Property(i => i.Condition)
-                    .HasColumnName("item_condition")
-                    .HasMaxLength(100);
+        builder.HasOne(p => p.Author)
+            .WithMany()
+            .HasForeignKey(p => p.AuthorId)
+            .HasConstraintName("fk_posts_author_id_users_id")
+            .OnDelete(DeleteBehavior.NoAction);
 
-                owned.Property(i => i.Material)
-                    .HasColumnName("item_material")
-                    .HasMaxLength(100);
+        builder.HasIndex(p => p.AuthorId)
+            .HasDatabaseName("ix_posts_author_id");
 
-                owned.Property(i => i.Size)
-                    .HasColumnName("item_size")
-                    .HasMaxLength(100);
+        // Organization
+        builder.Property(p => p.OrganizationId)
+            .HasColumnName("organization_id");
 
-                owned.Property(i => i.DistinctiveMarks)
-                    .HasColumnName("item_distinctive_marks")
-                    .HasMaxLength(500);
+        builder.HasOne(p => p.Organization)
+            .WithMany(o => o.Posts)
+            .HasForeignKey(p => p.OrganizationId)
+            .HasConstraintName("fk_posts_organization_id_organizations_id")
+            .OnDelete(DeleteBehavior.SetNull);
 
-                owned.Property(i => i.AdditionalDetails)
-                    .HasColumnName("item_additional_details")
-                    .HasMaxLength(2000);
-            });
+        // Images
+        builder.Property(p => p.ImageUrls)
+            .HasColumnName("image_urls")
+            .HasColumnType("text[]")
+            .IsRequired();
 
-            // tsvector full-text search column — auto-generated by PostgreSQL on every insert/update
-            // Weights: A = item_name (highest), B = category/brand, C = physical attributes, D = additional_details (lowest)
-            builder.Property<NpgsqlTsVector>("ItemSearch")
-                .HasColumnName("item_search")
-                .HasColumnType("tsvector")
-                .HasComputedColumnSql(
-                    "setweight(to_tsvector('english', coalesce(item_name, '')),               'A') || " +
-                    "setweight(to_tsvector('english', coalesce(item_category, '') || ' ' || coalesce(item_brand, '')), 'B') || " +
-                    "setweight(to_tsvector('english', coalesce(item_color, '')     || ' ' || coalesce(item_condition, '') || ' ' || coalesce(item_material, '') || ' ' || coalesce(item_size, '') || ' ' || coalesce(item_distinctive_marks, '')), 'C') || " +
-                    "setweight(to_tsvector('english', coalesce(item_additional_details, '')), 'D')",
-                    stored: true);
+        // Location (geography)
+        var geoPointToPointConverter = new ValueConverter<GeoPoint, Point>(
+            toDb => new Point(toDb.Longitude, toDb.Latitude) { SRID = 4326 },
+            fromDb => new GeoPoint(fromDb.Y, fromDb.X)
+        );
 
-            builder.HasIndex("ItemSearch")
-                .HasDatabaseName("ix_posts_item_search")
-                .HasMethod("gin");
+        var geoPointComparer = new ValueComparer<GeoPoint>(
+            (a, b) => a != null && b != null && a.Latitude == b.Latitude && a.Longitude == b.Longitude,
+            v => v == null ? 0 : HashCode.Combine(v.Latitude, v.Longitude),
+            v => new GeoPoint(v.Latitude, v.Longitude)
+        );
 
-            builder.Property(p => p.ImageUrls)
-                .HasColumnName("image_urls")
-                .HasColumnType("text[]")
-                .IsRequired();
+        builder.Property(p => p.Location)
+            .HasColumnName("location")
+            .HasColumnType("geography(point, 4326)")
+            .HasConversion(geoPointToPointConverter, geoPointComparer)
+            .IsRequired();
 
-            builder.Property(p => p.AuthorId)
-                .HasColumnName("author_id")
-                .HasColumnType("text")
-                .IsRequired();
+        builder.HasIndex(p => p.Location)
+            .HasDatabaseName("ix_posts_location")
+            .HasMethod("gist");
 
-            builder.HasOne(p => p.Author)
-                .WithMany()
-                .HasForeignKey(p => p.AuthorId)
-                .HasConstraintName("fk_posts_author_id_users_id")
-                .OnDelete(DeleteBehavior.NoAction);
+        builder.Property(p => p.ExternalPlaceId)
+            .HasColumnName("external_place_id")
+            .HasMaxLength(500);
 
-            builder.HasIndex(p => p.AuthorId)
-                .HasDatabaseName("ix_posts_author_id");
+        builder.Property(p => p.DisplayAddress)
+            .HasColumnName("display_address")
+            .HasMaxLength(1000)
+            .IsRequired();
 
-            builder.Property(p => p.OrganizationId)
-                .HasColumnName("organization_id");
+        // Embedding (text only)
+        var embeddingToVectorConverter = new ValueConverter<float[]?, Vector?>(
+            toDb => toDb == null ? null : new Vector(toDb),
+            fromDb => fromDb == null ? null : fromDb.ToArray()
+        );
 
-            builder.HasOne(p => p.Organization)
-                .WithMany(o => o.Posts)
-                .HasForeignKey(p => p.OrganizationId)
-                .HasConstraintName("fk_posts_organization_id_organizations_id")
-                .OnDelete(DeleteBehavior.SetNull);
+        var embeddingComparer = new ValueComparer<float[]?>(
+            (a, b) => a == b || (a != null && b != null && a.SequenceEqual(b)),
+            v => v == null ? 0 : StructuralComparisons.StructuralEqualityComparer.GetHashCode(v),
+            v => v == null ? null : v.ToArray()
+        );
 
-            var geoPointToPointConverter = new ValueConverter<GeoPoint, Point>(
-                toDb => new Point(toDb.Longitude, toDb.Latitude) { SRID = 4326 },
-                fromDb => new GeoPoint(fromDb.Y, fromDb.X)
-            );
+        builder.Property(p => p.Embedding)
+            .HasColumnName("embedding")
+            .HasColumnType("vector(1536)")
+            .HasConversion(embeddingToVectorConverter, embeddingComparer);
 
-            var geoPointComparer = new ValueComparer<GeoPoint>(
-                (a, b) => a != null && b != null && a.Latitude == b.Latitude && a.Longitude == b.Longitude,
-                v => v == null ? 0 : HashCode.Combine(v.Latitude, v.Longitude),
-                v => new GeoPoint(v.Latitude, v.Longitude)
-            );
+        builder.HasIndex(p => p.Embedding)
+            .HasDatabaseName("ix_posts_embedding")
+            .HasMethod("hnsw")
+            .HasOperators("vector_cosine_ops");
 
-            builder.Property(p => p.Location)
-                .HasColumnName("location")
-                .HasColumnType("geography(point, 4326)")
-                .HasConversion(geoPointToPointConverter, geoPointComparer)
-                .IsRequired();
+        // Status fields
+        builder.Property(p => p.EmbeddingStatus)
+            .HasColumnName("embedding_status")
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
 
-            builder.Property(p => p.ExternalPlaceId)
-                .HasColumnName("external_place_id")
-                .HasMaxLength(500);
+        builder.Property(p => p.PostMatchingStatus)
+            .HasColumnName("post_matching_status")
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
 
-            builder.Property(p => p.DisplayAddress)
-                .HasColumnName("display_address")
-                .HasMaxLength(1000)
-                .IsRequired();
+        builder.Property(p => p.ContentHash)
+            .HasColumnName("content_hash")
+            .HasMaxLength(64)
+            .IsRequired();
 
-            // Vector converter for embeddings
-            var embeddingToVectorConverter = new ValueConverter<float[]?, Vector?>(
-                toDb => toDb == null ? null : new Vector(toDb),
-                fromDb => fromDb == null ? null : fromDb.ToArray()
-            );
+        builder.Property(p => p.EventTime)
+            .HasColumnName("event_time")
+            .IsRequired();
 
-            var embeddingComparer = new ValueComparer<float[]?>(
-                (a, b) =>
-                    a == b || (a != null && b != null && a.SequenceEqual(b)),
-                v =>
-                    v == null ? 0 : StructuralComparisons.StructuralEqualityComparer.GetHashCode(v),
-                v =>
-                    v == null ? null : v.ToArray()
-            );
+        builder.Property(p => p.CreatedAt)
+            .HasColumnName("created_at")
+            .IsRequired();
 
-            builder.Property(p => p.Embedding)
-                .HasColumnName("embedding")
-                .HasColumnType("vector(1536)")
-                .HasConversion(embeddingToVectorConverter, embeddingComparer);
+        builder.Property(p => p.UpdatedAt)
+            .HasColumnName("updated_at");
 
-            builder.Property(p => p.ContentHash)
-                .HasColumnName("content_hash")
-                .HasMaxLength(64)
-                .IsRequired();
+        builder.Property(p => p.DeletedAt)
+            .HasColumnName("deleted_at");
 
-            builder.Property(p => p.EmbeddingStatus)
-                .HasColumnName("embedding_status")
-                .HasConversion<string>()
-                .IsRequired();
+        // Indexes for matching pre-filter
+        builder.HasIndex(p => new { p.Category, p.PostType, p.Status, p.EventTime })
+            .HasDatabaseName("ix_posts_match_filter");
 
-            builder.Property(p => p.PostMatchingStatus)
-                .HasColumnName("post_matching_status")
-                .HasConversion<string>()
-                .IsRequired();
+        builder.HasIndex(p => p.PostType)
+            .HasDatabaseName("ix_posts_post_type");
 
-            builder.Property(p => p.EventTime)
-                .HasColumnName("event_time")
-                .IsRequired();
+        builder.HasIndex(p => p.EventTime)
+            .HasDatabaseName("ix_posts_event_time");
 
-            builder.Property(p => p.CreatedAt)
-                .HasColumnName("created_at")
-                .IsRequired();
-
-            builder.Property(p => p.UpdatedAt)
-                .HasColumnName("updated_at");
-
-            builder.Property(p => p.DeletedAt)
-                .HasColumnName("deleted_at");
-
-            // Indexes
-            builder.HasIndex(p => p.PostType)
-                .HasDatabaseName("ix_posts_post_type");
-
-            builder.HasIndex(p => p.EventTime)
-                .HasDatabaseName("ix_posts_event_time");
-
-            // Spatial index for location using GIST
-            builder.HasIndex(p => p.Location)
-                .HasDatabaseName("ix_posts_location")
-                .HasMethod("gist");
-
-            // Vector index for embedding using HNSW for efficient similarity search
-            builder.HasIndex(p => p.Embedding)
-                .HasDatabaseName("ix_posts_embedding")
-                .HasMethod("hnsw")
-                .HasOperators("vector_cosine_ops");
-
-            // Global query filter for soft delete
-            builder.HasQueryFilter(p => p.DeletedAt == null);
-        }
+        builder.HasQueryFilter(p => p.DeletedAt == null);
     }
 }

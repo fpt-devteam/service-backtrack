@@ -11,7 +11,12 @@ public sealed record CreatePostCommand : IRequest<PostResult>
     [JsonIgnore]
     public Guid? OrganizationId { get; init; }
     public string? PostType { get; init; }
-    public required PostItem Item { get; init; }
+    public required string Category { get; init; }
+    public required Guid SubcategoryId { get; init; }
+    public PersonalBelongingDetailInput? PersonalBelongingDetail { get; init; }
+    public CardDetailInput? CardDetail { get; init; }
+    public ElectronicDetailInput? ElectronicDetail { get; init; }
+    public OtherDetailInput? OtherDetail { get; init; }
     public string[] ImageUrls { get; init; } = Array.Empty<string>();
     public GeoPoint? Location { get; init; }
     public string? DisplayAddress { get; init; }

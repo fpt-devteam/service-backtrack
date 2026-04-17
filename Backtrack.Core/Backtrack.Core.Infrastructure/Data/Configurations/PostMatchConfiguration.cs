@@ -1,4 +1,3 @@
-using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -10,85 +9,46 @@ public class PostMatchConfiguration : IEntityTypeConfiguration<PostMatch>
     public void Configure(EntityTypeBuilder<PostMatch> builder)
     {
         builder.ToTable("post_matches");
+        builder.HasKey(m => m.Id);
 
-        builder.HasKey(pm => pm.Id);
+        builder.Property(m => m.Id).HasColumnName("id");
+        builder.Property(m => m.SourcePostId).HasColumnName("source_post_id").IsRequired();
+        builder.Property(m => m.CandidatePostId).HasColumnName("candidate_post_id").IsRequired();
+        builder.Property(m => m.Score).HasColumnName("score").IsRequired();
+        builder.Property(m => m.MatchReason).HasColumnName("match_reason").HasMaxLength(100).IsRequired();
 
-        builder.Property(pm => pm.Id)
-            .HasColumnName("id")
-            .IsRequired();
-
-        builder.Property(pm => pm.LostPostId)
-            .HasColumnName("lost_post_id")
-            .IsRequired();
-
-        builder.Property(pm => pm.FoundPostId)
-            .HasColumnName("found_post_id")
-            .IsRequired();
-
-        builder.Property(pm => pm.MatchScore)
-            .HasColumnName("match_score")
-            .IsRequired();
-
-        builder.Property(pm => pm.DistanceMeters)
-            .HasColumnName("distance_meters")
-            .IsRequired();
-
-        builder.Property(pm => pm.TimeGapDays)
-            .HasColumnName("time_gap_days")
-            .IsRequired();
-
-        builder.Property(pm => pm.MatchingLevel)
-            .HasColumnName("matching_level")
+        builder.Property(m => m.Status)
+            .HasColumnName("status")
             .HasConversion<string>()
+            .HasMaxLength(20)
+            .HasDefaultValue(MatchStatus.Pending)
             .IsRequired();
 
-        builder.Property(pm => pm.IsAssessed)
-            .HasColumnName("is_assessed")
-            .IsRequired()
-            .HasDefaultValue(false);
+        builder.Property(m => m.CreatedAt).HasColumnName("created_at").IsRequired();
+        builder.Property(m => m.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(m => m.DeletedAt).HasColumnName("deleted_at");
 
-        builder.Property(pm => pm.AssessmentSummary)
-            .HasColumnName("assessment_summary")
-            .HasColumnType("text")
-            .IsRequired();
+        // Unique: one candidate can only match one source once
+        builder.HasIndex(m => new { m.SourcePostId, m.CandidatePostId })
+            .HasDatabaseName("ix_post_matches_source_candidate")
+            .IsUnique();
 
-        builder.Property(pm => pm.CreatedAt)
-            .HasColumnName("created_at")
-            .IsRequired();
+        // Query by source, sorted by score
+        builder.HasIndex(m => new { m.SourcePostId, m.Status, m.Score })
+            .HasDatabaseName("ix_post_matches_by_source");
 
-        builder.Property(pm => pm.UpdatedAt)
-            .HasColumnName("updated_at");
-
-        builder.Property(pm => pm.DeletedAt)
-            .HasColumnName("deleted_at");
-
-        // Relationships
-        builder.HasOne(pm => pm.LostPost)
+        builder.HasOne(m => m.SourcePost)
             .WithMany()
-            .HasForeignKey(pm => pm.LostPostId)
-            .HasConstraintName("fk_post_matches_lost_post_id")
+            .HasForeignKey(m => m.SourcePostId)
+            .HasConstraintName("fk_post_matches_source_post_id")
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(pm => pm.FoundPost)
+        builder.HasOne(m => m.CandidatePost)
             .WithMany()
-            .HasForeignKey(pm => pm.FoundPostId)
-            .HasConstraintName("fk_post_matches_found_post_id")
+            .HasForeignKey(m => m.CandidatePostId)
+            .HasConstraintName("fk_post_matches_candidate_post_id")
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Indexes
-        builder.HasIndex(pm => pm.LostPostId)
-            .HasDatabaseName("ix_post_matches_lost_post_id");
-
-        builder.HasIndex(pm => pm.FoundPostId)
-            .HasDatabaseName("ix_post_matches_found_post_id");
-
-        // Unique index for active matches
-        builder.HasIndex(pm => new { pm.FoundPostId, pm.LostPostId })
-            .IsUnique()
-            .HasDatabaseName("ux_post_matches_found_lost_active")
-            .HasFilter("deleted_at IS NULL");
-
-        // Global query filter for soft delete
-        builder.HasQueryFilter(pm => pm.DeletedAt == null);
+        builder.HasQueryFilter(m => m.DeletedAt == null);
     }
 }

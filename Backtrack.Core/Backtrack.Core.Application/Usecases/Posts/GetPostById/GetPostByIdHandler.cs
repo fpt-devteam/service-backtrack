@@ -25,21 +25,6 @@ public sealed class GetPostByIdHandler(
             ? await receiveReportRepository.GetByPostIdAsync(post.Id, cancellationToken)
             : null;
 
-        return new PostResult
-        {
-            Id              = post.Id,
-            Author          = post.Author?.ToPostAuthorResult(),
-            Organization    = post.Organization?.ToOrganizationOnPost(),
-            PostType        = post.PostType,
-            Status          = post.Status,
-            Item            = post.Item,
-            ImageUrls       = post.ImageUrls,
-            Location        = post.Location,
-            ExternalPlaceId = post.ExternalPlaceId,
-            DisplayAddress  = post.DisplayAddress,
-            EventTime       = post.EventTime,
-            CreatedAt       = post.CreatedAt,
-            FinderInfo      = receiveReport?.FinderInfo
-        };
+        return post.ToPostResult() with { FinderInfo = receiveReport?.FinderInfo };
     }
 }

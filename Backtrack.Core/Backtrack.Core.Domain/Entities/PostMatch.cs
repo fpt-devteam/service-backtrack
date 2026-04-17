@@ -1,20 +1,20 @@
-using Backtrack.Core.Domain.Constants;
-
 namespace Backtrack.Core.Domain.Entities;
 
 public sealed class PostMatch : Entity<Guid>
 {
-    public required Guid LostPostId { get; set; }
-    public required Guid FoundPostId { get; set; }
-    public required float MatchScore { get; set; }
-    public required float DistanceMeters { get; set; }
-    public required double TimeGapDays { get; set; }
-    public required MatchingLevel MatchingLevel { get; set; }
+    public required Guid SourcePostId { get; set; }
+    public required Guid CandidatePostId { get; set; }
+    public required double Score { get; set; }          // 0.0 - 1.0
+    public required string MatchReason { get; set; }    // "rrf_embedding", "card_hash_exact"...
+    public MatchStatus Status { get; set; } = MatchStatus.Pending;
 
-    public bool IsAssessed { get; set; }
-    public required string AssessmentSummary { get; set; }
+    public Post SourcePost { get; set; } = default!;
+    public Post CandidatePost { get; set; } = default!;
+}
 
-    // Navigation properties
-    public Post LostPost { get; set; } = default!;
-    public Post FoundPost { get; set; } = default!;
+public enum MatchStatus
+{
+    Pending,
+    Confirmed,
+    Rejected
 }

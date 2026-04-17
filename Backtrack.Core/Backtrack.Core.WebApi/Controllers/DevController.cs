@@ -1,5 +1,4 @@
 using Backtrack.Core.Application.Usecases.Dev.JoinOrganization;
-using Backtrack.Core.Application.Usecases.Dev.SeedSubscriptionPlans;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
@@ -20,15 +19,6 @@ public class DevController(IMediator mediator) : ControllerBase
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         command = command with { UserId = userId };
 
-        var result = await mediator.Send(command, cancellationToken);
-        return this.ApiCreated(result);
-    }
-
-    [HttpPost("seed-subscription-plans")]
-    public async Task<IActionResult> SeedSubscriptionPlansAsync(
-        [FromBody] SeedSubscriptionPlansCommand command,
-        CancellationToken cancellationToken)
-    {
         var result = await mediator.Send(command, cancellationToken);
         return this.ApiCreated(result);
     }

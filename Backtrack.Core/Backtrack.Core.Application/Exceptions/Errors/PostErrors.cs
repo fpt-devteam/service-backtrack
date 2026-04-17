@@ -6,6 +6,10 @@ namespace Backtrack.Core.Application.Exceptions.Errors
             Code: "InvalidPostType",
             Message: "PostType must be either 'Lost' or 'Found'.");
 
+        public static readonly Error InvalidCategory = new(
+            Code: "InvalidCategory",
+            Message: "Category must be one of: PersonalBelongings, Cards, Electronics, Others.");
+
         public static readonly Error NotFound = new(
             Code: "PostNotFound",
             Message: "Post not found.");

@@ -9,6 +9,11 @@ namespace Backtrack.Core.Infrastructure.Data
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Post> Posts { get; set; }
+        public DbSet<Subcategory> Subcategories { get; set; }
+        public DbSet<PostPersonalBelongingDetail> PostPersonalBelongingDetails { get; set; }
+        public DbSet<PostCardDetail> PostCardDetails { get; set; }
+        public DbSet<PostElectronicDetail> PostElectronicDetails { get; set; }
+        public DbSet<PostOtherDetail> PostOtherDetails { get; set; }
         public DbSet<Organization> Organizations { get; set; }
         public DbSet<Membership> Memberships { get; set; }
         public DbSet<JoinInvitation> JoinInvitations { get; set; }
@@ -28,6 +33,11 @@ namespace Backtrack.Core.Infrastructure.Data
 
             modelBuilder.ApplyConfiguration(new UserConfiguration());
             modelBuilder.ApplyConfiguration(new PostConfiguration());
+            modelBuilder.ApplyConfiguration(new SubcategoryConfiguration());
+            modelBuilder.ApplyConfiguration(new PostPersonalBelongingDetailConfiguration());
+            modelBuilder.ApplyConfiguration(new PostCardDetailConfiguration());
+            modelBuilder.ApplyConfiguration(new PostElectronicDetailConfiguration());
+            modelBuilder.ApplyConfiguration(new PostOtherDetailConfiguration());
             modelBuilder.ApplyConfiguration(new OrganizationConfiguration());
             modelBuilder.ApplyConfiguration(new MembershipConfiguration());
             modelBuilder.ApplyConfiguration(new JoinInvitationConfiguration());

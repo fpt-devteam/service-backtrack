@@ -6,43 +6,36 @@ using Backtrack.Core.Infrastructure.Helpers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Backtrack.Core.Infrastructure.DependencyInjections
+namespace Backtrack.Core.Infrastructure.DependencyInjections;
+
+public static class GeminiDI
 {
-    public static class GeminiDI
+    public static void AddGemini(this IServiceCollection services, IConfiguration configuration)
     {
-        public static void AddGemini(this IServiceCollection services, IConfiguration configuration)
+        services.Configure<GeminiSettings>(configuration.GetSection("GeminiSettings"));
+
+        // Core LLM service — single HttpClient for all generateContent calls
+        services.AddHttpClient<ILlmService, GeminiLlmService>((_, client) =>
         {
-            services.Configure<GeminiSettings>(configuration.GetSection("GeminiSettings"));
+            var s = configuration.GetSection("GeminiSettings").Get<GeminiSettings>();
+            if (s != null) client.Timeout = TimeSpan.FromSeconds(s.TimeoutSeconds * 3);
+        });
 
-            services.AddHttpClient<IEmbeddingService, GeminiEmbeddingService>((serviceProvider, client) =>
-            {
-                var geminiSettings = configuration.GetSection("GeminiSettings").Get<GeminiSettings>();
-                if (geminiSettings != null)
-                {
-                    client.Timeout = TimeSpan.FromSeconds(geminiSettings.TimeoutSeconds);
-                }
-            });
+        // Embedding service — separate HttpClient (different endpoint/model)
+        services.AddHttpClient<IEmbeddingService, GeminiEmbeddingService>((_, client) =>
+        {
+            var s = configuration.GetSection("GeminiSettings").Get<GeminiSettings>();
+            if (s != null) client.Timeout = TimeSpan.FromSeconds(s.TimeoutSeconds);
+        });
 
-            services.AddHttpClient<IImageAnalysisService, GeminiImageAnalysisService>((serviceProvider, client) =>
-            {
-                var geminiSettings = configuration.GetSection("GeminiSettings").Get<GeminiSettings>();
-                if (geminiSettings != null)
-                {
-                    // Image analysis may take longer due to image processing
-                    client.Timeout = TimeSpan.FromSeconds(geminiSettings.TimeoutSeconds * 2);
-                }
-            });
+        // Services that consume ILlmService (resolved via DI, no own HttpClient)
+        services.AddScoped<IImageAnalysisService, GeminiImageAnalysisService>();
+        services.AddScoped<IPostMatchAssessor, GeminiPostMatchAssessor>();
+        services.AddScoped<IOcrService, GeminiOcrService>();
 
-            services.AddHttpClient<IPostMatchAssessor, GeminiPostMatchAssessor>((serviceProvider, client) =>
-            {
-                var geminiSettings = configuration.GetSection("GeminiSettings").Get<GeminiSettings>();
-                if (geminiSettings != null)
-                {
-                    client.Timeout = TimeSpan.FromSeconds(geminiSettings.TimeoutSeconds * 2);
-                }
-            });
+        // Cross-encoder: also consumes ILlmService
+        services.AddScoped<ICrossEncoderService, GeminiCrossEncoderService>();
 
-            services.AddHttpClient<IImageFetcher, HttpImageFetcher>();
-        }
+        services.AddHttpClient<IImageFetcher, HttpImageFetcher>();
     }
 }

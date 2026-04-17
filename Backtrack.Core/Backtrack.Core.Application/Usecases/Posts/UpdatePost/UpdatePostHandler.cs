@@ -8,7 +8,6 @@ using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
-using System.Text.Json;
 using Backtrack.Core.Application.Usecases.PostMatchings;
 
 namespace Backtrack.Core.Application.Usecases.Posts.UpdatePost;
@@ -79,9 +78,25 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             needsReEmbedding = true;
         }
 
-        if (command.Item != null)
+        // Update category-specific detail if provided
+        if (command.PersonalBelongingDetail != null)
         {
-            post.Item = command.Item;
+            UpdatePersonalBelongingDetail(post, command.PersonalBelongingDetail);
+            needsReEmbedding = true;
+        }
+        else if (command.CardDetail != null)
+        {
+            UpdateCardDetail(post, command.CardDetail);
+            needsReEmbedding = true;
+        }
+        else if (command.ElectronicDetail != null)
+        {
+            UpdateElectronicDetail(post, command.ElectronicDetail);
+            needsReEmbedding = true;
+        }
+        else if (command.OtherDetail != null)
+        {
+            UpdateOtherDetail(post, command.OtherDetail);
             needsReEmbedding = true;
         }
 
@@ -120,22 +135,122 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         }
         await _postRepository.SaveChangesAsync();
 
-        if (needsReEmbedding) _backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
+        if (needsReEmbedding)
+            _backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(
+                orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
-        return new PostResult
+        return post.ToPostResult();
+    }
+
+    private static void UpdatePersonalBelongingDetail(Post post, PersonalBelongingDetailInput input)
+    {
+        if (post.PersonalBelongingDetail is { } d)
         {
-            Id = post.Id,
-            Author = post.Author?.ToPostAuthorResult(),
-            Organization = post.Organization?.ToOrganizationOnPost(),
-            PostType = post.PostType,
-            Status = post.Status,
-            Item = post.Item,
-            ImageUrls = post.ImageUrls,
-            Location = post.Location,
-            ExternalPlaceId = post.ExternalPlaceId,
-            DisplayAddress = post.DisplayAddress,
-            EventTime = post.EventTime,
-            CreatedAt = post.CreatedAt
-        };
+            d.Color = input.Color ?? d.Color;
+            d.Brand = input.Brand ?? d.Brand;
+            d.Material = input.Material ?? d.Material;
+            d.Size = input.Size ?? d.Size;
+            d.Condition = input.Condition ?? d.Condition;
+            d.DistinctiveMarks = input.DistinctiveMarks ?? d.DistinctiveMarks;
+            d.AdditionalDetails = input.AdditionalDetails ?? d.AdditionalDetails;
+        }
+        else
+        {
+            post.PersonalBelongingDetail = new PostPersonalBelongingDetail
+            {
+                PostId = post.Id,
+                Color = input.Color,
+                Brand = input.Brand,
+                Material = input.Material,
+                Size = input.Size,
+                Condition = input.Condition,
+                DistinctiveMarks = input.DistinctiveMarks,
+                AdditionalDetails = input.AdditionalDetails
+            };
+        }
+    }
+
+    private static void UpdateCardDetail(Post post, CardDetailInput input)
+    {
+        if (post.CardDetail is { } d)
+        {
+            d.CardNumberHash = input.CardNumberHash ?? d.CardNumberHash;
+            d.CardNumberMasked = input.CardNumberMasked ?? d.CardNumberMasked;
+            d.HolderName = input.HolderName ?? d.HolderName;
+            d.HolderNameNormalized = input.HolderNameNormalized ?? d.HolderNameNormalized;
+            d.DateOfBirth = input.DateOfBirth ?? d.DateOfBirth;
+            d.IssueDate = input.IssueDate ?? d.IssueDate;
+            d.ExpiryDate = input.ExpiryDate ?? d.ExpiryDate;
+            d.IssuingAuthority = input.IssuingAuthority ?? d.IssuingAuthority;
+            d.OcrText = input.OcrText ?? d.OcrText;
+        }
+        else
+        {
+            post.CardDetail = new PostCardDetail
+            {
+                PostId = post.Id,
+                CardNumberHash = input.CardNumberHash,
+                CardNumberMasked = input.CardNumberMasked,
+                HolderName = input.HolderName,
+                HolderNameNormalized = input.HolderNameNormalized,
+                DateOfBirth = input.DateOfBirth,
+                IssueDate = input.IssueDate,
+                ExpiryDate = input.ExpiryDate,
+                IssuingAuthority = input.IssuingAuthority,
+                OcrText = input.OcrText
+            };
+        }
+    }
+
+    private static void UpdateElectronicDetail(Post post, ElectronicDetailInput input)
+    {
+        if (post.ElectronicDetail is { } d)
+        {
+            d.Brand = input.Brand ?? d.Brand;
+            d.Model = input.Model ?? d.Model;
+            d.Color = input.Color ?? d.Color;
+            d.HasCase = input.HasCase ?? d.HasCase;
+            d.CaseDescription = input.CaseDescription ?? d.CaseDescription;
+            d.ScreenCondition = input.ScreenCondition ?? d.ScreenCondition;
+            d.LockScreenDescription = input.LockScreenDescription ?? d.LockScreenDescription;
+            d.DistinguishingFeatures = input.DistinguishingFeatures ?? d.DistinguishingFeatures;
+            d.AdditionalDetails = input.AdditionalDetails ?? d.AdditionalDetails;
+        }
+        else
+        {
+            post.ElectronicDetail = new PostElectronicDetail
+            {
+                PostId = post.Id,
+                Brand = input.Brand,
+                Model = input.Model,
+                Color = input.Color,
+                HasCase = input.HasCase,
+                CaseDescription = input.CaseDescription,
+                ScreenCondition = input.ScreenCondition,
+                LockScreenDescription = input.LockScreenDescription,
+                DistinguishingFeatures = input.DistinguishingFeatures,
+                AdditionalDetails = input.AdditionalDetails
+            };
+        }
+    }
+
+    private static void UpdateOtherDetail(Post post, OtherDetailInput input)
+    {
+        if (post.OtherDetail is { } d)
+        {
+            d.ItemIdentifier = input.ItemIdentifier;
+            d.PrimaryColor = input.PrimaryColor ?? d.PrimaryColor;
+            d.Notes = input.Notes ?? d.Notes;
+        }
+        else
+        {
+            post.OtherDetail = new PostOtherDetail
+            {
+                PostId = post.Id,
+                ItemIdentifier = input.ItemIdentifier,
+                PrimaryColor = input.PrimaryColor,
+                Notes = input.Notes
+            };
+        }
     }
 }

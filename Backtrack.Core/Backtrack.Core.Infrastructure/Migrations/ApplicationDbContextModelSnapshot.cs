@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using NpgsqlTypes;
 using Pgvector;
 
 #nullable disable
@@ -539,6 +538,12 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("author_id");
 
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("category");
+
                     b.Property<string>("ContentHash")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -565,7 +570,8 @@ namespace Backtrack.Core.Infrastructure.Migrations
 
                     b.Property<string>("EmbeddingStatus")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasColumnName("embedding_status");
 
                     b.Property<DateTimeOffset>("EventTime")
@@ -582,12 +588,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("image_urls");
 
-                    b.Property<NpgsqlTsVector>("ItemSearch")
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("tsvector")
-                        .HasColumnName("item_search")
-                        .HasComputedColumnSql("setweight(to_tsvector('english', coalesce(item_name, '')),               'A') || setweight(to_tsvector('english', coalesce(item_category, '') || ' ' || coalesce(item_brand, '')), 'B') || setweight(to_tsvector('english', coalesce(item_color, '')     || ' ' || coalesce(item_condition, '') || ' ' || coalesce(item_material, '') || ' ' || coalesce(item_size, '') || ' ' || coalesce(item_distinctive_marks, '')), 'C') || setweight(to_tsvector('english', coalesce(item_additional_details, '')), 'D')", true);
-
                     b.Property<Point>("Location")
                         .IsRequired()
                         .HasColumnType("geography(point, 4326)")
@@ -599,20 +599,27 @@ namespace Backtrack.Core.Infrastructure.Migrations
 
                     b.Property<string>("PostMatchingStatus")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasColumnName("post_matching_status");
 
                     b.Property<string>("PostType")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasColumnName("post_type");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasDefaultValue("Active")
                         .HasColumnName("status");
+
+                    b.Property<Guid>("SubcategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subcategory_id");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -632,11 +639,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.HasIndex("EventTime")
                         .HasDatabaseName("ix_posts_event_time");
 
-                    b.HasIndex("ItemSearch")
-                        .HasDatabaseName("ix_posts_item_search");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("ItemSearch"), "gin");
-
                     b.HasIndex("Location")
                         .HasDatabaseName("ix_posts_location");
 
@@ -647,7 +649,139 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.HasIndex("PostType")
                         .HasDatabaseName("ix_posts_post_type");
 
+                    b.HasIndex("SubcategoryId")
+                        .HasDatabaseName("ix_posts_subcategory_id");
+
+                    b.HasIndex("Category", "PostType", "Status", "EventTime")
+                        .HasDatabaseName("ix_posts_match_filter");
+
                     b.ToTable("posts", (string)null);
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.PostCardDetail", b =>
+                {
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<string>("AiDescription")
+                        .HasColumnType("text")
+                        .HasColumnName("ai_description");
+
+                    b.Property<string>("CardNumberHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("card_number_hash");
+
+                    b.Property<string>("CardNumberMasked")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("card_number_masked");
+
+                    b.Property<DateOnly?>("DateOfBirth")
+                        .HasColumnType("date")
+                        .HasColumnName("date_of_birth");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date")
+                        .HasColumnName("expiry_date");
+
+                    b.Property<string>("HolderName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("holder_name");
+
+                    b.Property<string>("HolderNameNormalized")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("holder_name_normalized");
+
+                    b.Property<DateOnly?>("IssueDate")
+                        .HasColumnType("date")
+                        .HasColumnName("issue_date");
+
+                    b.Property<string>("IssuingAuthority")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("issuing_authority");
+
+                    b.Property<string>("OcrText")
+                        .HasColumnType("text")
+                        .HasColumnName("ocr_text");
+
+                    b.HasKey("PostId");
+
+                    b.HasIndex("CardNumberHash")
+                        .HasDatabaseName("ix_post_card_details_card_number_hash")
+                        .HasFilter("card_number_hash IS NOT NULL");
+
+                    b.HasIndex("DateOfBirth")
+                        .HasDatabaseName("ix_post_card_details_dob")
+                        .HasFilter("date_of_birth IS NOT NULL");
+
+                    b.ToTable("post_card_details", (string)null);
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.PostElectronicDetail", b =>
+                {
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<string>("AdditionalDetails")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("additional_details");
+
+                    b.Property<string>("AiDescription")
+                        .HasColumnType("text")
+                        .HasColumnName("ai_description");
+
+                    b.Property<string>("Brand")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("brand");
+
+                    b.Property<string>("CaseDescription")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("case_description");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("color");
+
+                    b.Property<string>("DistinguishingFeatures")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("distinguishing_features");
+
+                    b.Property<bool?>("HasCase")
+                        .HasColumnType("boolean")
+                        .HasColumnName("has_case");
+
+                    b.Property<string>("LockScreenDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("lock_screen_description");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("model");
+
+                    b.Property<string>("ScreenCondition")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("screen_condition");
+
+                    b.HasKey("PostId");
+
+                    b.HasIndex("Brand", "Model")
+                        .HasDatabaseName("ix_post_electronic_details_brand_model");
+
+                    b.ToTable("post_electronic_details", (string)null);
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.PostMatch", b =>
@@ -657,10 +791,9 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("AssessmentSummary")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("assessment_summary");
+                    b.Property<Guid>("CandidatePostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("candidate_post_id");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -670,36 +803,27 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
 
-                    b.Property<float>("DistanceMeters")
-                        .HasColumnType("real")
-                        .HasColumnName("distance_meters");
-
-                    b.Property<Guid>("FoundPostId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("found_post_id");
-
-                    b.Property<bool>("IsAssessed")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_assessed");
-
-                    b.Property<Guid>("LostPostId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("lost_post_id");
-
-                    b.Property<float>("MatchScore")
-                        .HasColumnType("real")
-                        .HasColumnName("match_score");
-
-                    b.Property<string>("MatchingLevel")
+                    b.Property<string>("MatchReason")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("matching_level");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("match_reason");
 
-                    b.Property<double>("TimeGapDays")
+                    b.Property<double>("Score")
                         .HasColumnType("double precision")
-                        .HasColumnName("time_gap_days");
+                        .HasColumnName("score");
+
+                    b.Property<Guid>("SourcePostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_post_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Pending")
+                        .HasColumnName("status");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -707,18 +831,97 @@ namespace Backtrack.Core.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FoundPostId")
-                        .HasDatabaseName("ix_post_matches_found_post_id");
+                    b.HasIndex("CandidatePostId");
 
-                    b.HasIndex("LostPostId")
-                        .HasDatabaseName("ix_post_matches_lost_post_id");
-
-                    b.HasIndex("FoundPostId", "LostPostId")
+                    b.HasIndex("SourcePostId", "CandidatePostId")
                         .IsUnique()
-                        .HasDatabaseName("ux_post_matches_found_lost_active")
-                        .HasFilter("deleted_at IS NULL");
+                        .HasDatabaseName("ix_post_matches_source_candidate");
+
+                    b.HasIndex("SourcePostId", "Status", "Score")
+                        .HasDatabaseName("ix_post_matches_by_source");
 
                     b.ToTable("post_matches", (string)null);
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.PostOtherDetail", b =>
+                {
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<string>("AiDescription")
+                        .HasColumnType("text")
+                        .HasColumnName("ai_description");
+
+                    b.Property<string>("ItemIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("item_identifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("notes");
+
+                    b.Property<string>("PrimaryColor")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("primary_color");
+
+                    b.HasKey("PostId");
+
+                    b.ToTable("post_other_details", (string)null);
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.PostPersonalBelongingDetail", b =>
+                {
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<string>("AdditionalDetails")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("additional_details");
+
+                    b.Property<string>("AiDescription")
+                        .HasColumnType("text")
+                        .HasColumnName("ai_description");
+
+                    b.Property<string>("Brand")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("brand");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("color");
+
+                    b.Property<string>("Condition")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("condition");
+
+                    b.Property<string>("DistinctiveMarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("distinctive_marks");
+
+                    b.Property<string>("Material")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("material");
+
+                    b.Property<string>("Size")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("size");
+
+                    b.HasKey("PostId");
+
+                    b.ToTable("post_personal_belonging_details", (string)null);
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.QrCode", b =>
@@ -858,6 +1061,68 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasFilter("deleted_at IS NULL");
 
                     b.ToTable("qr_designs", (string)null);
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.Subcategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("category");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("display_order");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Category")
+                        .HasDatabaseName("ix_subcategories_category");
+
+                    b.HasIndex("Category", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_subcategories_category_code");
+
+                    b.ToTable("subcategories", (string)null);
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.Subscription", b =>
@@ -1252,93 +1517,87 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_posts_organization_id_organizations_id");
 
-                    b.OwnsOne("Backtrack.Core.Domain.ValueObjects.PostItem", "Item", b1 =>
-                        {
-                            b1.Property<Guid>("PostId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("AdditionalDetails")
-                                .HasMaxLength(2000)
-                                .HasColumnType("character varying(2000)")
-                                .HasColumnName("item_additional_details");
-
-                            b1.Property<string>("Brand")
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("item_brand");
-
-                            b1.Property<string>("Category")
-                                .IsRequired()
-                                .HasMaxLength(50)
-                                .HasColumnType("character varying(50)")
-                                .HasColumnName("item_category");
-
-                            b1.Property<string>("Color")
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("item_color");
-
-                            b1.Property<string>("Condition")
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("item_condition");
-
-                            b1.Property<string>("DistinctiveMarks")
-                                .HasMaxLength(500)
-                                .HasColumnType("character varying(500)")
-                                .HasColumnName("item_distinctive_marks");
-
-                            b1.Property<string>("ItemName")
-                                .IsRequired()
-                                .HasMaxLength(500)
-                                .HasColumnType("character varying(500)")
-                                .HasColumnName("item_name");
-
-                            b1.Property<string>("Material")
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("item_material");
-
-                            b1.Property<string>("Size")
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("item_size");
-
-                            b1.HasKey("PostId");
-
-                            b1.ToTable("posts");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PostId");
-                        });
+                    b.HasOne("Backtrack.Core.Domain.Entities.Subcategory", "Subcategory")
+                        .WithMany()
+                        .HasForeignKey("SubcategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_posts_subcategory_id_subcategories_id");
 
                     b.Navigation("Author");
 
-                    b.Navigation("Item")
-                        .IsRequired();
-
                     b.Navigation("Organization");
+
+                    b.Navigation("Subcategory");
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.PostCardDetail", b =>
+                {
+                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "Post")
+                        .WithOne("CardDetail")
+                        .HasForeignKey("Backtrack.Core.Domain.Entities.PostCardDetail", "PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_post_card_details_post_id");
+
+                    b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.PostElectronicDetail", b =>
+                {
+                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "Post")
+                        .WithOne("ElectronicDetail")
+                        .HasForeignKey("Backtrack.Core.Domain.Entities.PostElectronicDetail", "PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_post_electronic_details_post_id");
+
+                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.PostMatch", b =>
                 {
-                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "FoundPost")
+                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "CandidatePost")
                         .WithMany()
-                        .HasForeignKey("FoundPostId")
+                        .HasForeignKey("CandidatePostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_post_matches_found_post_id");
+                        .HasConstraintName("fk_post_matches_candidate_post_id");
 
-                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "LostPost")
+                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "SourcePost")
                         .WithMany()
-                        .HasForeignKey("LostPostId")
+                        .HasForeignKey("SourcePostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_post_matches_lost_post_id");
+                        .HasConstraintName("fk_post_matches_source_post_id");
 
-                    b.Navigation("FoundPost");
+                    b.Navigation("CandidatePost");
 
-                    b.Navigation("LostPost");
+                    b.Navigation("SourcePost");
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.PostOtherDetail", b =>
+                {
+                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "Post")
+                        .WithOne("OtherDetail")
+                        .HasForeignKey("Backtrack.Core.Domain.Entities.PostOtherDetail", "PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_post_other_details_post_id");
+
+                    b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.PostPersonalBelongingDetail", b =>
+                {
+                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "Post")
+                        .WithOne("PersonalBelongingDetail")
+                        .HasForeignKey("Backtrack.Core.Domain.Entities.PostPersonalBelongingDetail", "PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_post_personal_belonging_details_post_id");
+
+                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.Subscription", b =>
@@ -1366,6 +1625,17 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Navigation("Memberships");
 
                     b.Navigation("Posts");
+                });
+
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.Post", b =>
+                {
+                    b.Navigation("CardDetail");
+
+                    b.Navigation("ElectronicDetail");
+
+                    b.Navigation("OtherDetail");
+
+                    b.Navigation("PersonalBelongingDetail");
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.User", b =>

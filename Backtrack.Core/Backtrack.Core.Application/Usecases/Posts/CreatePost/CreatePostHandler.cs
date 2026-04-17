@@ -10,7 +10,6 @@ using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace Backtrack.Core.Application.Usecases.Posts.CreatePost;
 
@@ -30,6 +29,9 @@ public sealed class CreatePostHandler(
         string? displayAddress = command.DisplayAddress;
         string? externalPlaceId = command.ExternalPlaceId;
         var status = PostStatus.Active;
+
+        if (!Enum.TryParse<ItemCategory>(command.Category, ignoreCase: true, out var category))
+            throw new ValidationException(PostErrors.InvalidCategory);
 
         if (command.OrganizationId.HasValue)
         {
@@ -60,18 +62,21 @@ public sealed class CreatePostHandler(
             OrganizationId = command.OrganizationId,
             PostType = postType,
             Status = status,
-            Item = command.Item,
+            Category = category,
+            SubcategoryId = command.SubcategoryId,
             Location = location!,
             ExternalPlaceId = externalPlaceId,
             DisplayAddress = displayAddress!,
             Embedding = null,
             EmbeddingStatus = EmbeddingStatus.Pending,
             PostMatchingStatus = PostMatchingStatus.Pending,
-            ContentHash = hasher.HashStrings(JsonSerializer.Serialize(command.Item)),
+            ContentHash = hasher.HashStrings($"{category}:{command.SubcategoryId}"),
             EventTime = command.EventTime ?? DateTimeOffset.UtcNow,
             ImageUrls = command.ImageUrls.ToList(),
             CreatedAt = DateTimeOffset.UtcNow
         };
+
+        AttachDetail(post, command);
 
         await postRepository.CreateAsync(post);
 
@@ -92,22 +97,70 @@ public sealed class CreatePostHandler(
         await postRepository.SaveChangesAsync();
 
         if (!command.OrganizationId.HasValue)
-            backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
+            backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(
+                orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
-        return new PostResult
+        return post.ToPostResult();
+    }
+
+    private static void AttachDetail(Post post, CreatePostCommand command)
+    {
+        if (command.PersonalBelongingDetail is { } pb)
         {
-            Id = post.Id,
-            Organization = post.Organization?.ToOrganizationOnPost(),
-            PostType = post.PostType,
-            Status = post.Status,
-            Item = post.Item,
-            ImageUrls = post.ImageUrls,
-            Location = post.Location,
-            ExternalPlaceId = post.ExternalPlaceId,
-            DisplayAddress = post.DisplayAddress,
-            EventTime = post.EventTime,
-            CreatedAt = post.CreatedAt
-        };
+            post.PersonalBelongingDetail = new PostPersonalBelongingDetail
+            {
+                PostId = post.Id,
+                Color = pb.Color,
+                Brand = pb.Brand,
+                Material = pb.Material,
+                Size = pb.Size,
+                Condition = pb.Condition,
+                DistinctiveMarks = pb.DistinctiveMarks,
+                AdditionalDetails = pb.AdditionalDetails
+            };
+        }
+        else if (command.CardDetail is { } cd)
+        {
+            post.CardDetail = new PostCardDetail
+            {
+                PostId = post.Id,
+                CardNumberHash = cd.CardNumberHash,
+                CardNumberMasked = cd.CardNumberMasked,
+                HolderName = cd.HolderName,
+                HolderNameNormalized = cd.HolderNameNormalized,
+                DateOfBirth = cd.DateOfBirth,
+                IssueDate = cd.IssueDate,
+                ExpiryDate = cd.ExpiryDate,
+                IssuingAuthority = cd.IssuingAuthority,
+                OcrText = cd.OcrText
+            };
+        }
+        else if (command.ElectronicDetail is { } ed)
+        {
+            post.ElectronicDetail = new PostElectronicDetail
+            {
+                PostId = post.Id,
+                Brand = ed.Brand,
+                Model = ed.Model,
+                Color = ed.Color,
+                HasCase = ed.HasCase,
+                CaseDescription = ed.CaseDescription,
+                ScreenCondition = ed.ScreenCondition,
+                LockScreenDescription = ed.LockScreenDescription,
+                DistinguishingFeatures = ed.DistinguishingFeatures,
+                AdditionalDetails = ed.AdditionalDetails
+            };
+        }
+        else if (command.OtherDetail is { } od)
+        {
+            post.OtherDetail = new PostOtherDetail
+            {
+                PostId = post.Id,
+                ItemIdentifier = od.ItemIdentifier,
+                PrimaryColor = od.PrimaryColor,
+                Notes = od.Notes
+            };
+        }
     }
 
     private static void ValidateFinderInfo(FinderInfo? finderInfo, List<OrgContractField> requiredFields)
