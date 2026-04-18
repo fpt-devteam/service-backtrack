@@ -48,5 +48,7 @@ public class PostCardDetailConfiguration : IEntityTypeConfiguration<PostCardDeta
             .HasForeignKey<PostCardDetail>(d => d.PostId)
             .HasConstraintName("fk_post_card_details_post_id")
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(d => d.Post.DeletedAt == null);
     }
 }

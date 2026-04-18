@@ -1,6 +1,8 @@
+using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Infrastructure.Configurations;
 using Backtrack.Core.Infrastructure.Data;
 using Backtrack.Core.Infrastructure.DependencyInjections;
+using MediatR;
 using Microsoft.Extensions.Options;
 using Backtrack.Core.WebApi.DependencyInjections;
 using Backtrack.Core.WebApi.Middlewares;
@@ -52,7 +54,6 @@ public class Program
         WebApplication app = builder.Build();
 
         await MigrateDatabaseAsync(app);
-        await SeedDatabaseAsync(app);
 
         app.UseMiddleware<RequestLoggingMiddleware>();
         app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -66,7 +67,9 @@ public class Program
         app.UseHttpsRedirection();
         app.MapControllers();
 
-        await app.RunAsync();
+        await app.StartAsync();
+        await SeedDatabaseAsync(app);
+        await app.WaitForShutdownAsync();
     }
 
     private static async Task MigrateDatabaseAsync(WebApplication app)
@@ -98,12 +101,14 @@ public class Program
 
         try
         {
-            var context    = services.GetRequiredService<ApplicationDbContext>();
-            var logger     = services.GetRequiredService<ILogger<Program>>();
-            var stripe     = services.GetRequiredService<IOptions<StripeSettings>>().Value;
-            var superAdmin = services.GetRequiredService<IOptions<SuperAdminSettings>>().Value;
+            var context     = services.GetRequiredService<ApplicationDbContext>();
+            var mediator    = services.GetRequiredService<ISender>();
+            var orgRepo     = services.GetRequiredService<IOrganizationRepository>();
+            var logger      = services.GetRequiredService<ILogger<Program>>();
+            var stripe      = services.GetRequiredService<IOptions<StripeSettings>>().Value;
+            var superAdmin  = services.GetRequiredService<IOptions<SuperAdminSettings>>().Value;
 
-            await DataSeeder.SeedAsync(context, logger, stripe, superAdmin);
+            await DataSeeder.SeedAsync(context, mediator, orgRepo, logger, stripe, superAdmin);
         }
         catch (Exception ex)
         {

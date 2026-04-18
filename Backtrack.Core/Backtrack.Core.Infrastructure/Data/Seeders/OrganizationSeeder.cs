@@ -1,0 +1,361 @@
+using Backtrack.Core.Application.Exceptions;
+using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases.Dev.JoinOrganization;
+using Backtrack.Core.Application.Usecases.Organizations.CreateOrganization;
+using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Domain.ValueObjects;
+using MediatR;
+using Microsoft.Extensions.Logging;
+
+namespace Backtrack.Core.Infrastructure.Data.Seeders;
+
+public static class OrganizationSeeder
+{
+    private sealed record OrgUserInfo(string Email, string Password, string DisplayName, string AvatarUrl);
+
+    private sealed record OrgSeedData(
+        string Name, string Slug,
+        double Latitude, double Longitude,
+        string DisplayAddress, string? ExternalPlaceId,
+        string Phone, string ContactEmail, string TaxId,
+        string LogoUrl, string? CoverImageUrl, string? LocationNote,
+        string OpenTime, string CloseTime,
+        OrgContractField[] RequiredFinderFields, OrgContractField[] RequiredOwnerFields,
+        OrgUserInfo Admin, OrgUserInfo Staff);
+
+    private static string Avatar(int u) => $"https://img.heroui.chat/image/avatar?w=400&h=400&u={u}";
+
+    private static readonly OrgSeedData[] Organizations =
+    [
+        new(
+            Name: "Ho Chi Minh City University of Technology", Slug: "hcmut",
+            Latitude: 10.7724, Longitude: 106.6579,
+            DisplayAddress: "268 Lý Thường Kiệt, Phường 14, Quận 10, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 38 651 670", ContactEmail: "info@hcmut.edu.vn", TaxId: "0301234561",
+            LogoUrl: "https://img.favpng.com/16/20/22/ho-chi-minh-city-university-of-technology-vietnam-national-university-ho-chi-minh-city-hanoi-university-of-science-and-technology-university-of-technology-jamaica-png-favpng-BFnt5Mz1NGi1uScjMKVJDaA3u.jpg",
+            CoverImageUrl: "https://ktgelectric.com/wp-content/uploads/2023/06/bk2.jpg",
+            LocationNote: "Cổng chính đường Lý Thường Kiệt", OpenTime: "07:30", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.NationalId],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.NationalId],
+            Admin: new("admin@hcmut.edu.vn", "Password@123", "Admin - HCMUT", Avatar(14)),
+            Staff: new("staff@hcmut.edu.vn", "Password@123", "Staff - HCMUT", Avatar(15))),
+
+        new(
+            Name: "VNUHCM - University of Science", Slug: "hcmus",
+            Latitude: 10.7628, Longitude: 106.6823,
+            DisplayAddress: "227 Nguyễn Văn Cừ, Phường 4, Quận 5, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 38 353 193", ContactEmail: "bantin@hcmus.edu.vn", TaxId: "0301234562",
+            LogoUrl: "https://upload.wikimedia.org/wikipedia/commons/1/16/Logo-KHTN.jpg",
+            CoverImageUrl: "https://edus3.leaderbook.com/prod/upload/img/66ea4373aa37860051d3799c-truong-dai-hoc-khoa-hoc-tu-nhien-dai-hoc-quoc-gia-tp.hcm.png",
+            LocationNote: null, OpenTime: "08:00", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.NationalId],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.NationalId],
+            Admin: new("admin@hcmus.edu.vn", "Password@123", "Admin - HCMUS", Avatar(16)),
+            Staff: new("staff@hcmus.edu.vn", "Password@123", "Staff - HCMUS", Avatar(17))),
+
+        new(
+            Name: "University of Economics Ho Chi Minh City", Slug: "ueh",
+            Latitude: 10.7828, Longitude: 106.6917,
+            DisplayAddress: "59C Nguyễn Đình Chiểu, Phường Võ Thị Sáu, Quận 3, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 38 295 299", ContactEmail: "info@ueh.edu.vn", TaxId: "0301234563",
+            LogoUrl: "https://ueh.edu.vn/img/logo.png", CoverImageUrl: "https://ueh.edu.vn/img/cover.jpg",
+            LocationNote: "Cơ sở A", OpenTime: "07:30", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.Phone],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.Phone],
+            Admin: new("admin@ueh.edu.vn", "Password@123", "Admin - UEH", Avatar(18)),
+            Staff: new("staff@ueh.edu.vn", "Password@123", "Staff - UEH", Avatar(19))),
+
+        new(
+            Name: "University of Medicine and Pharmacy at HCMC", Slug: "ump-hcm",
+            Latitude: 10.7554, Longitude: 106.6633,
+            DisplayAddress: "217 Hồng Bàng, Phường 11, Quận 5, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 38 558 411", ContactEmail: "daotao@ump.edu.vn", TaxId: "0301234564",
+            LogoUrl: "https://upload.wikimedia.org/wikipedia/commons/7/71/Logo_UEH_xanh.png",
+            CoverImageUrl: "https://winhouse.vn/wp-content/uploads/2021/02/4-scaled.jpg",
+            LocationNote: null, OpenTime: "08:00", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.NationalId],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.NationalId],
+            Admin: new("admin@ump.edu.vn", "Password@123", "Admin - UMP", Avatar(20)),
+            Staff: new("staff@ump.edu.vn", "Password@123", "Staff - UMP", Avatar(21))),
+
+        new(
+            Name: "Foreign Trade University Campus II", Slug: "ftu2",
+            Latitude: 10.8042, Longitude: 106.7144,
+            DisplayAddress: "15 Đường D5, Phường 25, Bình Thạnh, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 35 127 254", ContactEmail: "qhqt.cs2@ftu.edu.vn", TaxId: "0301234565",
+            LogoUrl: "https://upload.wikimedia.org/wikipedia/en/c/cb/Foreign_Trade_University_logo.jpg",
+            CoverImageUrl: "https://api.upm.vn//uploads/university/cover/1628700846-qsJlan8R1KfpB2iT.jpg",
+            LocationNote: null, OpenTime: "08:00", CloseTime: "17:30",
+            RequiredFinderFields: [OrgContractField.Email],
+            RequiredOwnerFields:  [OrgContractField.Email],
+            Admin: new("admin@ftu.edu.vn", "Password@123", "Admin - FTU2", Avatar(22)),
+            Staff: new("staff@ftu.edu.vn", "Password@123", "Staff - FTU2", Avatar(23))),
+
+        new(
+            Name: "Ho Chi Minh City University of Education", Slug: "hcmue",
+            Latitude: 10.7601, Longitude: 106.6782,
+            DisplayAddress: "280 An Dương Vương, Phường 4, Quận 5, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 38 352 020", ContactEmail: "phongdaotao@hcmue.edu.vn", TaxId: "0301234566",
+            LogoUrl: "https://cdn.haitrieu.com/wp-content/uploads/2022/02/Logo-DH-Su-Pham-TPHCM-HCMUE.png",
+            CoverImageUrl: "https://xdcs.cdnchinhphu.vn/446259493575335936/2024/7/19/su-1721386673248568422887.jpg",
+            LocationNote: null, OpenTime: "07:30", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.NationalId],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.NationalId],
+            Admin: new("admin@hcmue.edu.vn", "Password@123", "Admin - HCMUE", Avatar(24)),
+            Staff: new("staff@hcmue.edu.vn", "Password@123", "Staff - HCMUE", Avatar(25))),
+
+        new(
+            Name: "Sai Gon University", Slug: "sgu",
+            Latitude: 10.759, Longitude: 106.681,
+            DisplayAddress: "273 An Dương Vương, Phường 3, Quận 5, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 38 354 409", ContactEmail: "p_daotao@sgu.edu.vn", TaxId: "0301234567",
+            LogoUrl: "https://etc.sgu.edu.vn/wp-content/uploads/2018/11/SGU-LOGO.png",
+            CoverImageUrl: "https://daotao.sgu.edu.vn/images/headers/DSC06478_1.jpg",
+            LocationNote: "Cơ sở chính", OpenTime: "08:00", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.Phone],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.Phone],
+            Admin: new("admin@sgu.edu.vn", "Password@123", "Admin - Sai Gon University", Avatar(26)),
+            Staff: new("staff@sgu.edu.vn", "Password@123", "Staff - Sai Gon University", Avatar(27))),
+
+        new(
+            Name: "HCMC University of Technology and Education", Slug: "hcmute",
+            Latitude: 10.8507, Longitude: 106.7724,
+            DisplayAddress: "1 Võ Văn Ngân, Phường Linh Chiểu, Thủ Đức, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 38 968 641", ContactEmail: "ptc@hcmute.edu.vn", TaxId: "0301234568",
+            LogoUrl: "https://careerhub.hcmute.edu.vn/assets/img/logo/ute_logo.png",
+            CoverImageUrl: "https://hcmute.edu.vn/Resources/Images/SubDomain/HomePage/tin%20tuc/Nam%202025/Vinh%20danh/Vinh%20danh%204.jpg",
+            LocationNote: null, OpenTime: "07:00", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.Phone],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.Phone],
+            Admin: new("admin@hcmute.edu.vn", "Password@123", "Admin - HCMUTE", Avatar(28)),
+            Staff: new("staff@hcmute.edu.vn", "Password@123", "Staff - HCMUTE", Avatar(29))),
+
+        new(
+            Name: "FPT University HCMC", Slug: "fptu-hcmc",
+            Latitude: 10.8417, Longitude: 106.8100,
+            DisplayAddress: "Lô E2a-7, Đường D1, Khu Công nghệ cao, Phường Tăng Nhơn Phú A, TP Thủ Đức",
+            ExternalPlaceId: "239813160",
+            Phone: "(028) 73 005 588", ContactEmail: "tuyensinhhcm@fpt.edu.vn", TaxId: "0319463316-001",
+            LogoUrl: "https://daihoc.fpt.edu.vn/wp-content/themes/fpt-university/assets/images/logo.png",
+            CoverImageUrl: "https://daihoc.fpt.edu.vn/wp-content/uploads/2025/12/P.Zo-9862-scaled.jpg",
+            LocationNote: "Khu công nghệ cao", OpenTime: "08:00", CloseTime: "17:30",
+            RequiredFinderFields: [OrgContractField.Email],
+            RequiredOwnerFields:  [OrgContractField.Email],
+            Admin: new("admin@fpt.edu.vn", "Password@123", "Admin - FPT University HCMC", Avatar(30)),
+            Staff: new("staff@fpt.edu.vn", "Password@123", "Staff - FPT University HCMC", Avatar(31))),
+
+        new(
+            Name: "Ton Duc Thang University", Slug: "tdtu",
+            Latitude: 10.7326, Longitude: 106.6997,
+            DisplayAddress: "19 Nguyễn Hữu Thọ, Phường Tân Phong, Quận 7, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 37 755 035", ContactEmail: "tuvan@tdtu.edu.vn", TaxId: "0301234569",
+            LogoUrl: "https://upload.wikimedia.org/wikipedia/vi/1/1b/T%C4%90T_logo.png",
+            CoverImageUrl: "https://khanhhoa.tdtu.edu.vn/sites/nhatrang/files/nhatrang/9_0.jpg",
+            LocationNote: null, OpenTime: "07:30", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.NationalId],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.NationalId],
+            Admin: new("admin@tdtu.edu.vn", "Password@123", "Admin - TDTU", Avatar(32)),
+            Staff: new("staff@tdtu.edu.vn", "Password@123", "Staff - TDTU", Avatar(33))),
+
+        new(
+            Name: "University of Architecture Ho Chi Minh City", Slug: "uah",
+            Latitude: 10.7818, Longitude: 106.6919,
+            DisplayAddress: "196 Pasteur, Phường Võ Thị Sáu, Quận 3, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 38 222 748", ContactEmail: "phongdaotao@uah.edu.vn", TaxId: "0301234570",
+            LogoUrl: "https://upload.wikimedia.org/wikipedia/vi/8/80/Logo_of_University_of_Architecture_Ho_Chi_Minh_City_red_version.png",
+            CoverImageUrl: "https://upload.wikimedia.org/wikipedia/commons/5/59/HCMC_Dai_Hoc_Kien_Truc_01.JPG",
+            LocationNote: "Cơ sở Pasteur", OpenTime: "07:30", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.Phone],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.Phone],
+            Admin: new("admin@uah.edu.vn", "Password@123", "Admin - UAH", Avatar(34)),
+            Staff: new("staff@uah.edu.vn", "Password@123", "Staff - UAH", Avatar(35))),
+
+        new(
+            Name: "VNUHCM - University of Social Sciences and Humanities", Slug: "ussh",
+            Latitude: 10.7853, Longitude: 106.7028,
+            DisplayAddress: "10-12 Đinh Tiên Hoàng, Phường Bến Nghé, Quận 1, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 38 293 828", ContactEmail: "phongdaotao@hcmussh.edu.vn", TaxId: "0301234571",
+            LogoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Logo_Tr%C6%B0%E1%BB%9Dng_%C4%90%E1%BA%A1i_h%E1%BB%8Dc_Khoa_h%E1%BB%8Dc_X%C3%A3_h%E1%BB%99i_v%C3%A0_Nh%C3%A2n_v%C4%83n%2C_%C4%90%E1%BA%A1i_h%E1%BB%8Dc_Qu%E1%BB%91c_gia_Th%C3%A0nh_ph%E1%BB%91_H%E1%BB%93_Ch%C3%AD_Minh.svg/250px-Logo_Tr%C6%B0%E1%BB%9Dng_%C4%90%E1%BA%A1i_h%E1%BB%8Dc_Khoa_h%E1%BB%8Dc_X%C3%A3_h%E1%BB%99i_v%C3%A0_Nh%C3%A2n_v%C4%83n%2C_%C4%90%E1%BA%A1i_h%E1%BB%8Dc_Qu%E1%BB%91c_gia_Th%C3%A0nh_ph%E1%BB%91_H%E1%BB%93_Ch%C3%AD_Minh.svg.png",
+            CoverImageUrl: "https://hcmussh.edu.vn/img/news/56257806.JPG?t=56257807",
+            LocationNote: "Cơ sở Đinh Tiên Hoàng", OpenTime: "08:00", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.NationalId],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.NationalId],
+            Admin: new("admin@hcmussh.edu.vn", "Password@123", "Admin - USSH", Avatar(36)),
+            Staff: new("staff@hcmussh.edu.vn", "Password@123", "Staff - USSH", Avatar(37))),
+
+        new(
+            Name: "RMIT University Vietnam", Slug: "rmit-hcm",
+            Latitude: 10.7303, Longitude: 106.6961,
+            DisplayAddress: "702 Nguyễn Văn Linh, Phường Tân Phong, Quận 7, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 37 761 300", ContactEmail: "enquiries@rmit.edu.vn", TaxId: "0302324561",
+            LogoUrl: "https://upload.wikimedia.org/wikipedia/commons/5/51/RMIT_University_Logo.svg",
+            CoverImageUrl: "https://cdn2.tuoitre.vn/zoom/700_525/471584752817336320/2025/5/29/rmit-1748522121074473030711-213-0-998-1500-crop-1748522173982199998048.jpg",
+            LocationNote: "Cơ sở Nam Sài Gòn (SGS)", OpenTime: "08:00", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.Phone, OrgContractField.NationalId],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.Phone, OrgContractField.NationalId],
+            Admin: new("admin@rmit.edu.vn", "Password@123", "Admin - RMIT Vietnam", Avatar(38)),
+            Staff: new("staff@rmit.edu.vn", "Password@123", "Staff - RMIT Vietnam", Avatar(39))),
+
+        new(
+            Name: "Fulbright University Vietnam", Slug: "fulbright",
+            Latitude: 10.7259, Longitude: 106.7214,
+            DisplayAddress: "105 Tôn Dật Tiên, Phường Tân Phú, Quận 7, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 73 032 255", ContactEmail: "info@fulbright.edu.vn", TaxId: "0302324562",
+            LogoUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGwDSW6mudp0v8JajTVGD0qI7Zq5WxFf8UHg&s",
+            CoverImageUrl: "https://newtecons.vn/wp-content/uploads/2021/08/fulbright.jpg",
+            LocationNote: "Cơ sở Crescent", OpenTime: "08:30", CloseTime: "17:30",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.Phone],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.Phone],
+            Admin: new("admin@fulbright.edu.vn", "Password@123", "Admin - Fulbright", Avatar(40)),
+            Staff: new("staff@fulbright.edu.vn", "Password@123", "Staff - Fulbright", Avatar(41))),
+
+        new(
+            Name: "Swinburne University of Technology", Slug: "swinburne-hcm",
+            Latitude: 10.8123, Longitude: 106.6667,
+            DisplayAddress: "A35 Bạch Đằng, Phường 2, Tân Bình, TP.HCM", ExternalPlaceId: null,
+            Phone: "1900 3205", ContactEmail: "swinburne@fe.edu.vn", TaxId: "0302324563",
+            LogoUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ340cwIdcfFios_ZdaHEe91VX7EwUd7ye4iQ&s",
+            CoverImageUrl: "https://www.aeccglobal.lk/images/2021/08/19/swinburne-university-mob.jpg",
+            LocationNote: null, OpenTime: "08:00", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email],
+            RequiredOwnerFields:  [OrgContractField.Email],
+            Admin: new("admin@swinburne-vn.edu.vn", "Password@123", "Admin - Swinburne HCMC", Avatar(42)),
+            Staff: new("staff@swinburne-vn.edu.vn", "Password@123", "Staff - Swinburne HCMC", Avatar(43))),
+
+        new(
+            Name: "Greenwich Viet Nam", Slug: "greenwich-hcm",
+            Latitude: 10.8012, Longitude: 106.6543,
+            DisplayAddress: "20 Cộng Hòa, Phường 12, Tân Bình, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 73 002 266", ContactEmail: "hcm@greenwich.edu.vn", TaxId: "0302324564",
+            LogoUrl: "https://kyluc.vn/Userfiles/Upload/images/2022-Greenwich-Eng.jpg",
+            CoverImageUrl: "https://greenwich.edu.vn/wp-content/uploads/2022/10/Welcome-1.jpg",
+            LocationNote: null, OpenTime: "08:00", CloseTime: "17:30",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.Phone],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.Phone],
+            Admin: new("admin@greenwich.edu.vn", "Password@123", "Admin - Greenwich HCMC", Avatar(44)),
+            Staff: new("staff@greenwich.edu.vn", "Password@123", "Staff - Greenwich HCMC", Avatar(45))),
+
+        new(
+            Name: "Western Sydney University Vietnam", Slug: "western-sydney-vn",
+            Latitude: 10.7834, Longitude: 106.6946,
+            DisplayAddress: "17 Phạm Ngọc Thạch, Phường Võ Thị Sáu, Quận 3, TP.HCM", ExternalPlaceId: null,
+            Phone: "(028) 39 305 293", ContactEmail: "westernsydney@isb.edu.vn", TaxId: "0302324565",
+            LogoUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFy1jO_pe_QvybLOlHqeF9xovPWwSbRvIOGw&s",
+            CoverImageUrl: "https://sunrisevietnam.com/sites/default/files/anh_bai_viet/Western%20Sydney%20University%202.jpg",
+            LocationNote: "Viện ISB - Tòa nhà Phạm Ngọc Thạch", OpenTime: "08:00", CloseTime: "17:00",
+            RequiredFinderFields: [OrgContractField.Email, OrgContractField.Phone],
+            RequiredOwnerFields:  [OrgContractField.Email, OrgContractField.Phone],
+            Admin: new("admin@westernsydney.edu.vn", "Password@123", "Admin - Western Sydney VN", Avatar(46)),
+            Staff: new("staff@westernsydney.edu.vn", "Password@123", "Staff - Western Sydney VN", Avatar(47))),
+    ];
+
+    public static async Task SeedAsync(
+        ApplicationDbContext db,
+        ISender mediator,
+        IOrganizationRepository orgRepository,
+        ILogger logger,
+        CancellationToken ct = default)
+    {
+        var created = new List<string>();
+        var skipped = new List<string>();
+
+        foreach (var org in Organizations)
+        {
+            try
+            {
+                var wasCreated = await SeedOneAsync(db, org, mediator, orgRepository, logger, ct);
+                (wasCreated ? created : skipped).Add(org.Slug);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to seed organization {Slug} — skipping.", org.Slug);
+                skipped.Add(org.Slug);
+            }
+        }
+
+        logger.LogInformation(
+            "Organizations — created {Created}, skipped {Skipped}. Created: [{CreatedNames}] Skipped: [{SkippedNames}]",
+            created.Count, skipped.Count,
+            string.Join(", ", created),
+            string.Join(", ", skipped));
+    }
+
+    private static async Task<bool> SeedOneAsync(
+        ApplicationDbContext db, OrgSeedData org, ISender mediator, IOrganizationRepository orgRepository, ILogger logger, CancellationToken ct)
+    {
+        var adminResult = await DataSeederHelper.SeedUserAsync(
+            db, org.Admin.Email, org.Admin.Password, org.Admin.DisplayName, mediator, logger, org.Admin.AvatarUrl, ct);
+
+        var staffResult = await DataSeederHelper.SeedUserAsync(
+            db, org.Staff.Email, org.Staff.Password, org.Staff.DisplayName, mediator, logger, org.Staff.AvatarUrl, ct);
+
+        var existing = await orgRepository.GetBySlugAsync(org.Slug, ct);
+
+        Guid orgId;
+        bool wasCreated;
+        if (existing is not null)
+        {
+            orgId = existing.Id;
+            wasCreated = false;
+        }
+        else
+        {
+            var result = await mediator.Send(new CreateOrganizationCommand
+            {
+                UserId                       = adminResult.User.Id,
+                Name                         = org.Name,
+                Slug                         = org.Slug,
+                Location                     = new GeoPoint(org.Latitude, org.Longitude),
+                DisplayAddress               = org.DisplayAddress,
+                ExternalPlaceId              = org.ExternalPlaceId,
+                Phone                        = org.Phone,
+                ContactEmail                 = org.ContactEmail,
+                IndustryType                 = "University",
+                TaxIdentificationNumber      = org.TaxId,
+                LogoUrl                      = org.LogoUrl,
+                CoverImageUrl                = org.CoverImageUrl,
+                LocationNote                 = org.LocationNote,
+                BusinessHours                = BuildBusinessHours(org.OpenTime, org.CloseTime),
+                RequiredFinderContractFields = [.. org.RequiredFinderFields],
+                RequiredOwnerContractFields  = [.. org.RequiredOwnerFields],
+            }, ct);
+
+            orgId = result.Id;
+            wasCreated = true;
+        }
+
+        await JoinStaffAsync(orgId, staffResult.User.Id, mediator, logger, ct);
+        return wasCreated;
+    }
+
+    private static async Task JoinStaffAsync(
+        Guid orgId, string staffUserId, ISender mediator, ILogger logger, CancellationToken ct)
+    {
+        try
+        {
+            await mediator.Send(new DevJoinOrganizationCommand
+            {
+                UserId         = staffUserId,
+                OrganizationId = orgId,
+                Role           = MembershipRole.OrgStaff,
+            }, ct);
+
+            logger.LogInformation("Staff {UserId} joined org {OrgId}.", staffUserId, orgId);
+        }
+        catch (ConflictException)
+        {
+            logger.LogInformation("Staff {UserId} already member of org {OrgId} — skipping.", staffUserId, orgId);
+        }
+    }
+
+    private static List<DailySchedule> BuildBusinessHours(string openTime, string closeTime) =>
+    [
+        new DailySchedule { Day = WeekDay.Monday,    IsClosed = false, OpenTime = openTime, CloseTime = closeTime },
+        new DailySchedule { Day = WeekDay.Tuesday,   IsClosed = false, OpenTime = openTime, CloseTime = closeTime },
+        new DailySchedule { Day = WeekDay.Wednesday, IsClosed = false, OpenTime = openTime, CloseTime = closeTime },
+        new DailySchedule { Day = WeekDay.Thursday,  IsClosed = false, OpenTime = openTime, CloseTime = closeTime },
+        new DailySchedule { Day = WeekDay.Friday,    IsClosed = false, OpenTime = openTime, CloseTime = closeTime },
+        new DailySchedule { Day = WeekDay.Saturday,  IsClosed = true },
+        new DailySchedule { Day = WeekDay.Sunday,    IsClosed = true },
+    ];
+}

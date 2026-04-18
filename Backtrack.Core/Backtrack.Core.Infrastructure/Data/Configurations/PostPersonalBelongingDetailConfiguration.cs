@@ -29,5 +29,7 @@ public class PostPersonalBelongingDetailConfiguration
             .HasForeignKey<PostPersonalBelongingDetail>(d => d.PostId)
             .HasConstraintName("fk_post_personal_belonging_details_post_id")
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(d => d.Post.DeletedAt == null);
     }
 }

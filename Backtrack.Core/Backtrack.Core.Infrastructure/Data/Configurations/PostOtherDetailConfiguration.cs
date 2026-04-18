@@ -28,5 +28,7 @@ public class PostOtherDetailConfiguration : IEntityTypeConfiguration<PostOtherDe
             .HasForeignKey<PostOtherDetail>(d => d.PostId)
             .HasConstraintName("fk_post_other_details_post_id")
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(d => d.Post.DeletedAt == null);
     }
 }
