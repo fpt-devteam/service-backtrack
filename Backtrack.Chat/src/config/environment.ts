@@ -11,6 +11,7 @@ const EnvSchema = z.object({
   RABBITMQ_EXCHANGE: z.string().min(1, "RABBITMQ_EXCHANGE is required"),
   RABBITMQ_USER_SYNC_QUEUE: z.string().min(1, "RABBITMQ_USER_SYNC_QUEUE is required"),
   RABBITMQ_ORG_SYNC_QUEUE: z.string().min(1, "RABBITMQ_ORG_SYNC_QUEUE is required"),
+  RABBITMQ_RETURN_REPORT_SYNC_QUEUE: z.string().min(1, "RABBITMQ_RETURN_REPORT_SYNC_QUEUE is required"),
   // Firebase Admin SDK — same base64-encoded service account JSON used by the API Gateway
   FIREBASE_SERVICE_ACCOUNT_JSON_BASE64: z.string().optional(),
 });

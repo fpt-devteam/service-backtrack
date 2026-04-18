@@ -6,6 +6,7 @@ const DirectConversationSchema = new Schema<IDirectConversation>(
         lastMessageAt: { type: Date },
         lastMessageContent: { type: String, default: null },
         senderId: { type: String, default: null },
+        handover: { type: Schema.Types.Mixed, default: null },
         deletedAt: { type: Date, default: null },
     },
     {

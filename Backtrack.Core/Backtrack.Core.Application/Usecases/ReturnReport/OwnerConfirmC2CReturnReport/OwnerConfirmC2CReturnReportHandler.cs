@@ -56,6 +56,35 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
 
         await returnReportRepository.SaveChangesAsync();
 
+        var finder = returnReport.FinderPost?.Author ?? returnReport.Finder!;
+        var owner = returnReport.OwnerPost?.Author ?? returnReport.Owner!;
+        var activatedByRole = returnReport.ActivatedById == returnReport.FinderId ? "Finder"
+                            : returnReport.ActivatedById == returnReport.OwnerId ? "Owner"
+                            : null;
+
+        await eventPublisher.PublishReturnReportSyncAsync(new ReturnReportSyncIntegrationEvent
+        {
+            C2CReturnReportId  = returnReport.Id,
+            FinderId           = finder.Id,
+            FinderDisplayName  = finder.DisplayName,
+            FinderAvatarUrl    = finder.AvatarUrl,
+            FinderEmail        = finder.Email,
+            OwnerId            = owner.Id,
+            OwnerDisplayName   = owner.DisplayName,
+            OwnerAvatarUrl     = owner.AvatarUrl,
+            OwnerEmail         = owner.Email,
+            FinderPostId       = returnReport.FinderPostId,
+            FinderPostType     = returnReport.FinderPost?.PostType.ToString(),
+            OwnerPostId        = returnReport.OwnerPostId,
+            OwnerPostType      = returnReport.OwnerPost?.PostType.ToString(),
+            Status             = returnReport.Status.ToString(),
+            ActivatedByRole    = activatedByRole,
+            ConfirmedAt        = returnReport.ConfirmedAt,
+            ExpiresAt          = returnReport.ExpiresAt,
+            CreatedAt          = returnReport.CreatedAt,
+            EventTimestamp     = DateTimeOffset.UtcNow,
+        });
+
         // Publish event so that the post service closes both posts and awards points
         var finderId = returnReport.FinderPost?.AuthorId ?? returnReport.FinderId;
         await eventPublisher.PublishReturnReportConfirmedAsync(new ReturnReportConfirmedIntegrationEvent
@@ -67,9 +96,6 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
             EventTimestamp = DateTimeOffset.UtcNow
         });
 
-        var finder = returnReport.FinderPost?.Author ?? returnReport.Finder!;
-        var owner = returnReport.OwnerPost?.Author ?? returnReport.Owner!;
-
         return new C2CReturnReportResult
         {
             Id = returnReport.Id,
@@ -78,9 +104,7 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
             FinderPost = returnReport.FinderPost?.ToPostResult(),
             OwnerPost = returnReport.OwnerPost?.ToPostResult(),
             Status = returnReport.Status.ToString(),
-            ActivatedByRole = returnReport.ActivatedById == returnReport.FinderId ? "Finder"
-                            : returnReport.ActivatedById == returnReport.OwnerId ? "Owner"
-                            : null,
+            ActivatedByRole = activatedByRole,
             ConfirmedAt = returnReport.ConfirmedAt,
             ExpiresAt = returnReport.ExpiresAt,
             CreatedAt = returnReport.CreatedAt
