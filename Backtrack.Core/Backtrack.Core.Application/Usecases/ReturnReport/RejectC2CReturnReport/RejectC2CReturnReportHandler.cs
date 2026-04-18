@@ -1,5 +1,7 @@
+using Backtrack.Core.Application.Events;
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
+using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Users;
@@ -9,7 +11,8 @@ using MediatR;
 namespace Backtrack.Core.Application.Usecases.ReturnReport.RejectC2CReturnReport;
 
 public sealed class RejectC2CReturnReportHandler(
-    IC2CReturnReportRepository returnReportRepository) : IRequestHandler<RejectC2CReturnReportCommand, C2CReturnReportResult>
+    IC2CReturnReportRepository returnReportRepository,
+    IEventPublisher eventPublisher) : IRequestHandler<RejectC2CReturnReportCommand, C2CReturnReportResult>
 {
     public async Task<C2CReturnReportResult> Handle(RejectC2CReturnReportCommand command, CancellationToken cancellationToken)
     {
@@ -35,6 +38,32 @@ public sealed class RejectC2CReturnReportHandler(
 
         var finder = returnReport.FinderPost?.Author ?? returnReport.Finder!;
         var owner = returnReport.OwnerPost?.Author ?? returnReport.Owner!;
+        var activatedByRole = returnReport.ActivatedById == returnReport.FinderId ? "Finder"
+                            : returnReport.ActivatedById == returnReport.OwnerId ? "Owner"
+                            : null;
+
+        await eventPublisher.PublishReturnReportSyncAsync(new ReturnReportSyncIntegrationEvent
+        {
+            C2CReturnReportId  = returnReport.Id,
+            FinderId           = finder.Id,
+            FinderDisplayName  = finder.DisplayName,
+            FinderAvatarUrl    = finder.AvatarUrl,
+            FinderEmail        = finder.Email,
+            OwnerId            = owner.Id,
+            OwnerDisplayName   = owner.DisplayName,
+            OwnerAvatarUrl     = owner.AvatarUrl,
+            OwnerEmail         = owner.Email,
+            FinderPostId       = returnReport.FinderPostId,
+            FinderPostType     = returnReport.FinderPost?.PostType.ToString(),
+            OwnerPostId        = returnReport.OwnerPostId,
+            OwnerPostType      = returnReport.OwnerPost?.PostType.ToString(),
+            Status             = returnReport.Status.ToString(),
+            ActivatedByRole    = activatedByRole,
+            ConfirmedAt        = returnReport.ConfirmedAt,
+            ExpiresAt          = returnReport.ExpiresAt,
+            CreatedAt          = returnReport.CreatedAt,
+            EventTimestamp     = DateTimeOffset.UtcNow,
+        });
 
         return new C2CReturnReportResult
         {

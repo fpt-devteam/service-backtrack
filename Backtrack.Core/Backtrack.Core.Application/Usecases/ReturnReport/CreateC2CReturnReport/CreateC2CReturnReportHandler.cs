@@ -1,5 +1,7 @@
+using Backtrack.Core.Application.Events;
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
+using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.ReturnReport.CreateC2CReturnReport;
@@ -13,7 +15,8 @@ namespace Backtrack.Core.Application.Usecases.ReturnReport.CreateC2CReturnReport
 public sealed class CreateC2CReturnReportHandler(
     IC2CReturnReportRepository returnReportRepository,
     IPostRepository postRepository,
-    IUserRepository userRepository) : IRequestHandler<CreateC2CReturnReportCommand, C2CReturnReportResult>
+    IUserRepository userRepository,
+    IEventPublisher eventPublisher) : IRequestHandler<CreateC2CReturnReportCommand, C2CReturnReportResult>
 {
     public async Task<C2CReturnReportResult> Handle(CreateC2CReturnReportCommand command, CancellationToken cancellationToken)
     {
@@ -132,6 +135,29 @@ public sealed class CreateC2CReturnReportHandler(
         await returnReportRepository.CreateAsync(returnReport);
         await returnReportRepository.SaveChangesAsync();
 
+        await eventPublisher.PublishReturnReportSyncAsync(new ReturnReportSyncIntegrationEvent
+        {
+            C2CReturnReportId  = returnReport.Id,
+            FinderId           = finder.Id,
+            FinderDisplayName  = finder.DisplayName,
+            FinderAvatarUrl    = finder.AvatarUrl,
+            FinderEmail        = finder.Email,
+            OwnerId            = owner.Id,
+            OwnerDisplayName   = owner.DisplayName,
+            OwnerAvatarUrl     = owner.AvatarUrl,
+            OwnerEmail         = owner.Email,
+            FinderPostId       = returnReport.FinderPostId,
+            FinderPostType     = finderPost?.PostType.ToString(),
+            OwnerPostId        = returnReport.OwnerPostId,
+            OwnerPostType      = ownerPost?.PostType.ToString(),
+            Status             = returnReport.Status.ToString(),
+            ActivatedByRole    = null,
+            ConfirmedAt        = returnReport.ConfirmedAt,
+            ExpiresAt          = returnReport.ExpiresAt,
+            CreatedAt          = returnReport.CreatedAt,
+            EventTimestamp     = DateTimeOffset.UtcNow,
+        });
+
         return new C2CReturnReportResult
         {
             Id = returnReport.Id,
@@ -149,9 +175,12 @@ public sealed class CreateC2CReturnReportHandler(
 
     /// <summary>
     /// Determines whether the initiator is the Finder or Owner.
-    /// Priority: if initiator owns the finder post → Finder; if initiator owns the owner post → Owner.
-    /// When only one post is provided, the initiator must own that post.
-    /// When no posts are provided, the presence of OwnerId implies Finder role, FinderId implies Owner role.
+    /// - If initiator authored the Found post → Finder.
+    /// - If initiator authored the Lost post → Owner.
+    /// - If only finderPost provided and initiator is NOT the author → initiator is Owner (referencing counterpart's Found post).
+    /// - If only ownerPost provided and initiator is NOT the author → initiator is Finder (referencing counterpart's Lost post).
+    /// - If both posts provided but initiator authored neither → NotParticipant.
+    /// - If no posts provided: OwnerId in body → Finder; FinderId in body → Owner.
     /// </summary>
     private static bool DetermineInitiatorRole(string initiatorId, Post? finderPost, Post? ownerPost, string? finderId, string? ownerId)
     {
@@ -161,8 +190,16 @@ public sealed class CreateC2CReturnReportHandler(
         if (ownerPost != null && ownerPost.AuthorId == initiatorId)
             return false; // initiator owns the Lost post → Owner
 
-        // Neither post is owned by initiator
-        if (finderPost != null || ownerPost != null)
+        // Only finderPost provided, initiator is not its author → initiator is the Owner
+        if (finderPost != null && ownerPost == null)
+            return false;
+
+        // Only ownerPost provided, initiator is not its author → initiator is the Finder
+        if (ownerPost != null && finderPost == null)
+            return true;
+
+        // Both posts provided but initiator authored neither → not a participant
+        if (finderPost != null && ownerPost != null)
             throw new ForbiddenException(ReturnReportErrors.NotParticipant);
 
         // No posts provided: determine role from which explicit ID is in the body
