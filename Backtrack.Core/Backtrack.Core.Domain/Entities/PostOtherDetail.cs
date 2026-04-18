@@ -12,5 +12,7 @@ public sealed class PostOtherDetail
 
     public string? AiDescription { get; set; }
 
+    public string? ContentHash { get; set; }
+
     public Post Post { get; set; } = default!;
 }

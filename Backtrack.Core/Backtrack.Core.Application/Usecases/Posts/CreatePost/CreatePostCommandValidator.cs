@@ -12,8 +12,8 @@ public sealed class CreatePostCommandValidator : AbstractValidator<CreatePostCom
             .Must(c => Enum.TryParse<ItemCategory>(c, ignoreCase: true, out _))
             .WithMessage($"Category must be one of: {string.Join(", ", Enum.GetNames<ItemCategory>())}");
 
-        RuleFor(x => x.SubcategoryId)
-            .NotEmpty().WithMessage("SubcategoryId must be a valid subcategory reference");
+        RuleFor(x => x.SubcategoryCode)
+            .NotEmpty().WithMessage("SubcategoryCode is required");
 
         RuleFor(x => x.ImageUrls)
             .NotEmpty().WithMessage("At least one image is required")

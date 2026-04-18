@@ -59,8 +59,12 @@ public sealed class UpdatePostEmbeddingHandler(
             var embedding = await embeddingService.GenerateDocumentEmbeddingAsync(content, cancellationToken);
 
             post.Embedding = embedding;
-            post.ContentHash = hasher.HashStrings($"{post.Category}:{post.SubcategoryId}");
             post.EmbeddingStatus = EmbeddingStatus.Ready;
+
+            var hash = hasher.HashStrings(content);
+            if (post.PersonalBelongingDetail is not null) post.PersonalBelongingDetail.ContentHash = hash;
+            else if (post.ElectronicDetail is not null) post.ElectronicDetail.ContentHash = hash;
+            else if (post.OtherDetail is not null) post.OtherDetail.ContentHash = hash;
 
             postRepository.Update(post);
             await postRepository.SaveChangesAsync();

@@ -36,6 +36,7 @@ public class PostCardDetailConfiguration : IEntityTypeConfiguration<PostCardDeta
         builder.Property(d => d.IssuingAuthority).HasColumnName("issuing_authority").HasMaxLength(300);
         builder.Property(d => d.OcrText).HasColumnName("ocr_text");
         builder.Property(d => d.AiDescription).HasColumnName("ai_description");
+        builder.Property(d => d.ContentHash).HasColumnName("content_hash").HasMaxLength(64);
 
         // Trigram index for holder_name_normalized must be added manually in migration:
         // CREATE EXTENSION IF NOT EXISTS pg_trgm;

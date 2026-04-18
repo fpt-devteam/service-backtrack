@@ -24,5 +24,7 @@ public sealed class PostCardDetail
     // AI-extracted description (for embedding context)
     public string? AiDescription { get; set; }
 
+    public string? ContentHash { get; set; }
+
     public Post Post { get; set; } = default!;
 }

@@ -17,5 +17,7 @@ public sealed class PostPersonalBelongingDetail
     // User-provided additional notes (contents of bag/wallet, context)
     public string? AdditionalDetails { get; set; }
 
+    public string? ContentHash { get; set; }
+
     public Post Post { get; set; } = default!;
 }

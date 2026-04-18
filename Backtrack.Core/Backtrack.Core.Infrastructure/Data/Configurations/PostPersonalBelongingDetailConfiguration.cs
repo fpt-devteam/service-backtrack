@@ -22,6 +22,7 @@ public class PostPersonalBelongingDetailConfiguration
         builder.Property(d => d.DistinctiveMarks).HasColumnName("distinctive_marks").HasMaxLength(500);
         builder.Property(d => d.AiDescription).HasColumnName("ai_description");
         builder.Property(d => d.AdditionalDetails).HasColumnName("additional_details").HasMaxLength(2000);
+        builder.Property(d => d.ContentHash).HasColumnName("content_hash").HasMaxLength(64);
 
         builder.HasOne(d => d.Post)
             .WithOne(p => p.PersonalBelongingDetail)

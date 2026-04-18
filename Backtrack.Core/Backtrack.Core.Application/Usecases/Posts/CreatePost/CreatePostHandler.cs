@@ -5,6 +5,7 @@ using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.PostMatchings;
 using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
+using Backtrack.Core.Application.Utils;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
@@ -18,6 +19,7 @@ public sealed class CreatePostHandler(
     IOrganizationRepository organizationRepository,
     IMembershipRepository membershipRepository,
     IOrgReceiveReportRepository receiveReportRepository,
+    ISubcategoryRepository subcategoryRepository,
     IHasher hasher,
     IBackgroundJobService backgroundJobService,
     ILogger<CreatePostHandler> logger) : IRequestHandler<CreatePostCommand, PostResult>
@@ -32,6 +34,9 @@ public sealed class CreatePostHandler(
 
         if (!Enum.TryParse<ItemCategory>(command.Category, ignoreCase: true, out var category))
             throw new ValidationException(PostErrors.InvalidCategory);
+
+        var subcategory = await subcategoryRepository.GetByCodeAsync(command.SubcategoryCode, cancellationToken)
+            ?? throw new NotFoundException(PostErrors.SubcategoryNotFound);
 
         if (command.OrganizationId.HasValue)
         {
@@ -63,20 +68,20 @@ public sealed class CreatePostHandler(
             PostType = postType,
             Status = status,
             Category = category,
-            SubcategoryId = command.SubcategoryId,
+            SubcategoryId = subcategory.Id,
             Location = location!,
             ExternalPlaceId = externalPlaceId,
             DisplayAddress = displayAddress!,
             Embedding = null,
             EmbeddingStatus = EmbeddingStatus.Pending,
             PostMatchingStatus = PostMatchingStatus.Pending,
-            ContentHash = hasher.HashStrings($"{category}:{command.SubcategoryId}"),
             EventTime = command.EventTime ?? DateTimeOffset.UtcNow,
             ImageUrls = command.ImageUrls.ToList(),
             CreatedAt = DateTimeOffset.UtcNow
         };
 
         AttachDetail(post, command);
+        SetDetailContentHash(post, hasher);
 
         await postRepository.CreateAsync(post);
 
@@ -101,6 +106,17 @@ public sealed class CreatePostHandler(
                 orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
         return post.ToPostResult();
+    }
+
+    private static void SetDetailContentHash(Post post, IHasher hasher)
+    {
+        if (post.Category == ItemCategory.Cards) return;
+
+        var hash = hasher.HashStrings(PostDocumentUtil.BuildDocument(post));
+
+        if (post.PersonalBelongingDetail is not null) post.PersonalBelongingDetail.ContentHash = hash;
+        else if (post.ElectronicDetail is not null) post.ElectronicDetail.ContentHash = hash;
+        else if (post.OtherDetail is not null) post.OtherDetail.ContentHash = hash;
     }
 
     private static void AttachDetail(Post post, CreatePostCommand command)

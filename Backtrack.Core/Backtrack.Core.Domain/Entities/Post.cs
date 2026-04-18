@@ -31,7 +31,6 @@ public sealed class Post : Entity<Guid>
     public required EmbeddingStatus EmbeddingStatus { get; set; }
     public required PostMatchingStatus PostMatchingStatus { get; set; }
 
-    public required string ContentHash { get; set; }
     public PostStatus Status { get; set; } = PostStatus.Active;
 
     // Relationships

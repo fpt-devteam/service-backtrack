@@ -13,9 +13,11 @@ public sealed class SubcategoryController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<List<SubcategoryResult>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetSubcategoriesAsync(CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetSubcategoriesAsync(
+        [FromQuery] string? category,
+        CancellationToken cancellationToken = default)
     {
-        var result = await mediator.Send(new GetSubcategoriesQuery(), cancellationToken);
+        var result = await mediator.Send(new GetSubcategoriesQuery { Category = category }, cancellationToken);
         return this.ApiOk(result);
     }
 }

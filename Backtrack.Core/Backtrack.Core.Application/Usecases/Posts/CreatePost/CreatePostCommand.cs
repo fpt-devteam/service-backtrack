@@ -12,7 +12,7 @@ public sealed record CreatePostCommand : IRequest<PostResult>
     public Guid? OrganizationId { get; init; }
     public string? PostType { get; init; }
     public required string Category { get; init; }
-    public required Guid SubcategoryId { get; init; }
+    public required string SubcategoryCode { get; init; }
     public PersonalBelongingDetailInput? PersonalBelongingDetail { get; init; }
     public CardDetailInput? CardDetail { get; init; }
     public ElectronicDetailInput? ElectronicDetail { get; init; }
