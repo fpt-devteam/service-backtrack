@@ -4,6 +4,7 @@ public sealed record QrPublicResult
 {
     public required string PublicCode { get; init; }
     public required string Note { get; init; }
+    public required string UserId{ get; init; }
 
     // Owner info — nullable fields respect ShowEmail / ShowPhone
     public required string? DisplayName { get; init; }
