@@ -1,9 +1,11 @@
 using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Domain.Entities;
 
 namespace Backtrack.Core.Application.Interfaces.AI;
 
 public sealed record PostMatchContext
 {
+    public required ItemCategory Category { get; init; }
     public required string LostDescription { get; init; }
     public required string FoundDescription { get; init; }
     public required float DistanceMeters { get; init; }
@@ -14,7 +16,7 @@ public sealed record PostMatchContext
 
 public sealed record PostMatchAssessment
 {
-    public required string Summary { get; init; }
+    public required List<MatchEvidence> Evidence { get; init; }
 }
 
 public interface IPostMatchAssessor

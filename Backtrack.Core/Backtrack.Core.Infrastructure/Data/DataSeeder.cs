@@ -22,5 +22,6 @@ public static class DataSeeder
         await SuperAdminSeeder.SeedAsync(db, logger, superAdminSettings, ct);
         await UserSeeder.SeedAsync(db, mediator, logger, ct);
         await OrganizationSeeder.SeedAsync(db, mediator, orgRepository, logger, ct);
+        await PostSeeder.SeedAsync(db, mediator, logger, ct);
     }
 }

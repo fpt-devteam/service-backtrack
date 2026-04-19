@@ -1,6 +1,7 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
+using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Utils;
 using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
@@ -18,18 +19,21 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
     private readonly IOrganizationRepository _organizationRepository;
     private readonly IMembershipRepository _membershipRepository;
     private readonly IBackgroundJobService _backgroundJobService;
+    private readonly IHasher _hasher;
 
     public UpdatePostHandler(
         IPostRepository postRepository,
         IUserRepository userRepository,
         IOrganizationRepository organizationRepository,
         IMembershipRepository membershipRepository,
-        IBackgroundJobService backgroundJobService)
+        IBackgroundJobService backgroundJobService,
+        IHasher hasher)
     {
         _postRepository = postRepository;
         _organizationRepository = organizationRepository;
         _membershipRepository = membershipRepository;
         _backgroundJobService = backgroundJobService;
+        _hasher = hasher;
     }
 
     public async Task<PostResult> Handle(UpdatePostCommand command, CancellationToken cancellationToken)
@@ -86,7 +90,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         }
         else if (command.CardDetail != null)
         {
-            UpdateCardDetail(post, command.CardDetail);
+            UpdateCardDetail(post, command.CardDetail, _hasher);
             needsReEmbedding = true;
         }
         else if (command.ElectronicDetail != null)
@@ -170,36 +174,48 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         }
     }
 
-    private static void UpdateCardDetail(Post post, CardDetailInput input)
+    private static void UpdateCardDetail(Post post, CardDetailInput input, IHasher hasher)
     {
+        var newHash   = input.CardNumber is not null ? hasher.Hash(input.CardNumber) : null;
+        var newMasked = MaskCardNumber(input.CardNumber);
+
         if (post.CardDetail is { } d)
         {
-            d.CardNumberHash = input.CardNumberHash ?? d.CardNumberHash;
-            d.CardNumberMasked = input.CardNumberMasked ?? d.CardNumberMasked;
-            d.HolderName = input.HolderName ?? d.HolderName;
+            if (newHash is not null)   { d.CardNumberHash   = newHash;   d.CardNumberMasked = newMasked; }
+            d.HolderName           = input.HolderName           ?? d.HolderName;
             d.HolderNameNormalized = input.HolderNameNormalized ?? d.HolderNameNormalized;
-            d.DateOfBirth = input.DateOfBirth ?? d.DateOfBirth;
-            d.IssueDate = input.IssueDate ?? d.IssueDate;
-            d.ExpiryDate = input.ExpiryDate ?? d.ExpiryDate;
-            d.IssuingAuthority = input.IssuingAuthority ?? d.IssuingAuthority;
-            d.OcrText = input.OcrText ?? d.OcrText;
+            d.DateOfBirth          = input.DateOfBirth          ?? d.DateOfBirth;
+            d.IssueDate            = input.IssueDate            ?? d.IssueDate;
+            d.ExpiryDate           = input.ExpiryDate           ?? d.ExpiryDate;
+            d.IssuingAuthority     = input.IssuingAuthority     ?? d.IssuingAuthority;
+            d.OcrText              = input.OcrText              ?? d.OcrText;
+            d.AdditionalDetails    = input.AdditionalDetails    ?? d.AdditionalDetails;
         }
         else
         {
             post.CardDetail = new PostCardDetail
             {
-                PostId = post.Id,
-                CardNumberHash = input.CardNumberHash,
-                CardNumberMasked = input.CardNumberMasked,
-                HolderName = input.HolderName,
+                PostId               = post.Id,
+                CardNumberHash       = newHash,
+                CardNumberMasked     = newMasked,
+                HolderName           = input.HolderName,
                 HolderNameNormalized = input.HolderNameNormalized,
-                DateOfBirth = input.DateOfBirth,
-                IssueDate = input.IssueDate,
-                ExpiryDate = input.ExpiryDate,
-                IssuingAuthority = input.IssuingAuthority,
-                OcrText = input.OcrText
+                DateOfBirth          = input.DateOfBirth,
+                IssueDate            = input.IssueDate,
+                ExpiryDate           = input.ExpiryDate,
+                IssuingAuthority     = input.IssuingAuthority,
+                OcrText              = input.OcrText,
+                AdditionalDetails    = input.AdditionalDetails
             };
         }
+    }
+
+    private static string? MaskCardNumber(string? cardNumber)
+    {
+        if (string.IsNullOrWhiteSpace(cardNumber)) return null;
+        var digits = cardNumber.Replace("-", "").Replace(" ", "");
+        var last4 = digits.Length >= 4 ? digits[^4..] : digits;
+        return $"***{last4}";
     }
 
     private static void UpdateElectronicDetail(Post post, ElectronicDetailInput input)
@@ -240,7 +256,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         {
             d.ItemIdentifier = input.ItemIdentifier;
             d.PrimaryColor = input.PrimaryColor ?? d.PrimaryColor;
-            d.Notes = input.Notes ?? d.Notes;
+            d.AdditionalDetails = input.AdditionalDetails ?? d.AdditionalDetails;
         }
         else
         {
@@ -249,7 +265,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
                 PostId = post.Id,
                 ItemIdentifier = input.ItemIdentifier,
                 PrimaryColor = input.PrimaryColor,
-                Notes = input.Notes
+                AdditionalDetails = input.AdditionalDetails
             };
         }
     }

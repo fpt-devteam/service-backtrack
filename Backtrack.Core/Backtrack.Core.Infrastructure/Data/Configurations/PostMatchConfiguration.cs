@@ -1,11 +1,19 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Backtrack.Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backtrack.Core.Infrastructure.Data.Configurations;
 
 public class PostMatchConfiguration : IEntityTypeConfiguration<PostMatch>
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     public void Configure(EntityTypeBuilder<PostMatch> builder)
     {
         builder.ToTable("post_matches");
@@ -15,7 +23,19 @@ public class PostMatchConfiguration : IEntityTypeConfiguration<PostMatch>
         builder.Property(m => m.SourcePostId).HasColumnName("source_post_id").IsRequired();
         builder.Property(m => m.CandidatePostId).HasColumnName("candidate_post_id").IsRequired();
         builder.Property(m => m.Score).HasColumnName("score").IsRequired();
-        builder.Property(m => m.MatchReason).HasColumnName("match_reason").HasMaxLength(100).IsRequired();
+
+        builder.Property(m => m.Evidence)
+            .HasColumnName("evidence")
+            .HasColumnType("jsonb")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                v => JsonSerializer.Deserialize<List<MatchEvidence>>(v, JsonOptions) ?? new List<MatchEvidence>())
+            .Metadata.SetValueComparer(new ValueComparer<List<MatchEvidence>>(
+                (a, b) => JsonSerializer.Serialize(a, JsonOptions) == JsonSerializer.Serialize(b, JsonOptions),
+                v => JsonSerializer.Serialize(v, JsonOptions).GetHashCode(),
+                v => JsonSerializer.Deserialize<List<MatchEvidence>>(JsonSerializer.Serialize(v, JsonOptions), JsonOptions)!));
+
+        builder.Property(m => m.Evidence).IsRequired();
 
         builder.Property(m => m.Status)
             .HasColumnName("status")

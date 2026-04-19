@@ -78,7 +78,13 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
 
     public override async Task<Post?> GetByIdAsync(Guid id, bool isTrack = false)
     {
-        IQueryable<Post> query = _dbSet.Include(p => p.Author).Include(p => p.Organization);
+        IQueryable<Post> query =_dbSet
+            .Include(p => p.Author)
+            .Include(p => p.Organization)
+            .Include(p => p.CardDetail)
+            .Include(p => p.PersonalBelongingDetail)
+            .Include(p => p.ElectronicDetail)
+            .Include(p => p.OtherDetail);
         if (!isTrack)
         {
             query = query.AsNoTracking();
@@ -200,6 +206,10 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Organization)
+            .Include(p => p.CardDetail)
+            .Include(p => p.PersonalBelongingDetail)
+            .Include(p => p.ElectronicDetail)
+            .Include(p => p.OtherDetail)
             .Where(p => ids.Contains(p.Id))
             .ToListAsync(cancellationToken);
 
@@ -275,6 +285,10 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Organization)
+            .Include(p => p.CardDetail)
+            .Include(p => p.PersonalBelongingDetail)
+            .Include(p => p.ElectronicDetail)
+            .Include(p => p.OtherDetail)
             .Where(p => ids.Contains(p.Id))
             .ToListAsync(cancellationToken);
 

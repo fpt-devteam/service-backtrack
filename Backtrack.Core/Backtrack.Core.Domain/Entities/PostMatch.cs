@@ -4,13 +4,22 @@ public sealed class PostMatch : Entity<Guid>
 {
     public required Guid SourcePostId { get; set; }
     public required Guid CandidatePostId { get; set; }
-    public required double Score { get; set; }          // 0.0 - 1.0
-    public required string MatchReason { get; set; }    // "rrf_embedding", "card_hash_exact"...
+    public required double Score { get; set; }
+    public List<MatchEvidence> Evidence { get; set; } = [];
     public MatchStatus Status { get; set; } = MatchStatus.Pending;
 
     public Post SourcePost { get; set; } = default!;
     public Post CandidatePost { get; set; } = default!;
 }
+
+public record MatchEvidence(
+    string Key,              // "holder_name", "brand", "color", "location", "time_gap" …
+    MatchStrength Strength,  // Strong | Partial | Weak | Mismatch
+    string? DisplayValue,    // human-readable value, e.g. "NGÔ ĐỨC BÌNH" or "1.2 km apart"
+    string? Note             // optional explanation
+);
+
+public enum MatchStrength { Strong, Partial, Weak, Mismatch }
 
 public enum MatchStatus
 {

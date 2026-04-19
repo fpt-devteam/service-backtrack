@@ -19,7 +19,7 @@ public class PostOtherDetailConfiguration : IEntityTypeConfiguration<PostOtherDe
             .IsRequired();
 
         builder.Property(d => d.PrimaryColor).HasColumnName("primary_color").HasMaxLength(100);
-        builder.Property(d => d.Notes).HasColumnName("notes").HasMaxLength(2000);
+        builder.Property(d => d.AdditionalDetails).HasColumnName("additional_details").HasMaxLength(2000);
         builder.Property(d => d.AiDescription).HasColumnName("ai_description");
         builder.Property(d => d.ContentHash).HasColumnName("content_hash").HasMaxLength(64);
 

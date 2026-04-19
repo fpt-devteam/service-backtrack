@@ -16,8 +16,13 @@ public sealed class CreatePostCommandValidator : AbstractValidator<CreatePostCom
             .NotEmpty().WithMessage("SubcategoryCode is required");
 
         RuleFor(x => x.ImageUrls)
-            .NotEmpty().WithMessage("At least one image is required")
             .Must(images => images.Length <= 5).WithMessage("No more than 5 images are allowed");
+
+        Unless(x => string.Equals(x.PostType, "Lost", StringComparison.OrdinalIgnoreCase), () =>
+        {
+            RuleFor(x => x.ImageUrls)
+                .NotEmpty().WithMessage("At least one image is required");
+        });
 
         // Location, DisplayAddress, EventTime, PostType are required only for non-org posts
         When(x => !x.OrganizationId.HasValue, () =>

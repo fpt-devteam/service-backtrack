@@ -35,6 +35,7 @@ public class PostCardDetailConfiguration : IEntityTypeConfiguration<PostCardDeta
         builder.Property(d => d.ExpiryDate).HasColumnName("expiry_date");
         builder.Property(d => d.IssuingAuthority).HasColumnName("issuing_authority").HasMaxLength(300);
         builder.Property(d => d.OcrText).HasColumnName("ocr_text");
+        builder.Property(d => d.AdditionalDetails).HasColumnName("additional_details").HasMaxLength(2000);
         builder.Property(d => d.AiDescription).HasColumnName("ai_description");
         builder.Property(d => d.ContentHash).HasColumnName("content_hash").HasMaxLength(64);
 

@@ -13,6 +13,7 @@ public sealed class GeminiOcrService(ILlmService llmService) : IOcrService
         Respond ONLY with valid JSON — no markdown, no extra text:
         {
             "ocrText":              "full verbatim OCR text from the card",
+            "cardNumber":           "card/ID number exactly as printed (digits and hyphens only, no spaces), or null",
             "holderName":           "full name of card holder, or null",
             "holderNameNormalized": "lowercase, no diacritics version of the name, or null",
             "issuingAuthority":     "issuing authority/organization, or null",
@@ -40,6 +41,7 @@ public sealed class GeminiOcrService(ILlmService llmService) : IOcrService
 
         return new CardDetailInput
         {
+            CardNumber           = dto.CardNumber,
             OcrText              = dto.OcrText,
             HolderName           = dto.HolderName,
             HolderNameNormalized = dto.HolderNameNormalized,
@@ -56,6 +58,7 @@ public sealed class GeminiOcrService(ILlmService llmService) : IOcrService
     private sealed class CardOcrDto
     {
         [JsonPropertyName("ocrText")]              public string? OcrText { get; set; }
+        [JsonPropertyName("cardNumber")]           public string? CardNumber { get; set; }
         [JsonPropertyName("holderName")]           public string? HolderName { get; set; }
         [JsonPropertyName("holderNameNormalized")] public string? HolderNameNormalized { get; set; }
         [JsonPropertyName("issuingAuthority")]     public string? IssuingAuthority { get; set; }

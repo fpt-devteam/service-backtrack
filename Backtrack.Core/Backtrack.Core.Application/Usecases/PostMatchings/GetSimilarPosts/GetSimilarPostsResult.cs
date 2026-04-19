@@ -26,6 +26,6 @@ public sealed record SimilarPostItem
     public string? DisplayAddress { get; init; }
     public required DateTimeOffset EventTime { get; init; }
     public required double Score { get; init; }
-    public required string MatchReason { get; init; }
+    public List<MatchEvidence> Evidence { get; init; } = [];
     public required MatchStatus Status { get; init; }
 }

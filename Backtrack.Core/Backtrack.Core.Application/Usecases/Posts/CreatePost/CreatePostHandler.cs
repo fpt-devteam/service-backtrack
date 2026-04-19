@@ -80,7 +80,7 @@ public sealed class CreatePostHandler(
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        AttachDetail(post, command);
+        AttachDetail(post, command, hasher);
         SetDetailContentHash(post, hasher);
 
         await postRepository.CreateAsync(post);
@@ -119,7 +119,15 @@ public sealed class CreatePostHandler(
         else if (post.OtherDetail is not null) post.OtherDetail.ContentHash = hash;
     }
 
-    private static void AttachDetail(Post post, CreatePostCommand command)
+    private static string? MaskCardNumber(string? cardNumber)
+    {
+        if (string.IsNullOrWhiteSpace(cardNumber)) return null;
+        var digits = cardNumber.Replace("-", "").Replace(" ", "");
+        var last4 = digits.Length >= 4 ? digits[^4..] : digits;
+        return $"***{last4}";
+    }
+
+    private static void AttachDetail(Post post, CreatePostCommand command, IHasher hasher)
     {
         if (command.PersonalBelongingDetail is { } pb)
         {
@@ -139,16 +147,17 @@ public sealed class CreatePostHandler(
         {
             post.CardDetail = new PostCardDetail
             {
-                PostId = post.Id,
-                CardNumberHash = cd.CardNumberHash,
-                CardNumberMasked = cd.CardNumberMasked,
-                HolderName = cd.HolderName,
+                PostId               = post.Id,
+                CardNumberHash       = cd.CardNumber is not null ? hasher.Hash(cd.CardNumber) : null,
+                CardNumberMasked     = MaskCardNumber(cd.CardNumber),
+                HolderName           = cd.HolderName,
                 HolderNameNormalized = cd.HolderNameNormalized,
-                DateOfBirth = cd.DateOfBirth,
-                IssueDate = cd.IssueDate,
-                ExpiryDate = cd.ExpiryDate,
-                IssuingAuthority = cd.IssuingAuthority,
-                OcrText = cd.OcrText
+                DateOfBirth          = cd.DateOfBirth,
+                IssueDate            = cd.IssueDate,
+                ExpiryDate           = cd.ExpiryDate,
+                IssuingAuthority     = cd.IssuingAuthority,
+                OcrText              = cd.OcrText,
+                AdditionalDetails    = cd.AdditionalDetails
             };
         }
         else if (command.ElectronicDetail is { } ed)
@@ -174,7 +183,7 @@ public sealed class CreatePostHandler(
                 PostId = post.Id,
                 ItemIdentifier = od.ItemIdentifier,
                 PrimaryColor = od.PrimaryColor,
-                Notes = od.Notes
+                AdditionalDetails = od.AdditionalDetails
             };
         }
     }

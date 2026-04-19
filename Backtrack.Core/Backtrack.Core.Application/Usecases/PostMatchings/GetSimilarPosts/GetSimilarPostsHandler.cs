@@ -55,9 +55,9 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
             ExternalPlaceId  = target.ExternalPlaceId,
             DisplayAddress   = target.DisplayAddress,
             EventTime        = target.EventTime,
-            Score            = match.Score,
-            MatchReason      = match.MatchReason,
-            Status           = match.Status
+            Score    = match.Score,
+            Evidence = match.Evidence,
+            Status   = match.Status
         };
     }
 }

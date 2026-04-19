@@ -46,6 +46,7 @@ public sealed record CardDetailResult
     public DateOnly? IssueDate { get; init; }
     public DateOnly? ExpiryDate { get; init; }
     public string? IssuingAuthority { get; init; }
+    public string? AdditionalDetails { get; init; }
     public string? AiDescription { get; init; }
 }
 
@@ -67,7 +68,7 @@ public sealed record OtherDetailResult
 {
     public required string ItemIdentifier { get; init; }
     public string? PrimaryColor { get; init; }
-    public string? Notes { get; init; }
+    public string? AdditionalDetails { get; init; }
     public string? AiDescription { get; init; }
 }
 
@@ -103,6 +104,7 @@ public static class PostResultMapper
                 IssueDate = cd.IssueDate,
                 ExpiryDate = cd.ExpiryDate,
                 IssuingAuthority = cd.IssuingAuthority,
+                AdditionalDetails = cd.AdditionalDetails,
                 AiDescription = cd.AiDescription
             } : null,
             ElectronicDetail = post.ElectronicDetail is { } ed ? new ElectronicDetailResult
@@ -122,7 +124,7 @@ public static class PostResultMapper
             {
                 ItemIdentifier = od.ItemIdentifier,
                 PrimaryColor = od.PrimaryColor,
-                Notes = od.Notes,
+                AdditionalDetails = od.AdditionalDetails,
                 AiDescription = od.AiDescription
             } : null,
             ImageUrls = post.ImageUrls,

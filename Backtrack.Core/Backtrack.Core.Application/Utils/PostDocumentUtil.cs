@@ -28,11 +28,11 @@ public static class PostDocumentUtil
                 break;
 
             case ItemCategory.Cards when post.CardDetail is { } c:
-                // if (!string.IsNullOrWhiteSpace(c.HolderName)) sb.Append($" Holder: {c.HolderName}.");
-                // if (!string.IsNullOrWhiteSpace(c.IssuingAuthority)) sb.Append($" Issued by: {c.IssuingAuthority}.");
-                // if (!string.IsNullOrWhiteSpace(c.AiDescription)) sb.Append($" {c.AiDescription}");
-                // if (!string.IsNullOrWhiteSpace(c.OcrText)) sb.Append($" OCR: {c.OcrText}.");
-                throw new InvalidOperationException("Card details are not included in the document content for embedding/reranking, as they often contain personally identifiable information. This is a deliberate design choice to protect user privacy and comply with data protection regulations. If you need to include card details for specific use cases, please implement a secure handling mechanism that ensures sensitive information is properly anonymized or encrypted before processing.");
+                if (!string.IsNullOrWhiteSpace(c.HolderName)) sb.Append($" Holder: {c.HolderName}.");
+                if (!string.IsNullOrWhiteSpace(c.IssuingAuthority)) sb.Append($" Issued by: {c.IssuingAuthority}.");
+                if (!string.IsNullOrWhiteSpace(c.AiDescription)) sb.Append($" {c.AiDescription}");
+                if (!string.IsNullOrWhiteSpace(c.OcrText)) sb.Append($" OCR: {c.OcrText}.");
+                break;
 
             case ItemCategory.Electronics when post.ElectronicDetail is { } e:
                 if (!string.IsNullOrWhiteSpace(e.Brand)) sb.Append($" Brand: {e.Brand}.");
@@ -48,7 +48,7 @@ public static class PostDocumentUtil
                 sb.Append($" Item: {o.ItemIdentifier}.");
                 if (!string.IsNullOrWhiteSpace(o.PrimaryColor)) sb.Append($" Color: {o.PrimaryColor}.");
                 if (!string.IsNullOrWhiteSpace(o.AiDescription)) sb.Append($" {o.AiDescription}");
-                if (!string.IsNullOrWhiteSpace(o.Notes)) sb.Append($" Notes: {o.Notes}.");
+                if (!string.IsNullOrWhiteSpace(o.AdditionalDetails)) sb.Append($" Additional details: {o.AdditionalDetails}.");
                 break;
         }
 

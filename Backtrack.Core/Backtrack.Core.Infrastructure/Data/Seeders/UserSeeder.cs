@@ -38,6 +38,8 @@ public static class UserSeeder
         = ("nhuhong.hr@gmail.com", "123456", "Nhu Hong", Avatar(12));
     public static readonly (string Email, string Password, string DisplayName, string AvatarUrl) HongVu
         = ("hongvu.marketing@hotmail.com", "123456", "Hong Vu", Avatar(13));
+    public static readonly (string Email, string Password, string DisplayName, string AvatarUrl) NgoDucBinh
+        = ("ngodb.ps27513@fpt.edu.vn", "123456", "Ngo Duc Binh", Avatar(47));
 
     private static readonly UserSeedInfo[] AllUsers =
     [
@@ -54,6 +56,7 @@ public static class UserSeeder
         new(HongPham.Email,    HongPham.Password,    HongPham.DisplayName,    HongPham.AvatarUrl),
         new(NhuHong.Email,     NhuHong.Password,     NhuHong.DisplayName,     NhuHong.AvatarUrl),
         new(HongVu.Email,      HongVu.Password,      HongVu.DisplayName,      HongVu.AvatarUrl),
+        new(NgoDucBinh.Email,  NgoDucBinh.Password,  NgoDucBinh.DisplayName,  NgoDucBinh.AvatarUrl),
     ];
 
     public static async Task SeedAsync(ApplicationDbContext db, ISender mediator, ILogger logger, CancellationToken ct = default)

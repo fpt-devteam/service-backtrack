@@ -11,4 +11,5 @@ public sealed record ImageAnalysisResult
     public ElectronicDetailInput? Electronic { get; init; }
     public OtherDetailInput? Other { get; init; }
     public CardDetailInput? Card { get; init; }
+    public IReadOnlyList<string>? Warnings { get; init; }
 }

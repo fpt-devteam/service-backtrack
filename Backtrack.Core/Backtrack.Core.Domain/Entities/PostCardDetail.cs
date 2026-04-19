@@ -21,6 +21,8 @@ public sealed class PostCardDetail
     // OCR dump from card images
     public string? OcrText { get; set; }
 
+    public string? AdditionalDetails { get; set; }
+
     // AI-extracted description (for embedding context)
     public string? AiDescription { get; set; }
 

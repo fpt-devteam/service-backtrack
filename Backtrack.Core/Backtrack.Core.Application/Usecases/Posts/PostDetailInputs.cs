@@ -14,8 +14,7 @@ public sealed record PersonalBelongingDetailInput
 
 public sealed record CardDetailInput
 {
-    public string? CardNumberHash { get; init; }
-    public string? CardNumberMasked { get; init; }
+    public string? CardNumber { get; init; }
     public string? HolderName { get; init; }
     public string? HolderNameNormalized { get; init; }
     public DateOnly? DateOfBirth { get; init; }
@@ -23,6 +22,7 @@ public sealed record CardDetailInput
     public DateOnly? ExpiryDate { get; init; }
     public string? IssuingAuthority { get; init; }
     public string? OcrText { get; init; }
+    public string? AdditionalDetails { get; init; }
 }
 
 public sealed record ElectronicDetailInput
@@ -44,5 +44,5 @@ public sealed record OtherDetailInput
     public required string ItemIdentifier { get; init; }
     public string? PrimaryColor { get; init; }
     public string? AiDescription { get; init; }
-    public string? Notes { get; init; }
+    public string? AdditionalDetails { get; init; }
 }

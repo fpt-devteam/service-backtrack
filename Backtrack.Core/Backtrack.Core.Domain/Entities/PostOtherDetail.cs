@@ -8,7 +8,7 @@ public sealed class PostOtherDetail
     public required string ItemIdentifier { get; set; }  // "Sapiens book", "hugging pillow"
 
     public string? PrimaryColor { get; set; }
-    public string? Notes { get; set; }
+    public string? AdditionalDetails { get; set; }
 
     public string? AiDescription { get; set; }
 
