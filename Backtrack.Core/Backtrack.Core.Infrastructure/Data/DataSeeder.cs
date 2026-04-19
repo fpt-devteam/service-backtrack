@@ -21,6 +21,7 @@ public static class DataSeeder
         await SubscriptionPlanSeeder.SeedAsync(db, logger, stripeSettings, ct);
         await SuperAdminSeeder.SeedAsync(db, logger, superAdminSettings, ct);
         await UserSeeder.SeedAsync(db, mediator, logger, ct);
+        await UserSubscriptionSeeder.SeedAsync(db, logger, ct);
         await OrganizationSeeder.SeedAsync(db, mediator, orgRepository, logger, ct);
         await PostSeeder.SeedAsync(db, mediator, logger, ct);
     }
