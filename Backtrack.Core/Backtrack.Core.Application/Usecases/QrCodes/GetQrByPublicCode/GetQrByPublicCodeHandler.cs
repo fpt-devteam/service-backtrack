@@ -28,6 +28,7 @@ public sealed class GetQrByPublicCodeHandler(
         return new QrPublicResult
         {
             PublicCode = qrCode.PublicCode,
+            UserId = qrCode.UserId,
             Note = qrCode.Note,
             DisplayName = user.DisplayName,
             AvatarUrl = user.AvatarUrl,
