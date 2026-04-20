@@ -137,12 +137,13 @@ public sealed class FindAndSavePostMatchesHandler(
     private static string BuildCardDescription(PostCardDetail c)
     {
         var sb = new System.Text.StringBuilder();
-        if (!string.IsNullOrWhiteSpace(c.HolderName))        sb.Append($"Holder name: {c.HolderName}. ");
-        if (!string.IsNullOrWhiteSpace(c.IssuingAuthority))  sb.Append($"Issuing authority: {c.IssuingAuthority}. ");
-        if (c.ExpiryDate.HasValue)                            sb.Append($"Expiry date: {c.ExpiryDate:MM/yyyy}. ");
-        if (c.DateOfBirth.HasValue)                           sb.Append($"Date of birth: {c.DateOfBirth:dd/MM/yyyy}. ");
-        if (!string.IsNullOrWhiteSpace(c.OcrText))            sb.Append($"OCR text: {c.OcrText}. ");
-        if (!string.IsNullOrWhiteSpace(c.AdditionalDetails))  sb.Append($"Notes: {c.AdditionalDetails}.");
+        if (!string.IsNullOrWhiteSpace(c.ItemName))           sb.Append($"Card: {c.ItemName}. ");
+        if (!string.IsNullOrWhiteSpace(c.HolderName))         sb.Append($"Holder name: {c.HolderName}. ");
+        if (!string.IsNullOrWhiteSpace(c.IssuingAuthority))   sb.Append($"Issuing authority: {c.IssuingAuthority}. ");
+        if (c.ExpiryDate.HasValue)                             sb.Append($"Expiry date: {c.ExpiryDate:MM/yyyy}. ");
+        if (c.DateOfBirth.HasValue)                            sb.Append($"Date of birth: {c.DateOfBirth:dd/MM/yyyy}. ");
+        if (!string.IsNullOrWhiteSpace(c.OcrText))             sb.Append($"OCR text: {c.OcrText}. ");
+        if (!string.IsNullOrWhiteSpace(c.AdditionalDetails))   sb.Append($"Notes: {c.AdditionalDetails}.");
         return sb.Length > 0 ? sb.ToString().Trim() : "Card (no details available).";
     }
 

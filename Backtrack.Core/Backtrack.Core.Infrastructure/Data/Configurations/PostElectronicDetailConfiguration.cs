@@ -14,6 +14,7 @@ public class PostElectronicDetailConfiguration
 
         builder.Property(d => d.PostId).HasColumnName("post_id");
 
+        builder.Property(d => d.ItemName).HasColumnName("item_name").HasMaxLength(300);
         builder.Property(d => d.Brand).HasColumnName("brand").HasMaxLength(100);
         builder.Property(d => d.Model).HasColumnName("model").HasMaxLength(100);
         builder.Property(d => d.Color).HasColumnName("color").HasMaxLength(50);

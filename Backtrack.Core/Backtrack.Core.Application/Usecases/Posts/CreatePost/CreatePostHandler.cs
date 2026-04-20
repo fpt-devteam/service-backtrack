@@ -134,6 +134,7 @@ public sealed class CreatePostHandler(
             post.PersonalBelongingDetail = new PostPersonalBelongingDetail
             {
                 PostId = post.Id,
+                ItemName = pb.ItemName,
                 Color = pb.Color,
                 Brand = pb.Brand,
                 Material = pb.Material,
@@ -148,6 +149,7 @@ public sealed class CreatePostHandler(
             post.CardDetail = new PostCardDetail
             {
                 PostId               = post.Id,
+                ItemName             = cd.ItemName,
                 CardNumberHash       = cd.CardNumber is not null ? hasher.Hash(cd.CardNumber) : null,
                 CardNumberMasked     = MaskCardNumber(cd.CardNumber),
                 HolderName           = cd.HolderName,
@@ -165,6 +167,7 @@ public sealed class CreatePostHandler(
             post.ElectronicDetail = new PostElectronicDetail
             {
                 PostId = post.Id,
+                ItemName = ed.ItemName,
                 Brand = ed.Brand,
                 Model = ed.Model,
                 Color = ed.Color,

@@ -18,6 +18,9 @@ public sealed class PostCardDetail
     public DateOnly? ExpiryDate { get; set; }
     public string? IssuingAuthority { get; set; }
 
+    // Human-readable card name (e.g. "FPT Polytechnic Student Card", "Vietnam National ID")
+    public string? ItemName { get; set; }
+
     // OCR dump from card images
     public string? OcrText { get; set; }
 

@@ -150,6 +150,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
     {
         if (post.PersonalBelongingDetail is { } d)
         {
+            d.ItemName = input.ItemName ?? d.ItemName;
             d.Color = input.Color ?? d.Color;
             d.Brand = input.Brand ?? d.Brand;
             d.Material = input.Material ?? d.Material;
@@ -163,6 +164,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             post.PersonalBelongingDetail = new PostPersonalBelongingDetail
             {
                 PostId = post.Id,
+                ItemName = input.ItemName,
                 Color = input.Color,
                 Brand = input.Brand,
                 Material = input.Material,
@@ -182,6 +184,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         if (post.CardDetail is { } d)
         {
             if (newHash is not null)   { d.CardNumberHash   = newHash;   d.CardNumberMasked = newMasked; }
+            d.ItemName             = input.ItemName             ?? d.ItemName;
             d.HolderName           = input.HolderName           ?? d.HolderName;
             d.HolderNameNormalized = input.HolderNameNormalized ?? d.HolderNameNormalized;
             d.DateOfBirth          = input.DateOfBirth          ?? d.DateOfBirth;
@@ -196,6 +199,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             post.CardDetail = new PostCardDetail
             {
                 PostId               = post.Id,
+                ItemName             = input.ItemName,
                 CardNumberHash       = newHash,
                 CardNumberMasked     = newMasked,
                 HolderName           = input.HolderName,
@@ -222,6 +226,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
     {
         if (post.ElectronicDetail is { } d)
         {
+            d.ItemName = input.ItemName ?? d.ItemName;
             d.Brand = input.Brand ?? d.Brand;
             d.Model = input.Model ?? d.Model;
             d.Color = input.Color ?? d.Color;
@@ -237,6 +242,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             post.ElectronicDetail = new PostElectronicDetail
             {
                 PostId = post.Id,
+                ItemName = input.ItemName,
                 Brand = input.Brand,
                 Model = input.Model,
                 Color = input.Color,

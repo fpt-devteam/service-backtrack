@@ -14,6 +14,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
 
         Analyze the image and extract:
         {
+            "itemName":        "concise item name combining type, brand, and color (e.g. 'Black Louis Vuitton wallet', 'JanSport navy backpack', 'silver keyring'), or null",
             "color":           "primary color(s)",
             "brand":           "brand name if visible, or null",
             "material":        "material type (leather, fabric, metal, plastic…), or null",
@@ -32,6 +33,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
 
         Analyze the image and extract:
         {
+            "itemName":              "concise device name combining brand, model, and color (e.g. 'Black iPhone 14 Pro', 'Silver MacBook Air M2', 'White AirPods Pro'), or null",
             "brand":                 "device brand (Apple, Samsung, Sony…), or null",
             "model":                 "model name/number if identifiable, or null",
             "color":                 "primary color",
@@ -73,6 +75,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
 
         return new PersonalBelongingDetailInput
         {
+            ItemName         = dto.ItemName,
             Color            = dto.Color,
             Brand            = dto.Brand,
             Material         = dto.Material,
@@ -98,6 +101,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
 
         return new ElectronicDetailInput
         {
+            ItemName               = dto.ItemName,
             Brand                  = dto.Brand,
             Model                  = dto.Model,
             Color                  = dto.Color,
@@ -195,6 +199,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
     // ── Private DTOs ────────────────────────────────────────────────────────
     private sealed class PersonalBelongingDto
     {
+        [JsonPropertyName("itemName")]         public string? ItemName { get; set; }
         [JsonPropertyName("color")]            public string? Color { get; set; }
         [JsonPropertyName("brand")]            public string? Brand { get; set; }
         [JsonPropertyName("material")]         public string? Material { get; set; }
@@ -206,6 +211,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
 
     private sealed class ElectronicDto
     {
+        [JsonPropertyName("itemName")]               public string? ItemName { get; set; }
         [JsonPropertyName("brand")]                  public string? Brand { get; set; }
         [JsonPropertyName("model")]                  public string? Model { get; set; }
         [JsonPropertyName("color")]                  public string? Color { get; set; }

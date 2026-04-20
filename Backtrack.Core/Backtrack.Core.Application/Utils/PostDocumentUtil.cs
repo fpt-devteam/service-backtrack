@@ -18,6 +18,7 @@ public static class PostDocumentUtil
         switch (post.Category)
         {
             case ItemCategory.PersonalBelongings when post.PersonalBelongingDetail is { } d:
+                if (!string.IsNullOrWhiteSpace(d.ItemName)) sb.Append($" Item: {d.ItemName}.");
                 if (!string.IsNullOrWhiteSpace(d.Brand))  sb.Append($" Brand: {d.Brand}.");
                 if (!string.IsNullOrWhiteSpace(d.Color))  sb.Append($" Color: {d.Color}.");
                 if (!string.IsNullOrWhiteSpace(d.Material)) sb.Append($" Material: {d.Material}.");
@@ -28,6 +29,7 @@ public static class PostDocumentUtil
                 break;
 
             case ItemCategory.Cards when post.CardDetail is { } c:
+                if (!string.IsNullOrWhiteSpace(c.ItemName)) sb.Append($" Card: {c.ItemName}.");
                 if (!string.IsNullOrWhiteSpace(c.HolderName)) sb.Append($" Holder: {c.HolderName}.");
                 if (!string.IsNullOrWhiteSpace(c.IssuingAuthority)) sb.Append($" Issued by: {c.IssuingAuthority}.");
                 if (!string.IsNullOrWhiteSpace(c.AiDescription)) sb.Append($" {c.AiDescription}");
@@ -35,6 +37,7 @@ public static class PostDocumentUtil
                 break;
 
             case ItemCategory.Electronics when post.ElectronicDetail is { } e:
+                if (!string.IsNullOrWhiteSpace(e.ItemName)) sb.Append($" Device: {e.ItemName}.");
                 if (!string.IsNullOrWhiteSpace(e.Brand)) sb.Append($" Brand: {e.Brand}.");
                 if (!string.IsNullOrWhiteSpace(e.Model)) sb.Append($" Model: {e.Model}.");
                 if (!string.IsNullOrWhiteSpace(e.Color)) sb.Append($" Color: {e.Color}.");

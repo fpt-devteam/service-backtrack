@@ -13,6 +13,7 @@ public sealed record PostResult
     public required PostStatus Status { get; init; }
     public required ItemCategory Category { get; init; }
     public required Guid SubcategoryId { get; init; }
+    public string? PostTitle { get; init; }
     public PersonalBelongingDetailResult? PersonalBelongingDetail { get; init; }
     public CardDetailResult? CardDetail { get; init; }
     public ElectronicDetailResult? ElectronicDetail { get; init; }
@@ -28,6 +29,7 @@ public sealed record PostResult
 
 public sealed record PersonalBelongingDetailResult
 {
+    public string? ItemName { get; init; }
     public string? Color { get; init; }
     public string? Brand { get; init; }
     public string? Material { get; init; }
@@ -40,6 +42,7 @@ public sealed record PersonalBelongingDetailResult
 
 public sealed record CardDetailResult
 {
+    public string? ItemName { get; init; }
     public string? CardNumberMasked { get; init; }
     public string? HolderName { get; init; }
     public DateOnly? DateOfBirth { get; init; }
@@ -52,6 +55,7 @@ public sealed record CardDetailResult
 
 public sealed record ElectronicDetailResult
 {
+    public string? ItemName { get; init; }
     public string? Brand { get; init; }
     public string? Model { get; init; }
     public string? Color { get; init; }
@@ -85,8 +89,13 @@ public static class PostResultMapper
             Status = post.Status,
             Category = post.Category,
             SubcategoryId = post.SubcategoryId,
+            PostTitle = post.PersonalBelongingDetail?.ItemName
+                     ?? post.CardDetail?.ItemName
+                     ?? post.ElectronicDetail?.ItemName
+                     ?? post.OtherDetail?.ItemIdentifier,
             PersonalBelongingDetail = post.PersonalBelongingDetail is { } pb ? new PersonalBelongingDetailResult
             {
+                ItemName = pb.ItemName,
                 Color = pb.Color,
                 Brand = pb.Brand,
                 Material = pb.Material,
@@ -98,6 +107,7 @@ public static class PostResultMapper
             } : null,
             CardDetail = post.CardDetail is { } cd ? new CardDetailResult
             {
+                ItemName = cd.ItemName,
                 CardNumberMasked = cd.CardNumberMasked,
                 HolderName = cd.HolderName,
                 DateOfBirth = cd.DateOfBirth,
@@ -109,6 +119,7 @@ public static class PostResultMapper
             } : null,
             ElectronicDetail = post.ElectronicDetail is { } ed ? new ElectronicDetailResult
             {
+                ItemName = ed.ItemName,
                 Brand = ed.Brand,
                 Model = ed.Model,
                 Color = ed.Color,

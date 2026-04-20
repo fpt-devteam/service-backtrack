@@ -4,6 +4,9 @@ public sealed class PostPersonalBelongingDetail
 {
     public required Guid PostId { get; set; }
 
+    // Concise item name (e.g. "Black leather wallet", "JanSport navy backpack")
+    public string? ItemName { get; set; }
+
     public string? Color { get; set; }
     public string? Brand { get; set; }
     public string? Material { get; set; }

@@ -30,6 +30,8 @@ public class PostCardDetailConfiguration : IEntityTypeConfiguration<PostCardDeta
             .HasDatabaseName("ix_post_card_details_dob")
             .HasFilter("date_of_birth IS NOT NULL");
 
+        builder.Property(d => d.ItemName).HasColumnName("item_name").HasMaxLength(300);
+
         // Other card metadata
         builder.Property(d => d.IssueDate).HasColumnName("issue_date");
         builder.Property(d => d.ExpiryDate).HasColumnName("expiry_date");
