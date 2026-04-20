@@ -49,6 +49,14 @@ internal sealed class GeminiGenerateConfig
 
     [JsonPropertyName("maxOutputTokens")]
     public int MaxOutputTokens { get; set; }
+
+    /// <summary>
+    /// Forces constrained JSON decoding. Use "application/json" to guarantee
+    /// a complete, valid JSON object regardless of token limits.
+    /// </summary>
+    [JsonPropertyName("responseMimeType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResponseMimeType { get; set; }
 }
 
 internal sealed class GeminiGenerateResponse
@@ -61,4 +69,11 @@ internal sealed class GeminiGenerateCandidate
 {
     [JsonPropertyName("content")]
     public GeminiGenerateContent? Content { get; set; }
+
+    /// <summary>
+    /// Reason the model stopped generating. Common values:
+    /// "STOP" (normal), "MAX_TOKENS" (truncated), "SAFETY" (filtered).
+    /// </summary>
+    [JsonPropertyName("finishReason")]
+    public string? FinishReason { get; set; }
 }

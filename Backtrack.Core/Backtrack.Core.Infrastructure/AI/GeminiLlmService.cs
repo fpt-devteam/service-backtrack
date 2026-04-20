@@ -42,7 +42,12 @@ public sealed class GeminiLlmService(
             }
 
             var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(cancellationToken);
-            var text = result?.Candidates?[0].Content?.Parts?[0].Text;
+            var candidate = result?.Candidates?[0];
+            var text = candidate?.Content?.Parts?[0].Text;
+
+            var finishReason = candidate?.FinishReason;
+            if (!string.IsNullOrWhiteSpace(finishReason) && finishReason != "STOP")
+                logger.LogWarning("Gemini finished with reason '{FinishReason}' on attempt {Attempt}/{Max} — response may be incomplete.", finishReason, attempt, MaxParseRetries);
 
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -91,8 +96,11 @@ public sealed class GeminiLlmService(
             Contents = [new GeminiGenerateContent { Parts = parts }],
             GenerationConfig = new GeminiGenerateConfig
             {
-                Temperature = request.Temperature,
-                MaxOutputTokens = request.MaxOutputTokens
+                Temperature     = request.Temperature,
+                MaxOutputTokens = request.MaxOutputTokens,
+                // Constrained JSON decoding: guarantees a complete, valid JSON object.
+                // Without this, Gemini can stop mid-JSON when hitting MaxOutputTokens.
+                ResponseMimeType = "application/json"
             }
         };
     }

@@ -70,7 +70,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             ImageBase64   = imageBase64,
             ImageMimeType = mimeType,
             Temperature   = 0.2f,
-            MaxOutputTokens = 512
+            MaxOutputTokens = 1024
         }, cancellationToken);
 
         return new PersonalBelongingDetailInput
@@ -96,7 +96,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             ImageBase64   = imageBase64,
             ImageMimeType = mimeType,
             Temperature   = 0.2f,
-            MaxOutputTokens = 512
+            MaxOutputTokens = 1024
         }, cancellationToken);
 
         return new ElectronicDetailInput
@@ -124,7 +124,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             ImageBase64   = imageBase64,
             ImageMimeType = mimeType,
             Temperature   = 0.2f,
-            MaxOutputTokens = 512
+            MaxOutputTokens = 1024
         }, cancellationToken);
 
         return new OtherDetailInput

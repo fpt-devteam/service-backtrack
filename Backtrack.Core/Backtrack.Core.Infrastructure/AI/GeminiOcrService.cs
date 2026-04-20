@@ -37,7 +37,7 @@ public sealed class GeminiOcrService(ILlmService llmService) : IOcrService
             ImageBase64     = imageBase64,
             ImageMimeType   = mimeType,
             Temperature     = 0.1f,
-            MaxOutputTokens = 512
+            MaxOutputTokens = 1024
         }, cancellationToken);
 
         return new CardDetailInput
