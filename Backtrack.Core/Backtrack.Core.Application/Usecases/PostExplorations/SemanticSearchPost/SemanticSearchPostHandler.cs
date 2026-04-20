@@ -27,6 +27,10 @@ public sealed class SemanticSearchPostHandler(
                 Author           = p.Author?.ToPostAuthorResult(),
                 Organization     = p.Organization?.ToOrganizationOnPost(),
                 PostType         = p.PostType,
+                ItemName         = p.PersonalBelongingDetail?.ItemName
+                                 ?? p.CardDetail?.ItemName
+                                 ?? p.ElectronicDetail?.ItemName
+                                 ?? p.OtherDetail?.ItemIdentifier,
                 Category         = p.Category,
                 SubcategoryId    = p.SubcategoryId,
                 PersonalBelongingDetail = p.PersonalBelongingDetail,
@@ -56,6 +60,10 @@ public sealed class SemanticSearchPostHandler(
                 Author           = x.Post.Author?.ToPostAuthorResult(),
                 Organization     = x.Post.Organization?.ToOrganizationOnPost(),
                 PostType         = x.Post.PostType,
+                ItemName         = x.Post.PersonalBelongingDetail?.ItemName
+                                 ?? x.Post.CardDetail?.ItemName
+                                 ?? x.Post.ElectronicDetail?.ItemName
+                                 ?? x.Post.OtherDetail?.ItemIdentifier,
                 Category         = x.Post.Category,
                 SubcategoryId    = x.Post.SubcategoryId,
                 PersonalBelongingDetail = x.Post.PersonalBelongingDetail,

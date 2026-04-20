@@ -13,7 +13,7 @@ public sealed record PostResult
     public required PostStatus Status { get; init; }
     public required ItemCategory Category { get; init; }
     public required Guid SubcategoryId { get; init; }
-    public string? PostTitle { get; init; }
+    public string? ItemName { get; init; }
     public PersonalBelongingDetailResult? PersonalBelongingDetail { get; init; }
     public CardDetailResult? CardDetail { get; init; }
     public ElectronicDetailResult? ElectronicDetail { get; init; }
@@ -89,7 +89,7 @@ public static class PostResultMapper
             Status = post.Status,
             Category = post.Category,
             SubcategoryId = post.SubcategoryId,
-            PostTitle = post.PersonalBelongingDetail?.ItemName
+            ItemName = post.PersonalBelongingDetail?.ItemName
                      ?? post.CardDetail?.ItemName
                      ?? post.ElectronicDetail?.ItemName
                      ?? post.OtherDetail?.ItemIdentifier,
