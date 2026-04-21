@@ -86,21 +86,25 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         if (command.PersonalBelongingDetail != null)
         {
             UpdatePersonalBelongingDetail(post, command.PersonalBelongingDetail);
+            post.PostTitle = post.PersonalBelongingDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
         else if (command.CardDetail != null)
         {
             UpdateCardDetail(post, command.CardDetail, _hasher);
+            post.PostTitle = post.CardDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
         else if (command.ElectronicDetail != null)
         {
             UpdateElectronicDetail(post, command.ElectronicDetail);
+            post.PostTitle = post.ElectronicDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
         else if (command.OtherDetail != null)
         {
             UpdateOtherDetail(post, command.OtherDetail);
+            post.PostTitle = post.OtherDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
 
@@ -260,7 +264,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
     {
         if (post.OtherDetail is { } d)
         {
-            d.ItemIdentifier = input.ItemIdentifier;
+            d.ItemName = input.ItemName;
             d.PrimaryColor = input.PrimaryColor ?? d.PrimaryColor;
             d.AdditionalDetails = input.AdditionalDetails ?? d.AdditionalDetails;
         }
@@ -269,7 +273,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             post.OtherDetail = new PostOtherDetail
             {
                 PostId = post.Id,
-                ItemIdentifier = input.ItemIdentifier,
+                ItemName = input.ItemName,
                 PrimaryColor = input.PrimaryColor,
                 AdditionalDetails = input.AdditionalDetails
             };

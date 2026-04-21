@@ -53,9 +53,9 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
 
         Analyze the image and extract:
         {
-            "itemIdentifier": "concise name of what this item IS (e.g. 'Sapiens book', 'hugging pillow', 'red umbrella')",
-            "primaryColor":   "primary color, or null",
-            "aiDescription":  "One concise sentence naming the item and its most searchable traits: type, color, shape, size, brand if visible, and any unique markings. Optimized for semantic search — a person searching for this lost item should be able to find it from this sentence alone."
+            "itemName":      "concise name of what this item IS (e.g. 'Sapiens book', 'hugging pillow', 'red umbrella')",
+            "primaryColor":  "primary color, or null",
+            "aiDescription": "One concise sentence naming the item and its most searchable traits: type, color, shape, size, brand if visible, and any unique markings. Optimized for semantic search — a person searching for this lost item should be able to find it from this sentence alone."
         }
         Only describe what is visible. Respond ONLY with the JSON object, no markdown.
         """;
@@ -129,9 +129,9 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
 
         return new OtherDetailInput
         {
-            ItemIdentifier = dto.ItemIdentifier ?? "Unknown item",
-            PrimaryColor   = dto.PrimaryColor,
-            AiDescription  = dto.AiDescription
+            ItemName      = dto.ItemName ?? "Unknown item",
+            PrimaryColor  = dto.PrimaryColor,
+            AiDescription = dto.AiDescription
         };
     }
 
@@ -225,9 +225,9 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
 
     private sealed class OtherDto
     {
-        [JsonPropertyName("itemIdentifier")] public string? ItemIdentifier { get; set; }
-        [JsonPropertyName("primaryColor")]   public string? PrimaryColor { get; set; }
-        [JsonPropertyName("aiDescription")]  public string? AiDescription { get; set; }
+        [JsonPropertyName("itemName")]      public string? ItemName { get; set; }
+        [JsonPropertyName("primaryColor")]  public string? PrimaryColor { get; set; }
+        [JsonPropertyName("aiDescription")] public string? AiDescription { get; set; }
     }
 
     private sealed class ConsistencyDto

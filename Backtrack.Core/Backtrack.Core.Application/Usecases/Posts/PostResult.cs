@@ -13,7 +13,7 @@ public sealed record PostResult
     public required PostStatus Status { get; init; }
     public required ItemCategory Category { get; init; }
     public required Guid SubcategoryId { get; init; }
-    public string? ItemName { get; init; }
+    public required string PostTitle { get; init; }
     public PersonalBelongingDetailResult? PersonalBelongingDetail { get; init; }
     public CardDetailResult? CardDetail { get; init; }
     public ElectronicDetailResult? ElectronicDetail { get; init; }
@@ -70,7 +70,7 @@ public sealed record ElectronicDetailResult
 
 public sealed record OtherDetailResult
 {
-    public required string ItemIdentifier { get; init; }
+    public required string ItemName { get; init; }
     public string? PrimaryColor { get; init; }
     public string? AdditionalDetails { get; init; }
     public string? AiDescription { get; init; }
@@ -89,10 +89,7 @@ public static class PostResultMapper
             Status = post.Status,
             Category = post.Category,
             SubcategoryId = post.SubcategoryId,
-            ItemName = post.PersonalBelongingDetail?.ItemName
-                     ?? post.CardDetail?.ItemName
-                     ?? post.ElectronicDetail?.ItemName
-                     ?? post.OtherDetail?.ItemIdentifier,
+            PostTitle = post.PostTitle,
             PersonalBelongingDetail = post.PersonalBelongingDetail is { } pb ? new PersonalBelongingDetailResult
             {
                 ItemName = pb.ItemName,
@@ -133,7 +130,7 @@ public static class PostResultMapper
             } : null,
             OtherDetail = post.OtherDetail is { } od ? new OtherDetailResult
             {
-                ItemIdentifier = od.ItemIdentifier,
+                ItemName = od.ItemName,
                 PrimaryColor = od.PrimaryColor,
                 AdditionalDetails = od.AdditionalDetails,
                 AiDescription = od.AiDescription

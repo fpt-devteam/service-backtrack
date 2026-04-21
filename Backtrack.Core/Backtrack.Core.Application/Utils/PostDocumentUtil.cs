@@ -48,7 +48,7 @@ public static class PostDocumentUtil
                 break;
 
             case ItemCategory.Others when post.OtherDetail is { } o:
-                sb.Append($" Item: {o.ItemIdentifier}.");
+                sb.Append($" Item: {o.ItemName}.");
                 if (!string.IsNullOrWhiteSpace(o.PrimaryColor)) sb.Append($" Color: {o.PrimaryColor}.");
                 if (!string.IsNullOrWhiteSpace(o.AiDescription)) sb.Append($" {o.AiDescription}");
                 if (!string.IsNullOrWhiteSpace(o.AdditionalDetails)) sb.Append($" Additional details: {o.AdditionalDetails}.");

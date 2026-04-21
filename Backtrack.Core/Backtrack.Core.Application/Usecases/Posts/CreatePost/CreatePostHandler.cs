@@ -77,6 +77,7 @@ public sealed class CreatePostHandler(
             PostMatchingStatus = PostMatchingStatus.Pending,
             EventTime = command.EventTime ?? DateTimeOffset.UtcNow,
             ImageUrls = command.ImageUrls.ToList(),
+            PostTitle = command.PostTitle,
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -184,7 +185,7 @@ public sealed class CreatePostHandler(
             post.OtherDetail = new PostOtherDetail
             {
                 PostId = post.Id,
-                ItemIdentifier = od.ItemIdentifier,
+                ItemName = od.ItemName,
                 PrimaryColor = od.PrimaryColor,
                 AdditionalDetails = od.AdditionalDetails
             };

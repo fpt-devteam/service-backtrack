@@ -152,6 +152,11 @@ public class PostConfiguration : IEntityTypeConfiguration<Post>
             .HasMaxLength(20)
             .IsRequired();
 
+        builder.Property(p => p.PostTitle)
+            .HasColumnName("post_title")
+            .HasMaxLength(200)
+            .IsRequired();
+
         builder.Property(p => p.EventTime)
             .HasColumnName("event_time")
             .IsRequired();

@@ -2,7 +2,7 @@ namespace Backtrack.Core.Application.Usecases.Posts;
 
 public sealed record PersonalBelongingDetailInput
 {
-    public string? ItemName { get; init; }
+    public required string ItemName { get; init; }
     public string? Color { get; init; }
     public string? Brand { get; init; }
     public string? Material { get; init; }
@@ -15,7 +15,7 @@ public sealed record PersonalBelongingDetailInput
 
 public sealed record CardDetailInput
 {
-    public string? ItemName { get; init; }
+    public required string ItemName { get; init; }
     public string? CardNumber { get; init; }
     public string? HolderName { get; init; }
     public string? HolderNameNormalized { get; init; }
@@ -29,7 +29,7 @@ public sealed record CardDetailInput
 
 public sealed record ElectronicDetailInput
 {
-    public string? ItemName { get; init; }
+    public required string ItemName { get; init; }
     public string? Brand { get; init; }
     public string? Model { get; init; }
     public string? Color { get; init; }
@@ -44,7 +44,7 @@ public sealed record ElectronicDetailInput
 
 public sealed record OtherDetailInput
 {
-    public required string ItemIdentifier { get; init; }
+    public required string ItemName { get; init; }
     public string? PrimaryColor { get; init; }
     public string? AiDescription { get; init; }
     public string? AdditionalDetails { get; init; }

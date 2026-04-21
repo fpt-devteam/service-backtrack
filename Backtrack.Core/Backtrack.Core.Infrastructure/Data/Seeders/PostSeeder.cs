@@ -25,6 +25,7 @@ public static class PostSeeder
     private static readonly CreatePostCommand NgoDucBinhLostStudentCard = new()
     {
         PostType        = "Lost",
+        PostTitle       = "Thẻ sinh viên FPT Polytechnic",
         Category        = "Cards",
         SubcategoryCode = "student_card",
         ImageUrls       = [],
@@ -33,6 +34,7 @@ public static class PostSeeder
         EventTime       = DateTimeOffset.UtcNow.AddDays(-3),
         CardDetail      = new CardDetailInput
         {
+            ItemName              = "Thẻ sinh viên FPT Polytechnic",
             HolderName           = "NGÔ ĐỨC BÌNH",
             HolderNameNormalized = "ngo duc binh",
             IssuingAuthority     = "FPT Polytechnic",
@@ -43,6 +45,7 @@ public static class PostSeeder
     private static readonly CreatePostCommand LongFptFoundStudentCard = new()
     {
         PostType        = "Found",
+        PostTitle       = "Thẻ sinh viên FPT",
         Category        = "Cards",
         SubcategoryCode = "student_card",
         ImageUrls       =
@@ -54,6 +57,7 @@ public static class PostSeeder
         EventTime      = DateTimeOffset.UtcNow.AddDays(-2),
         CardDetail     = new CardDetailInput
         {
+            ItemName             = "Thẻ sinh viên FPT",
             CardNumber           = "PS27513",
             HolderName           = "NGÔ ĐỨC BÌNH",
             HolderNameNormalized = "ngo duc binh",

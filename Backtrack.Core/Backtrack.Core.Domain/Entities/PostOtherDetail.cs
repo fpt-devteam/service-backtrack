@@ -4,8 +4,8 @@ public sealed class PostOtherDetail
 {
     public required Guid PostId { get; set; }
 
-    // Required free-text identifier (what IS this thing?)
-    public required string ItemIdentifier { get; set; }  // "Sapiens book", "hugging pillow"
+    // Concise item name (what IS this thing?)
+    public required string ItemName { get; set; }  // "Sapiens book", "hugging pillow"
 
     public string? PrimaryColor { get; set; }
     public string? AdditionalDetails { get; set; }

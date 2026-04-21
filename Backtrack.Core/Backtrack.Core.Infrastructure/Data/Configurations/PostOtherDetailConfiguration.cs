@@ -13,8 +13,8 @@ public class PostOtherDetailConfiguration : IEntityTypeConfiguration<PostOtherDe
 
         builder.Property(d => d.PostId).HasColumnName("post_id");
 
-        builder.Property(d => d.ItemIdentifier)
-            .HasColumnName("item_identifier")
+        builder.Property(d => d.ItemName)
+            .HasColumnName("item_name")
             .HasMaxLength(200)
             .IsRequired();
 

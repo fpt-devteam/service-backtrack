@@ -38,6 +38,9 @@ public sealed class Post : Entity<Guid>
     public User Author { get; set; } = default!;
     public Organization? Organization { get; set; } = null;
 
+    // Denormalized title derived from the detail's ItemName at write time
+    public required string PostTitle { get; set; }
+
     // Category-specific details (exactly ONE is populated based on Category)
     public PostPersonalBelongingDetail? PersonalBelongingDetail { get; set; }
     public PostCardDetail? CardDetail { get; set; }

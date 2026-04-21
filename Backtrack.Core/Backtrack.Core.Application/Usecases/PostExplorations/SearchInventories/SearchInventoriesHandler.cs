@@ -78,10 +78,7 @@ public sealed class SearchInventoriesHandler(
         Organization          = post.Organization?.ToOrganizationOnPost(),
         PostType              = post.PostType,
         Status                = post.Status,
-        ItemName              = post.PersonalBelongingDetail?.ItemName
-                              ?? post.CardDetail?.ItemName
-                              ?? post.ElectronicDetail?.ItemName
-                              ?? post.OtherDetail?.ItemIdentifier,
+        PostTitle             = post.PostTitle,
         Category              = post.Category,
         SubcategoryId         = post.SubcategoryId,
         PersonalBelongingDetail = post.PersonalBelongingDetail,

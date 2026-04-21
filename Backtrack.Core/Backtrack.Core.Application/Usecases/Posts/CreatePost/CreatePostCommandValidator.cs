@@ -7,6 +7,10 @@ public sealed class CreatePostCommandValidator : AbstractValidator<CreatePostCom
 {
     public CreatePostCommandValidator()
     {
+        RuleFor(x => x.PostTitle)
+            .NotEmpty().WithMessage("PostTitle is required")
+            .MaximumLength(200).WithMessage("PostTitle must not exceed 200 characters");
+
         RuleFor(x => x.Category)
             .NotEmpty().WithMessage("Category is required")
             .Must(c => Enum.TryParse<ItemCategory>(c, ignoreCase: true, out _))
@@ -22,6 +26,50 @@ public sealed class CreatePostCommandValidator : AbstractValidator<CreatePostCom
         {
             RuleFor(x => x.ImageUrls)
                 .NotEmpty().WithMessage("At least one image is required");
+        });
+
+        When(x => string.Equals(x.Category, "PersonalBelongings", StringComparison.OrdinalIgnoreCase), () =>
+        {
+            RuleFor(x => x.PersonalBelongingDetail)
+                .NotNull().WithMessage("PersonalBelongingDetail is required for category PersonalBelongings");
+            When(x => x.PersonalBelongingDetail != null, () =>
+            {
+                RuleFor(x => x.PersonalBelongingDetail!.ItemName)
+                    .NotEmpty().WithMessage("PersonalBelongingDetail.ItemName is required");
+            });
+        });
+
+        When(x => string.Equals(x.Category, "Cards", StringComparison.OrdinalIgnoreCase), () =>
+        {
+            RuleFor(x => x.CardDetail)
+                .NotNull().WithMessage("CardDetail is required for category Cards");
+            When(x => x.CardDetail != null, () =>
+            {
+                RuleFor(x => x.CardDetail!.ItemName)
+                    .NotEmpty().WithMessage("CardDetail.ItemName is required");
+            });
+        });
+
+        When(x => string.Equals(x.Category, "Electronics", StringComparison.OrdinalIgnoreCase), () =>
+        {
+            RuleFor(x => x.ElectronicDetail)
+                .NotNull().WithMessage("ElectronicDetail is required for category Electronics");
+            When(x => x.ElectronicDetail != null, () =>
+            {
+                RuleFor(x => x.ElectronicDetail!.ItemName)
+                    .NotEmpty().WithMessage("ElectronicDetail.ItemName is required");
+            });
+        });
+
+        When(x => string.Equals(x.Category, "Others", StringComparison.OrdinalIgnoreCase), () =>
+        {
+            RuleFor(x => x.OtherDetail)
+                .NotNull().WithMessage("OtherDetail is required for category Others");
+            When(x => x.OtherDetail != null, () =>
+            {
+                RuleFor(x => x.OtherDetail!.ItemName)
+                    .NotEmpty().WithMessage("OtherDetail.ItemName is required");
+            });
         });
 
         // Location, DisplayAddress, EventTime, PostType are required only for non-org posts

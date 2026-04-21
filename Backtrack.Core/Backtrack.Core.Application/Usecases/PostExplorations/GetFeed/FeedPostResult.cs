@@ -10,7 +10,7 @@ public sealed record FeedPostItem
     public required Guid Id { get; init; }
     public PostAuthorResult? Author { get; init; }
     public OrganizationOnPost? Organization { get; init; }
-    public string? ItemName { get; init; }
+    public string? PostTitle { get; init; }
     public required PostType PostType { get; init; }
     public required ItemCategory Category { get; init; }
     public required Guid SubcategoryId { get; init; }

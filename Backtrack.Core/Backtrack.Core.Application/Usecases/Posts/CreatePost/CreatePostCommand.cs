@@ -11,6 +11,7 @@ public sealed record CreatePostCommand : IRequest<PostResult>
     [JsonIgnore]
     public Guid? OrganizationId { get; init; }
     public string? PostType { get; init; }
+    public required string PostTitle { get; init; }
     public required string Category { get; init; }
     public required string SubcategoryCode { get; init; }
     public PersonalBelongingDetailInput? PersonalBelongingDetail { get; init; }

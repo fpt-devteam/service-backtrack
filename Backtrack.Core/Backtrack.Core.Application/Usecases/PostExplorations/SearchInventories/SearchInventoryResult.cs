@@ -12,7 +12,7 @@ public sealed record SearchInventoryResult
     public OrganizationOnPost? Organization { get; init; }
     public required PostType PostType { get; init; }
     public required PostStatus Status { get; init; }
-    public string? ItemName { get; init; }
+    public required string PostTitle { get; init; }
     public required ItemCategory Category { get; init; }
     public required Guid SubcategoryId { get; init; }
     public PostPersonalBelongingDetail? PersonalBelongingDetail { get; init; }
