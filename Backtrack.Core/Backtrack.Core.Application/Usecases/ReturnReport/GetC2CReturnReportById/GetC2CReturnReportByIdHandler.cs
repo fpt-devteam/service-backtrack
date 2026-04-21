@@ -1,6 +1,7 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Users;
 using MediatR;
 
@@ -11,7 +12,7 @@ public sealed class GetC2CReturnReportByIdHandler(
 {
     public async Task<C2CReturnReportResult> Handle(GetC2CReturnReportByIdQuery query, CancellationToken cancellationToken)
     {
-        var returnReport = await returnReportRepository.GetByIdWithExtensionAsync(query.C2CReturnReportId, cancellationToken)
+        var returnReport = await returnReportRepository.GetByIdWithPostsAsync(query.C2CReturnReportId, cancellationToken)
             ?? throw new NotFoundException(ReturnReportErrors.NotFound);
 
         if (returnReport.FinderId != query.UserId && returnReport.OwnerId != query.UserId)
@@ -22,8 +23,10 @@ public sealed class GetC2CReturnReportByIdHandler(
         return new C2CReturnReportResult
         {
             Id = returnReport.Id,
-            Finder = returnReport.Finder.ToUserResult(),
-            Owner = returnReport.Owner.ToUserResult(),
+            Finder = returnReport.Finder!.ToUserResult(),
+            Owner = returnReport.Owner?.ToUserResult(),
+            FinderPost = returnReport.FinderPost?.ToPostResult(),
+            OwnerPost = returnReport.OwnerPost?.ToPostResult(),
             Status = returnReport.Status.ToString(),
             ActivatedByRole = returnReport.ActivatedById == returnReport.FinderId ? "Finder"
                             : returnReport.ActivatedById == returnReport.OwnerId ? "Owner"
