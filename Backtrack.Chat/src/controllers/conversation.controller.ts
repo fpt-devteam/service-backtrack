@@ -13,7 +13,7 @@ const parsePaginationParams = (req: Request) => ({
     cursor: req.query.cursor as string | undefined,
 });
 
-// Conversation CRUD 
+// Conversation CRUD
 
 export const createDirectConversation = async (req: Request, res: Response) => {
     const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
@@ -69,7 +69,7 @@ export const deleteConversation = async (req: Request, res: Response) => {
     );
 };
 
-// Listing 
+// Listing
 
 export const listDirectConversations = async (req: Request, res: Response) => {
     const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
@@ -128,3 +128,15 @@ export const unassignStaff = async (req: Request, res: Response) => {
         ApiResponseBuilder.success({ message: 'Conversation returned to queue' }, getCorrelationId(req))
     );
 };
+
+// Resolved
+
+export const resolveConversation = async (req: Request, res: Response) => {
+	const staffId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+	const id = req.params.id as string;
+
+	const conversation = await conversationService.markResolved(id, staffId);
+	return res.status(200).json(
+		ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
+	);
+}

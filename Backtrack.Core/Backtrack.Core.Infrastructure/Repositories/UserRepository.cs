@@ -14,7 +14,7 @@ public class UserRepository : CrudRepositoryBase<User, string>, IUserRepository
     }
     public async Task<User> EnsureExistAsync(User user)
     {
-        var existingUser = await GetByIdAsync(user.Id);
+        var existingUser = await GetByIdAsync(user.Id, isTrack: true);
         if (existingUser is not null)
             return existingUser;
 

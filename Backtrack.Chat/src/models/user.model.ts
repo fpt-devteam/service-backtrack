@@ -30,11 +30,11 @@ export interface IUser {
 const userSchema = new Schema<IUser>(
 	{
 		_id: { type: String, required: true },
-		email: { type: String, default: null, unique: true, sparse: true },
+		email: { type: String, default: null, sparse: true },
 		displayName: { type: String, default: null },
 		avatarUrl: { type: String, default: null },
-		globalRole: { 
-			type: String, 
+		globalRole: {
+			type: String,
 			enum: Object.values(UserGlobalRole),
 			default: UserGlobalRole.Customer,
 			required: true
@@ -45,6 +45,14 @@ const userSchema = new Schema<IUser>(
 	},
 	{ timestamps: true },
 );
-
+userSchema.index(
+  { email: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      email: { $type: 'string', $gt: '' }
+    }
+  }
+);
 const User = model<IUser>('User', userSchema);
 export default User;
