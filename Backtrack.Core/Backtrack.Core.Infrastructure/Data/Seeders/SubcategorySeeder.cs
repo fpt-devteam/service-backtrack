@@ -19,6 +19,7 @@ public static class SubcategorySeeder
         (ItemCategory.Electronics, "power_outlet",    "Power Outlet",    8),
         (ItemCategory.Electronics, "headphone",       "Headphone",       9),
         (ItemCategory.Electronics, "earphone",        "Earphone",        10),
+        (ItemCategory.Electronics, "calculator",      "Calculator",      11),
 
         (ItemCategory.Cards, "identification_card", "Identification Card", 1),
         (ItemCategory.Cards, "passport",            "Passport",            2),
@@ -34,6 +35,9 @@ public static class SubcategorySeeder
         (ItemCategory.PersonalBelongings, "backpack",  "Backpack",  4),
         (ItemCategory.PersonalBelongings, "clothings", "Clothings", 5),
         (ItemCategory.PersonalBelongings, "jewelry",   "Jewelry",   6),
+        (ItemCategory.PersonalBelongings, "bottle",    "Bottle",    7),
+
+        (ItemCategory.Others, "others", "Others", 1),
     ];
 
     public static async Task SeedAsync(ApplicationDbContext db, ILogger logger, CancellationToken ct = default)

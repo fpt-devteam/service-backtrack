@@ -126,7 +126,7 @@ public class ReturnReportController : ControllerBase
 
     /// <summary>Get all C2C return reports between the current user and a partner</summary>
     [HttpGet("c2c/partner/{partnerId}")]
-    [ProducesResponseType(typeof(ApiResponse<List<C2CReturnReportResult>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<C2CReturnReportResult>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetC2CReturnReportsByPartnerIdAsync(
         [FromRoute] string partnerId, CancellationToken cancellationToken)
     {

@@ -7,15 +7,15 @@ namespace Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportsBy
 
 public sealed class GetC2CReturnReportsByPartnerIdHandler(
     IC2CReturnReportRepository returnReportRepository)
-    : IRequestHandler<GetC2CReturnReportsByPartnerIdQuery, List<C2CReturnReportResult>>
+    : IRequestHandler<GetC2CReturnReportsByPartnerIdQuery, PagedResult<C2CReturnReportResult>>
 {
-    public async Task<List<C2CReturnReportResult>> Handle(
+    public async Task<PagedResult<C2CReturnReportResult>> Handle(
         GetC2CReturnReportsByPartnerIdQuery query, CancellationToken cancellationToken)
     {
         var items = await returnReportRepository.GetByPartnerAsync(
             query.UserId, query.PartnerId, cancellationToken);
 
-        return items.Select(r => new C2CReturnReportResult
+        var results = items.Select(r => new C2CReturnReportResult
         {
             Id = r.Id,
             Finder = r.Finder!.ToUserResult(),
@@ -30,5 +30,7 @@ public sealed class GetC2CReturnReportsByPartnerIdHandler(
             ExpiresAt = r.ExpiresAt,
             CreatedAt = r.CreatedAt
         }).ToList();
+
+        return new PagedResult<C2CReturnReportResult>(results.Count, results);
     }
 }
