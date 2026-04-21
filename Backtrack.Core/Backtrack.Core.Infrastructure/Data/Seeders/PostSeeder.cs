@@ -90,8 +90,8 @@ public static class PostSeeder
     private static async Task SeedStudentCardMatchingScenarioAsync(
         ApplicationDbContext db, ISender mediator, ILogger logger, CancellationToken ct)
     {
-        await SeedPostAsync(db, mediator, logger, UserSeeder.NgoDucBinh.Email, NgoDucBinhLostStudentCard, ct);
-        await SeedPostAsync(db, mediator, logger, UserSeeder.LongFpt.Email,    LongFptFoundStudentCard,   ct);
+        // await SeedPostAsync(db, mediator, logger, UserSeeder.NgoDucBinh.Email, NgoDucBinhLostStudentCard, ct);
+        // await SeedPostAsync(db, mediator, logger, UserSeeder.LongFpt.Email,    LongFptFoundStudentCard,   ct);
     }
 
     // ──────────────────────────────────────────────

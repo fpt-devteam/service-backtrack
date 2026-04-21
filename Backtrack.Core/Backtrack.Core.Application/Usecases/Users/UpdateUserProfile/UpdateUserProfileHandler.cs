@@ -1,5 +1,7 @@
+using Backtrack.Core.Application.Events;
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
+using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using MediatR;
 
@@ -8,10 +10,12 @@ namespace Backtrack.Core.Application.Usecases.Users.UpdateUserProfile;
 public sealed class UpdateUserProfileHandler : IRequestHandler<UpdateUserProfileCommand, UserResult>
 {
     private readonly IUserRepository _userRepository;
+    private readonly IEventPublisher _eventPublisher;
 
-    public UpdateUserProfileHandler(IUserRepository userRepository)
+    public UpdateUserProfileHandler(IUserRepository userRepository, IEventPublisher eventPublisher)
     {
         _userRepository = userRepository;
+        _eventPublisher = eventPublisher;
     }
 
     public async Task<UserResult> Handle(UpdateUserProfileCommand request, CancellationToken cancellationToken)
@@ -38,6 +42,17 @@ public sealed class UpdateUserProfileHandler : IRequestHandler<UpdateUserProfile
 
         _userRepository.Update(user);
         await _userRepository.SaveChangesAsync();
+
+        await _eventPublisher.PublishUserEnsureExistAsync(new UserEnsureExistIntegrationEvent
+        {
+            Id = user.Id,
+            Email = user.Email,
+            DisplayName = user.DisplayName,
+            AvatarUrl = user.AvatarUrl,
+            GlobalRole = user.GlobalRole.ToString(),
+            CreatedAt = user.CreatedAt,
+            EventTimestamp = DateTimeOffset.UtcNow,
+        });
 
         return new UserResult
         {
