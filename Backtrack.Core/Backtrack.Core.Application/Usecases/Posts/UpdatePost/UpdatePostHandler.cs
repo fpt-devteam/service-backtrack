@@ -101,10 +101,16 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             post.PostTitle = post.ElectronicDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
-        else if (command.OtherDetail != null)
+        if (command.OtherDetail != null)
         {
             UpdateOtherDetail(post, command.OtherDetail);
             post.PostTitle = post.OtherDetail?.ItemName ?? post.PostTitle;
+            needsReEmbedding = true;
+        }
+
+        if (command.PostTitle != null && post.PostTitle != command.PostTitle)
+        {
+            post.PostTitle = command.PostTitle;
             needsReEmbedding = true;
         }
 
