@@ -7,13 +7,13 @@ public sealed record ItemConsistencyResult(bool MatchesSubcategory, string? Reas
 
 public interface IImageAnalysisService
 {
-    Task<PersonalBelongingDetailInput> AnalyzePersonalBelongingAsync(
+    Task<PersonalBelongingDetailDto> AnalyzePersonalBelongingAsync(
         string imageBase64, string mimeType, CancellationToken cancellationToken = default);
 
-    Task<ElectronicDetailInput> AnalyzeElectronicAsync(
+    Task<ElectronicDetailDto> AnalyzeElectronicAsync(
         string imageBase64, string mimeType, CancellationToken cancellationToken = default);
 
-    Task<OtherDetailInput> AnalyzeOtherAsync(
+    Task<OtherDetailDto> AnalyzeOtherAsync(
         string imageBase64, string mimeType, CancellationToken cancellationToken = default);
 
     Task<ItemConsistencyResult> VerifyItemConsistencyAsync(

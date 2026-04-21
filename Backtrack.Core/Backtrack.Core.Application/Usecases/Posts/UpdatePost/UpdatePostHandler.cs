@@ -156,133 +156,35 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         return post.ToPostResult();
     }
 
-    private static void UpdatePersonalBelongingDetail(Post post, PersonalBelongingDetailInput input)
+    private static void UpdatePersonalBelongingDetail(Post post, PersonalBelongingDetailDto input)
     {
         if (post.PersonalBelongingDetail is { } d)
-        {
-            d.ItemName = input.ItemName ?? d.ItemName;
-            d.Color = input.Color ?? d.Color;
-            d.Brand = input.Brand ?? d.Brand;
-            d.Material = input.Material ?? d.Material;
-            d.Size = input.Size ?? d.Size;
-            d.Condition = input.Condition ?? d.Condition;
-            d.DistinctiveMarks = input.DistinctiveMarks ?? d.DistinctiveMarks;
-            d.AdditionalDetails = input.AdditionalDetails ?? d.AdditionalDetails;
-        }
+            input.ApplyTo(d);
         else
-        {
-            post.PersonalBelongingDetail = new PostPersonalBelongingDetail
-            {
-                PostId = post.Id,
-                ItemName = input.ItemName,
-                Color = input.Color,
-                Brand = input.Brand,
-                Material = input.Material,
-                Size = input.Size,
-                Condition = input.Condition,
-                DistinctiveMarks = input.DistinctiveMarks,
-                AdditionalDetails = input.AdditionalDetails
-            };
-        }
+            post.PersonalBelongingDetail = input.ToEntity(post.Id);
     }
 
-    private static void UpdateCardDetail(Post post, CardDetailInput input, IHasher hasher)
+    private static void UpdateCardDetail(Post post, CardDetailDto input, IHasher hasher)
     {
-        var newHash   = input.CardNumber is not null ? hasher.Hash(input.CardNumber) : null;
-        var newMasked = MaskCardNumber(input.CardNumber);
-
         if (post.CardDetail is { } d)
-        {
-            if (newHash is not null)   { d.CardNumberHash   = newHash;   d.CardNumberMasked = newMasked; }
-            d.ItemName             = input.ItemName             ?? d.ItemName;
-            d.HolderName           = input.HolderName           ?? d.HolderName;
-            d.HolderNameNormalized = input.HolderNameNormalized ?? d.HolderNameNormalized;
-            d.DateOfBirth          = input.DateOfBirth          ?? d.DateOfBirth;
-            d.IssueDate            = input.IssueDate            ?? d.IssueDate;
-            d.ExpiryDate           = input.ExpiryDate           ?? d.ExpiryDate;
-            d.IssuingAuthority     = input.IssuingAuthority     ?? d.IssuingAuthority;
-            d.OcrText              = input.OcrText              ?? d.OcrText;
-            d.AdditionalDetails    = input.AdditionalDetails    ?? d.AdditionalDetails;
-        }
+            input.ApplyTo(d, hasher);
         else
-        {
-            post.CardDetail = new PostCardDetail
-            {
-                PostId               = post.Id,
-                ItemName             = input.ItemName,
-                CardNumberHash       = newHash,
-                CardNumberMasked     = newMasked,
-                HolderName           = input.HolderName,
-                HolderNameNormalized = input.HolderNameNormalized,
-                DateOfBirth          = input.DateOfBirth,
-                IssueDate            = input.IssueDate,
-                ExpiryDate           = input.ExpiryDate,
-                IssuingAuthority     = input.IssuingAuthority,
-                OcrText              = input.OcrText,
-                AdditionalDetails    = input.AdditionalDetails
-            };
-        }
+            post.CardDetail = input.ToEntity(post.Id, hasher);
     }
 
-    private static string? MaskCardNumber(string? cardNumber)
-    {
-        if (string.IsNullOrWhiteSpace(cardNumber)) return null;
-        var digits = cardNumber.Replace("-", "").Replace(" ", "");
-        var last4 = digits.Length >= 4 ? digits[^4..] : digits;
-        return $"***{last4}";
-    }
-
-    private static void UpdateElectronicDetail(Post post, ElectronicDetailInput input)
+    private static void UpdateElectronicDetail(Post post, ElectronicDetailDto input)
     {
         if (post.ElectronicDetail is { } d)
-        {
-            d.ItemName = input.ItemName ?? d.ItemName;
-            d.Brand = input.Brand ?? d.Brand;
-            d.Model = input.Model ?? d.Model;
-            d.Color = input.Color ?? d.Color;
-            d.HasCase = input.HasCase ?? d.HasCase;
-            d.CaseDescription = input.CaseDescription ?? d.CaseDescription;
-            d.ScreenCondition = input.ScreenCondition ?? d.ScreenCondition;
-            d.LockScreenDescription = input.LockScreenDescription ?? d.LockScreenDescription;
-            d.DistinguishingFeatures = input.DistinguishingFeatures ?? d.DistinguishingFeatures;
-            d.AdditionalDetails = input.AdditionalDetails ?? d.AdditionalDetails;
-        }
+            input.ApplyTo(d);
         else
-        {
-            post.ElectronicDetail = new PostElectronicDetail
-            {
-                PostId = post.Id,
-                ItemName = input.ItemName,
-                Brand = input.Brand,
-                Model = input.Model,
-                Color = input.Color,
-                HasCase = input.HasCase,
-                CaseDescription = input.CaseDescription,
-                ScreenCondition = input.ScreenCondition,
-                LockScreenDescription = input.LockScreenDescription,
-                DistinguishingFeatures = input.DistinguishingFeatures,
-                AdditionalDetails = input.AdditionalDetails
-            };
-        }
+            post.ElectronicDetail = input.ToEntity(post.Id);
     }
 
-    private static void UpdateOtherDetail(Post post, OtherDetailInput input)
+    private static void UpdateOtherDetail(Post post, OtherDetailDto input)
     {
         if (post.OtherDetail is { } d)
-        {
-            d.ItemName = input.ItemName;
-            d.PrimaryColor = input.PrimaryColor ?? d.PrimaryColor;
-            d.AdditionalDetails = input.AdditionalDetails ?? d.AdditionalDetails;
-        }
+            input.ApplyTo(d);
         else
-        {
-            post.OtherDetail = new PostOtherDetail
-            {
-                PostId = post.Id,
-                ItemName = input.ItemName,
-                PrimaryColor = input.PrimaryColor,
-                AdditionalDetails = input.AdditionalDetails
-            };
-        }
+            post.OtherDetail = input.ToEntity(post.Id);
     }
 }

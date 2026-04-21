@@ -41,7 +41,7 @@ public static class PostSeeder
         Location        = FptUniversityLocation,
         DisplayAddress  = FptUniversityAddress,
         EventTime       = DateTimeOffset.UtcNow.AddDays(-3),
-        CardDetail      = new CardDetailInput
+        CardDetail      = new CardDetailDto
         {
             ItemName              = "Thẻ sinh viên FPT Polytechnic",
             HolderName           = "NGÔ ĐỨC BÌNH",
@@ -64,7 +64,7 @@ public static class PostSeeder
         Location       = FptUniversityLocation,
         DisplayAddress = FptUniversityAddress,
         EventTime      = DateTimeOffset.UtcNow.AddDays(-2),
-        CardDetail     = new CardDetailInput
+        CardDetail     = new CardDetailDto
         {
             ItemName             = "Thẻ sinh viên FPT",
             CardNumber           = "PS27513",
@@ -90,7 +90,7 @@ public static class PostSeeder
         Location       = TonThatTungLocation,
         DisplayAddress = TonThatTungAddress,
         EventTime      = DateTimeOffset.UtcNow.AddDays(-1),
-        PersonalBelongingDetail = new PersonalBelongingDetailInput
+        PersonalBelongingDetail = new PersonalBelongingDetailDto
         {
             ItemName         = "Ví da đen",
             Color            = "black",
@@ -114,7 +114,7 @@ public static class PostSeeder
         Location       = BenThanhLocation,
         DisplayAddress = BenThanhAddress,
         EventTime      = DateTimeOffset.UtcNow.AddDays(-2),
-        PersonalBelongingDetail = new PersonalBelongingDetailInput
+        PersonalBelongingDetail = new PersonalBelongingDetailDto
         {
             ItemName         = "Card Wallet",
             Color            = "black",
@@ -138,7 +138,7 @@ public static class PostSeeder
         Location       = VnuhcmLocation,
         DisplayAddress = VnuhcmAddress,
         EventTime      = DateTimeOffset.UtcNow.AddDays(-1),
-        ElectronicDetail = new ElectronicDetailInput
+        ElectronicDetail = new ElectronicDetailDto
         {
             ItemName               = "White Apple MagSafe Power Adapter",
             Brand                  = "Apple",
@@ -160,7 +160,7 @@ public static class PostSeeder
         Location       = VnuhcmLocation,
         DisplayAddress = VnuhcmAddress,
         EventTime      = DateTimeOffset.UtcNow.AddDays(-1),
-        ElectronicDetail = new ElectronicDetailInput
+        ElectronicDetail = new ElectronicDetailDto
         {
             ItemName               = "White Apple MagSafe Power Adapter",
             Brand                  = "Apple",

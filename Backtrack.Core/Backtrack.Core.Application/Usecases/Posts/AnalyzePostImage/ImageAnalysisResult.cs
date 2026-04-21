@@ -7,9 +7,9 @@ namespace Backtrack.Core.Application.Usecases.Posts.AnalyzePostImage;
 public sealed record ImageAnalysisResult
 {
     public required string Category { get; init; }
-    public PersonalBelongingDetailInput? PersonalBelonging { get; init; }
-    public ElectronicDetailInput? Electronic { get; init; }
-    public OtherDetailInput? Other { get; init; }
-    public CardDetailInput? Card { get; init; }
+    public PersonalBelongingDetailDto? PersonalBelonging { get; init; }
+    public ElectronicDetailDto? Electronic { get; init; }
+    public OtherDetailDto? Other { get; init; }
+    public CardDetailDto? Card { get; init; }
     public IReadOnlyList<string>? Warnings { get; init; }
 }

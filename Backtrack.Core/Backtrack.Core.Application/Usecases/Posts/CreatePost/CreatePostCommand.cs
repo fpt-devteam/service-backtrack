@@ -14,10 +14,10 @@ public sealed record CreatePostCommand : IRequest<PostResult>
     public required string PostTitle { get; init; }
     public required string Category { get; init; }
     public required string SubcategoryCode { get; init; }
-    public PersonalBelongingDetailInput? PersonalBelongingDetail { get; init; }
-    public CardDetailInput? CardDetail { get; init; }
-    public ElectronicDetailInput? ElectronicDetail { get; init; }
-    public OtherDetailInput? OtherDetail { get; init; }
+    public PersonalBelongingDetailDto? PersonalBelongingDetail { get; init; }
+    public CardDetailDto? CardDetail { get; init; }
+    public ElectronicDetailDto? ElectronicDetail { get; init; }
+    public OtherDetailDto? OtherDetail { get; init; }
     public string[] ImageUrls { get; init; } = Array.Empty<string>();
     public GeoPoint? Location { get; init; }
     public string? DisplayAddress { get; init; }

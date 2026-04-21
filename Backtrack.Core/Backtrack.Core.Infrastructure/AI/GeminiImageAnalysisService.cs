@@ -64,7 +64,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
     private const int MaxOutputTokensForAnalysis = 2048;
     private const int MaxOutputTokensForConsistency = 256;
 
-    public async Task<PersonalBelongingDetailInput> AnalyzePersonalBelongingAsync(
+    public async Task<PersonalBelongingDetailDto> AnalyzePersonalBelongingAsync(
         string imageBase64, string mimeType, CancellationToken cancellationToken = default)
     {
         var dto = await llmService.CompleteAsync<PersonalBelongingDto>(new LlmRequest
@@ -77,7 +77,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             MaxOutputTokens = MaxOutputTokensForAnalysis
         }, cancellationToken);
 
-        return new PersonalBelongingDetailInput
+        return new PersonalBelongingDetailDto
         {
             ItemName         = dto.ItemName ?? "Unknown personal belonging item",
             Color            = dto.Color,
@@ -90,7 +90,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
         };
     }
 
-    public async Task<ElectronicDetailInput> AnalyzeElectronicAsync(
+    public async Task<ElectronicDetailDto> AnalyzeElectronicAsync(
         string imageBase64, string mimeType, CancellationToken cancellationToken = default)
     {
         var dto = await llmService.CompleteAsync<ElectronicDto>(new LlmRequest
@@ -103,7 +103,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             MaxOutputTokens = MaxOutputTokensForAnalysis
         }, cancellationToken);
 
-        return new ElectronicDetailInput
+        return new ElectronicDetailDto
         {
             ItemName               = dto.ItemName ?? "Unknown electronic device",
             Brand                  = dto.Brand,
@@ -118,7 +118,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
         };
     }
 
-    public async Task<OtherDetailInput> AnalyzeOtherAsync(
+    public async Task<OtherDetailDto> AnalyzeOtherAsync(
         string imageBase64, string mimeType, CancellationToken cancellationToken = default)
     {
         var dto = await llmService.CompleteAsync<OtherDto>(new LlmRequest
@@ -131,7 +131,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             MaxOutputTokens = MaxOutputTokensForAnalysis
         }, cancellationToken);
 
-        return new OtherDetailInput
+        return new OtherDetailDto
         {
             ItemName      = dto.ItemName ?? "Unknown item",
             PrimaryColor  = dto.PrimaryColor,

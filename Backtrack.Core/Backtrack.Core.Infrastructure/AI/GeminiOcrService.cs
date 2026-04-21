@@ -26,7 +26,7 @@ public sealed class GeminiOcrService(ILlmService llmService) : IOcrService
         """;
     private const int MaxOutputTokens = 2048;
 
-    public async Task<CardDetailInput> ExtractCardTextAsync(
+    public async Task<CardDetailDto> ExtractCardTextAsync(
         string imageBase64,
         string mimeType,
         CancellationToken cancellationToken = default)
@@ -41,7 +41,7 @@ public sealed class GeminiOcrService(ILlmService llmService) : IOcrService
             MaxOutputTokens = MaxOutputTokens
         }, cancellationToken);
 
-        return new CardDetailInput
+        return new CardDetailDto
         {
             ItemName             = dto.ItemName ?? "Unknown card/document",
             CardNumber           = dto.CardNumber,

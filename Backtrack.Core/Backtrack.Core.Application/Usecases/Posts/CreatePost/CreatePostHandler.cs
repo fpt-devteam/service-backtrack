@@ -120,76 +120,16 @@ public sealed class CreatePostHandler(
         else if (post.OtherDetail is not null) post.OtherDetail.ContentHash = hash;
     }
 
-    private static string? MaskCardNumber(string? cardNumber)
-    {
-        if (string.IsNullOrWhiteSpace(cardNumber)) return null;
-        var digits = cardNumber.Replace("-", "").Replace(" ", "");
-        var last4 = digits.Length >= 4 ? digits[^4..] : digits;
-        return $"***{last4}";
-    }
-
     private static void AttachDetail(Post post, CreatePostCommand command, IHasher hasher)
     {
         if (command.PersonalBelongingDetail is { } pb)
-        {
-            post.PersonalBelongingDetail = new PostPersonalBelongingDetail
-            {
-                PostId = post.Id,
-                ItemName = pb.ItemName,
-                Color = pb.Color,
-                Brand = pb.Brand,
-                Material = pb.Material,
-                Size = pb.Size,
-                Condition = pb.Condition,
-                DistinctiveMarks = pb.DistinctiveMarks,
-                AdditionalDetails = pb.AdditionalDetails
-            };
-        }
+            post.PersonalBelongingDetail = pb.ToEntity(post.Id);
         else if (command.CardDetail is { } cd)
-        {
-            post.CardDetail = new PostCardDetail
-            {
-                PostId               = post.Id,
-                ItemName             = cd.ItemName,
-                CardNumberHash       = cd.CardNumber is not null ? hasher.Hash(cd.CardNumber) : null,
-                CardNumberMasked     = MaskCardNumber(cd.CardNumber),
-                HolderName           = cd.HolderName,
-                HolderNameNormalized = cd.HolderNameNormalized,
-                DateOfBirth          = cd.DateOfBirth,
-                IssueDate            = cd.IssueDate,
-                ExpiryDate           = cd.ExpiryDate,
-                IssuingAuthority     = cd.IssuingAuthority,
-                OcrText              = cd.OcrText,
-                AdditionalDetails    = cd.AdditionalDetails
-            };
-        }
+            post.CardDetail = cd.ToEntity(post.Id, hasher);
         else if (command.ElectronicDetail is { } ed)
-        {
-            post.ElectronicDetail = new PostElectronicDetail
-            {
-                PostId = post.Id,
-                ItemName = ed.ItemName,
-                Brand = ed.Brand,
-                Model = ed.Model,
-                Color = ed.Color,
-                HasCase = ed.HasCase,
-                CaseDescription = ed.CaseDescription,
-                ScreenCondition = ed.ScreenCondition,
-                LockScreenDescription = ed.LockScreenDescription,
-                DistinguishingFeatures = ed.DistinguishingFeatures,
-                AdditionalDetails = ed.AdditionalDetails
-            };
-        }
+            post.ElectronicDetail = ed.ToEntity(post.Id);
         else if (command.OtherDetail is { } od)
-        {
-            post.OtherDetail = new PostOtherDetail
-            {
-                PostId = post.Id,
-                ItemName = od.ItemName,
-                PrimaryColor = od.PrimaryColor,
-                AdditionalDetails = od.AdditionalDetails
-            };
-        }
+            post.OtherDetail = od.ToEntity(post.Id);
     }
 
     private static void ValidateFinderInfo(FinderInfo? finderInfo, List<OrgContractField> requiredFields)

@@ -14,10 +14,10 @@ public sealed record UpdatePostCommand : IRequest<PostResult>
     public string? PostTitle { get; init; }
     public string? PostType { get; init; }
     public string? Status { get; init; }
-    public PersonalBelongingDetailInput? PersonalBelongingDetail { get; init; }
-    public CardDetailInput? CardDetail { get; init; }
-    public ElectronicDetailInput? ElectronicDetail { get; init; }
-    public OtherDetailInput? OtherDetail { get; init; }
+    public PersonalBelongingDetailDto? PersonalBelongingDetail { get; init; }
+    public CardDetailDto? CardDetail { get; init; }
+    public ElectronicDetailDto? ElectronicDetail { get; init; }
+    public OtherDetailDto? OtherDetail { get; init; }
     public GeoPoint? Location { get; init; }
     public string? ExternalPlaceId { get; init; }
     public string? DisplayAddress { get; init; }
