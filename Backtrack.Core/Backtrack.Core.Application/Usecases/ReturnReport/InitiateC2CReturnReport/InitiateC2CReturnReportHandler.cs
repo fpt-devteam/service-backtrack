@@ -31,13 +31,21 @@ public sealed class InitiateC2CReturnReportHandler(
         if (ownerPost.PostType != PostType.Lost)
             throw new ValidationException(ReturnReportErrors.PostTypeMismatch);
 
-        if (ownerPost.AuthorId == command.InitiatorId)
+        // Roles are determined by post authorship
+        var finderId = finderPost.AuthorId;
+        var ownerId  = ownerPost.AuthorId;
+
+        if (finderId == ownerId)
             throw new ValidationException(ReturnReportErrors.CannotReturnReportOwnPost);
 
-        var finder = await userRepository.GetByIdAsync(command.InitiatorId)
+        // Initiator must be one of the two participants
+        if (command.InitiatorId != finderId && command.InitiatorId != ownerId)
+            throw new ForbiddenException(ReturnReportErrors.NotParticipant);
+
+        var finder = await userRepository.GetByIdAsync(finderId)
             ?? throw new NotFoundException(ReturnReportErrors.FinderNotFound);
 
-        var owner = await userRepository.GetByIdAsync(ownerPost.AuthorId)
+        var owner = await userRepository.GetByIdAsync(ownerId)
             ?? throw new NotFoundException(ReturnReportErrors.OwnerNotFound);
 
         if (await returnReportRepository.ExistsActiveReturnReportForFinderPostAsync(command.FinderPostId, cancellationToken))
@@ -49,8 +57,8 @@ public sealed class InitiateC2CReturnReportHandler(
         var returnReport = new C2CReturnReport
         {
             Id           = Guid.NewGuid(),
-            FinderId     = finder.Id,
-            OwnerId      = owner.Id,
+            FinderId     = finderId,
+            OwnerId      = ownerId,
             FinderPostId = command.FinderPostId,
             OwnerPostId  = command.OwnerPostId,
             Status       = C2CReturnReportStatus.Ongoing,

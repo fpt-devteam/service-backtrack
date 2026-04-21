@@ -24,6 +24,9 @@ public static class PostSeeder
     private static readonly GeoPoint BenThanhLocation = new(10.7726, 106.6981);
     private const string BenThanhAddress = "Chợ Bến Thành, Phường Bến Thành, Quận 1, TP Hồ Chí Minh";
 
+    private static readonly GeoPoint VnuhcmLocation = new(10.8700, 106.8033);
+    private const string VnuhcmAddress = "Nhà Văn hóa Sinh viên, Đại học Quốc gia TP.HCM, Đường Võ Trường Toản, Phường Linh Trung, TP. Thủ Đức";
+
     // ──────────────────────────────────────────────
     // Post data records
     // ──────────────────────────────────────────────
@@ -122,6 +125,53 @@ public static class PostSeeder
         },
     };
 
+    private static readonly CreatePostCommand LongFptFoundCharger = new()
+    {
+        PostType        = "Found",
+        PostTitle       = "Found Apple MagSafe Charger",
+        Category        = "Electronics",
+        SubcategoryCode = "charger_adapter",
+        ImageUrls       =
+        [
+            "https://firebasestorage.googleapis.com/v0/b/backtrack-sep490.firebasestorage.app/o/posts%2Fimages%2Fwhite_macbook_charger_2.jpg?alt=media&token=a96f55d8-7976-4a05-8820-b0d79927b11b",
+        ],
+        Location       = VnuhcmLocation,
+        DisplayAddress = VnuhcmAddress,
+        EventTime      = DateTimeOffset.UtcNow.AddDays(-1),
+        ElectronicDetail = new ElectronicDetailInput
+        {
+            ItemName               = "White Apple MagSafe Power Adapter",
+            Brand                  = "Apple",
+            Model                  = "MagSafe Power Adapter",
+            Color                  = "White",
+            HasCase                = false,
+            DistinguishingFeatures = "The power cable is discolored, appearing yellowish-brown, and the MagSafe connector has a distinct blue plastic piece attached.",
+            AiDescription          = "This is a white Apple MagSafe power adapter, identifiable by the Apple logo on its surface and its characteristic L-shaped MagSafe connector. The power cable is notably discolored to a yellowish-brown, and the MagSafe connector features a unique blue plastic attachment.",
+        },
+    };
+
+    private static readonly CreatePostCommand ThangFptLostCharger = new()
+    {
+        PostType        = "Lost",
+        PostTitle       = "Lost Apple MagSafe Charger",
+        Category        = "Electronics",
+        SubcategoryCode = "charger_adapter",
+        ImageUrls       = [],
+        Location       = VnuhcmLocation,
+        DisplayAddress = VnuhcmAddress,
+        EventTime      = DateTimeOffset.UtcNow.AddDays(-1),
+        ElectronicDetail = new ElectronicDetailInput
+        {
+            ItemName               = "White Apple MagSafe Power Adapter",
+            Brand                  = "Apple",
+            Model                  = "MagSafe Power Adapter",
+            Color                  = "White",
+            HasCase                = false,
+            DistinguishingFeatures = "Cable has yellowed over time, MagSafe connector end has a small blue plastic cap that I added myself to protect the pins.",
+            AiDescription          = "White Apple MagSafe power adapter with a yellowed power cable and a custom blue plastic cap on the MagSafe connector. Has an Apple logo on the brick.",
+        },
+    };
+
     // ──────────────────────────────────────────────
     // Entry point
     // ──────────────────────────────────────────────
@@ -134,6 +184,7 @@ public static class PostSeeder
     {
         await SeedStudentCardMatchingScenarioAsync(db, mediator, logger, ct);
         await SeedWalletDeliveredScenarioAsync(db, mediator, logger, ct);
+        await SeedChargerConfirmedScenarioAsync(db, mediator, logger, ct);
     }
 
     // ──────────────────────────────────────────────
@@ -173,6 +224,25 @@ public static class PostSeeder
                 db, mediator, logger,
                 finderEmail:  UserSeeder.LongFpt.Email,
                 ownerEmail:   UserSeeder.CatLinh.Email,
+                finderPostId: finderPostId.Value,
+                ownerPostId:  ownerPostId.Value,
+                ct);
+        }
+    }
+
+    // Scenario: LongFpt found ThangFpt's MagSafe charger; Thang initiates, Long delivers, Thang confirms.
+    private static async Task SeedChargerConfirmedScenarioAsync(
+        ApplicationDbContext db, ISender mediator, ILogger logger, CancellationToken ct)
+    {
+        var ownerPostId  = await SeedPostAsync(db, mediator, logger, UserSeeder.ThangFpt.Email, ThangFptLostCharger,  ct);
+        var finderPostId = await SeedPostAsync(db, mediator, logger, UserSeeder.LongFpt.Email,  LongFptFoundCharger,  ct);
+
+        if (finderPostId.HasValue && ownerPostId.HasValue)
+        {
+            await HandoverSeeder.SeedConfirmedAsync(
+                db, mediator, logger,
+                finderEmail:  UserSeeder.LongFpt.Email,
+                ownerEmail:   UserSeeder.ThangFpt.Email,
                 finderPostId: finderPostId.Value,
                 ownerPostId:  ownerPostId.Value,
                 ct);
