@@ -16,22 +16,15 @@ namespace Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostResult>
 {
     private readonly IPostRepository _postRepository;
-    private readonly IOrganizationRepository _organizationRepository;
-    private readonly IMembershipRepository _membershipRepository;
     private readonly IBackgroundJobService _backgroundJobService;
     private readonly IHasher _hasher;
 
     public UpdatePostHandler(
         IPostRepository postRepository,
-        IUserRepository userRepository,
-        IOrganizationRepository organizationRepository,
-        IMembershipRepository membershipRepository,
         IBackgroundJobService backgroundJobService,
         IHasher hasher)
     {
         _postRepository = postRepository;
-        _organizationRepository = organizationRepository;
-        _membershipRepository = membershipRepository;
         _backgroundJobService = backgroundJobService;
         _hasher = hasher;
     }
@@ -41,46 +34,13 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         var post = await _postRepository.GetByIdAsync(command.PostId, true);
         if (post == null) throw new NotFoundException(PostErrors.NotFound);
 
-        if (post.OrganizationId.HasValue)
-        {
-            var membership = await _membershipRepository.GetByOrgAndUserAsync(post.OrganizationId.Value, command.UserId);
-            if (membership is null) throw new ForbiddenException(PostErrors.Forbidden);
-        }
-        else
-        {
-            if (post.AuthorId != command.UserId) throw new ForbiddenException(PostErrors.Forbidden);
-        }
+        if (post.OrganizationId.HasValue) throw new ForbiddenException(PostErrors.Forbidden);
+        if (post.AuthorId != command.UserId) throw new ForbiddenException(PostErrors.Forbidden);
 
         bool needsReEmbedding = false;
 
         if (command.PostType != null && !Enum.TryParse<PostType>(command.PostType, ignoreCase: true, out var postType))
-        {
             throw new ValidationException(PostErrors.InvalidPostType);
-        }
-
-        if (command.OrganizationId.HasValue && post.OrganizationId != command.OrganizationId)
-        {
-            var organization = await _organizationRepository.GetByIdAsync(command.OrganizationId.Value)
-                ?? throw new NotFoundException(OrganizationErrors.NotFound);
-
-            if (await _membershipRepository.GetByOrgAndUserAsync(organization.Id, command.UserId) == null)
-                throw new ValidationException(MembershipErrors.MemberNotFound);
-
-            if (post.PostType == PostType.Lost) throw new ValidationException(PostErrors.LostPostCannotBeAssociatedWithOrganization);
-
-            post.OrganizationId = command.OrganizationId;
-            post.Organization = organization;
-            post.Location = organization.Location;
-            post.DisplayAddress = organization.DisplayAddress;
-            post.ExternalPlaceId = organization.ExternalPlaceId;
-            needsReEmbedding = true;
-        }
-        else if (command.OrganizationId == null && post.OrganizationId != null)
-        {
-            post.OrganizationId = null;
-            post.Organization = null;
-            needsReEmbedding = true;
-        }
 
         // Update category-specific detail if provided
         if (command.PersonalBelongingDetail != null)

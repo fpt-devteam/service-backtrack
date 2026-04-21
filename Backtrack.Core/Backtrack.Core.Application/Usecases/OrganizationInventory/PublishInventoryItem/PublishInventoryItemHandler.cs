@@ -2,18 +2,22 @@ using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
 using Backtrack.Core.Application.Usecases.PostMatchings;
+using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Domain.Constants;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.Posts.PublishInventoryPost;
+namespace Backtrack.Core.Application.Usecases.OrganizationInventory.PublishInventoryItem;
 
-public sealed class PublishInventoryPostHandler(
+public sealed class PublishInventoryItemHandler(
     IPostRepository postRepository,
     IMembershipRepository membershipRepository,
-    IBackgroundJobService backgroundJobService) : IRequestHandler<PublishInventoryPostCommand, PostResult>
+    IOrgReceiveReportRepository receiveReportRepository,
+    IOrgReturnReportRepository returnReportRepository,
+    IBackgroundJobService backgroundJobService) : IRequestHandler<PublishInventoryItemCommand, InventoryItemResult>
 {
-    public async Task<PostResult> Handle(PublishInventoryPostCommand command, CancellationToken cancellationToken)
+    public async Task<InventoryItemResult> Handle(PublishInventoryItemCommand command, CancellationToken cancellationToken)
     {
         var membership = await membershipRepository.GetByOrgAndUserAsync(command.OrgId, command.UserId, cancellationToken);
         if (membership is null) throw new ForbiddenException(MembershipErrors.NotAMember);
@@ -36,6 +40,9 @@ public sealed class PublishInventoryPostHandler(
         backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(
             orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
-        return post.ToPostResult();
+        var receiveReport = await receiveReportRepository.GetByPostIdAsync(post.Id, cancellationToken);
+        var returnReport  = await returnReportRepository.GetByPostIdAsync(post.Id, cancellationToken);
+
+        return post.ToInventoryItemResult(receiveReport, returnReport);
     }
 }

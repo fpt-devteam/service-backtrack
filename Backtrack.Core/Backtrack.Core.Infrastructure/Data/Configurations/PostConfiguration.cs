@@ -108,6 +108,10 @@ public class PostConfiguration : IEntityTypeConfiguration<Post>
             .HasDatabaseName("ix_posts_location")
             .HasMethod("gist");
 
+        builder.Property(p => p.InternalLocation)
+            .HasColumnName("internal_location")
+            .HasMaxLength(500);
+
         builder.Property(p => p.ExternalPlaceId)
             .HasColumnName("external_place_id")
             .HasMaxLength(500);

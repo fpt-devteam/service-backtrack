@@ -25,6 +25,6 @@ public sealed class GetPostByIdHandler(
             ? await receiveReportRepository.GetByPostIdAsync(post.Id, cancellationToken)
             : null;
 
-        return post.ToPostResult() with { FinderInfo = receiveReport?.FinderInfo };
+        return post.ToPostResult();
     }
 }

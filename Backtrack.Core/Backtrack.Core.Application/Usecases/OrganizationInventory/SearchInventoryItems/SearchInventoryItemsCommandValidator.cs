@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace Backtrack.Core.Application.Usecases.PostExplorations.SearchInventories;
+namespace Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
 
-public sealed class SearchInventoriesCommandValidator : AbstractValidator<SearchInventoriesCommand>
+public sealed class SearchInventoryItemsCommandValidator : AbstractValidator<SearchInventoryItemsCommand>
 {
-    public SearchInventoriesCommandValidator()
+    public SearchInventoryItemsCommandValidator()
     {
         RuleFor(x => x.Query)
             .MaximumLength(500).WithMessage("Query must not exceed 500 characters")

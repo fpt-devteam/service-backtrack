@@ -1,7 +1,7 @@
-using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Application.Usecases.PostExplorations;
+using Backtrack.Core.Domain.Constants;
 
-namespace Backtrack.Core.Application.Usecases.PostExplorations.SearchInventories;
+namespace Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
 
 public sealed record InventoryFilter
 {

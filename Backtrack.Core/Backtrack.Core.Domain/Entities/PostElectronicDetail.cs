@@ -5,7 +5,7 @@ public sealed class PostElectronicDetail
     public required Guid PostId { get; set; }
 
     // Concise device name (e.g. "iPhone 14 Pro", "Sony WH-1000XM5")
-    public string? ItemName { get; set; }
+    public required string ItemName { get; set; }
 
     // Structured fields (strong matching signals)
     public string? Brand { get; set; }

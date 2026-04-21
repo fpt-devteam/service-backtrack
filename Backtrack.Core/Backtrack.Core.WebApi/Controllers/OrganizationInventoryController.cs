@@ -1,12 +1,10 @@
 using Backtrack.Core.Application.Usecases;
-using Backtrack.Core.Application.Usecases.PostExplorations.SearchInventories;
-using Backtrack.Core.Application.Usecases.Posts;
-using Backtrack.Core.Application.Usecases.Posts.CreatePost;
+using Backtrack.Core.Application.Usecases.OrganizationInventory.CreateInventoryItem;
+using Backtrack.Core.Application.Usecases.OrganizationInventory.GetInventoryItemById;
+using Backtrack.Core.Application.Usecases.OrganizationInventory.PublishInventoryItem;
+using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory.UpdateInventoryItem;
 using Backtrack.Core.Application.Usecases.Posts.DeletePost;
-using Backtrack.Core.Application.Usecases.Posts.GetPostById;
-using Backtrack.Core.Application.Usecases.Posts.PublishInventoryPost;
-using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
-using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
@@ -21,23 +19,23 @@ namespace Backtrack.Core.WebApi.Controllers;
 public class OrganizationInventoryController(IMediator mediator) : ControllerBase
 {
     [HttpPost]
-    [ProducesResponseType(typeof(ApiResponse<PostResult>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<InventoryItemResult>), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateInventoryItemAsync(
         [FromRoute] Guid orgId,
-        [FromBody] CreatePostCommand command,
+        [FromBody] CreateInventoryItemCommand command,
         CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        command = command with { AuthorId = userId, OrganizationId = orgId };
+        command = command with { StaffId = userId, OrgId = orgId };
         var result = await mediator.Send(command, cancellationToken);
         return this.ApiCreated(result);
     }
 
     [HttpPost("search")]
-    [ProducesResponseType(typeof(ApiResponse<PagedResult<SearchInventoryResult>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<InventoryItemResult>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetInventoryItemsAsync(
         [FromRoute] Guid orgId,
-        [FromBody] SearchInventoriesCommand command,
+        [FromBody] SearchInventoryItemsCommand command,
         CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
@@ -47,10 +45,10 @@ public class OrganizationInventoryController(IMediator mediator) : ControllerBas
     }
 
     [HttpPost("me/search")]
-    [ProducesResponseType(typeof(ApiResponse<PagedResult<SearchInventoryResult>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<InventoryItemResult>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyInventoryItemsAsync(
         [FromRoute] Guid orgId,
-        [FromBody] SearchInventoriesCommand command,
+        [FromBody] SearchInventoryItemsCommand command,
         CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
@@ -65,41 +63,41 @@ public class OrganizationInventoryController(IMediator mediator) : ControllerBas
     }
 
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<PostResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<InventoryItemResult>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetInventoryItemByIdAsync(
         [FromRoute] Guid orgId,
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var query = new GetPostByIdQuery { PostId = id, UserId = userId };
+        var query = new GetInventoryItemByIdQuery { PostId = id, UserId = userId, OrgId = orgId };
         var result = await mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }
 
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<PostResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<InventoryItemResult>), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateInventoryItemAsync(
         [FromRoute] Guid orgId,
         [FromRoute] Guid id,
-        [FromBody] UpdatePostCommand command,
+        [FromBody] UpdateInventoryItemCommand command,
         CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        command = command with { PostId = id, UserId = userId, OrganizationId = orgId };
+        command = command with { PostId = id, UserId = userId, OrgId = orgId };
         var result = await mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
     }
 
     [HttpPost("{id:guid}/publish")]
-    [ProducesResponseType(typeof(ApiResponse<PostResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<InventoryItemResult>), StatusCodes.Status200OK)]
     public async Task<IActionResult> PublishInventoryItemAsync(
         [FromRoute] Guid orgId,
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var command = new PublishInventoryPostCommand { PostId = id, UserId = userId, OrgId = orgId };
+        var command = new PublishInventoryItemCommand { PostId = id, UserId = userId, OrgId = orgId };
         var result = await mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
     }
