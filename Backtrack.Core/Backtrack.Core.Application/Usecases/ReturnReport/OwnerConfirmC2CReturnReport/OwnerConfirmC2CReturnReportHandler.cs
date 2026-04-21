@@ -21,14 +21,14 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
         var returnReport = await returnReportRepository.GetByIdWithPostsAsync(command.C2CReturnReportId, cancellationToken)
             ?? throw new NotFoundException(ReturnReportErrors.NotFound);
 
-        if (returnReport.Status == ReturnReportStatus.Confirmed)
+        if (returnReport.Status == C2CReturnReportStatus.Confirmed)
             throw new ValidationException(ReturnReportErrors.AlreadyConfirmed);
 
-        if (returnReport.Status == ReturnReportStatus.Expired)
+        if (returnReport.Status == C2CReturnReportStatus.Expired)
             throw new ValidationException(ReturnReportErrors.AlreadyExpired);
 
-        if (returnReport.Status != ReturnReportStatus.Active)
-            throw new ValidationException(new Error("NotActive", "Only an Active return report can be confirmed."));
+        if (returnReport.Status != C2CReturnReportStatus.Delivered)
+            throw new ValidationException(new Error("NotDelivered", "Only a Delivered return report can be confirmed."));
 
         var isParticipant = returnReport.FinderId == command.UserId || returnReport.OwnerId == command.UserId;
         if (!isParticipant)
@@ -39,7 +39,7 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
             throw new ForbiddenException(new Error("ActivatorCannotConfirm", "The person who activated this return report cannot confirm it. Wait for the counterpart."));
 
         // Confirm the return report
-        returnReport.Status = ReturnReportStatus.Confirmed;
+        returnReport.Status = C2CReturnReportStatus.Confirmed;
         returnReport.ConfirmedAt = DateTimeOffset.UtcNow;
 
         if (returnReport.FinderPost != null)

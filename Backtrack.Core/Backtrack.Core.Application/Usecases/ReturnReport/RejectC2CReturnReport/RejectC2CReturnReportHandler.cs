@@ -19,20 +19,20 @@ public sealed class RejectC2CReturnReportHandler(
         var returnReport = await returnReportRepository.GetByIdWithPostsAsync(command.C2CReturnReportId, cancellationToken)
             ?? throw new NotFoundException(ReturnReportErrors.NotFound);
 
-        if (returnReport.Status == ReturnReportStatus.Confirmed)
+        if (returnReport.Status == C2CReturnReportStatus.Confirmed)
             throw new ValidationException(ReturnReportErrors.AlreadyConfirmed);
 
-        if (returnReport.Status == ReturnReportStatus.Rejected)
+        if (returnReport.Status == C2CReturnReportStatus.Rejected)
             throw new ValidationException(ReturnReportErrors.AlreadyRejected);
 
-        if (returnReport.Status == ReturnReportStatus.Expired)
+        if (returnReport.Status == C2CReturnReportStatus.Expired)
             throw new ValidationException(ReturnReportErrors.AlreadyExpired);
 
         var isParticipant = returnReport.FinderId == command.UserId || returnReport.OwnerId == command.UserId;
         if (!isParticipant)
             throw new ForbiddenException(ReturnReportErrors.NotParticipant);
 
-        returnReport.Status = ReturnReportStatus.Rejected;
+        returnReport.Status = C2CReturnReportStatus.Rejected;
 
         await returnReportRepository.SaveChangesAsync();
 

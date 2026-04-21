@@ -60,6 +60,10 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
         Only describe what is visible. Respond ONLY with the JSON object, no markdown.
         """;
 
+    private const int MaxRetries = 3;
+    private const int MaxOutputTokensForAnalysis = 2048;
+    private const int MaxOutputTokensForConsistency = 256;
+
     public async Task<PersonalBelongingDetailInput> AnalyzePersonalBelongingAsync(
         string imageBase64, string mimeType, CancellationToken cancellationToken = default)
     {
@@ -70,12 +74,12 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             ImageBase64   = imageBase64,
             ImageMimeType = mimeType,
             Temperature   = 0.2f,
-            MaxOutputTokens = 1024
+            MaxOutputTokens = MaxOutputTokensForAnalysis
         }, cancellationToken);
 
         return new PersonalBelongingDetailInput
         {
-            ItemName         = dto.ItemName,
+            ItemName         = dto.ItemName ?? "Unknown personal belonging item",
             Color            = dto.Color,
             Brand            = dto.Brand,
             Material         = dto.Material,
@@ -96,12 +100,12 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             ImageBase64   = imageBase64,
             ImageMimeType = mimeType,
             Temperature   = 0.2f,
-            MaxOutputTokens = 1024
+            MaxOutputTokens = MaxOutputTokensForAnalysis
         }, cancellationToken);
 
         return new ElectronicDetailInput
         {
-            ItemName               = dto.ItemName,
+            ItemName               = dto.ItemName ?? "Unknown electronic device",
             Brand                  = dto.Brand,
             Model                  = dto.Model,
             Color                  = dto.Color,
@@ -124,7 +128,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             ImageBase64   = imageBase64,
             ImageMimeType = mimeType,
             Temperature   = 0.2f,
-            MaxOutputTokens = 1024
+            MaxOutputTokens = MaxOutputTokensForAnalysis
         }, cancellationToken);
 
         return new OtherDetailInput
@@ -187,7 +191,7 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
             UserPrompt      = $"Expected subcategory: \"{subcategoryName}\". Verify the image(s) against this subcategory.",
             Images          = llmImages,
             Temperature     = 0.1f,
-            MaxOutputTokens = 256
+            MaxOutputTokens = MaxOutputTokensForConsistency
         }, cancellationToken);
 
         return new ItemConsistencyResult(

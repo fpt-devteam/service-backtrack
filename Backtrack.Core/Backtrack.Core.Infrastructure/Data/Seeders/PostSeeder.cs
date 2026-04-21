@@ -90,15 +90,26 @@ public static class PostSeeder
     private static async Task SeedStudentCardMatchingScenarioAsync(
         ApplicationDbContext db, ISender mediator, ILogger logger, CancellationToken ct)
     {
-        // await SeedPostAsync(db, mediator, logger, UserSeeder.NgoDucBinh.Email, NgoDucBinhLostStudentCard, ct);
-        // await SeedPostAsync(db, mediator, logger, UserSeeder.LongFpt.Email,    LongFptFoundStudentCard,   ct);
+        var ownerPostId  = await SeedPostAsync(db, mediator, logger, UserSeeder.NgoDucBinh.Email, NgoDucBinhLostStudentCard, ct);
+        var finderPostId = await SeedPostAsync(db, mediator, logger, UserSeeder.LongFpt.Email,    LongFptFoundStudentCard,   ct);
+
+        if (finderPostId.HasValue && ownerPostId.HasValue)
+        {
+            await HandoverSeeder.SeedDraftAsync(
+                db, mediator, logger,
+                finderEmail:  UserSeeder.LongFpt.Email,
+                ownerEmail:   UserSeeder.NgoDucBinh.Email,
+                finderPostId: finderPostId.Value,
+                ownerPostId:  ownerPostId.Value,
+                ct);
+        }
     }
 
     // ──────────────────────────────────────────────
     // Reusable seed method
     // ──────────────────────────────────────────────
 
-    private static async Task SeedPostAsync(
+    private static async Task<Guid?> SeedPostAsync(
         ApplicationDbContext db,
         ISender mediator,
         ILogger logger,
@@ -113,13 +124,13 @@ public static class PostSeeder
         if (user is null)
         {
             logger.LogWarning("PostSeeder: user {Email} not found — skipping post.", authorEmail);
-            return;
+            return null;
         }
 
         if (!Enum.TryParse<PostType>(postData.PostType, ignoreCase: true, out var postType))
         {
             logger.LogWarning("PostSeeder: invalid PostType '{PostType}' for {Email} — skipping.", postData.PostType, authorEmail);
-            return;
+            return null;
         }
 
         var subcategory = await db.Set<Subcategory>()
@@ -128,26 +139,29 @@ public static class PostSeeder
 
         if (subcategory is not null)
         {
-            var alreadyExists = await db.Set<Post>()
-                .AnyAsync(p => p.AuthorId == user.Id && p.SubcategoryId == subcategory.Id, ct);
+            var existing = await db.Set<Post>()
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(p => p.AuthorId == user.Id && p.SubcategoryId == subcategory.Id, ct);
 
-            if (alreadyExists)
+            if (existing is not null)
             {
                 logger.LogInformation(
                     "PostSeeder: {PostType} post for {Email} in subcategory '{Subcategory}' already exists — skipping.",
                     postType, authorEmail, postData.SubcategoryCode);
-                return;
+                return existing.Id;
             }
         }
 
         try
         {
-            await mediator.Send(postData with { AuthorId = user.Id }, ct);
+            var result = await mediator.Send(postData with { AuthorId = user.Id }, ct);
             logger.LogInformation("PostSeeder: created {PostType} post for {Email}.", postType, authorEmail);
+            return result.Id;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "PostSeeder: failed to create {PostType} post for {Email} — skipping.", postType, authorEmail);
+            return null;
         }
     }
 }

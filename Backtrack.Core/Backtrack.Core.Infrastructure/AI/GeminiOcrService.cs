@@ -24,6 +24,7 @@ public sealed class GeminiOcrService(ILlmService llmService) : IOcrService
         }
         Set any field to null if not visible or not applicable.
         """;
+    private const int MaxOutputTokens = 2048;
 
     public async Task<CardDetailInput> ExtractCardTextAsync(
         string imageBase64,
@@ -37,12 +38,12 @@ public sealed class GeminiOcrService(ILlmService llmService) : IOcrService
             ImageBase64     = imageBase64,
             ImageMimeType   = mimeType,
             Temperature     = 0.1f,
-            MaxOutputTokens = 1024
+            MaxOutputTokens = MaxOutputTokens
         }, cancellationToken);
 
         return new CardDetailInput
         {
-            ItemName             = dto.ItemName,
+            ItemName             = dto.ItemName ?? "Unknown card/document",
             CardNumber           = dto.CardNumber,
             OcrText              = dto.OcrText,
             HolderName           = dto.HolderName,

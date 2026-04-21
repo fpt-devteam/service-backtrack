@@ -34,7 +34,7 @@ public class ReturnReportRepository : CrudRepositoryBase<C2CReturnReport, Guid>,
     // {
     //     var now = DateTimeOffset.UtcNow;
     //     return await _dbSet
-    //         .Where(h => h.Status == ReturnReportStatus.Pending && h.ExpiresAt <= now)
+    //         .Where(h => h.Status == C2CReturnReportStatus.Pending && h.ExpiresAt <= now)
     //         .ToListAsync(cancellationToken);
     // }
 
@@ -42,7 +42,7 @@ public class ReturnReportRepository : CrudRepositoryBase<C2CReturnReport, Guid>,
         string userId,
         int page,
         int pageSize,
-        ReturnReportStatus? status = null,
+        C2CReturnReportStatus? status = null,
         CancellationToken cancellationToken = default)
     {
         IQueryable<C2CReturnReport> c2cQuery = _context.Set<C2CReturnReport>()
@@ -76,7 +76,7 @@ public class ReturnReportRepository : CrudRepositoryBase<C2CReturnReport, Guid>,
     {
         return await _dbSet.AnyAsync(h =>
             h.FinderPostId == finderPostId &&
-            h.Status == ReturnReportStatus.Active,
+            h.Status == C2CReturnReportStatus.Ongoing,
             cancellationToken);
     }
 
@@ -86,7 +86,7 @@ public class ReturnReportRepository : CrudRepositoryBase<C2CReturnReport, Guid>,
     {
         return await _dbSet.AnyAsync(h =>
             h.OwnerPostId == ownerPostId &&
-            h.Status == ReturnReportStatus.Active,
+            h.Status == C2CReturnReportStatus.Ongoing,
             cancellationToken);
     }
 }

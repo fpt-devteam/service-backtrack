@@ -8,47 +8,32 @@ using Backtrack.Core.Application.Usecases.Users;
 using Backtrack.Core.Domain.Constants;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.ReturnReport.ActiveC2CReturnReport;
+namespace Backtrack.Core.Application.Usecases.ReturnReport.FinderDeliveredC2CReturnReport;
 
-public sealed class ActiveC2CReturnReportHandler(
+public sealed class FinderDeliveredC2CReturnReportHandler(
     IC2CReturnReportRepository returnReportRepository,
-    IEventPublisher eventPublisher) : IRequestHandler<ActiveC2CReturnReportCommand, C2CReturnReportResult>
+    IEventPublisher eventPublisher) : IRequestHandler<FinderDeliveredC2CReturnReportCommand, C2CReturnReportResult>
 {
-    public async Task<C2CReturnReportResult> Handle(ActiveC2CReturnReportCommand command, CancellationToken cancellationToken)
+    public async Task<C2CReturnReportResult> Handle(FinderDeliveredC2CReturnReportCommand command, CancellationToken cancellationToken)
     {
         var returnReport = await returnReportRepository.GetByIdWithPostsAsync(command.C2CReturnReportId, cancellationToken)
             ?? throw new NotFoundException(ReturnReportErrors.NotFound);
 
-        if (returnReport.Status != ReturnReportStatus.Draft)
-            throw new ValidationException(new Error("NotDraft", "Only a Draft return report can be activated."));
+        if (returnReport.Status != C2CReturnReportStatus.Ongoing)
+            throw new ValidationException(new Error("NotOngoing", "Only an Ongoing return report can be marked as delivered."));
 
-        var isParticipant = returnReport.FinderId == command.UserId || returnReport.OwnerId == command.UserId;
-        if (!isParticipant)
-            throw new ForbiddenException(ReturnReportErrors.NotParticipant);
+        if (returnReport.FinderId != command.UserId)
+            throw new ForbiddenException(new Error("NotFinder", "Only the finder can mark the item as delivered."));
 
-        // Check that activating this post won't conflict with an existing Active report for the same post
-        if (returnReport.FinderId == command.UserId && returnReport.FinderPostId.HasValue)
-        {
-            var taken = await returnReportRepository.ExistsActiveReturnReportForFinderPostAsync(returnReport.FinderPostId.Value, cancellationToken);
-            if (taken)
-                throw new ConflictException(ReturnReportErrors.FinderPostAlreadyInReport);
-        }
-
-        if (returnReport.OwnerId == command.UserId && returnReport.OwnerPostId.HasValue)
-        {
-            var taken = await returnReportRepository.ExistsActiveReturnReportForOwnerPostAsync(returnReport.OwnerPostId.Value, cancellationToken);
-            if (taken)
-                throw new ConflictException(ReturnReportErrors.OwnerPostAlreadyInReport);
-        }
-
-        returnReport.Status = ReturnReportStatus.Active;
-        returnReport.ActivatedById = command.UserId;
+        returnReport.Status = C2CReturnReportStatus.Delivered;
 
         await returnReportRepository.SaveChangesAsync();
 
         var finder = returnReport.FinderPost?.Author ?? returnReport.Finder!;
         var owner = returnReport.OwnerPost?.Author ?? returnReport.Owner!;
-        var activatedByRole = returnReport.FinderId == command.UserId ? "Finder" : "Owner";
+        var activatedByRole = returnReport.ActivatedById == returnReport.FinderId ? "Finder"
+                            : returnReport.ActivatedById == returnReport.OwnerId ? "Owner"
+                            : null;
 
         await eventPublisher.PublishReturnReportSyncAsync(new ReturnReportSyncIntegrationEvent
         {

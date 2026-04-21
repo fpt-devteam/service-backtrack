@@ -4,24 +4,22 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.Posts;
-using Backtrack.Core.Application.Usecases.ReturnReport.CreateC2CReturnReport;
+using Backtrack.Core.Application.Usecases.ReturnReport.InitiateC2CReturnReport;
 using Backtrack.Core.Application.Usecases.Users;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.ReturnReport.CreateC2CReturnReport;
+namespace Backtrack.Core.Application.Usecases.ReturnReport.InitiateC2CReturnReport;
 
-public sealed class CreateC2CReturnReportHandler(
+public sealed class InitiateC2CReturnReportHandler(
     IC2CReturnReportRepository returnReportRepository,
     IPostRepository postRepository,
     IUserRepository userRepository,
-    IEventPublisher eventPublisher) : IRequestHandler<CreateC2CReturnReportCommand, C2CReturnReportResult>
+    IEventPublisher eventPublisher) : IRequestHandler<InitiateC2CReturnReportCommand, C2CReturnReportResult>
 {
-    public async Task<C2CReturnReportResult> Handle(CreateC2CReturnReportCommand command, CancellationToken cancellationToken)
+    public async Task<C2CReturnReportResult> Handle(InitiateC2CReturnReportCommand command, CancellationToken cancellationToken)
     {
-        if (command.Status != ReturnReportStatus.Draft && command.Status != ReturnReportStatus.Active)
-            throw new ValidationException(new Error("InvalidStatus", "Status must be Draft or Active."));
 
         Post? finderPost = null;
         Post? ownerPost = null;
@@ -128,7 +126,7 @@ public sealed class CreateC2CReturnReportHandler(
             OwnerId = resolvedOwnerId,
             FinderPostId = command.FinderPostId,
             OwnerPostId = command.OwnerPostId,
-            Status = command.Status,
+            Status = C2CReturnReportStatus.Ongoing,
             ExpiresAt = DateTimeOffset.UtcNow.AddDays(7)
         };
 

@@ -7,7 +7,7 @@ public sealed class C2CReturnReport : Entity<Guid>
     public string FinderId { get; set; } = default!;
     public string OwnerId { get; set; } = default!;
     public string? ActivatedById { get; set; }
-    public required ReturnReportStatus Status { get; set; }
+    public required C2CReturnReportStatus Status { get; set; }
     public required DateTimeOffset ExpiresAt { get; set; }
     public Guid? FinderPostId { get; set; }
     public Guid? OwnerPostId { get; set; }

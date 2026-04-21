@@ -11,5 +11,5 @@ public sealed record GetC2CReturnReportsByUserIdQuery : IRequest<PagedResult<C2C
 
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
-    public ReturnReportStatus? Status { get; init; }
+    public C2CReturnReportStatus? Status { get; init; }
 }

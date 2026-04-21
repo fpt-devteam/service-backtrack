@@ -4,10 +4,10 @@ using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Utils;
 using Backtrack.Core.Application.Usecases.ReturnReport;
-using Backtrack.Core.Application.Usecases.ReturnReport.CreateC2CReturnReport;
+using Backtrack.Core.Application.Usecases.ReturnReport.InitiateC2CReturnReport;
+using Backtrack.Core.Application.Usecases.ReturnReport.FinderDeliveredC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.CreateOrgReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportById;
-using Backtrack.Core.Application.Usecases.ReturnReport.ActiveC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.OwnerConfirmC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.RejectC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportsByUserId;
@@ -36,8 +36,8 @@ public class ReturnReportController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> CreateC2CReturnReportAsync(
-        [FromBody] CreateC2CReturnReportCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> InitiateC2CReturnReportAsync(
+        [FromBody] InitiateC2CReturnReportCommand command, CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         command = command with { InitiatorId = userId };
@@ -100,7 +100,7 @@ public class ReturnReportController : ControllerBase
     public async Task<IActionResult> GetC2CReturnReportsByUserIdAsync(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] ReturnReportStatus? status = null,
+        [FromQuery] C2CReturnReportStatus? status = null,
         CancellationToken cancellationToken = default)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
@@ -123,19 +123,18 @@ public class ReturnReportController : ControllerBase
         return this.ApiOk(result);
     }
 
-    /// <summary>Activate a C2C return report (either finder or owner). The counterpart must then confirm.</summary>
-    [HttpPatch("c2c/{id:guid}/activate")]
+    /// <summary>Finder marks item as delivered. Owner must then confirm or reject.</summary>
+    [HttpPatch("c2c/{id:guid}/deliver")]
     [ProducesResponseType(typeof(ApiResponse<C2CReturnReportResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> ActiveC2CReturnReportAsync(
+    public async Task<IActionResult> FinderDeliveredC2CReturnReportAsync(
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var command = new ActiveC2CReturnReportCommand { UserId = userId, C2CReturnReportId = id };
+        var command = new FinderDeliveredC2CReturnReportCommand { UserId = userId, C2CReturnReportId = id };
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
     }
