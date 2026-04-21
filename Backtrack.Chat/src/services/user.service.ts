@@ -26,18 +26,23 @@ export const ensureUserExists = async (userData: {
 	subscriptionStatus?: string | null;
 }): Promise<IUser> => {
 	try {
+		const fields: Record<string, unknown> = {
+			displayName: userData.displayName,
+			avatarUrl: userData.avatarUrl,
+			globalRole: userData.globalRole,
+			providerCustomerId: userData.providerCustomerId,
+			subscriptionStatus: userData.subscriptionStatus,
+		};
+
+		// Only update email when it is explicitly provided — avoids overwriting a
+		// valid stored email when the sync event omits the field.
+		if (userData.email !== undefined) {
+			fields.email = userData.email || null;
+		}
+
 		const user = await User.findByIdAndUpdate(
 			userData.id,
-			{
-				$set: {
-					email: userData.email || null,
-					displayName: userData.displayName,
-					avatarUrl: userData.avatarUrl,
-					globalRole: userData.globalRole,
-					providerCustomerId: userData.providerCustomerId,
-					subscriptionStatus: userData.subscriptionStatus,
-				},
-			},
+			{ $set: fields },
 			{ upsert: true, new: true, setDefaultsOnInsert: true }
 		).exec();
 
