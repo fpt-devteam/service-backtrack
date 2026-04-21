@@ -18,6 +18,12 @@ public static class PostSeeder
     private static readonly GeoPoint FptUniversityLocation = new(10.8417, 106.8100);
     private const string FptUniversityAddress = "Lô E2a-7, Đường D1, Khu Công nghệ cao, Phường Tăng Nhơn Phú A, TP Thủ Đức";
 
+    private static readonly GeoPoint TonThatTungLocation = new(10.7601, 106.6846);
+    private const string TonThatTungAddress = "22 Tôn Thất Tùng, Phường Phạm Ngũ Lão, Quận 1, TP Hồ Chí Minh";
+
+    private static readonly GeoPoint BenThanhLocation = new(10.7726, 106.6981);
+    private const string BenThanhAddress = "Chợ Bến Thành, Phường Bến Thành, Quận 1, TP Hồ Chí Minh";
+
     // ──────────────────────────────────────────────
     // Post data records
     // ──────────────────────────────────────────────
@@ -68,6 +74,54 @@ public static class PostSeeder
         },
     };
 
+    private static readonly CreatePostCommand LongFptFoundWallet = new()
+    {
+        PostType        = "Found",
+        PostTitle       = "Ví da đen",
+        Category        = "PersonalBelongings",
+        SubcategoryCode = "wallets",
+        ImageUrls       =
+        [
+            "https://firebasestorage.googleapis.com/v0/b/backtrack-sep490.firebasestorage.app/o/posts%2Fimages%2Fvi_tonthattung.png?alt=media&token=2ab89a31-343b-46bc-b88e-d598b85b9cb0",
+        ],
+        Location       = TonThatTungLocation,
+        DisplayAddress = TonThatTungAddress,
+        EventTime      = DateTimeOffset.UtcNow.AddDays(-1),
+        PersonalBelongingDetail = new PersonalBelongingDetailInput
+        {
+            ItemName         = "Ví da đen",
+            Color            = "black",
+            Material         = "leather",
+            Size             = "small",
+            DistinctiveMarks = "quilted pattern, gold-colored interlocking circle logo",
+            AiDescription    = "Black leather wallet with a quilted pattern. The wallet features a gold-colored interlocking circle logo on the front flap. It has a zipper closure and multiple card slots.",
+        },
+    };
+
+    private static readonly CreatePostCommand CatLinhLostWallet = new()
+    {
+        PostType        = "Lost",
+        PostTitle       = "Card Wallet",
+        Category        = "PersonalBelongings",
+        SubcategoryCode = "wallets",
+        ImageUrls       =
+        [
+            "https://firebasestorage.googleapis.com/v0/b/backtrack-sep490.firebasestorage.app/o/posts%2Fimages%2Fvi_lost_chobenthanh.jpeg?alt=media&token=1b525f5f-9cfb-459a-9638-170862399559",
+        ],
+        Location       = BenThanhLocation,
+        DisplayAddress = BenThanhAddress,
+        EventTime      = DateTimeOffset.UtcNow.AddDays(-2),
+        PersonalBelongingDetail = new PersonalBelongingDetailInput
+        {
+            ItemName         = "Card Wallet",
+            Color            = "black",
+            Material         = "leather",
+            Size             = "small",
+            DistinctiveMarks = "quilted pattern, gold clasp",
+            AiDescription    = "This is a small black leather wallet. It features a quilted pattern and a gold clasp.",
+        },
+    };
+
     // ──────────────────────────────────────────────
     // Entry point
     // ──────────────────────────────────────────────
@@ -79,6 +133,7 @@ public static class PostSeeder
         CancellationToken ct = default)
     {
         await SeedStudentCardMatchingScenarioAsync(db, mediator, logger, ct);
+        await SeedWalletDeliveredScenarioAsync(db, mediator, logger, ct);
     }
 
     // ──────────────────────────────────────────────
@@ -95,10 +150,29 @@ public static class PostSeeder
 
         if (finderPostId.HasValue && ownerPostId.HasValue)
         {
-            await HandoverSeeder.SeedDraftAsync(
+            await HandoverSeeder.SeedOngoingAsync(
                 db, mediator, logger,
                 finderEmail:  UserSeeder.LongFpt.Email,
                 ownerEmail:   UserSeeder.NgoDucBinh.Email,
+                finderPostId: finderPostId.Value,
+                ownerPostId:  ownerPostId.Value,
+                ct);
+        }
+    }
+
+    // Scenario: LongFpt found CatLinh's wallet near Ben Thanh; Long initiates and delivers.
+    private static async Task SeedWalletDeliveredScenarioAsync(
+        ApplicationDbContext db, ISender mediator, ILogger logger, CancellationToken ct)
+    {
+        var ownerPostId  = await SeedPostAsync(db, mediator, logger, UserSeeder.CatLinh.Email,  CatLinhLostWallet,    ct);
+        var finderPostId = await SeedPostAsync(db, mediator, logger, UserSeeder.LongFpt.Email,  LongFptFoundWallet,   ct);
+
+        if (finderPostId.HasValue && ownerPostId.HasValue)
+        {
+            await HandoverSeeder.SeedDeliveredAsync(
+                db, mediator, logger,
+                finderEmail:  UserSeeder.LongFpt.Email,
+                ownerEmail:   UserSeeder.CatLinh.Email,
                 finderPostId: finderPostId.Value,
                 ownerPostId:  ownerPostId.Value,
                 ct);

@@ -30,13 +30,8 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
         if (returnReport.Status != C2CReturnReportStatus.Delivered)
             throw new ValidationException(new Error("NotDelivered", "Only a Delivered return report can be confirmed."));
 
-        var isParticipant = returnReport.FinderId == command.UserId || returnReport.OwnerId == command.UserId;
-        if (!isParticipant)
-            throw new ForbiddenException(ReturnReportErrors.NotParticipant);
-
-        // The counterpart (not the activator) must confirm
-        if (returnReport.ActivatedById == command.UserId)
-            throw new ForbiddenException(new Error("ActivatorCannotConfirm", "The person who activated this return report cannot confirm it. Wait for the counterpart."));
+        if (returnReport.OwnerId != command.UserId)
+            throw new ForbiddenException(new Error("NotOwner", "Only the owner can confirm the handover."));
 
         // Confirm the return report
         returnReport.Status = C2CReturnReportStatus.Confirmed;
@@ -58,9 +53,6 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
 
         var finder = returnReport.FinderPost?.Author ?? returnReport.Finder!;
         var owner = returnReport.OwnerPost?.Author ?? returnReport.Owner!;
-        var activatedByRole = returnReport.ActivatedById == returnReport.FinderId ? "Finder"
-                            : returnReport.ActivatedById == returnReport.OwnerId ? "Owner"
-                            : null;
 
         await eventPublisher.PublishReturnReportSyncAsync(new ReturnReportSyncIntegrationEvent
         {
@@ -78,7 +70,7 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
             OwnerPostId        = returnReport.OwnerPostId,
             OwnerPostType      = returnReport.OwnerPost?.PostType.ToString(),
             Status             = returnReport.Status.ToString(),
-            ActivatedByRole    = activatedByRole,
+            ActivatedByRole    = null,
             ConfirmedAt        = returnReport.ConfirmedAt,
             ExpiresAt          = returnReport.ExpiresAt,
             CreatedAt          = returnReport.CreatedAt,
@@ -104,7 +96,7 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
             FinderPost = returnReport.FinderPost?.ToPostResult(),
             OwnerPost = returnReport.OwnerPost?.ToPostResult(),
             Status = returnReport.Status.ToString(),
-            ActivatedByRole = activatedByRole,
+            ActivatedByRole = null,
             ConfirmedAt = returnReport.ConfirmedAt,
             ExpiresAt = returnReport.ExpiresAt,
             CreatedAt = returnReport.CreatedAt

@@ -6,7 +6,6 @@ using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Users;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
-using Backtrack.Core.Application.Usecases.Posts;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.ReturnReport.CreateOrgReturnReport;

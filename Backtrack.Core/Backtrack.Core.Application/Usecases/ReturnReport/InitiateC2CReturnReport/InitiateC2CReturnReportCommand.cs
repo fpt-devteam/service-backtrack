@@ -7,8 +7,6 @@ public sealed record InitiateC2CReturnReportCommand : IRequest<C2CReturnReportRe
 {
     [JsonIgnore]
     public string InitiatorId { get; init; } = string.Empty;
-    public Guid? FinderPostId { get; init; }
-    public Guid? OwnerPostId { get; init; }
-    public string? FinderId { get; init; }
-    public string? OwnerId { get; init; }
+    public required Guid FinderPostId { get; init; }
+    public required Guid OwnerPostId { get; init; }
 }
