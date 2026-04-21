@@ -70,6 +70,24 @@ public class ReturnReportRepository : CrudRepositoryBase<C2CReturnReport, Guid>,
         return (items, total);
     }
 
+    public async Task<List<C2CReturnReport>> GetByPartnerAsync(
+        string userId,
+        string partnerId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<C2CReturnReport>()
+            .Include(h => h.Finder)
+            .Include(h => h.Owner)
+            .Include(h => h.FinderPost)
+                .ThenInclude(p => p!.Author)
+            .Include(h => h.OwnerPost)
+                .ThenInclude(p => p!.Author)
+            .Where(h => (h.FinderId == userId && h.OwnerId == partnerId) ||
+                        (h.FinderId == partnerId && h.OwnerId == userId))
+            .OrderByDescending(h => h.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> ExistsActiveReturnReportForFinderPostAsync(
         Guid finderPostId,
         CancellationToken cancellationToken = default)

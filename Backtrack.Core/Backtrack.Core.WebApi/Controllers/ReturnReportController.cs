@@ -11,6 +11,7 @@ using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportById;
 using Backtrack.Core.Application.Usecases.ReturnReport.OwnerConfirmC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.RejectC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportsByUserId;
+using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportsByPartnerId;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetOrgReturnReports;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetOrgReturnReportById;
 using Backtrack.Core.Application.Usecases;
@@ -119,6 +120,18 @@ public class ReturnReportController : ControllerBase
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var query = new GetC2CReturnReportByIdQuery { UserId = userId, C2CReturnReportId = id };
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    /// <summary>Get all C2C return reports between the current user and a partner</summary>
+    [HttpGet("c2c/partner/{partnerId}")]
+    [ProducesResponseType(typeof(ApiResponse<List<C2CReturnReportResult>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetC2CReturnReportsByPartnerIdAsync(
+        [FromRoute] string partnerId, CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var query = new GetC2CReturnReportsByPartnerIdQuery { UserId = userId, PartnerId = partnerId };
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }
