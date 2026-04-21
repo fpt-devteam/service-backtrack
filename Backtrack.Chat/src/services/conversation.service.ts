@@ -371,6 +371,18 @@ export const assignStaff = async (id: string, staffId: string): Promise<SupportC
     return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
 };
 
+export const markResolved = async (id: string, staffId: string): Promise<SupportConversationResponse | null> => {
+    const conversation = await SupportConversation.findById(id).lean().exec();
+    if (!conversation || conversation.deletedAt) throw ConversationErrors.NotFound;
+
+    // Conversation must be waiting in queue to be picked up
+    if (conversation.status !== ConversationStatus.IN_PROGRESS) throw ConversationErrors.NotAssigned;
+
+    await Conversation.findByIdAndUpdate(id, {status: ConversationStatus.CLOSED });
+    // id is guaranteed to be a SupportConversation at this call site
+    return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
+};
+
 export const backToQueue = async (id: string, staffId: string): Promise<boolean> => {
     const conversation = await SupportConversation.findById(id).lean().exec();
     if (!conversation || conversation.deletedAt) throw ConversationErrors.NotFound;
