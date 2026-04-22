@@ -1,5 +1,5 @@
 import Message from '@/models/message';
-import { MessageStatus } from '@/models';
+import { MessageStatus, MessageType } from '@/models';
 import SupportConversation from '@/models/support-conversation';
 import DirectConversation from '@/models/direct-conversation';
 import ConversationParticipant from '@/models/conversation-participant';
@@ -67,11 +67,13 @@ export const sendMessage = async (data: SendMessagePayload): Promise<SendMessage
   });
 
   await message.save();
-
+  const lastMessageContent = data.type === MessageType.IMAGE
+  ? '📷 Picture'
+  : data.content;
   // Update conversation last message using the correct model
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (found.model as any).findByIdAndUpdate(data.conversationId, {
-    lastMessageContent: data.content,
+    lastMessageContent: lastMessageContent,
     lastMessageAt: message.createdAt,
     senderId: data.senderId,
   }).exec();
@@ -98,7 +100,7 @@ export const sendMessage = async (data: SendMessagePayload): Promise<SendMessage
 
   const lastMessage = {
     senderId: data.senderId,
-    content: data.content,
+    content: lastMessageContent,
     timestamp: message.createdAt,
   };
 
@@ -118,7 +120,7 @@ export const sendMessage = async (data: SendMessagePayload): Promise<SendMessage
       conversationId: message.conversationId.toString(),
       senderId: message.senderId,
       type: message.type,
-      content: message.content,
+      content: lastMessageContent,
       attachments: message.attachments ?? undefined,
       status: message.status!,
       createdAt: message.createdAt,
@@ -183,10 +185,10 @@ export const updateMessageStatus = async (messageId: string, status: MessageStat
 };
 export const markMessagesAsSeen = async (conversationId: string, userId: string): Promise<void> => {
   await Message.updateMany(
-    { 
-      conversationId, 
-      senderId: { $ne: userId },      
-      status: { $ne: MessageStatus.SEEN } 
+    {
+      conversationId,
+      senderId: { $ne: userId },
+      status: { $ne: MessageStatus.SEEN }
     },
     { $set: { status: MessageStatus.SEEN } }
   );
