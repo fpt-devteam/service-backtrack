@@ -21,8 +21,8 @@ public sealed class ListInventoryItemByOrgSlugHandler(
         var filters = new PostFilters
         {
             OrganizationId = org.Id,
-            PostType       = query.PostType,
-            Status         = Domain.Constants.PostStatus.Active
+            PostType       = Domain.Constants.PostType.Found,
+            Status         = Domain.Constants.PostStatus.InStorage
         };
 
         var (items, totalCount) = await postRepository.GetPagedAsync(pagedQuery, filters, cancellationToken);

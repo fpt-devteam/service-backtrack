@@ -66,12 +66,11 @@ public class OrganizationPublicController(IMediator mediator) : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ListInventoryItemByOrgSlugAsync(
         [FromRoute] string slug,
-        [FromQuery] PostType? postType = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
-        var query = new ListInventoryItemByOrgSlugQuery { Slug = slug, PostType = postType, Page = page, PageSize = pageSize };
+        var query = new ListInventoryItemByOrgSlugQuery { Slug = slug, Page = page, PageSize = pageSize };
         var result = await mediator.Send(query, cancellationToken);
         return this.ApiOk(PagedResponse<PostResult>.Create(result.Items, page, pageSize, result.Total));
     }
