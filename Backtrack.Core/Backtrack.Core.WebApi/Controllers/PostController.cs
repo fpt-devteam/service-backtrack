@@ -6,13 +6,11 @@ using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Application.Usecases.Posts.GetPostById;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetSimilarPosts;
 using Backtrack.Core.Application.Usecases.Posts.DeletePost;
-using Backtrack.Core.Application.Usecases.PostExplorations.GetPostsByAuthorId;
-using Backtrack.Core.Application.Usecases.PostExplorations.GetPostsByOrgId;
+using Backtrack.Core.Application.Usecases.PostExplorations.ListPostsByAuthorId;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetPostMatchingStatus;
-using Backtrack.Core.Application.Usecases.PostExplorations.SemanticSearchPost;
 using Backtrack.Core.Application.Usecases.PostExplorations.GetFeed;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.Application.Usecases.PostExplorations.SearchPostByTitle;
@@ -79,7 +77,7 @@ public class PostController : ControllerBase
     public async Task<IActionResult> GetMyPostsAsync(CancellationToken cancellationToken = default)
     {
         var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var query = new GetPostsByAuthorIdQuery(authorId);
+        var query = new ListPostsByAuthorIdQuery(authorId);
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }
@@ -153,27 +151,15 @@ public class PostController : ControllerBase
     }
 
     [HttpGet("users/{userId}")]
-    public async Task<IActionResult> GetPostsByUserIdAsync(
+    public async Task<IActionResult> ListPostsByUserIdAsync(
         [FromRoute] string userId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetPostsByAuthorIdQuery(userId) { Page = page, PageSize = pageSize };
+        var query = new ListPostsByAuthorIdQuery(userId) { Page = page, PageSize = pageSize };
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(PagedResponse<PostResult>.Create(result.Items, page, pageSize, result.Total));
     }
 
-    [HttpGet("orgs/{orgId:guid}")]
-    public async Task<IActionResult> GetPostsByOrgIdAsync(
-        [FromRoute] Guid orgId,
-        [FromQuery] PostType? postType = null,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        CancellationToken cancellationToken = default)
-    {
-        var query = new GetPostsByOrgIdQuery { OrgId = orgId, PostType = postType, Page = page, PageSize = pageSize };
-        var result = await _mediator.Send(query, cancellationToken);
-        return this.ApiOk(PagedResponse<PostResult>.Create(result.Items, page, pageSize, result.Total));
-    }
 }

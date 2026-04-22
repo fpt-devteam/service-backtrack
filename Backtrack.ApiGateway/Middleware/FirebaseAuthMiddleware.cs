@@ -50,6 +50,9 @@ public class FirebaseAuthMiddleware
         // GET /api/core/orgs/public/{slug}              — public org profile by slug, no auth required
         new Regex(@"^/api/core/orgs/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
+        // GET /api/core/orgs/public/{slug}/inventory   — public org inventory list, no auth required
+        new Regex(@"^/api/core/orgs/public/[^/]+/inventory$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+
         // GET /api/core/orgs/public/{orgId}/settings   — public org settings, no auth required
         new Regex(@"^/api/core/orgs/public/[0-9a-f\-]{36}/settings$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
