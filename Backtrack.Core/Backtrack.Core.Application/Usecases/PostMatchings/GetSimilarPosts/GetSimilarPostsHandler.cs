@@ -32,13 +32,13 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
             .Take(request.Limit)
             .ToList();
 
-        var results = matches.Select(ToSimilarPostItem).ToList();
+        var results = matches.Select(m => ToSimilarPostItem(m, request.PostId)).ToList();
         return new GetSimilarPostsResult { SimilarPosts = results };
     }
 
-    private static SimilarPostItem ToSimilarPostItem(Domain.Entities.PostMatch match)
+    private static SimilarPostItem ToSimilarPostItem(Domain.Entities.PostMatch match, Guid requestPostId)
     {
-        var target = match.CandidatePost;
+        var target = match.LostPostId == requestPostId ? match.FoundPost : match.LostPost;
 
         return new SimilarPostItem
         {

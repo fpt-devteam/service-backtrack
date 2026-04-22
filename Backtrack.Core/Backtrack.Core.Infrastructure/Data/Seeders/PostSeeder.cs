@@ -220,7 +220,7 @@ public static class PostSeeder
 
         if (finderPostId.HasValue && ownerPostId.HasValue)
         {
-            await HandoverSeeder.SeedDeliveredAsync(
+            await HandoverSeeder.SeedOngoingAsync(
                 db, mediator, logger,
                 finderEmail:  UserSeeder.LongFpt.Email,
                 ownerEmail:   UserSeeder.CatLinh.Email,
@@ -239,7 +239,7 @@ public static class PostSeeder
 
         if (finderPostId.HasValue && ownerPostId.HasValue)
         {
-            await HandoverSeeder.SeedConfirmedAsync(
+            await HandoverSeeder.SeedOngoingAsync(
                 db, mediator, logger,
                 finderEmail:  UserSeeder.LongFpt.Email,
                 ownerEmail:   UserSeeder.ThangFpt.Email,

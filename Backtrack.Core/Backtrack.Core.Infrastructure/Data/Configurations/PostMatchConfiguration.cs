@@ -20,8 +20,8 @@ public class PostMatchConfiguration : IEntityTypeConfiguration<PostMatch>
         builder.HasKey(m => m.Id);
 
         builder.Property(m => m.Id).HasColumnName("id");
-        builder.Property(m => m.SourcePostId).HasColumnName("source_post_id").IsRequired();
-        builder.Property(m => m.CandidatePostId).HasColumnName("candidate_post_id").IsRequired();
+        builder.Property(m => m.LostPostId).HasColumnName("lost_post_id").IsRequired();
+        builder.Property(m => m.FoundPostId).HasColumnName("found_post_id").IsRequired();
         builder.Property(m => m.Score).HasColumnName("score").IsRequired();
 
         builder.Property(m => m.Evidence)
@@ -48,25 +48,30 @@ public class PostMatchConfiguration : IEntityTypeConfiguration<PostMatch>
         builder.Property(m => m.UpdatedAt).HasColumnName("updated_at");
         builder.Property(m => m.DeletedAt).HasColumnName("deleted_at");
 
-        // Unique: one candidate can only match one source once
-        builder.HasIndex(m => new { m.SourcePostId, m.CandidatePostId })
-            .HasDatabaseName("ix_post_matches_source_candidate")
-            .IsUnique();
+        // Unique among active (non-deleted) records only — soft-deleted rows must not block re-insertion
+        builder.HasIndex(m => new { m.LostPostId, m.FoundPostId })
+            .HasDatabaseName("ix_post_matches_lost_found")
+            .IsUnique()
+            .HasFilter("deleted_at IS NULL");
 
-        // Query by source, sorted by score
-        builder.HasIndex(m => new { m.SourcePostId, m.Status, m.Score })
-            .HasDatabaseName("ix_post_matches_by_source");
+        // Query by lost post, sorted by score
+        builder.HasIndex(m => new { m.LostPostId, m.Status, m.Score })
+            .HasDatabaseName("ix_post_matches_by_lost");
 
-        builder.HasOne(m => m.SourcePost)
+        // Query by found post, sorted by score
+        builder.HasIndex(m => new { m.FoundPostId, m.Status, m.Score })
+            .HasDatabaseName("ix_post_matches_by_found");
+
+        builder.HasOne(m => m.LostPost)
             .WithMany()
-            .HasForeignKey(m => m.SourcePostId)
-            .HasConstraintName("fk_post_matches_source_post_id")
+            .HasForeignKey(m => m.LostPostId)
+            .HasConstraintName("fk_post_matches_lost_post_id")
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(m => m.CandidatePost)
+        builder.HasOne(m => m.FoundPost)
             .WithMany()
-            .HasForeignKey(m => m.CandidatePostId)
-            .HasConstraintName("fk_post_matches_candidate_post_id")
+            .HasForeignKey(m => m.FoundPostId)
+            .HasConstraintName("fk_post_matches_found_post_id")
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasQueryFilter(m => m.DeletedAt == null);

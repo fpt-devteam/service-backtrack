@@ -43,7 +43,7 @@ public sealed class FindAndSavePostMatchesHandler(
         try
         {
             // ── 4. Delete stale matches ───────────────────────────────────────
-            await postMatchRepository.DeleteBySourcePostIdsAsync([sourcePost.Id], cancellationToken);
+            await postMatchRepository.DeleteByPostIdAsync(sourcePost.Id, cancellationToken);
             await postMatchRepository.SaveChangesAsync();
 
             // ── 5. Find similar posts ─────────────────────────────────────────
@@ -67,8 +67,8 @@ public sealed class FindAndSavePostMatchesHandler(
                     MatchingLevel   = ScoreToMatchingLevel((float)similarity),
                 };
                 logger.LogInformation(
-                    "Assessing match between Post {SourcePostId} and Candidate {CandidatePostId} with similarity {Similarity:P0}.",
-                    sourcePost.Id, candidatePost.Id, similarity);
+                    "Assessing match between Lost {LostPostId} and Found {FoundPostId} with similarity {Similarity:P0}.",
+                    lostPost.Id, foundPost.Id, similarity);
 
                 List<MatchEvidence> evidence;
                 try
@@ -84,13 +84,13 @@ public sealed class FindAndSavePostMatchesHandler(
 
                 postMatches.Add(new PostMatch
                 {
-                    Id              = Guid.NewGuid(),
-                    SourcePostId    = sourcePost.Id,
-                    CandidatePostId = candidatePost.Id,
-                    Score           = similarity,
-                    Evidence        = evidence,
-                    Status          = MatchStatus.Pending,
-                    CreatedAt       = DateTimeOffset.UtcNow
+                    Id          = Guid.NewGuid(),
+                    LostPostId  = lostPost.Id,
+                    FoundPostId = foundPost.Id,
+                    Score       = similarity,
+                    Evidence    = evidence,
+                    Status      = MatchStatus.Pending,
+                    CreatedAt   = DateTimeOffset.UtcNow
                 });
             }
 

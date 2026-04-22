@@ -2,14 +2,14 @@ namespace Backtrack.Core.Domain.Entities;
 
 public sealed class PostMatch : Entity<Guid>
 {
-    public required Guid SourcePostId { get; set; }
-    public required Guid CandidatePostId { get; set; }
+    public required Guid LostPostId { get; set; }
+    public required Guid FoundPostId { get; set; }
     public required double Score { get; set; }
     public List<MatchEvidence> Evidence { get; set; } = [];
     public MatchStatus Status { get; set; } = MatchStatus.Pending;
 
-    public Post SourcePost { get; set; } = default!;
-    public Post CandidatePost { get; set; } = default!;
+    public Post LostPost { get; set; } = default!;
+    public Post FoundPost { get; set; } = default!;
 }
 
 public record MatchEvidence(

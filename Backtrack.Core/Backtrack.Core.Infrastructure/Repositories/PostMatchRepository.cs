@@ -17,22 +17,11 @@ namespace Backtrack.Core.Infrastructure.Repositories
             await _dbSet.AddRangeAsync(postMatches, cancellationToken);
         }
 
-        public async Task DeleteBySourcePostIdsAsync(IEnumerable<Guid> sourcePostIds, CancellationToken cancellationToken = default)
+        public async Task DeleteByPostIdAsync(Guid postId, CancellationToken cancellationToken = default)
         {
             var now = DateTimeOffset.UtcNow;
             await _dbSet
-                .Where(pm => sourcePostIds.Contains(pm.SourcePostId) && pm.DeletedAt == null)
-                .ExecuteUpdateAsync(setter => setter
-                    .SetProperty(pm => pm.DeletedAt, now)
-                    .SetProperty(pm => pm.UpdatedAt, now),
-                    cancellationToken);
-        }
-
-        public async Task DeleteByCandidatePostIdsAsync(IEnumerable<Guid> candidatePostIds, CancellationToken cancellationToken = default)
-        {
-            var now = DateTimeOffset.UtcNow;
-            await _dbSet
-                .Where(pm => candidatePostIds.Contains(pm.CandidatePostId) && pm.DeletedAt == null)
+                .Where(pm => (pm.LostPostId == postId || pm.FoundPostId == postId) && pm.DeletedAt == null)
                 .ExecuteUpdateAsync(setter => setter
                     .SetProperty(pm => pm.DeletedAt, now)
                     .SetProperty(pm => pm.UpdatedAt, now),
@@ -43,9 +32,9 @@ namespace Backtrack.Core.Infrastructure.Repositories
         {
             const string sql = @"
                 SELECT COUNT(DISTINCT id)::int FROM (
-                    SELECT source_post_id    AS id FROM post_matches WHERE deleted_at IS NULL
+                    SELECT lost_post_id  AS id FROM post_matches WHERE deleted_at IS NULL
                     UNION
-                    SELECT candidate_post_id AS id FROM post_matches WHERE deleted_at IS NULL
+                    SELECT found_post_id AS id FROM post_matches WHERE deleted_at IS NULL
                 ) matched_ids";
 
             var conn = _context.Database.GetDbConnection();
@@ -60,8 +49,9 @@ namespace Backtrack.Core.Infrastructure.Repositories
         public async Task<IEnumerable<PostMatch>> GetMatchesByPostIdAsync(Guid postId, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(pm => pm.CandidatePost)
-                .Where(pm => pm.SourcePostId == postId && pm.DeletedAt == null)
+                .Include(pm => pm.LostPost)
+                .Include(pm => pm.FoundPost)
+                .Where(pm => (pm.LostPostId == postId || pm.FoundPostId == postId) && pm.DeletedAt == null)
                 .OrderByDescending(pm => pm.Score)
                 .ToListAsync(cancellationToken);
         }
