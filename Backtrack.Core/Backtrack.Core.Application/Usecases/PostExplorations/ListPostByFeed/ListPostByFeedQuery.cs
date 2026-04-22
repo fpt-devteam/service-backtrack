@@ -1,11 +1,11 @@
+using Backtrack.Core.Application.Usecases;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
-using Backtrack.Core.Application.Usecases;
 
-namespace Backtrack.Core.Application.Usecases.PostExplorations.GetFeed;
+namespace Backtrack.Core.Application.Usecases.PostExplorations.ListPostByFeed;
 
-public sealed record GetFeedQuery : IRequest<FeedPostResult>
+public sealed record ListPostByFeedQuery : IRequest<ListPostByFeedResult>
 {
     public required GeoPoint Location { get; init; }
     public PostType? PostType { get; init; }

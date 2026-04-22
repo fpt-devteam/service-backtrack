@@ -1,6 +1,5 @@
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Domain.Constants;
-using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 
 namespace Backtrack.Core.Application.Usecases.PostExplorations;
@@ -14,10 +13,10 @@ public sealed record SearchPostResult
     public required PostType PostType { get; init; }
     public required ItemCategory Category { get; init; }
     public required Guid SubcategoryId { get; init; }
-    public PostPersonalBelongingDetail? PersonalBelongingDetail { get; init; }
-    public PostCardDetail? CardDetail { get; init; }
-    public PostElectronicDetail? ElectronicDetail { get; init; }
-    public PostOtherDetail? OtherDetail { get; init; }
+    public PersonalBelongingDetailDto? PersonalBelongingDetail { get; init; }
+    public CardDetailDto? CardDetail { get; init; }
+    public ElectronicDetailDto? ElectronicDetail { get; init; }
+    public OtherDetailDto? OtherDetail { get; init; }
     public List<string> ImageUrls { get; init; } = new();
     public required GeoPoint Location { get; init; }
     public string? ExternalPlaceId { get; init; }

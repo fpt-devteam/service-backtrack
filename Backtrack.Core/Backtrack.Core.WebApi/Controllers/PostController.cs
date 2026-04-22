@@ -11,7 +11,7 @@ using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetPostMatchingStatus;
-using Backtrack.Core.Application.Usecases.PostExplorations.GetFeed;
+using Backtrack.Core.Application.Usecases.PostExplorations.ListPostByFeed;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.Application.Usecases.PostExplorations.SearchPostByTitle;
 
@@ -90,7 +90,7 @@ public class PostController : ControllerBase
     }
 
     [HttpPost("feed")]
-    public async Task<IActionResult> GetFeedAsync([FromBody] GetFeedQuery query, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> ListPostByFeedAsync([FromBody] ListPostByFeedQuery query, CancellationToken cancellationToken = default)
     {
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);

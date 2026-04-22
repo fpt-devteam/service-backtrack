@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace Backtrack.Core.Application.Usecases.PostExplorations.GetFeed;
+namespace Backtrack.Core.Application.Usecases.PostExplorations.ListPostByFeed;
 
-public sealed class GetFeedQueryValidator : AbstractValidator<GetFeedQuery>
+public sealed class ListPostByFeedQueryValidator : AbstractValidator<ListPostByFeedQuery>
 {
-    public GetFeedQueryValidator()
+    public ListPostByFeedQueryValidator()
     {
         RuleFor(x => x.Location)
             .NotNull()

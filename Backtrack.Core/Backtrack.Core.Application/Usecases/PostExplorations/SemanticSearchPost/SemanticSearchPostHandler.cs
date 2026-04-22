@@ -21,28 +21,7 @@ public sealed class SemanticSearchPostHandler(
             var filter = command.Filters ?? new PostFilters { Status = PostStatus.Active };
 
             var result = await postRepository.GetPagedAsync(PagedQuery.Default, filter, cancellationToken);
-            return result.Items.Select(p => new SearchPostResult
-            {
-                Id               = p.Id,
-                Author           = p.Author?.ToPostAuthorResult(),
-                Organization     = p.Organization?.ToOrganizationOnPost(),
-                PostType         = p.PostType,
-                PostTitle        = p.PostTitle,
-                Category         = p.Category,
-                SubcategoryId    = p.SubcategoryId,
-                PersonalBelongingDetail = p.PersonalBelongingDetail,
-                CardDetail       = p.CardDetail,
-                ElectronicDetail = p.ElectronicDetail,
-                OtherDetail      = p.OtherDetail,
-                ImageUrls        = p.ImageUrls,
-                Location         = p.Location,
-                ExternalPlaceId  = p.ExternalPlaceId,
-                DisplayAddress   = p.DisplayAddress,
-                EventTime        = p.EventTime,
-                CreatedAt        = p.CreatedAt,
-                Score            = 0,
-                DistanceInMeters = null
-            });
+            return result.Items.Select(p => p.ToSearchPostResult(score: 0));
         }
 
         var embedding  = await embeddingService.GenerateQueryEmbeddingAsync(command.Query, cancellationToken);
@@ -51,30 +30,11 @@ public sealed class SemanticSearchPostHandler(
         var searchLocation = command.Filters?.Geo?.Location;
 
         return candidates
-            .Select(x => new SearchPostResult
-            {
-                Id               = x.Post.Id,
-                Author           = x.Post.Author?.ToPostAuthorResult(),
-                Organization     = x.Post.Organization?.ToOrganizationOnPost(),
-                PostType         = x.Post.PostType,
-                PostTitle        = x.Post.PostTitle,
-                Category         = x.Post.Category,
-                SubcategoryId    = x.Post.SubcategoryId,
-                PersonalBelongingDetail = x.Post.PersonalBelongingDetail,
-                CardDetail       = x.Post.CardDetail,
-                ElectronicDetail = x.Post.ElectronicDetail,
-                OtherDetail      = x.Post.OtherDetail,
-                ImageUrls        = x.Post.ImageUrls,
-                Location         = x.Post.Location,
-                ExternalPlaceId  = x.Post.ExternalPlaceId,
-                DisplayAddress   = x.Post.DisplayAddress,
-                EventTime        = x.Post.EventTime,
-                CreatedAt        = x.Post.CreatedAt,
-                Score            = x.SimilarityScore,
-                DistanceInMeters = searchLocation != null && x.Post.Location != null
+            .Select(x => x.Post.ToSearchPostResult(
+                score: x.SimilarityScore,
+                distanceInMeters: searchLocation != null && x.Post.Location != null
                     ? GeoUtil.Haversine(searchLocation, x.Post.Location)
-                    : null
-            })
+                    : null))
             .OrderByDescending(x => x.Score)
             .ThenBy(x => x.DistanceInMeters ?? double.MaxValue)
             .ToList();
