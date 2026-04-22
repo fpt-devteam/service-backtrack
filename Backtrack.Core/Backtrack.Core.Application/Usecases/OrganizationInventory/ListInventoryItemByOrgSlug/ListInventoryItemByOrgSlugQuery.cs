@@ -2,11 +2,11 @@ using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Domain.Constants;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.PostExplorations.GetPostsByOrgId;
+namespace Backtrack.Core.Application.Usecases.OrganizationInventory.ListInventoryItemByOrgSlug;
 
-public sealed record GetPostsByOrgIdQuery : IRequest<PagedResult<PostResult>>
+public sealed record ListInventoryItemByOrgSlugQuery : IRequest<PagedResult<PostResult>>
 {
-    public required Guid OrgId { get; init; }
+    public required string Slug { get; init; }
     public PostType? PostType { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;

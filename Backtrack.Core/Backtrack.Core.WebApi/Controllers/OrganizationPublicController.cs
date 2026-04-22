@@ -3,6 +3,9 @@ using Backtrack.Core.Application.Usecases.Organizations.CheckSlugExist;
 using Backtrack.Core.Application.Usecases.Organizations.GetAllOrganizations;
 using Backtrack.Core.Application.Usecases.Organizations.GetOrganizationBySlug;
 using Backtrack.Core.Application.Usecases.Organizations.GetOrganizationSetting;
+using Backtrack.Core.Application.Usecases.OrganizationInventory.ListInventoryItemByOrgSlug;
+using Backtrack.Core.Application.Usecases.Posts;
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.WebApi.Common;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -56,5 +59,20 @@ public class OrganizationPublicController(IMediator mediator) : ControllerBase
         var query = new GetOrganizationBySlugQuery(slug);
         var result = await mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
+    }
+
+    [HttpGet("{slug}/inventory")]
+    [ProducesResponseType(typeof(ApiResponse<PagedResponse<PostResult>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ListInventoryItemByOrgSlugAsync(
+        [FromRoute] string slug,
+        [FromQuery] PostType? postType = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new ListInventoryItemByOrgSlugQuery { Slug = slug, PostType = postType, Page = page, PageSize = pageSize };
+        var result = await mediator.Send(query, cancellationToken);
+        return this.ApiOk(PagedResponse<PostResult>.Create(result.Items, page, pageSize, result.Total));
     }
 }

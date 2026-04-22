@@ -150,6 +150,10 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Organization)
+            .Include(p => p.CardDetail)
+            .Include(p => p.PersonalBelongingDetail)
+            .Include(p => p.ElectronicDetail)
+            .Include(p => p.OtherDetail)
             .Where(p => ids.Contains(p.Id))
             .ToListAsync(cancellationToken);
 
