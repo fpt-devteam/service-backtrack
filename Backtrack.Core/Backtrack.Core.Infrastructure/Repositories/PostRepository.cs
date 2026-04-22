@@ -344,6 +344,43 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return result;
     }
 
+    public async Task<List<(string Period, PostType PostType, PostStatus Status, int Count)>> GetMonthlyPostKpiAsync(
+        int months,
+        CancellationToken cancellationToken = default)
+    {
+        var cutoff = DateTimeOffset.UtcNow.AddMonths(-months);
+        const string sql = @"
+            SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS period,
+                   post_type,
+                   status,
+                   COUNT(*)::int AS count
+            FROM posts
+            WHERE deleted_at IS NULL
+              AND created_at >= @cutoff
+            GROUP BY DATE_TRUNC('month', created_at), post_type, status
+            ORDER BY 1";
+
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        var result = new List<(string, PostType, PostStatus, int)>();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.Add(new NpgsqlParameter("@cutoff", cutoff));
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var period    = reader.GetString(0);
+            var postType  = Enum.Parse<PostType>(reader.GetString(1));
+            var status    = Enum.Parse<PostStatus>(reader.GetString(2));
+            var count     = reader.GetInt32(3);
+            result.Add((period, postType, status, count));
+        }
+
+        return result;
+    }
+
     public async Task<int> CountAsync(
         PostFilters? filters = null,
         CancellationToken cancellationToken = default)
