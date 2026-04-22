@@ -12,10 +12,10 @@ using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetPostMatchingStatus;
-using Backtrack.Core.Application.Usecases.PostExplorations.FullTextSearchPost;
 using Backtrack.Core.Application.Usecases.PostExplorations.SemanticSearchPost;
 using Backtrack.Core.Application.Usecases.PostExplorations.GetFeed;
 using Backtrack.Core.WebApi.Common;
+using Backtrack.Core.Application.Usecases.PostExplorations.SearchPostByTitle;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -85,9 +85,9 @@ public class PostController : ControllerBase
     }
 
     [HttpPost("search")]
-    public async Task<IActionResult> SearchPostsAsync([FromBody] SemanticSearchPostCommand command, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> SearchPostsAsync([FromBody] SearchPostByTitleQuery query, CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(command, cancellationToken);
+        var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }
 

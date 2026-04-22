@@ -357,49 +357,53 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return Convert.ToInt32(await cmd.ExecuteScalarAsync(cancellationToken));
     }
 
-    public async Task<IEnumerable<Post>> SearchByFullTextAsync(
-        string searchTerm,
+    public async Task<IEnumerable<Post>> SearchByTitleAsync(
+        string title,
         PostFilters? filters = null,
         CancellationToken cancellationToken = default)
     {
         var (filterSql, parameters) = BuildFilters(filters);
-        parameters.Insert(0, new("@searchTerm", searchTerm));
+        parameters.Insert(0, new("@title", $"%{title}%"));
 
-        var dataSql = $@"
+        var sql = $@"
             SELECT id
             FROM posts
             WHERE deleted_at IS NULL
-                AND item_search @@ websearch_to_tsquery('english', @searchTerm)
+                AND post_title ILIKE @title
                 {filterSql}
-            ORDER BY ts_rank(item_search, websearch_to_tsquery('english', @searchTerm)) DESC";
+            ORDER BY created_at DESC";
 
         var conn = _context.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
             await _context.Database.OpenConnectionAsync(cancellationToken);
 
-        var rankedIds = new List<Guid>();
+        var ids = new List<Guid>();
         await using (var cmd = conn.CreateCommand())
         {
-            cmd.CommandText = dataSql;
+            cmd.CommandText = sql;
             cmd.Parameters.AddRange(parameters.ToArray());
 
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
-                rankedIds.Add(reader.GetGuid(0));
+                ids.Add(reader.GetGuid(0));
         }
 
-        if (rankedIds.Count == 0)
+        if (ids.Count == 0)
             return [];
 
         var posts = await _dbSet
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Organization)
-            .Where(p => rankedIds.Contains(p.Id))
+            .Include(p => p.CardDetail)
+            .Include(p => p.PersonalBelongingDetail)
+            .Include(p => p.ElectronicDetail)
+            .Include(p => p.OtherDetail)
+            .Where(p => ids.Contains(p.Id))
             .ToListAsync(cancellationToken);
 
         var postMap = posts.ToDictionary(p => p.Id);
-        return rankedIds.Where(id => postMap.ContainsKey(id)).Select(id => postMap[id]);
+        return ids.Where(id => postMap.ContainsKey(id)).Select(id => postMap[id]);
     }
 
 }
