@@ -38,11 +38,11 @@ public sealed class GetOrganizationsHandler(
             .GroupBy(s => s.OrganizationId!.Value)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(s => s.CurrentPeriodEnd).First());
 
-        // Filter by OrganizationStatus: Active = live subscription, Suspended = expired or no subscription
+        // Filter by Organization.Status (the entity field — Active / Suspended)
         var filtered = query.Status switch
         {
-            OrganizationStatus.Active    => allOrgs.Where(o => latestSubByOrg.TryGetValue(o.Id, out var s) && s.CurrentPeriodEnd > now).ToList(),
-            OrganizationStatus.Suspended => allOrgs.Where(o => !latestSubByOrg.TryGetValue(o.Id, out var s) || s.CurrentPeriodEnd <= now).ToList(),
+            OrganizationStatus.Active    => allOrgs.Where(o => o.Status == OrganizationStatus.Active).ToList(),
+            OrganizationStatus.Suspended => allOrgs.Where(o => o.Status == OrganizationStatus.Suspended).ToList(),
             _                            => allOrgs
         };
 
@@ -75,9 +75,8 @@ public sealed class GetOrganizationsHandler(
 
         var items = pageOrgs.Select(org =>
         {
-            var sub          = latestSubByOrg.TryGetValue(org.Id, out var s) ? s : null;
-            var isActive     = sub is not null && sub.CurrentPeriodEnd > now;
-            var bizStatus    = sub is null ? "Inactive" : isActive ? "Active" : "Expired";
+            var sub      = latestSubByOrg.TryGetValue(org.Id, out var s) ? s : null;
+            var isActive = sub is not null && sub.CurrentPeriodEnd > now;
             var (total, ret) = postStats.TryGetValue(org.Id, out var ps) ? ps : (0, 0);
             var successRate  = total > 0 ? Math.Round(ret / (double)total * 100, 1) : 0.0;
             var revenue      = revenueSums.TryGetValue(org.Id, out var rev) ? (long)rev : 0L;
@@ -91,7 +90,7 @@ public sealed class GetOrganizationsHandler(
                 LogoUrl          = org.LogoUrl,
                 AdminEmail       = adminEmail,
                 SubscriptionPlan = sub?.PlanSnapshot.Name,
-                Status           = bizStatus,
+                Status           = org.Status.ToString(),
                 Capacity         = new OrganizationCapacityResult(memberCount, 0),
                 Performance      = successRate,
                 TotalRevenue     = revenue,
