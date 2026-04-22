@@ -623,6 +623,7 @@ export const listConversationsQueueByStaff = async (
                 orgId,
                 status: ConversationStatus.IN_QUEUE,
                 staffAssignId: null,
+				lastMessageContent: { $ne: null },
                 deletedAt: null,
                 ...(params.cursor && {
                     lastMessageAt: { $lt: new Date(params.cursor) }
@@ -638,6 +639,34 @@ export const listConversationsQueueByStaff = async (
 
     return formatSupportResult(results, limit);
 };
+
+export const listConversationsResolvedByStaff = async (
+    orgId: string,
+    params: CursorPaginationParams = {}
+): Promise<SupportConversationsListResult> => {
+    const limit = Math.min(params.limit || Constants.PAGINATION.DEFAULT_LIMIT, Constants.PAGINATION.MAX_LIMIT);
+
+    const results = await Conversation.aggregate([
+        {
+            $match: {
+                orgId,
+                status: ConversationStatus.CLOSED,
+                deletedAt: null,
+                ...(params.cursor && {
+                    lastMessageAt: { $lt: new Date(params.cursor) }
+                })
+            }
+        },
+        { $sort: { lastMessageAt: -1 } },
+        { $limit: limit + 1 },
+        { $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
+        ...lookupPartnerStages(orgId),
+        projectConversationStage,
+    ]);
+
+    return formatSupportResult(results, limit);
+};
+
 
 export const listConversationsAssignedByStaff = async (
     staffId: string,
