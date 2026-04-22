@@ -9,16 +9,13 @@ namespace Backtrack.Core.Application.Usecases.Admin.GetRecentActivity;
 
 public sealed class GetRecentActivityHandler(
     IUserRepository userRepository,
-    IPostRepository postRepository) : IRequestHandler<GetRecentActivityQuery, RecentActivityResult>
+    IPostRepository postRepository) : IRequestHandler<GetRecentActivityQuery, PagedResult<RecentActivityItemResult>>
 {
-    public async Task<RecentActivityResult> Handle(GetRecentActivityQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<RecentActivityItemResult>> Handle(GetRecentActivityQuery query, CancellationToken cancellationToken)
     {
         var caller = await userRepository.GetByIdAsync(query.AdminUserId);
         if (caller is null || caller.GlobalRole != UserGlobalRole.PlatformSuperAdmin)
             throw new ForbiddenException(AdminErrors.Forbidden);
-
-        if (query.Limit < 1 || query.Limit > 50)
-            throw new ValidationException(AdminErrors.InvalidLimitRange);
 
         PostStatus? statusFilter = null;
         if (query.Status is not null)
@@ -29,7 +26,7 @@ public sealed class GetRecentActivityHandler(
         }
 
         var filters    = statusFilter.HasValue ? new PostFilters { Status = statusFilter } : null;
-        var pagedQuery = PagedQuery.FromPage(1, query.Limit);
+        var pagedQuery = PagedQuery.FromPage(query.Page, query.PageSize);
 
         var total          = await postRepository.CountAsync(filters, cancellationToken);
         var (items, _)     = await postRepository.GetPagedAsync(pagedQuery, filters, cancellationToken);
@@ -46,7 +43,7 @@ public sealed class GetRecentActivityHandler(
             TimeAgo:    BuildTimeAgo(now, post.CreatedAt)
         )).ToList();
 
-        return new RecentActivityResult(data, total);
+        return new PagedResult<RecentActivityItemResult>(total, data);
     }
 
     private static string BuildInitials(string name)
