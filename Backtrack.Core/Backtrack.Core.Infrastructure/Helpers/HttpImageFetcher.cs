@@ -1,6 +1,5 @@
 using Backtrack.Core.Application.Interfaces.Helpers;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Jpeg;
+using ImageMagick;
 
 namespace Backtrack.Core.Infrastructure.Helpers;
 
@@ -25,14 +24,13 @@ public sealed class HttpImageFetcher : IImageFetcher
             if (bytes.Length == 0)
                 return null;
 
-            // Convert to JPEG regardless of original format (WebP, PNG, GIF, etc.)
+            // Convert to JPEG regardless of original format (WebP, PNG, GIF, HEIC, etc.)
             // Gemini embedding API only supports PNG and JPEG
-            using var inputStream = new MemoryStream(bytes);
-            using var image = await Image.LoadAsync(inputStream, cancellationToken);
-            using var outputStream = new MemoryStream();
-            await image.SaveAsJpegAsync(outputStream, new JpegEncoder { Quality = 90 }, cancellationToken);
+            using var image = new MagickImage(bytes);
+            image.Format = MagickFormat.Jpeg;
+            image.Quality = 90;
 
-            return new FetchedImage(Convert.ToBase64String(outputStream.ToArray()), "image/jpeg");
+            return new FetchedImage(Convert.ToBase64String(image.ToByteArray()), "image/jpeg");
         }
         catch
         {
