@@ -18,6 +18,10 @@ public interface IC2CReturnReportRepository : IGenericRepository<C2CReturnReport
         string userId,
         string partnerId,
         CancellationToken cancellationToken = default);
-    Task<bool> ExistsActiveReturnReportForFinderPostAsync(Guid finderPostId, CancellationToken cancellationToken = default);
-    Task<bool> ExistsActiveReturnReportForOwnerPostAsync(Guid ownerPostId, CancellationToken cancellationToken = default);
+    Task<C2CReturnReport?> GetOngoingByParticipantsAndPostsAsync(
+        string finderId,
+        string ownerId,
+        Guid finderPostId,
+        Guid ownerPostId,
+        CancellationToken cancellationToken = default);
 }

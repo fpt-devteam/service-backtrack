@@ -88,23 +88,26 @@ public class ReturnReportRepository : CrudRepositoryBase<C2CReturnReport, Guid>,
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<bool> ExistsActiveReturnReportForFinderPostAsync(
+    public async Task<C2CReturnReport?> GetOngoingByParticipantsAndPostsAsync(
+        string finderId,
+        string ownerId,
         Guid finderPostId,
-        CancellationToken cancellationToken = default)
-    {
-        return await _dbSet.AnyAsync(h =>
-            h.FinderPostId == finderPostId &&
-            h.Status == C2CReturnReportStatus.Ongoing,
-            cancellationToken);
-    }
-
-    public async Task<bool> ExistsActiveReturnReportForOwnerPostAsync(
         Guid ownerPostId,
         CancellationToken cancellationToken = default)
     {
-        return await _dbSet.AnyAsync(h =>
-            h.OwnerPostId == ownerPostId &&
-            h.Status == C2CReturnReportStatus.Ongoing,
-            cancellationToken);
+        return await _dbSet
+            .Include(h => h.Finder)
+            .Include(h => h.Owner)
+            .Include(h => h.FinderPost)
+                .ThenInclude(p => p!.Author)
+            .Include(h => h.OwnerPost)
+                .ThenInclude(p => p!.Author)
+            .FirstOrDefaultAsync(h =>
+                h.FinderId == finderId &&
+                h.OwnerId == ownerId &&
+                h.FinderPostId == finderPostId &&
+                h.OwnerPostId == ownerPostId &&
+                h.Status == C2CReturnReportStatus.Ongoing,
+                cancellationToken);
     }
 }
