@@ -24,7 +24,7 @@ public sealed class GeminiOcrService(ILlmService llmService) : IOcrService
         }
         Set any field to null if not visible or not applicable.
         """;
-    private const int MaxOutputTokens = 2048;
+    private const int MaxOutputTokens = 8192;
 
     public async Task<CardDetailDto> ExtractCardTextAsync(
         string imageBase64,
