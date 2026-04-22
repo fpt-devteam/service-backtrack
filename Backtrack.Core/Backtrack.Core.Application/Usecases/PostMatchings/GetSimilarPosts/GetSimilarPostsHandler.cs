@@ -43,6 +43,7 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
         return new SimilarPostItem
         {
             Id               = target.Id,
+            Author           = target.Author,
             PostTitle        = target.PostTitle,
             PostType         = target.PostType,
             Category         = target.Category,
