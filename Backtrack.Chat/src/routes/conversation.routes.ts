@@ -16,5 +16,6 @@ router.get('/organization/assigned', asyncHandler(conversationController.listCon
 router.post('/:id/assign-staff', asyncHandler(conversationController.assignStaff));
 router.post('/:id/unassign-staff', asyncHandler(conversationController.unassignStaff));
 router.post('/:id/resolve', asyncHandler(conversationController.resolveConversation));
+router.get('/organization/resolved', asyncHandler(conversationController.listConversationResolvedByStaff));
 
 export default router;

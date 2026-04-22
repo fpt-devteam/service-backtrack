@@ -31,7 +31,6 @@ export const createOrgConversation = async (req: Request, res: Response) => {
     const { orgId } = CreationOrganizationConversationSchema.parse(req.body);
 
     const conversation = await conversationService.findOrCreateOrgConversation(userId, orgId);
-
     return res.status(201).json(
         ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
     );
@@ -102,6 +101,15 @@ export const listConversationAssignedByStaff = async (req: Request, res: Respons
     const staffId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
 
     const result = await conversationService.listConversationsAssignedByStaff(staffId, parsePaginationParams(req));
+    return res.status(200).json(
+        ApiResponseBuilder.success(result, getCorrelationId(req))
+    );
+};
+
+export const listConversationResolvedByStaff = async (req: Request, res: Response) => {
+    const orgId = req.headers[Constants.HEADERS.ORG_ID] as string;
+
+    const result = await conversationService.listConversationsResolvedByStaff(orgId, parsePaginationParams(req));
     return res.status(200).json(
         ApiResponseBuilder.success(result, getCorrelationId(req))
     );
