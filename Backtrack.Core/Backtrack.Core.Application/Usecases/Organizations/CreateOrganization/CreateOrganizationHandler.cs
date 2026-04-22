@@ -13,15 +13,18 @@ public sealed class CreateOrganizationHandler : IRequestHandler<CreateOrganizati
 {
     private readonly IOrganizationRepository _organizationRepository;
     private readonly IMembershipRepository _membershipRepository;
+    private readonly ISubscriptionRepository _subscriptionRepository;
     private readonly IEventPublisher _eventPublisher;
 
     public CreateOrganizationHandler(
         IOrganizationRepository organizationRepository,
         IMembershipRepository membershipRepository,
+        ISubscriptionRepository subscriptionRepository,
         IEventPublisher eventPublisher)
     {
         _organizationRepository = organizationRepository;
         _membershipRepository = membershipRepository;
+        _subscriptionRepository = subscriptionRepository;
         _eventPublisher = eventPublisher;
     }
 
@@ -69,6 +72,7 @@ public sealed class CreateOrganizationHandler : IRequestHandler<CreateOrganizati
         };
 
         await _membershipRepository.CreateAsync(membership);
+        await _subscriptionRepository.InitializeFreeForOrganizationAsync(organization.Id, cancellationToken);
         await _organizationRepository.SaveChangesAsync();
 
         await _eventPublisher.PublishOrgEnsureExistAsync(new OrgEnsureExistIntegrationEvent

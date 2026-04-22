@@ -377,6 +377,7 @@ public static class OrganizationSeeder
         ApplicationDbContext db,
         ISender mediator,
         IOrganizationRepository orgRepository,
+        ISubscriptionRepository subscriptionRepository,
         ILogger logger,
         CancellationToken ct = default)
     {
@@ -387,7 +388,7 @@ public static class OrganizationSeeder
         {
             try
             {
-                var wasCreated = await SeedOneAsync(db, org, mediator, orgRepository, logger, ct);
+                var wasCreated = await SeedOneAsync(db, org, mediator, orgRepository, subscriptionRepository, logger, ct);
                 (wasCreated ? created : skipped).Add(org.Slug);
             }
             catch (Exception ex)
@@ -405,7 +406,9 @@ public static class OrganizationSeeder
     }
 
     private static async Task<bool> SeedOneAsync(
-        ApplicationDbContext db, OrgSeedData org, ISender mediator, IOrganizationRepository orgRepository, ILogger logger, CancellationToken ct)
+        ApplicationDbContext db, OrgSeedData org, ISender mediator,
+        IOrganizationRepository orgRepository, ISubscriptionRepository subscriptionRepository,
+        ILogger logger, CancellationToken ct)
     {
         var adminResult = await DataSeederHelper.SeedUserAsync(
             db, org.Admin.Email, org.Admin.Password, org.Admin.DisplayName, mediator, logger, org.Admin.AvatarUrl, ct);
@@ -421,6 +424,10 @@ public static class OrganizationSeeder
         {
             orgId = existing.Id;
             wasCreated = false;
+
+            // Ensure existing orgs have a free subscription (idempotent — skips if already present)
+            await subscriptionRepository.InitializeFreeForOrganizationAsync(orgId, ct);
+            await subscriptionRepository.SaveChangesAsync();
         }
         else
         {

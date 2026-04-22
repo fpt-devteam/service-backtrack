@@ -1,6 +1,7 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
+using Backtrack.Core.Domain.ValueObjects;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -51,6 +52,43 @@ public class SubscriptionRepository : CrudRepositoryBase<Subscription, Guid>, IS
         return await _dbSet.AsNoTracking()
             .Where(s => s.OrganizationId.HasValue && ids.Contains(s.OrganizationId!.Value))
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task InitializeFreeForOrganizationAsync(Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        var alreadyExists = await _dbSet.AnyAsync(
+            s => s.OrganizationId == organizationId && s.Status == SubscriptionStatus.Active,
+            cancellationToken);
+
+        if (alreadyExists) return;
+
+        var freePlan = await _context.Set<SubscriptionPlan>()
+            .FirstOrDefaultAsync(
+                p => p.SubscriberType == SubscriberType.Organization && p.Price == 0m && p.IsActive,
+                cancellationToken)
+            ?? throw new InvalidOperationException("Free organization subscription plan is not seeded.");
+
+        var now = DateTimeOffset.UtcNow;
+        _dbSet.Add(new Subscription
+        {
+            Id = Guid.NewGuid(),
+            SubscriberType = SubscriberType.Organization,
+            OrganizationId = organizationId,
+            PlanId = freePlan.Id,
+            PlanSnapshot = new SubscriptionPlanSnapshot
+            {
+                Name = freePlan.Name,
+                Price = freePlan.Price,
+                Currency = freePlan.Currency,
+                BillingInterval = freePlan.BillingInterval,
+                Features = freePlan.Features,
+            },
+            ProviderSubscriptionId = Guid.NewGuid().ToString(),
+            ProviderCustomerId = string.Empty,
+            Status = SubscriptionStatus.Active,
+            CurrentPeriodStart = now,
+            CurrentPeriodEnd = DateTimeOffset.MaxValue,
+        });
     }
 
     public async Task<decimal> GetMrrAsync(CancellationToken cancellationToken = default)

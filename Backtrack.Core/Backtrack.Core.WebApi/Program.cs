@@ -101,14 +101,15 @@ public class Program
 
         try
         {
-            var context     = services.GetRequiredService<ApplicationDbContext>();
-            var mediator    = services.GetRequiredService<ISender>();
-            var orgRepo     = services.GetRequiredService<IOrganizationRepository>();
-            var logger      = services.GetRequiredService<ILogger<Program>>();
-            var stripe      = services.GetRequiredService<IOptions<StripeSettings>>().Value;
-            var superAdmin  = services.GetRequiredService<IOptions<SuperAdminSettings>>().Value;
+            var context          = services.GetRequiredService<ApplicationDbContext>();
+            var mediator         = services.GetRequiredService<ISender>();
+            var orgRepo          = services.GetRequiredService<IOrganizationRepository>();
+            var subscriptionRepo = services.GetRequiredService<ISubscriptionRepository>();
+            var logger           = services.GetRequiredService<ILogger<Program>>();
+            var stripe           = services.GetRequiredService<IOptions<StripeSettings>>().Value;
+            var superAdmin       = services.GetRequiredService<IOptions<SuperAdminSettings>>().Value;
 
-            await DataSeeder.SeedAsync(context, mediator, orgRepo, logger, stripe, superAdmin);
+            await DataSeeder.SeedAsync(context, mediator, orgRepo, subscriptionRepo, logger, stripe, superAdmin);
         }
         catch (Exception ex)
         {
