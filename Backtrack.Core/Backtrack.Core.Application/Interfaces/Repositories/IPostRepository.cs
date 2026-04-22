@@ -40,5 +40,9 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
         Task<List<(string Period, PostType PostType, PostStatus Status, int Count)>> GetMonthlyPostKpiAsync(
             int months,
             CancellationToken cancellationToken = default);
+
+        Task<List<(int Year, int Month, PostType PostType, int Count)>> GetPostMonthlyAsync(
+            int months,
+            CancellationToken cancellationToken = default);
     }
 }

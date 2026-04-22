@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Usecases.Admin.GetDashboardKpi;
+using Backtrack.Core.Application.Usecases.Admin.GetPostMonthly;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
@@ -18,6 +19,19 @@ public class DashboardController(IMediator mediator) : ControllerBase
     {
         var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var result = await mediator.Send(new GetDashboardKpiQuery(adminUserId), cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("post-monthly")]
+    [ProducesResponseType(typeof(ApiResponse<List<PostMonthlyResult>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPostMonthlyAsync(
+        [FromQuery] int months = 12,
+        CancellationToken cancellationToken = default)
+    {
+        var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetPostMonthlyQuery { AdminUserId = adminUserId, Months = months },
+            cancellationToken);
         return this.ApiOk(result);
     }
 }
