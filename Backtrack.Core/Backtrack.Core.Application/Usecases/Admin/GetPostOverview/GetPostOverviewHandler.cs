@@ -42,7 +42,6 @@ public sealed class GetPostOverviewHandler(
             {
                 Active          = active,
                 InStorage       = Sum(PostStatus.InStorage),
-                ReturnScheduled = Sum(PostStatus.ReturnScheduled),
                 Returned        = Sum(PostStatus.Returned),
                 Archived        = Sum(PostStatus.Archived),
                 Expired         = Sum(PostStatus.Expired)
