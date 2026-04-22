@@ -13,7 +13,7 @@ public sealed record GetSimilarPostsResult
 public sealed record SimilarPostItem
 {
     public required Guid Id { get; init; }
-    public required User Author { get; init; }
+    public required PostAuthorResult Author { get; init; }
     public required string PostTitle { get; init; }
     public required PostType PostType { get; init; }
     public required ItemCategory Category { get; init; }
