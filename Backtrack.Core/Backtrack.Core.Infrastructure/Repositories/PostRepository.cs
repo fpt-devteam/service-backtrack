@@ -411,6 +411,24 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return result;
     }
 
+    public async Task<Dictionary<Guid, (int Total, int Returned)>> GetStatsByOrgIdsAsync(
+        IEnumerable<Guid> orgIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids  = orgIds.ToList();
+        var rows = await _dbSet.AsNoTracking()
+            .Where(p => p.OrganizationId.HasValue && ids.Contains(p.OrganizationId!.Value))
+            .GroupBy(p => p.OrganizationId!.Value)
+            .Select(g => new
+            {
+                OrgId    = g.Key,
+                Total    = g.Count(),
+                Returned = g.Count(p => p.Status == PostStatus.Returned)
+            })
+            .ToListAsync(cancellationToken);
+        return rows.ToDictionary(r => r.OrgId, r => (r.Total, r.Returned));
+    }
+
     public async Task<int> CountAsync(
         PostFilters? filters = null,
         CancellationToken cancellationToken = default)

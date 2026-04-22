@@ -3,7 +3,7 @@ using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Admin.GetOrganizations;
 
-public sealed record GetOrganizationsQuery : IRequest<PagedResult<AdminOrgSummaryResult>>
+public sealed record GetOrganizationsQuery : IRequest<OrganizationsResult>
 {
     public required string AdminUserId { get; init; }
     public string? Search { get; init; }

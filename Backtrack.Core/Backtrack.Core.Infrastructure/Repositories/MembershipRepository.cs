@@ -57,4 +57,28 @@ public class MembershipRepository : CrudRepositoryBase<Membership, Guid>, IMembe
 
     public async Task<int> CountByOrgAsync(Guid orgId, CancellationToken cancellationToken = default)
         => await _dbSet.CountAsync(m => m.OrganizationId == orgId, cancellationToken);
+
+    public async Task<List<Membership>> GetByOrgIdsWithUserAsync(
+        IEnumerable<Guid> orgIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = orgIds.ToList();
+        return await _dbSet.AsNoTracking()
+            .Include(m => m.User)
+            .Where(m => ids.Contains(m.OrganizationId))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Dictionary<Guid, int>> GetCountsByOrgIdsAsync(
+        IEnumerable<Guid> orgIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids  = orgIds.ToList();
+        var rows = await _dbSet.AsNoTracking()
+            .Where(m => ids.Contains(m.OrganizationId))
+            .GroupBy(m => m.OrganizationId)
+            .Select(g => new { OrgId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+        return rows.ToDictionary(r => r.OrgId, r => r.Count);
+    }
 }

@@ -19,6 +19,8 @@ public interface IOrganizationRepository : IGenericRepository<Organization, Guid
     Task<(int Total, int Active, int NewThisMonth)> GetCountsAsync(CancellationToken cancellationToken = default);
 
     Task<List<(string Period, int Count)>> GetGrowthChartAsync(int months, CancellationToken cancellationToken = default);
+
+    Task<List<Organization>> GetAllForAdminAsync(string? search = null, CancellationToken cancellationToken = default);
     
     /// <summary>
     /// Get only required finder contact fields for an organization (efficient projection query)

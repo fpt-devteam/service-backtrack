@@ -42,6 +42,19 @@ public class PaymentHistoryRepository : CrudRepositoryBase<PaymentHistory, Guid>
         return (total, thisMonth, lastMonth, userRev, orgRev);
     }
 
+    public async Task<Dictionary<Guid, decimal>> GetRevenueSumsByOrgIdsAsync(
+        IEnumerable<Guid> orgIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids  = orgIds.ToList();
+        var rows = await _dbSet.AsNoTracking()
+            .Where(p => p.OrganizationId.HasValue && ids.Contains(p.OrganizationId!.Value))
+            .GroupBy(p => p.OrganizationId!.Value)
+            .Select(g => new { OrgId = g.Key, Total = g.Sum(p => p.Amount) })
+            .ToListAsync(cancellationToken);
+        return rows.ToDictionary(r => r.OrgId, r => r.Total);
+    }
+
     public async Task<List<(string Period, decimal Amount, int TransactionCount)>> GetRevenueChartAsync(
         int months, CancellationToken cancellationToken = default)
     {
