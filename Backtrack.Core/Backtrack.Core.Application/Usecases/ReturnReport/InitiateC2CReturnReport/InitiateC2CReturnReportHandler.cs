@@ -48,11 +48,29 @@ public sealed class InitiateC2CReturnReportHandler(
         var owner = await userRepository.GetByIdAsync(ownerId)
             ?? throw new NotFoundException(ReturnReportErrors.OwnerNotFound);
 
-        if (await returnReportRepository.ExistsActiveReturnReportForFinderPostAsync(command.FinderPostId, cancellationToken))
-            throw new ConflictException(ReturnReportErrors.FinderPostAlreadyInReport);
+        var existingReturnReport = await returnReportRepository.GetOngoingByParticipantsAndPostsAsync(
+            finderId,
+            ownerId,
+            command.FinderPostId,
+            command.OwnerPostId,
+            cancellationToken);
 
-        if (await returnReportRepository.ExistsActiveReturnReportForOwnerPostAsync(command.OwnerPostId, cancellationToken))
-            throw new ConflictException(ReturnReportErrors.OwnerPostAlreadyInReport);
+        if (existingReturnReport is not null)
+        {
+            return new C2CReturnReportResult
+            {
+                Id              = existingReturnReport.Id,
+                Finder          = finder.ToUserResult(),
+                Owner           = owner.ToUserResult(),
+                FinderPost      = finderPost.ToPostResult(),
+                OwnerPost       = ownerPost.ToPostResult(),
+                Status          = existingReturnReport.Status.ToString(),
+                ActivatedByRole = null,
+                ConfirmedAt     = existingReturnReport.ConfirmedAt,
+                ExpiresAt       = existingReturnReport.ExpiresAt,
+                CreatedAt       = existingReturnReport.CreatedAt
+            };
+        }
 
         var returnReport = new C2CReturnReport
         {
