@@ -134,7 +134,7 @@ public class AdminController(IMediator mediator) : ControllerBase
     // ── Organizations ────────────────────────────────────────────────────────
 
     [HttpGet("orgs")]
-    [ProducesResponseType(typeof(ApiResponse<PagedResult<AdminOrgSummaryResult>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<OrganizationsResult>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetOrganizationsAsync(
         [FromQuery] string? search,
         [FromQuery] OrganizationStatus? status,

@@ -17,4 +17,7 @@ public interface IPaymentHistoryRepository : IGenericRepository<PaymentHistory, 
 
     Task<List<(string Period, decimal Amount, int TransactionCount)>> GetRevenueChartAsync(
         int months, CancellationToken cancellationToken = default);
+
+    Task<Dictionary<Guid, decimal>> GetRevenueSumsByOrgIdsAsync(
+        IEnumerable<Guid> orgIds, CancellationToken cancellationToken = default);
 }

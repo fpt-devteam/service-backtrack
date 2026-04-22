@@ -17,4 +17,16 @@ public static class AdminErrors
     public static readonly Error InvalidPostStatus = new(
         Code: "InvalidPostStatus",
         Message: "Status must be one of: Active, InStorage, Returned, Archived, Expired.");
+
+    public static readonly Error InvalidPage = new(
+        Code: "InvalidPage",
+        Message: "Page must be at least 1.");
+
+    public static readonly Error InvalidPageSize = new(
+        Code: "InvalidPageSize",
+        Message: "PageSize must not exceed 50.");
+
+    public static readonly Error InvalidOrgStatus = new(
+        Code: "InvalidOrgStatus",
+        Message: "Status must be one of: Active, Expired, Inactive.");
 }

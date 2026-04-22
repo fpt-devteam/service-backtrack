@@ -14,4 +14,6 @@ public interface ISubscriptionRepository : IGenericRepository<Subscription, Guid
     Task<(int UserCount, int OrgCount)> GetActiveCountsAsync(CancellationToken cancellationToken = default);
 
     Task<decimal> GetMrrAsync(CancellationToken cancellationToken = default);
+
+    Task<List<Subscription>> GetByOrgIdsAsync(IEnumerable<Guid> orgIds, CancellationToken cancellationToken = default);
 }

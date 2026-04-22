@@ -44,5 +44,9 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
         Task<List<(int Year, int Month, PostType PostType, int Count)>> GetPostMonthlyAsync(
             int months,
             CancellationToken cancellationToken = default);
+
+        Task<Dictionary<Guid, (int Total, int Returned)>> GetStatsByOrgIdsAsync(
+            IEnumerable<Guid> orgIds,
+            CancellationToken cancellationToken = default);
     }
 }

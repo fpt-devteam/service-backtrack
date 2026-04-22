@@ -43,6 +43,16 @@ public class SubscriptionRepository : CrudRepositoryBase<Subscription, Guid>, IS
         return (userCount, orgCount);
     }
 
+    public async Task<List<Subscription>> GetByOrgIdsAsync(
+        IEnumerable<Guid> orgIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = orgIds.ToList();
+        return await _dbSet.AsNoTracking()
+            .Where(s => s.OrganizationId.HasValue && ids.Contains(s.OrganizationId!.Value))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<decimal> GetMrrAsync(CancellationToken cancellationToken = default)
     {
         var snapshots = await _dbSet

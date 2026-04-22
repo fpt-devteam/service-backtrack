@@ -16,4 +16,8 @@ public interface IMembershipRepository : IGenericRepository<Membership, Guid>
     Task<Membership?> GetByOrgAndUserEmailAsync(Guid orgId, string email, CancellationToken cancellationToken = default);
 
     Task<int> CountByOrgAsync(Guid orgId, CancellationToken cancellationToken = default);
+
+    Task<List<Membership>> GetByOrgIdsWithUserAsync(IEnumerable<Guid> orgIds, CancellationToken cancellationToken = default);
+
+    Task<Dictionary<Guid, int>> GetCountsByOrgIdsAsync(IEnumerable<Guid> orgIds, CancellationToken cancellationToken = default);
 }

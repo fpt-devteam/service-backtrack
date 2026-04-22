@@ -3,6 +3,7 @@ using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Backtrack.Core.Infrastructure.Repositories;
 
@@ -98,6 +99,26 @@ public class OrganizationRepository : CrudRepositoryBase<Organization, Guid>, IO
             .ToListAsync(cancellationToken);
 
         return (items, total);
+    }
+
+    public async Task<List<Organization>> GetAllForAdminAsync(
+        string? search = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _dbSet.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(o =>
+                o.Name.ToLower().Contains(term) ||
+                o.Memberships.Any(m =>
+                    m.Role == MembershipRole.OrgAdmin &&
+                    m.User.Email != null &&
+                    m.User.Email.ToLower().Contains(term)));
+        }
+
+        return await query.OrderByDescending(o => o.CreatedAt).ToListAsync(cancellationToken);
     }
 
     public async Task<List<OrgContractField>?> GetRequiredFinderContractFieldsByOrgIdAsync(
