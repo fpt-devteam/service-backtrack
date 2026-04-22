@@ -30,4 +30,7 @@ public sealed record SimilarPostItem
     public required double Score { get; init; }
     public List<MatchEvidence> Evidence { get; init; } = [];
     public required MatchStatus Status { get; init; }
+    // time gap and location distance
+    public required TimeSpan TimeGap { get; init; }
+    public required double LocationDistance { get; init; }
 }

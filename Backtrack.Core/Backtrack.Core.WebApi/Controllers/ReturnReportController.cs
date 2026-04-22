@@ -12,6 +12,7 @@ using Backtrack.Core.Application.Usecases.ReturnReport.OwnerConfirmC2CReturnRepo
 using Backtrack.Core.Application.Usecases.ReturnReport.RejectC2CReturnReport;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportsByUserId;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportsByPartnerId;
+using Backtrack.Core.Application.Usecases.ReturnReport.GetC2CReturnReportByPosts;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetOrgReturnReports;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetOrgReturnReportById;
 using Backtrack.Core.Application.Usecases;
@@ -120,6 +121,22 @@ public class ReturnReportController : ControllerBase
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var query = new GetC2CReturnReportByIdQuery { UserId = userId, C2CReturnReportId = id };
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    /// <summary>Get a C2C return report by finder post ID and owner post ID</summary>
+    [HttpGet("c2c/posts")]
+    [ProducesResponseType(typeof(ApiResponse<C2CReturnReportResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetC2CReturnReportByPostsAsync(
+        [FromQuery] Guid finderPostId,
+        [FromQuery] Guid ownerPostId,
+        CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var query = new GetC2CReturnReportByPostsQuery { UserId = userId, FinderPostId = finderPostId, OwnerPostId = ownerPostId };
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }

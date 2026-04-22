@@ -24,4 +24,8 @@ public interface IC2CReturnReportRepository : IGenericRepository<C2CReturnReport
         Guid finderPostId,
         Guid ownerPostId,
         CancellationToken cancellationToken = default);
+    Task<C2CReturnReport?> GetByPostsAsync(
+        Guid finderPostId,
+        Guid ownerPostId,
+        CancellationToken cancellationToken = default);
 }

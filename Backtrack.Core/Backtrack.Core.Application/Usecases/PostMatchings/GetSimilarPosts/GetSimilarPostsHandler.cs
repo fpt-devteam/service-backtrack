@@ -2,6 +2,7 @@ using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.Posts;
+using Backtrack.Core.Application.Utils;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -59,7 +60,9 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
             EventTime        = target.EventTime,
             Score    = match.Score,
             Evidence = match.Evidence,
-            Status   = match.Status
+            Status   = match.Status,
+            TimeGap          = (match.LostPost.EventTime - match.FoundPost.EventTime).Duration(),
+            LocationDistance = GeoUtil.Haversine(match.LostPost.Location, match.FoundPost.Location)
         };
     }
 }

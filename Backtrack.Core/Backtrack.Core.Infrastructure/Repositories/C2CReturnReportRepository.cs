@@ -88,6 +88,24 @@ public class ReturnReportRepository : CrudRepositoryBase<C2CReturnReport, Guid>,
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<C2CReturnReport?> GetByPostsAsync(
+        Guid finderPostId,
+        Guid ownerPostId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(h => h.Finder)
+            .Include(h => h.Owner)
+            .Include(h => h.FinderPost)
+                .ThenInclude(p => p!.Author)
+            .Include(h => h.OwnerPost)
+                .ThenInclude(p => p!.Author)
+            .FirstOrDefaultAsync(h =>
+                h.FinderPostId == finderPostId &&
+                h.OwnerPostId == ownerPostId,
+                cancellationToken);
+    }
+
     public async Task<C2CReturnReport?> GetOngoingByParticipantsAndPostsAsync(
         string finderId,
         string ownerId,
