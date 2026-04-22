@@ -49,8 +49,8 @@ namespace Backtrack.Core.Infrastructure.Repositories
         public async Task<IEnumerable<PostMatch>> GetMatchesByPostIdAsync(Guid postId, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(pm => pm.LostPost)
-                .Include(pm => pm.FoundPost)
+                .Include(pm => pm.LostPost).ThenInclude(p => p.Author)
+                .Include(pm => pm.FoundPost).ThenInclude(p => p.Author)
                 .Where(pm => (pm.LostPostId == postId || pm.FoundPostId == postId) && pm.DeletedAt == null)
                 .OrderByDescending(pm => pm.Score)
                 .ToListAsync(cancellationToken);
