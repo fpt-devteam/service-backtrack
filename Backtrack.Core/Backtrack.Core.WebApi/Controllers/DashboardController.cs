@@ -1,3 +1,4 @@
+using Backtrack.Core.Application.Usecases;
 using Backtrack.Core.Application.Usecases.Admin.GetDashboardKpi;
 using Backtrack.Core.Application.Usecases.Admin.GetPostMonthly;
 using Backtrack.Core.Application.Usecases.Admin.GetRecentActivity;
@@ -37,15 +38,16 @@ public class DashboardController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("recent-activity")]
-    [ProducesResponseType(typeof(ApiResponse<RecentActivityResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<RecentActivityItemResult>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecentActivityAsync(
         [FromQuery] string? status = null,
-        [FromQuery] int limit = 10,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
         var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var result = await mediator.Send(
-            new GetRecentActivityQuery { AdminUserId = adminUserId, Status = status, Limit = limit },
+            new GetRecentActivityQuery { AdminUserId = adminUserId, Status = status, Page = page, PageSize = pageSize },
             cancellationToken);
         return this.ApiOk(result);
     }
