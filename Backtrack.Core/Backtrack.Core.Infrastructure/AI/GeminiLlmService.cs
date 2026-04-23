@@ -42,8 +42,8 @@ public sealed class GeminiLlmService(
             }
 
             var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(cancellationToken);
-            var candidate = result?.Candidates?[0];
-            var text = candidate?.Content?.Parts?[0].Text;
+            var candidate = result?.Candidates?.FirstOrDefault();
+            var text = candidate?.Content?.Parts?.FirstOrDefault()?.Text;
 
             var finishReason = candidate?.FinishReason;
             if (!string.IsNullOrWhiteSpace(finishReason) && finishReason != "STOP")
