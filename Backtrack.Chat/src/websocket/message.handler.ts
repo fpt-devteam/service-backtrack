@@ -1,6 +1,7 @@
 import { Socket } from 'socket.io';
 import logger from '@/utils/logger';
 import * as messageService from '@/services/message.service';
+import * as conversationService from '@/services/conversation.service';
 import { SendDirectMessageSchema, SendSupportMessageSchema } from '@/dtos/message/message.request';
 import { isAppError } from '@/utils/api-error';
 
@@ -93,6 +94,27 @@ async function persistAndBroadcast(
 
 export function registerMessageHandlers(socket: Socket): void {
   const authUserId = socket.data.userId as string | undefined;
+
+  // ─── Join / leave org queue room (staff only) ────────────────────────────
+  socket.on('join:org:queue', async (data: { orgId: string; limit?: number; cursor?: string }) => {
+    if (!authUserId || !data?.orgId) return;
+    const { orgId, limit, cursor } = data;
+    try {
+      socket.join(`org:${orgId}:queue`);
+      const result = await conversationService.listConversationsQueueByStaff(orgId, { limit, cursor });
+      socket.emit('org:queue:list', { orgId, ...result });
+      logger.info(`Socket ${socket.id} joined org queue room org:${orgId}:queue`);
+    } catch (err) {
+      logger.error('Error fetching org queue:', { error: String(err) });
+      socket.emit('org:queue:error', { orgId, message: 'Failed to fetch queue' });
+    }
+  });
+
+  socket.on('leave:org:queue', (orgId: string) => {
+    if (!orgId) return;
+    socket.leave(`org:${orgId}:queue`);
+    logger.info(`Socket ${socket.id} left org queue room org:${orgId}:queue`);
+  });
 
   // ─── Join conversation room ──────────────────────────────────────────────
   socket.on('join:conversation', async (conversationId: string) => {

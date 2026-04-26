@@ -787,6 +787,7 @@ const buildConvBranch = (
     userId: string,
     cursorFilter: Record<string, unknown>,
     extraProject: Record<string, unknown>,
+    extraMatch: Record<string, unknown> = {},
 ) =>
     ConversationParticipant.aggregate<MixedConversationAggRow>([
         { $match: { memberId: userId, isActive: true, deletedAt: null } },
@@ -799,6 +800,7 @@ const buildConvBranch = (
                         $expr:            { $eq: ['$_id', { $toObjectId: '$$cid' }] },
                         deletedAt:        null,
                         lastMessageContent: { $ne: null },
+                        ...extraMatch,
                     },
                 }],
                 as: 'conv',
@@ -861,7 +863,7 @@ export const listAllConversationsByUserId = async (
             status:        { $ifNull: ['$conv.status',        null] },
             staffAssignId: { $ifNull: ['$conv.staffAssignId', null] },
             handover:      { $literal: null },
-        }),
+        }, { status: { $ne: ConversationStatus.CLOSED } }),
     ]);
 
     // ── Merge → sort → paginate in-process ─────────────────────────────────
