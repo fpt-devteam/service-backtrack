@@ -15,7 +15,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
 {
     private static (string Sql, List<NpgsqlParameter> Parameters) BuildFilters(PostFilters? filters)
     {
-        var clauses    = new List<string>();
+        var clauses = new List<string>();
         var parameters = new List<NpgsqlParameter>();
 
         if (filters?.PostType != null)
@@ -34,8 +34,8 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                 ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography,
                 @radius)");
             parameters.Add(new("@longitude", filters.Geo.Location.Longitude));
-            parameters.Add(new("@latitude",  filters.Geo.Location.Latitude));
-            parameters.Add(new("@radius",    filters.Geo.RadiusInKm * 1000));
+            parameters.Add(new("@latitude", filters.Geo.Location.Latitude));
+            parameters.Add(new("@radius", filters.Geo.RadiusInKm * 1000));
         }
         if (filters?.Time?.From != null)
         {
@@ -78,7 +78,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
 
     public override async Task<Post?> GetByIdAsync(Guid id, bool isTrack = false)
     {
-        IQueryable<Post> query =_dbSet
+        IQueryable<Post> query = _dbSet
             .Include(p => p.Author)
             .Include(p => p.Organization)
             .Include(p => p.CardDetail)
@@ -134,7 +134,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         {
             cmd.CommandText = dataSql;
             var (_, dataParams) = BuildFilters(filters);
-            dataParams.Add(new("@limit",  pagedQuery.Limit));
+            dataParams.Add(new("@limit", pagedQuery.Limit));
             dataParams.Add(new("@offset", pagedQuery.Offset));
             cmd.Parameters.AddRange(dataParams.ToArray());
 
@@ -230,17 +230,17 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         if (post.Status != PostStatus.Active || post.EmbeddingStatus != EmbeddingStatus.Ready || post.Embedding == null)
             return [];
 
-        var window  = TimeSpan.FromDays(PostSimilarityThresholds.TimeWindowDays);
+        var window = TimeSpan.FromDays(PostSimilarityThresholds.TimeWindowDays);
         var filters = new PostFilters
         {
-            Status        = PostStatus.Active,
+            Status = PostStatus.Active,
             SubcategoryId = post.SubcategoryId,
-            Geo           = post.Location != null
+            Geo = post.Location != null
                 ? new GeoFilter(post.Location, PostSimilarityThresholds.MaxDistanceMeters / 1000.0)
                 : null,
-            Time          = new TimeFilter(
+            Time = new TimeFilter(
                 From: post.EventTime - window,
-                To:   post.EventTime + window)
+                To: post.EventTime + window)
         };
 
         var (filterSql, filterParams) = BuildFilters(filters);
@@ -269,10 +269,10 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         await using (var command = conn.CreateCommand())
         {
             command.CommandText = sql;
-            command.Parameters.Add(new NpgsqlParameter("@postId",        post.Id));
-            command.Parameters.Add(new NpgsqlParameter("@embedding",     embeddingVec));
-            command.Parameters.Add(new NpgsqlParameter("@postType",      post.PostType.ToString()));
-            command.Parameters.Add(new NpgsqlParameter("@authorId",      post.AuthorId));
+            command.Parameters.Add(new NpgsqlParameter("@postId", post.Id));
+            command.Parameters.Add(new NpgsqlParameter("@embedding", embeddingVec));
+            command.Parameters.Add(new NpgsqlParameter("@postType", post.PostType.ToString()));
+            command.Parameters.Add(new NpgsqlParameter("@authorId", post.AuthorId));
             command.Parameters.Add(new NpgsqlParameter("@minSimilarity", PostSimilarityThresholds.MediumSimilarityThreshold));
             command.Parameters.AddRange(filterParams.ToArray());
 
@@ -284,7 +284,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         if (rankedIds.Count == 0)
             return [];
 
-        var ids   = rankedIds.Select(r => r.Id).ToList();
+        var ids = rankedIds.Select(r => r.Id).ToList();
         var posts = await _dbSet
             .AsNoTracking()
             .Include(p => p.Author)
@@ -371,10 +371,10 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
-            var period    = reader.GetString(0);
-            var postType  = Enum.Parse<PostType>(reader.GetString(1));
-            var status    = Enum.Parse<PostStatus>(reader.GetString(2));
-            var count     = reader.GetInt32(3);
+            var period = reader.GetString(0);
+            var postType = Enum.Parse<PostType>(reader.GetString(1));
+            var status = Enum.Parse<PostStatus>(reader.GetString(2));
+            var count = reader.GetInt32(3);
             result.Add((period, postType, status, count));
         }
 
@@ -415,14 +415,14 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         IEnumerable<Guid> orgIds,
         CancellationToken cancellationToken = default)
     {
-        var ids  = orgIds.ToList();
+        var ids = orgIds.ToList();
         var rows = await _dbSet.AsNoTracking()
             .Where(p => p.OrganizationId.HasValue && ids.Contains(p.OrganizationId!.Value))
             .GroupBy(p => p.OrganizationId!.Value)
             .Select(g => new
             {
-                OrgId    = g.Key,
-                Total    = g.Count(),
+                OrgId = g.Key,
+                Total = g.Count(),
                 Returned = g.Count(p => p.Status == PostStatus.Returned)
             })
             .ToListAsync(cancellationToken);
@@ -436,7 +436,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         if (post.Status != PostStatus.Active)
             return [];
 
-        var cardNumberHash      = post.CardDetail?.CardNumberHash;
+        var cardNumberHash = post.CardDetail?.CardNumberHash;
         var holderNameNormalized = post.CardDetail?.HolderNameNormalized;
 
         // Nothing to match on — skip card matching entirely
@@ -477,16 +477,18 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         await using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = sql;
-            cmd.Parameters.Add(new NpgsqlParameter("@postId",               post.Id));
-            cmd.Parameters.Add(new NpgsqlParameter("@postType",             post.PostType.ToString()));
-            cmd.Parameters.Add(new NpgsqlParameter("@authorId",             post.AuthorId));
-            cmd.Parameters.Add(new NpgsqlParameter("@longitude",            post.Location.Longitude));
-            cmd.Parameters.Add(new NpgsqlParameter("@latitude",             post.Location.Latitude));
-            cmd.Parameters.Add(new NpgsqlParameter("@maxDistance",          PostSimilarityThresholds.MaxDistanceMeters));
-            cmd.Parameters.Add(new NpgsqlParameter("@fromTime",             post.EventTime - window));
-            cmd.Parameters.Add(new NpgsqlParameter("@toTime",               post.EventTime + window));
-            cmd.Parameters.Add(new NpgsqlParameter("@cardNumberHash",       (object?)cardNumberHash       ?? DBNull.Value));
-            cmd.Parameters.Add(new NpgsqlParameter("@holderNameNormalized", (object?)holderNameNormalized ?? DBNull.Value));
+            cmd.Parameters.Add(new NpgsqlParameter("@postId", post.Id));
+            cmd.Parameters.Add(new NpgsqlParameter("@postType", post.PostType.ToString()));
+            cmd.Parameters.Add(new NpgsqlParameter("@authorId", post.AuthorId));
+            cmd.Parameters.Add(new NpgsqlParameter("@longitude", post.Location.Longitude));
+            cmd.Parameters.Add(new NpgsqlParameter("@latitude", post.Location.Latitude));
+            cmd.Parameters.Add(new NpgsqlParameter("@maxDistance", PostSimilarityThresholds.MaxDistanceMeters));
+            cmd.Parameters.Add(new NpgsqlParameter("@fromTime", post.EventTime - window));
+            cmd.Parameters.Add(new NpgsqlParameter("@toTime", post.EventTime + window));
+            cmd.Parameters.Add(new NpgsqlParameter("@cardNumberHash", NpgsqlTypes.NpgsqlDbType.Text)
+            { Value = (object?)cardNumberHash ?? DBNull.Value });
+            cmd.Parameters.Add(new NpgsqlParameter("@holderNameNormalized", NpgsqlTypes.NpgsqlDbType.Text)
+            { Value = (object?)holderNameNormalized ?? DBNull.Value });
 
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
