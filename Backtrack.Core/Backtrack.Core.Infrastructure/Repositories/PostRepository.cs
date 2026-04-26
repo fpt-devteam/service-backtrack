@@ -429,6 +429,85 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return rows.ToDictionary(r => r.OrgId, r => (r.Total, r.Returned));
     }
 
+    public async Task<IEnumerable<Post>> GetCardMatchCandidatesAsync(
+        Post post,
+        CancellationToken cancellationToken = default)
+    {
+        if (post.Status != PostStatus.Active)
+            return [];
+
+        var cardNumberHash      = post.CardDetail?.CardNumberHash;
+        var holderNameNormalized = post.CardDetail?.HolderNameNormalized;
+
+        // Nothing to match on — skip card matching entirely
+        if (cardNumberHash is null && holderNameNormalized is null)
+            return [];
+
+        var window = TimeSpan.FromDays(PostSimilarityThresholds.TimeWindowDays);
+
+        // Core card matching: CardNumberHash (definitive) OR HolderNameNormalized (strong signal)
+        // Secondary filters: distance + time window to reduce false positives
+        const string sql = """
+            SELECT p.id
+            FROM posts p
+            INNER JOIN post_card_details pcd ON pcd.post_id = p.id
+            WHERE p.deleted_at IS NULL
+                AND p.id != @postId
+                AND p.status = 'Active'
+                AND p.post_type != @postType
+                AND p.author_id != @authorId
+                AND p.location IS NOT NULL
+                AND ST_DWithin(
+                    p.location::geography,
+                    ST_SetSRID(ST_MakePoint(@longitude, @latitude), 4326)::geography,
+                    @maxDistance)
+                AND p.event_time BETWEEN @fromTime AND @toTime
+                AND (
+                    (@cardNumberHash IS NOT NULL AND pcd.card_number_hash = @cardNumberHash)
+                    OR
+                    (@holderNameNormalized IS NOT NULL AND pcd.holder_name_normalized = @holderNameNormalized)
+                )
+            """;
+
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        var ids = new List<Guid>();
+        await using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = sql;
+            cmd.Parameters.Add(new NpgsqlParameter("@postId",               post.Id));
+            cmd.Parameters.Add(new NpgsqlParameter("@postType",             post.PostType.ToString()));
+            cmd.Parameters.Add(new NpgsqlParameter("@authorId",             post.AuthorId));
+            cmd.Parameters.Add(new NpgsqlParameter("@longitude",            post.Location.Longitude));
+            cmd.Parameters.Add(new NpgsqlParameter("@latitude",             post.Location.Latitude));
+            cmd.Parameters.Add(new NpgsqlParameter("@maxDistance",          PostSimilarityThresholds.MaxDistanceMeters));
+            cmd.Parameters.Add(new NpgsqlParameter("@fromTime",             post.EventTime - window));
+            cmd.Parameters.Add(new NpgsqlParameter("@toTime",               post.EventTime + window));
+            cmd.Parameters.Add(new NpgsqlParameter("@cardNumberHash",       (object?)cardNumberHash       ?? DBNull.Value));
+            cmd.Parameters.Add(new NpgsqlParameter("@holderNameNormalized", (object?)holderNameNormalized ?? DBNull.Value));
+
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+                ids.Add(reader.GetGuid(0));
+        }
+
+        if (ids.Count == 0)
+            return [];
+
+        return await _dbSet
+            .AsNoTracking()
+            .Include(p => p.Author)
+            .Include(p => p.Organization)
+            .Include(p => p.CardDetail)
+            .Include(p => p.PersonalBelongingDetail)
+            .Include(p => p.ElectronicDetail)
+            .Include(p => p.OtherDetail)
+            .Where(p => ids.Contains(p.Id))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<int> CountAsync(
         PostFilters? filters = null,
         CancellationToken cancellationToken = default)

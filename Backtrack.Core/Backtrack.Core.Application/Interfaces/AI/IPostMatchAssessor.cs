@@ -8,14 +8,12 @@ public sealed record PostMatchContext
     public required ItemCategory Category { get; init; }
     public required string LostDescription { get; init; }
     public required string FoundDescription { get; init; }
-    public required float DistanceMeters { get; init; }
-    public required double TimeGapDays { get; init; }
-    public required float MatchScore { get; init; }
-    public required MatchingLevel MatchingLevel { get; init; }
 }
 
 public sealed record PostMatchAssessment
 {
+    public required bool IsMatch { get; set; }
+    public required string Reasoning { get; set; }
     public required List<MatchEvidence> Evidence { get; init; }
 }
 

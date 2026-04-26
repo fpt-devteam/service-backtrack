@@ -7,80 +7,94 @@ namespace Backtrack.Core.Infrastructure.AI;
 
 public sealed class GeminiPostMatchAssessor(ILlmService llmService) : IPostMatchAssessor
 {
-    // ── Shared instructions appended to every category prompt ─────────────────
+    // ── Shared output format — appended to every category prompt ──────────────
 
-    private const string SharedInstructions = """
+    private const string OutputFormat = """
 
-        After evaluating item-specific fields, always include two additional evidence entries:
-          - key "location": compare the distance between where the item was lost and found.
-          - key "time_gap": compare how many days apart the two events occurred.
+        After extracting evidence, make a final verdict:
+          - is_match: true if the evidence suggests these are LIKELY the same physical item, false otherwise.
+          - reasoning: one sentence explaining your verdict based on the evidence you found.
 
-        Rules:
-          - strength must be one of: Strong, Partial, Weak, Mismatch
-          - display_value: a short human-readable value (e.g. "NGÔ ĐỨC BÌNH", "1.2 km apart", "1 day apart")
-          - note: one short explanatory phrase, or null if self-evident
-          - Omit keys that have no information in either post (do not invent data)
+        Critical rules:
+          - ONLY include attributes that are explicitly stated or clearly visible in BOTH posts.
+          - If an attribute is mentioned in one post but absent in the other, SKIP it entirely.
+          - Do NOT guess, infer, or fabricate any value.
+          - ONE attribute per evidence entry. If a post mentions multiple distinct features
+            (e.g. "quilted pattern" AND "gold clasp"), create SEPARATE entries for each.
+            Never bundle multiple attributes into a single key.
+          - strength meanings:
+              "Strong"   = clearly the same (exact or synonymous, e.g. "black" vs "màu đen")
+              "Partial"  = plausibly the same but described differently — two people can describe
+                           the same physical detail using different words (e.g. "gold clasp" vs
+                           "gold circle logo" could be the same hardware seen from different angles).
+                           Use Partial when you cannot confirm OR deny they are the same.
+              "Mismatch" = clearly contradictory and impossible to reconcile
+                           (e.g. "red" vs "blue", "Nike" vs "Adidas")
+          - is_match should be false ONLY when there is a clear, irreconcilable Mismatch on a
+            primary attribute (color, brand, item type) or when there are zero Strong matches.
+            Partial entries alone do NOT disqualify a match.
 
         Respond ONLY with valid JSON — no markdown, no extra text:
         {
+          "is_match": true,
+          "reasoning": "Both posts describe a black Herschel backpack with a cat sticker on the front.",
           "evidence": [
-            { "key": "...", "strength": "Strong|Partial|Weak|Mismatch", "display_value": "...", "note": "..." }
+            {
+              "key": "attribute name in snake_case",
+              "lost_value": "what the lost post says",
+              "found_value": "what the found post says",
+              "strength": "Strong|Partial|Mismatch",
+              "note": "one short phrase explaining your judgment, or null"
+            }
           ]
         }
         """;
 
     // ── Category-specific system prompts ──────────────────────────────────────
 
-    private static string CardPrompt => $"""
-        You are a lost-and-found matching expert specialising in identity and membership cards.
-
-        You will receive the description of a lost card and a found card.
-        Evaluate the following evidence keys IN ORDER OF IMPORTANCE:
-          1. "holder_name"      — does the cardholder name match? (exact = Strong, similar = Partial, different = Mismatch)
-          2. "issuing_authority"— same institution/organisation?
-          3. "card_type"        — same type of card (student, national ID, bank card…)?
-          4. "expiry_date"      — do expiry dates align?
-          5. "ocr_text"         — do other details from the scanned text corroborate the match?
-        {SharedInstructions}
-        """;
-
     private static string PersonalBelongingsPrompt => $"""
-        You are a lost-and-found matching expert specialising in personal belongings.
+        You are comparing two lost-and-found posts about a personal belonging.
+        Your job: find concrete attribute matches between the lost item and the found item.
 
-        You will receive the description of a lost item and a found item.
-        Evaluate the following evidence keys IN ORDER OF IMPORTANCE:
-          1. "brand"            — same brand?
-          2. "color"            — same primary colour?
-          3. "material"         — same material?
-          4. "distinctive_marks"— unique marks, engravings, stickers, damage?
-          5. "condition"        — reported condition consistent?
-          6. "description"      — do the overall descriptions align?
-        {SharedInstructions}
+        Look for these attributes (skip any not mentioned in both posts):
+          - brand
+          - color (primary and secondary)
+          - material (leather, fabric, plastic, metal…)
+          - size or dimensions
+          - distinctive_marks (scratches, stickers, engravings, stains, damage)
+          - contents (what was inside, if mentioned)
+          - any other concrete physical attribute both posts describe
+        {OutputFormat}
         """;
 
     private static string ElectronicsPrompt => $"""
-        You are a lost-and-found matching expert specialising in electronic devices.
+        You are comparing two lost-and-found posts about an electronic device.
+        Your job: find concrete attribute matches between the lost item and the found item.
 
-        You will receive the description of a lost device and a found device.
-        Evaluate the following evidence keys IN ORDER OF IMPORTANCE:
-          1. "brand"                  — same brand?
-          2. "model"                  — same model?
-          3. "color"                  — same colour?
-          4. "distinguishing_features"— unique scratches, stickers, cases, accessories?
-          5. "lock_screen"            — lock screen description consistent?
-          6. "description"            — overall description alignment?
-        {SharedInstructions}
+        Look for these attributes (skip any not mentioned in both posts):
+          - brand
+          - model
+          - color
+          - case_or_cover (phone case, laptop sleeve, protective cover)
+          - lock_screen (wallpaper, displayed info)
+          - distinguishing_features (scratches, stickers, cracks, dents)
+          - accessories (charger, earbuds, stylus attached)
+          - any other concrete physical attribute both posts describe
+        {OutputFormat}
         """;
 
     private static string OthersPrompt => $"""
-        You are a lost-and-found matching expert.
+        You are comparing two lost-and-found posts about a miscellaneous item.
+        Your job: find concrete attribute matches between the lost item and the found item.
 
-        You will receive the description of a lost item and a found item.
-        Evaluate the following evidence keys IN ORDER OF IMPORTANCE:
-          1. "item_type"  — same type of item?
-          2. "color"      — same primary colour?
-          3. "description"— do the overall descriptions align (size, shape, markings)?
-        {SharedInstructions}
+        Look for these attributes (skip any not mentioned in both posts):
+          - item_type (what kind of item)
+          - color
+          - size or shape
+          - material
+          - distinctive_marks (text printed, labels, logos, damage)
+          - any other concrete physical attribute both posts describe
+        {OutputFormat}
         """;
 
     // ── Entry point ───────────────────────────────────────────────────────────
@@ -91,33 +105,41 @@ public sealed class GeminiPostMatchAssessor(ILlmService llmService) : IPostMatch
     {
         var systemPrompt = context.Category switch
         {
-            ItemCategory.Cards              => CardPrompt,
             ItemCategory.PersonalBelongings => PersonalBelongingsPrompt,
-            ItemCategory.Electronics        => ElectronicsPrompt,
-            _                               => OthersPrompt,
+            ItemCategory.Electronics => ElectronicsPrompt,
+            _ => OthersPrompt,
         };
 
         var dto = await llmService.CompleteAsync<EvidenceDto>(new LlmRequest
         {
-            SystemPrompt    = systemPrompt,
-            UserPrompt      = BuildUserPrompt(context),
-            Temperature     = 0.1f,
-            MaxOutputTokens = 2000
+            SystemPrompt = systemPrompt,
+            UserPrompt = BuildUserPrompt(context),
+            Temperature = 0.1f,
+            MaxOutputTokens = 2500
         }, cancellationToken);
 
         var evidence = dto.Evidence?
-            .Where(e => !string.IsNullOrWhiteSpace(e.Key) && Enum.TryParse<MatchStrength>(e.Strength, out _))
+            .Where(e => !string.IsNullOrWhiteSpace(e.Key)
+                     && !string.IsNullOrWhiteSpace(e.LostValue)
+                     && !string.IsNullOrWhiteSpace(e.FoundValue)
+                     && Enum.TryParse<MatchStrength>(e.Strength, out _))
             .Select(e => new MatchEvidence(
                 e.Key!,
                 Enum.Parse<MatchStrength>(e.Strength!),
-                e.DisplayValue,
+                e.LostValue!,
+                e.FoundValue!,
                 e.Note))
             .ToList() ?? [];
 
-        return new PostMatchAssessment { Evidence = evidence };
+        return new PostMatchAssessment
+        {
+            IsMatch = dto.IsMatch,
+            Reasoning = dto.Reasoning,
+            Evidence = evidence,
+        };
     }
 
-    // ── User prompt (same structure for all categories) ───────────────────────
+    // ── User prompt — description only, no metrics ────────────────────────────
 
     private static string BuildUserPrompt(PostMatchContext ctx) => $"""
         --- LOST ITEM ---
@@ -126,21 +148,21 @@ public sealed class GeminiPostMatchAssessor(ILlmService llmService) : IPostMatch
         --- FOUND ITEM ---
         {ctx.FoundDescription}
 
-        --- CONTEXT METRICS ---
-        Distance:         {ctx.DistanceMeters:F0} metres
-        Time gap:         {ctx.TimeGapDays:F1} days
-        Similarity score: {ctx.MatchScore:P0}
-        Matching level:   {ctx.MatchingLevel}
-
-        Assess whether these two items are likely the same, returning structured evidence.
+        Compare these two posts and extract matching evidence.
         """;
 
     // ── DTOs for JSON parsing ─────────────────────────────────────────────────
 
     private sealed class EvidenceDto
     {
+        [JsonPropertyName("is_match")]
+        public required bool IsMatch { get; set; }
+
+        [JsonPropertyName("reasoning")]
+        public required string Reasoning { get; set; }
+
         [JsonPropertyName("evidence")]
-        public List<EvidenceItemDto>? Evidence { get; set; }
+        public required List<EvidenceItemDto> Evidence { get; set; }
     }
 
     private sealed class EvidenceItemDto
@@ -151,8 +173,11 @@ public sealed class GeminiPostMatchAssessor(ILlmService llmService) : IPostMatch
         [JsonPropertyName("strength")]
         public string? Strength { get; set; }
 
-        [JsonPropertyName("display_value")]
-        public string? DisplayValue { get; set; }
+        [JsonPropertyName("lost_value")]
+        public string? LostValue { get; set; }
+
+        [JsonPropertyName("found_value")]
+        public string? FoundValue { get; set; }
 
         [JsonPropertyName("note")]
         public string? Note { get; set; }

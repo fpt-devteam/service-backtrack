@@ -41,7 +41,6 @@ public class PostMatchConfiguration : IEntityTypeConfiguration<PostMatch>
             .HasColumnName("status")
             .HasConversion<string>()
             .HasMaxLength(20)
-            .HasDefaultValue(MatchStatus.Pending)
             .IsRequired();
 
         builder.Property(m => m.CreatedAt).HasColumnName("created_at").IsRequired();

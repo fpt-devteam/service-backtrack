@@ -26,6 +26,10 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             Post post,
             CancellationToken cancellationToken = default);
 
+        Task<IEnumerable<Post>> GetCardMatchCandidatesAsync(
+            Post post,
+            CancellationToken cancellationToken = default);
+
         Task<int> CountAsync(
             PostFilters? filters = null,
             CancellationToken cancellationToken = default);

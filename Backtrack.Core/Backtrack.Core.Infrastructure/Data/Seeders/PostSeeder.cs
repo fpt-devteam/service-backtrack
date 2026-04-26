@@ -92,7 +92,7 @@ public static class PostSeeder
         EventTime      = DateTimeOffset.UtcNow.AddDays(-1),
         PersonalBelongingDetail = new PersonalBelongingDetailDto
         {
-            ItemName         = "Ví da đen",
+            ItemName         = "Black Wallet",
             Color            = "black",
             Material         = "leather",
             Size             = "small",

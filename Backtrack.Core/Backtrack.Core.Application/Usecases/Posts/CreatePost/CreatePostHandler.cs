@@ -64,12 +64,11 @@ public sealed class CreatePostHandler(
 
     private static void SetDetailContentHash(Post post, IHasher hasher)
     {
-        if (post.Category == ItemCategory.Cards) return;
-
         var hash = hasher.HashStrings(PostDocumentUtil.BuildDocument(post));
 
         if (post.PersonalBelongingDetail is not null) post.PersonalBelongingDetail.ContentHash = hash;
         else if (post.ElectronicDetail is not null) post.ElectronicDetail.ContentHash = hash;
+        else if (post.CardDetail is not null) post.CardDetail.ContentHash = hash;
         else if (post.OtherDetail is not null) post.OtherDetail.ContentHash = hash;
     }
 

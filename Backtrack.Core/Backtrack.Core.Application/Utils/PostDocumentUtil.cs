@@ -19,8 +19,8 @@ public static class PostDocumentUtil
         {
             case ItemCategory.PersonalBelongings when post.PersonalBelongingDetail is { } d:
                 if (!string.IsNullOrWhiteSpace(d.ItemName)) sb.Append($" Item: {d.ItemName}.");
-                if (!string.IsNullOrWhiteSpace(d.Brand))  sb.Append($" Brand: {d.Brand}.");
-                if (!string.IsNullOrWhiteSpace(d.Color))  sb.Append($" Color: {d.Color}.");
+                if (!string.IsNullOrWhiteSpace(d.Brand)) sb.Append($" Brand: {d.Brand}.");
+                if (!string.IsNullOrWhiteSpace(d.Color)) sb.Append($" Color: {d.Color}.");
                 if (!string.IsNullOrWhiteSpace(d.Material)) sb.Append($" Material: {d.Material}.");
                 if (!string.IsNullOrWhiteSpace(d.Condition)) sb.Append($" Condition: {d.Condition}.");
                 if (!string.IsNullOrWhiteSpace(d.DistinctiveMarks)) sb.Append($" Distinctive marks: {d.DistinctiveMarks}.");
@@ -29,11 +29,13 @@ public static class PostDocumentUtil
                 break;
 
             case ItemCategory.Cards when post.CardDetail is { } c:
-                if (!string.IsNullOrWhiteSpace(c.ItemName)) sb.Append($" Card: {c.ItemName}.");
-                if (!string.IsNullOrWhiteSpace(c.HolderName)) sb.Append($" Holder: {c.HolderName}.");
-                if (!string.IsNullOrWhiteSpace(c.IssuingAuthority)) sb.Append($" Issued by: {c.IssuingAuthority}.");
-                if (!string.IsNullOrWhiteSpace(c.AiDescription)) sb.Append($" {c.AiDescription}");
-                if (!string.IsNullOrWhiteSpace(c.OcrText)) sb.Append($" OCR: {c.OcrText}.");
+                if (!string.IsNullOrWhiteSpace(c.ItemName)) sb.Append($"Card: {c.ItemName}. ");
+                if (!string.IsNullOrWhiteSpace(c.HolderNameNormalized)) sb.Append($"Holder name: {c.HolderNameNormalized}. ");
+                if (!string.IsNullOrWhiteSpace(c.IssuingAuthority)) sb.Append($"Issuing authority: {c.IssuingAuthority}. ");
+                if (c.ExpiryDate.HasValue) sb.Append($"Expiry date: {c.ExpiryDate:MM/yyyy}. ");
+                if (c.DateOfBirth.HasValue) sb.Append($"Date of birth: {c.DateOfBirth:dd/MM/yyyy}. ");
+                if (!string.IsNullOrWhiteSpace(c.OcrText)) sb.Append($"OCR text: {c.OcrText}. ");
+                if (!string.IsNullOrWhiteSpace(c.AdditionalDetails)) sb.Append($"Notes: {c.AdditionalDetails}.");
                 break;
 
             case ItemCategory.Electronics when post.ElectronicDetail is { } e:
