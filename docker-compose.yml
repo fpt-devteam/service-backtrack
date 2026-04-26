@@ -38,20 +38,6 @@ services:
     networks:
       - backtrack-network
 
-  backtrack-notification-api:
-    image: backtrack-notification-api:latest
-    build:
-      context: .
-      dockerfile: dockerfiles/Dockerfile.backtrack-notification-api
-    container_name: backtrack-notification-api
-    ports:
-      - "5000:5000"
-    env_file:
-      - ./env/backtrack-notification-api.docker.env
-    networks:
-      - backtrack-network
-    restart: unless-stopped
-
   backtrack-core-db:
     image: backtrack-core-db:latest
     build:
@@ -86,22 +72,6 @@ services:
       - backtrack-network
     restart: unless-stopped
 
-  backtrack-notification-db:
-    image: mongo:7-jammy
-    container_name: backtrack-notification-db
-    hostname: backtrack-notification-db
-    ports:
-      - "27019:27017"
-    environment:
-      - MONGO_INITDB_DATABASE=backtrack-notification
-      - MONGO_INITDB_ROOT_USERNAME=mongo
-      - MONGO_INITDB_ROOT_PASSWORD=mongo123
-    volumes:
-      - backtrack-notification-db-data:/data/db
-    networks:
-      - backtrack-network
-    restart: unless-stopped
-
   backtrack-message-broker:
     image: rabbitmq:3.13-management-alpine
     container_name: backtrack-message-broker
@@ -132,6 +102,5 @@ networks:
 volumes:
   backtrack-core-db-data:
   backtrack-chat-db-data:
-  backtrack-notification-db-data:
   backtrack-message-broker-data:
 

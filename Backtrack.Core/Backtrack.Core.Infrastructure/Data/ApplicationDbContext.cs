@@ -26,6 +26,8 @@ namespace Backtrack.Core.Infrastructure.Data
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<PaymentHistory> PaymentHistories { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Device> Devices { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -50,6 +52,8 @@ namespace Backtrack.Core.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new SubscriptionPlanConfiguration());
             modelBuilder.ApplyConfiguration(new SubscriptionConfiguration());
             modelBuilder.ApplyConfiguration(new PaymentHistoryConfiguration());
+            modelBuilder.ApplyConfiguration(new NotificationConfiguration());
+            modelBuilder.ApplyConfiguration(new DeviceConfiguration());
         }
     }
 }

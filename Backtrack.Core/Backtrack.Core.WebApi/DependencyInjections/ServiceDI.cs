@@ -1,12 +1,16 @@
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Interfaces.Email;
+using Backtrack.Core.Application.Interfaces.PushNotification;
 using Backtrack.Core.Application.Usecases;
 using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Application.Usecases.Users.EnsureUserExist;
 using Backtrack.Core.Infrastructure.Helpers;
 using Backtrack.Core.Infrastructure.Messaging;
+using Backtrack.Core.Infrastructure.Messaging.Consumers;
 using Backtrack.Core.Infrastructure.Repositories;
+using Backtrack.Core.Infrastructure.Services.Notifications;
 using FluentValidation;
 using MediatR;
 
@@ -36,9 +40,27 @@ public static class ServiceDI
         services.AddScoped<IOrgReturnReportRepository, OrgReturnReportRepository>();
         services.AddScoped<IOrgReceiveReportRepository, OrgReceiveReportRepository>();
         services.AddScoped(typeof(IGenericRepository<,>), typeof(CrudRepositoryBase<,>));
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<IDeviceRepository, DeviceRepository>();
 
         // Messaging
         services.AddScoped<IEventPublisher, CapEventPublisher>();
+        services.AddScoped<InvitationCreatedConsumer>();
+
+        // Notification services
+        services.AddScoped<IPushNotificationService, ExpoPushNotificationService>();
+        services.AddHttpClient();
+        services.AddScoped<IEmailService, ResendEmailService>();
+
+        services.AddHttpClient("Resend", (sp, client) =>
+        {
+            var config = sp.GetRequiredService<IConfiguration>();
+            var apiKey = config["Resend:ApiKey"]
+                ?? throw new InvalidOperationException("Resend:ApiKey is required.");
+            client.BaseAddress = new Uri("https://api.resend.com/");
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+        });
 
         // Helpers
         services.AddSingleton<IHasher, SHA256Hasher>();

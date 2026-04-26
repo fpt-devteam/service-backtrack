@@ -82,4 +82,10 @@
     <ProjectReference Include="..\Backtrack.Core.Infrastructure\Backtrack.Core.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Templates\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
