@@ -52,5 +52,11 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
         Task<Dictionary<Guid, (int Total, int Returned)>> GetStatsByOrgIdsAsync(
             IEnumerable<Guid> orgIds,
             CancellationToken cancellationToken = default);
+
+        Task<HashSet<DateOnly>> GetActiveDatesAsync(
+            string authorId,
+            Guid orgId,
+            DateTimeOffset since,
+            CancellationToken cancellationToken = default);
     }
 }

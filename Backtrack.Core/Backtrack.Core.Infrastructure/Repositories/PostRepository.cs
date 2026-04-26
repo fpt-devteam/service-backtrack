@@ -527,6 +527,38 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return Convert.ToInt32(await cmd.ExecuteScalarAsync(cancellationToken));
     }
 
+    public async Task<HashSet<DateOnly>> GetActiveDatesAsync(
+        string authorId,
+        Guid orgId,
+        DateTimeOffset since,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+            SELECT DISTINCT DATE(created_at AT TIME ZONE 'UTC')
+            FROM posts
+            WHERE deleted_at IS NULL
+              AND author_id = @authorId
+              AND organization_id = @orgId
+              AND created_at >= @since";
+
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        var result = new HashSet<DateOnly>();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.Add(new NpgsqlParameter("@authorId", authorId));
+        cmd.Parameters.Add(new NpgsqlParameter("@orgId",    orgId));
+        cmd.Parameters.Add(new NpgsqlParameter("@since",    since));
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            result.Add(reader.GetFieldValue<DateOnly>(0));
+
+        return result;
+    }
+
     public async Task<IEnumerable<Post>> SearchByTitleAsync(
         string title,
         PostFilters? filters = null,
