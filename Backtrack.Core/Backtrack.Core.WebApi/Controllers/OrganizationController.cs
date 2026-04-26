@@ -1,3 +1,4 @@
+using Backtrack.Core.Application.Usecases.OrganizationDashboard.GetOrgReturnRate;
 using Backtrack.Core.Application.Usecases.Organizations;
 using Backtrack.Core.Application.Usecases.Organizations.CreateOrganization;
 using Backtrack.Core.Application.Usecases.Organizations.GetMyOrganizations;
@@ -47,6 +48,19 @@ public class OrganizationController(IMediator mediator) : ControllerBase
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var query = new GetMyOrganizationsQuery(userId);
         var result = await mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("{orgId:guid}/return-rate")]
+    [ProducesResponseType(typeof(ApiResponse<OrgReturnRateResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetOrgReturnRateAsync(
+        [FromRoute] Guid orgId, CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetOrgReturnRateQuery { OrgId = orgId, UserId = userId },
+            cancellationToken);
         return this.ApiOk(result);
     }
 
