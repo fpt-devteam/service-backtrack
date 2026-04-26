@@ -1,3 +1,5 @@
+using Backtrack.Core.Application.Usecases.OrganizationDashboard.GetEngagementMetrics;
+using Backtrack.Core.Application.Usecases.OrganizationDashboard.GetMyReturnRate;
 using Backtrack.Core.Application.Usecases.OrganizationDashboard.GetOrgPostStats;
 using Backtrack.Core.Application.Usecases.OrganizationDashboard.GetStaffDashboardStats;
 using Backtrack.Core.WebApi.Common;
@@ -35,6 +37,34 @@ public class OrganizationStaffDashboardController(IMediator mediator) : Controll
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var result = await mediator.Send(
             new GetOrgPostStatsQuery { OrgId = orgId, UserId = userId },
+            cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("engagement")]
+    [ProducesResponseType(typeof(ApiResponse<EngagementMetricsResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetEngagementMetricsAsync(
+        [FromRoute] Guid orgId,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetEngagementMetricsQuery { OrgId = orgId, UserId = userId },
+            cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("return-rate")]
+    [ProducesResponseType(typeof(ApiResponse<MyReturnRateResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetMyReturnRateAsync(
+        [FromRoute] Guid orgId,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetMyReturnRateQuery { OrgId = orgId, UserId = userId },
             cancellationToken);
         return this.ApiOk(result);
     }

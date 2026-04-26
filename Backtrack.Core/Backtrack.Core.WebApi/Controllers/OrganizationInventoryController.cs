@@ -1,5 +1,6 @@
 using Backtrack.Core.Application.Usecases;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.CreateInventoryItem;
+using Backtrack.Core.Application.Usecases.OrganizationInventory.GetDashboardInventory;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.GetInventoryItemById;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.PublishInventoryItem;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
@@ -18,6 +19,28 @@ namespace Backtrack.Core.WebApi.Controllers;
 [Produces("application/json")]
 public class OrganizationInventoryController(IMediator mediator) : ControllerBase
 {
+    [HttpGet]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<DashboardInventoryItem>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetDashboardInventoryAsync(
+        [FromRoute] Guid orgId,
+        [FromQuery] string? staffId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(new GetDashboardInventoryQuery
+        {
+            UserId   = userId,
+            OrgId    = orgId,
+            StaffId  = staffId,
+            Page     = page,
+            PageSize = pageSize
+        }, cancellationToken);
+        return this.ApiOk(result);
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<InventoryItemResult>), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateInventoryItemAsync(
