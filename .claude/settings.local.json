@@ -62,7 +62,9 @@
       "Bash(git stash *)",
       "mcp__plugin_context-mode_context-mode__ctx_search",
       "mcp__plugin_context-mode_context-mode__ctx_execute",
-      "Bash(grep \"\\\\.cs$\")"
+      "Bash(grep \"\\\\.cs$\")",
+      "Bash(xargs ls *)",
+      "Bash(git log *)"
     ],
     "deny": [],
     "ask": []

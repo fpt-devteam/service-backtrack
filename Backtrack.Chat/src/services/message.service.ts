@@ -3,10 +3,12 @@ import { MessageStatus, MessageType } from '@/models';
 import SupportConversation from '@/models/support-conversation';
 import DirectConversation from '@/models/direct-conversation';
 import ConversationParticipant from '@/models/conversation-participant';
+import User from '@/models/user.model';
 import { SendMessagePayload } from '@/dtos/message/message.request';
 import { MessageResponse, MessagesResponse } from '@/dtos/message/message.response';
 import { CursorPaginationParams, cursorPaginate } from '@/utils/pagination';
 import { ConversationErrors } from './errors/conversation.errors';
+import { getIO } from '@/config/websocket';
 import logger from '@/utils/logger';
 
 /**
@@ -44,6 +46,10 @@ export const sendMessage = async (data: SendMessagePayload): Promise<SendMessage
   if (!found) {
     throw ConversationErrors.NotFound;
   }
+
+  const isFirstSupportMessage =
+    found.model === SupportConversation &&
+    found.doc.lastMessageContent === null;
 
   // Verify sender is a participant
   const participant = await ConversationParticipant.findOne({
@@ -111,6 +117,45 @@ export const sendMessage = async (data: SendMessagePayload): Promise<SendMessage
       unreadCount: p.unreadCount ?? 0,
       lastMessage,
     }));
+
+  if (isFirstSupportMessage) {
+    try {
+      const supportDoc = found.doc as InstanceType<typeof SupportConversation>;
+      const senderUser = await User.findById(data.senderId)
+        .select('displayName email avatarUrl')
+        .lean()
+        .exec();
+      getIO()
+        .to(`org:${supportDoc.orgId}:queue`)
+        .emit('queue:new', {
+          conversationId: data.conversationId,
+          orgId: supportDoc.orgId,
+          orgName: supportDoc.orgName ?? null,
+          orgSlug: supportDoc.orgSlug ?? null,
+          orgLogoUrl: supportDoc.orgLogoUrl ?? null,
+          status: supportDoc.status,
+          assignedStaffId: null,
+          partner: senderUser
+            ? {
+                id: senderUser._id.toString(),
+                displayName: senderUser.displayName ?? null,
+                email: senderUser.email ?? null,
+                avatarUrl: senderUser.avatarUrl ?? null,
+              }
+            : null,
+          lastMessage: {
+            senderId: data.senderId,
+            content: lastMessageContent,
+            timestamp: message.createdAt,
+          },
+          unreadCount: 1,
+          createdAt: supportDoc.createdAt,
+          updatedAt: message.createdAt,
+        });
+    } catch (err) {
+      logger.warn('queue:new emit failed (non-fatal):', { error: String(err) });
+    }
+  }
 
   logger.info(`Message sent in conversation ${data.conversationId} by ${data.senderId}`);
 
