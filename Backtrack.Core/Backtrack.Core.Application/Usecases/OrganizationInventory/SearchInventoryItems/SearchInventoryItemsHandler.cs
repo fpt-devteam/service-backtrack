@@ -27,8 +27,8 @@ public sealed class SearchInventoryItemsHandler(
         var filters = new PostFilters
         {
             OrganizationId = command.OrgId,
-            PostType       = PostType.Found,
             Category       = command.Filters?.Category,
+            PostType       = command.Filters?.PostType,
             Status         = command.Filters?.Status,
             AuthorId       = command.Filters?.StaffId,
             Time           = command.Filters?.Time
