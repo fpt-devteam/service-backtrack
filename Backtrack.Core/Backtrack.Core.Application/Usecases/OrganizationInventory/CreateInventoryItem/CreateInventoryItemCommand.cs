@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
 using Backtrack.Core.Application.Usecases.Posts;
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 
@@ -11,6 +12,7 @@ public sealed record CreateInventoryItemCommand : IRequest<InventoryItemResult>
     [JsonIgnore] public string StaffId { get; init; } = string.Empty;
     [JsonIgnore] public Guid OrgId { get; init; }
     public required string PostTitle { get; init; }
+    public required PostType PostType { get; init; }
     public required string Category { get; init; }
     public required string SubcategoryCode { get; init; }
     public PersonalBelongingDetailDto? PersonalBelongingDetail { get; init; }
