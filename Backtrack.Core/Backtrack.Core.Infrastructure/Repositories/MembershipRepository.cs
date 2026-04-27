@@ -58,6 +58,12 @@ public class MembershipRepository : CrudRepositoryBase<Membership, Guid>, IMembe
     public async Task<int> CountByOrgAsync(Guid orgId, CancellationToken cancellationToken = default)
         => await _dbSet.CountAsync(m => m.OrganizationId == orgId, cancellationToken);
 
+    public async Task<int> CountActiveByOrgAsync(Guid orgId, CancellationToken cancellationToken = default)
+        => await _dbSet.CountAsync(m => m.OrganizationId == orgId && m.Status == MembershipStatus.Active, cancellationToken);
+
+    public async Task<int> CountNewByOrgSinceAsync(Guid orgId, DateTimeOffset since, CancellationToken cancellationToken = default)
+        => await _dbSet.CountAsync(m => m.OrganizationId == orgId && m.JoinedAt >= since, cancellationToken);
+
     public async Task<List<Membership>> GetByOrgIdsWithUserAsync(
         IEnumerable<Guid> orgIds,
         CancellationToken cancellationToken = default)

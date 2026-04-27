@@ -17,6 +17,10 @@ public interface IMembershipRepository : IGenericRepository<Membership, Guid>
 
     Task<int> CountByOrgAsync(Guid orgId, CancellationToken cancellationToken = default);
 
+    Task<int> CountActiveByOrgAsync(Guid orgId, CancellationToken cancellationToken = default);
+
+    Task<int> CountNewByOrgSinceAsync(Guid orgId, DateTimeOffset since, CancellationToken cancellationToken = default);
+
     Task<List<Membership>> GetByOrgIdsWithUserAsync(IEnumerable<Guid> orgIds, CancellationToken cancellationToken = default);
 
     Task<Dictionary<Guid, int>> GetCountsByOrgIdsAsync(IEnumerable<Guid> orgIds, CancellationToken cancellationToken = default);
