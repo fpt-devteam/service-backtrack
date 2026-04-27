@@ -16,7 +16,7 @@ public sealed class UnregisterDeviceHandler : IRequestHandler<UnregisterDeviceCo
 
     public async Task<Unit> Handle(UnregisterDeviceCommand request, CancellationToken cancellationToken)
     {
-        var found = await _deviceRepository.DeactivateAsync(request.UserId, request.DeviceId, cancellationToken);
+        var found = await _deviceRepository.DeactivateAsync(request.UserId!, request.DeviceId, cancellationToken);
         if (!found)
             throw new NotFoundException(NotificationErrors.DeviceNotFound);
 
