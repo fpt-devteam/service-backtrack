@@ -63,5 +63,15 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             Guid orgId,
             string? authorId,
             CancellationToken cancellationToken = default);
+
+        Task<List<(int Year, int Month, int Lost, int Found, int Returned)>> GetMonthlyActivityByOrgAsync(
+            Guid orgId,
+            int months,
+            CancellationToken cancellationToken = default);
+
+        Task<Dictionary<string, (int Total, int Returned)>> GetStatsByAuthorIdsAsync(
+            Guid orgId,
+            IEnumerable<string> authorIds,
+            CancellationToken cancellationToken = default);
     }
 }

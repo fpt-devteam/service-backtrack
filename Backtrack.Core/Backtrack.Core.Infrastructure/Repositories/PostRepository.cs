@@ -601,6 +601,84 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return result;
     }
 
+    public async Task<List<(int Year, int Month, int Lost, int Found, int Returned)>> GetMonthlyActivityByOrgAsync(
+        Guid orgId,
+        int months,
+        CancellationToken cancellationToken = default)
+    {
+        var cutoff = DateTimeOffset.UtcNow.AddMonths(-months);
+        const string sql = @"
+            SELECT year, month, SUM(lost)::int, SUM(found)::int, SUM(returned)::int
+            FROM (
+                SELECT EXTRACT(YEAR  FROM created_at)::int AS year,
+                       EXTRACT(MONTH FROM created_at)::int AS month,
+                       CASE WHEN post_type = 'Lost'  THEN 1 ELSE 0 END AS lost,
+                       CASE WHEN post_type = 'Found' THEN 1 ELSE 0 END AS found,
+                       0 AS returned
+                FROM posts
+                WHERE deleted_at IS NULL
+                  AND organization_id = @orgId
+                  AND created_at >= @cutoff
+                UNION ALL
+                SELECT EXTRACT(YEAR  FROM created_at)::int,
+                       EXTRACT(MONTH FROM created_at)::int,
+                       0, 0, 1
+                FROM org_return_reports
+                WHERE deleted_at IS NULL
+                  AND org_id = @orgId
+                  AND created_at >= @cutoff
+            ) sub
+            GROUP BY year, month
+            ORDER BY year, month";
+
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        var result = new List<(int, int, int, int, int)>();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.Add(new NpgsqlParameter("@orgId",  orgId));
+        cmd.Parameters.Add(new NpgsqlParameter("@cutoff", cutoff));
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            result.Add((reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2), reader.GetInt32(3), reader.GetInt32(4)));
+
+        return result;
+    }
+
+    public async Task<Dictionary<string, (int Total, int Returned)>> GetStatsByAuthorIdsAsync(
+        Guid orgId,
+        IEnumerable<string> authorIds,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+            SELECT author_id,
+                   COUNT(*)::int AS total,
+                   SUM(CASE WHEN status = 'Returned' THEN 1 ELSE 0 END)::int AS returned
+            FROM posts
+            WHERE deleted_at IS NULL
+              AND organization_id = @orgId
+              AND author_id = ANY(@authorIds)
+            GROUP BY author_id";
+
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        var result = new Dictionary<string, (int, int)>();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.Add(new NpgsqlParameter("@orgId",     orgId));
+        cmd.Parameters.Add(new NpgsqlParameter("@authorIds", authorIds.ToArray()));
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            result[reader.GetString(0)] = (reader.GetInt32(1), reader.GetInt32(2));
+
+        return result;
+    }
+
     public async Task<IEnumerable<Post>> SearchByTitleAsync(
         string title,
         PostFilters? filters = null,

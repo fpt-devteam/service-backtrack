@@ -10,6 +10,9 @@ using Backtrack.Core.Application.Usecases.Admin.GetOrganizations;
 using Backtrack.Core.Application.Usecases.Admin.GetPostOverview;
 using Backtrack.Core.Application.Usecases.Admin.GetRevenueOverview;
 using Backtrack.Core.Application.Usecases.Admin.GetUserDetail;
+using Backtrack.Core.Application.Usecases.Admin.GetOrgDashboardStats;
+using Backtrack.Core.Application.Usecases.Admin.GetOrgMonthlyActivity;
+using Backtrack.Core.Application.Usecases.Admin.GetOrgStaffPerformance;
 using Backtrack.Core.Application.Usecases.Admin.GetUsers;
 using Backtrack.Core.Application.Usecases.Admin.UpdateSubscriptionPlanFeatures;
 using Backtrack.Core.Domain.Constants;
@@ -132,6 +135,48 @@ public class AdminController(IMediator mediator) : ControllerBase
             BillingPageSize = billingPageSize
         };
         var result = await mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    // ── Org admin dashboard ───────────────────────────────────────────────────
+
+    [HttpGet("orgs/{orgId:guid}/dashboard/stats")]
+    [ProducesResponseType(typeof(ApiResponse<OrgDashboardStatsResult>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOrgDashboardStatsAsync(
+        [FromRoute] Guid orgId,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetOrgDashboardStatsQuery { OrgId = orgId, UserId = userId },
+            cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("orgs/{orgId:guid}/dashboard/staff-performance")]
+    [ProducesResponseType(typeof(ApiResponse<List<StaffPerformanceItemResult>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOrgStaffPerformanceAsync(
+        [FromRoute] Guid orgId,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetOrgStaffPerformanceQuery { OrgId = orgId, UserId = userId },
+            cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("orgs/{orgId:guid}/dashboard/monthly-activity")]
+    [ProducesResponseType(typeof(ApiResponse<List<MonthlyActivityPoint>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOrgMonthlyActivityAsync(
+        [FromRoute] Guid orgId,
+        [FromQuery] int months = 12,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetOrgMonthlyActivityQuery { OrgId = orgId, UserId = userId, Months = months },
+            cancellationToken);
         return this.ApiOk(result);
     }
 
