@@ -129,13 +129,33 @@ public class PaymentHistoryRepository : CrudRepositoryBase<PaymentHistory, Guid>
     }
 
     public async Task<(List<PaymentHistory> Items, int Total)> GetPagedWithDetailsAsync(
-        int page, int pageSize, CancellationToken cancellationToken = default)
+        int             page,
+        int             pageSize,
+        SubscriberType? subscriberType    = null,
+        PaymentStatus?  status            = null,
+        string?         search            = null,
+        CancellationToken cancellationToken = default)
     {
-        var query = _dbSet.AsNoTracking()
+        IQueryable<PaymentHistory> q = _dbSet.AsNoTracking()
             .Include(p => p.Subscription)
-                .ThenInclude(s => s.Organization)
-            .OrderByDescending(p => p.PaymentDate);
+                .ThenInclude(s => s.Organization);
 
+        if (subscriberType != null)
+            q = q.Where(p => p.SubscriberType == subscriberType);
+
+        if (status != null)
+            q = q.Where(p => p.Status == status);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            q = q.Where(p =>
+                p.ProviderInvoiceId.ToLower().Contains(term) ||
+                (p.Subscription.Organization != null &&
+                 p.Subscription.Organization.Name.ToLower().Contains(term)));
+        }
+
+        var query = q.OrderByDescending(p => p.PaymentDate);
         var total = await query.CountAsync(cancellationToken);
         var items = await query
             .Skip((page - 1) * pageSize)

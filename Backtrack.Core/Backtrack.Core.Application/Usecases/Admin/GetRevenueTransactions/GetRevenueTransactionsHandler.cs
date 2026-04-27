@@ -19,7 +19,9 @@ public sealed class GetRevenueTransactionsHandler(
             throw new ForbiddenException(AdminErrors.Forbidden);
 
         var (items, total) = await paymentHistoryRepository.GetPagedWithDetailsAsync(
-            query.Page, query.PageSize, cancellationToken);
+            query.Page, query.PageSize,
+            query.SubscriberType, query.Status, query.Search,
+            cancellationToken);
 
         var userIds      = items.Where(p => p.UserId != null).Select(p => p.UserId!).Distinct();
         var displayNames = await userRepository.GetDisplayNamesByIdsAsync(userIds, cancellationToken);

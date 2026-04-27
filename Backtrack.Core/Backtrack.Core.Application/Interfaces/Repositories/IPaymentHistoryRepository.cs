@@ -1,3 +1,4 @@
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 
 namespace Backtrack.Core.Application.Interfaces.Repositories;
@@ -28,5 +29,10 @@ public interface IPaymentHistoryRepository : IGenericRepository<PaymentHistory, 
         CancellationToken cancellationToken = default);
 
     Task<(List<PaymentHistory> Items, int Total)> GetPagedWithDetailsAsync(
-        int page, int pageSize, CancellationToken cancellationToken = default);
+        int            page,
+        int            pageSize,
+        SubscriberType? subscriberType = null,
+        PaymentStatus?  status         = null,
+        string?         search         = null,
+        CancellationToken cancellationToken = default);
 }

@@ -97,14 +97,24 @@ public class AdminController(IMediator mediator) : ControllerBase
     [HttpGet("revenue/transactions")]
     [ProducesResponseType(typeof(ApiResponse<RevenueTransactionsPageResult>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRevenueTransactionsAsync(
-        [FromQuery] int page     = 1,
-        [FromQuery] int pageSize = 10,
+        [FromQuery] int     page           = 1,
+        [FromQuery] int     pageSize       = 10,
+        [FromQuery] SubscriberType? subscriberType = null,
+        [FromQuery] PaymentStatus? paymentStatus  = null,
+        [FromQuery] string? search         = null,
         CancellationToken cancellationToken = default)
     {
         var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var result = await mediator.Send(
-            new GetRevenueTransactionsQuery { AdminUserId = adminUserId, Page = page, PageSize = pageSize },
-            cancellationToken);
+
+        var result = await mediator.Send(new GetRevenueTransactionsQuery
+        {
+            AdminUserId    = adminUserId,
+            Page           = page,
+            PageSize       = pageSize,
+            SubscriberType = subscriberType,
+            Status         = paymentStatus,
+            Search         = string.IsNullOrWhiteSpace(search) ? null : search,
+        }, cancellationToken);
         return this.ApiOk(result);
     }
 
