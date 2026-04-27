@@ -114,6 +114,37 @@ public class PaymentHistoryRepository : CrudRepositoryBase<PaymentHistory, Guid>
         return result;
     }
 
+    public async Task<(int Total, int OrgCount, int UserCount)> GetTransactionCountsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await _dbSet.AsNoTracking()
+            .Where(p => p.Status == PaymentStatus.Succeeded)
+            .GroupBy(p => p.SubscriberType)
+            .Select(g => new { Type = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var orgCount  = rows.FirstOrDefault(r => r.Type == SubscriberType.Organization)?.Count ?? 0;
+        var userCount = rows.FirstOrDefault(r => r.Type == SubscriberType.User)?.Count ?? 0;
+        return (orgCount + userCount, orgCount, userCount);
+    }
+
+    public async Task<(List<PaymentHistory> Items, int Total)> GetPagedWithDetailsAsync(
+        int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = _dbSet.AsNoTracking()
+            .Include(p => p.Subscription)
+                .ThenInclude(s => s.Organization)
+            .OrderByDescending(p => p.PaymentDate);
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, total);
+    }
+
     public async Task<(List<PaymentHistory> Items, int Total)> GetPagedByUserIdAsync(
         string userId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
