@@ -10,4 +10,8 @@ public sealed record GetOrganizationsQuery : IRequest<OrganizationsResult>
     public OrganizationStatus? Status { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
+    /// <summary>createdAt | name</summary>
+    public string SortBy { get; init; } = "createdAt";
+    /// <summary>asc | desc</summary>
+    public string SortOrder { get; init; } = "desc";
 }

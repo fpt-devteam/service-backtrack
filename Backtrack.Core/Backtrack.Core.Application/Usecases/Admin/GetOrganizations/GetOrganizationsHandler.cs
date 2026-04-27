@@ -1,3 +1,4 @@
+using Backtrack.Core.Application.Common;
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
@@ -46,6 +47,15 @@ public sealed class GetOrganizationsHandler(
             _                            => allOrgs
         };
 
+        // Apply sorting
+        var desc = !string.Equals(query.SortOrder, "asc", StringComparison.OrdinalIgnoreCase);
+        IEnumerable<Domain.Entities.Organization> sorted = query.SortBy?.ToLower() switch
+        {
+            "name" => desc ? filtered.OrderByDescending(o => o.Name) : filtered.OrderBy(o => o.Name),
+            _      => desc ? filtered.OrderByDescending(o => o.CreatedAt) : filtered.OrderBy(o => o.CreatedAt),
+        };
+        filtered = sorted.ToList();
+
         var totalCount = filtered.Count;
         var totalPages = (int)Math.Ceiling(totalCount / (double)query.PageSize);
 
@@ -75,8 +85,10 @@ public sealed class GetOrganizationsHandler(
 
         var items = pageOrgs.Select(org =>
         {
-            var sub      = latestSubByOrg.TryGetValue(org.Id, out var s) ? s : null;
-            var isActive = sub is not null && sub.CurrentPeriodEnd > now;
+            var sub        = latestSubByOrg.TryGetValue(org.Id, out var s) ? s : null;
+            var isActive   = sub is not null && sub.CurrentPeriodEnd > now;
+            var planName   = isActive ? sub!.PlanSnapshot.Name : null;
+            var memberLimit = OrgMemberLimitPolicy.GetLimit(planName);
             var (total, ret) = postStats.TryGetValue(org.Id, out var ps) ? ps : (0, 0);
             var successRate  = total > 0 ? Math.Round(ret / (double)total * 100, 1) : 0.0;
             var revenue      = revenueSums.TryGetValue(org.Id, out var rev) ? (long)rev : 0L;
@@ -89,9 +101,9 @@ public sealed class GetOrganizationsHandler(
                 Name             = org.Name,
                 LogoUrl          = org.LogoUrl,
                 AdminEmail       = adminEmail,
-                SubscriptionPlan = sub?.PlanSnapshot.Name,
+                SubscriptionPlan = planName ?? "Free",
                 Status           = org.Status.ToString(),
-                Capacity         = new OrganizationCapacityResult(memberCount, 0),
+                Capacity         = new OrganizationCapacityResult(memberCount, memberLimit),
                 Performance      = successRate,
                 TotalRevenue     = revenue,
                 SuccessRate      = successRate,

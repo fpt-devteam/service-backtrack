@@ -20,6 +20,8 @@ public class OrganizationsController(IMediator mediator) : ControllerBase
         [FromQuery] OrganizationStatus? status = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] string sortBy = "createdAt",
+        [FromQuery] string sortOrder = "desc",
         CancellationToken cancellationToken = default)
     {
         var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
@@ -30,7 +32,9 @@ public class OrganizationsController(IMediator mediator) : ControllerBase
                 Search      = search,
                 Status      = status,
                 Page        = page,
-                PageSize    = pageSize
+                PageSize    = pageSize,
+                SortBy      = sortBy,
+                SortOrder   = sortOrder,
             },
             cancellationToken);
         return this.ApiOk(result);
