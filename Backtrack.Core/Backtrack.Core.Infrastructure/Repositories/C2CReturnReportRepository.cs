@@ -106,6 +106,14 @@ public class ReturnReportRepository : CrudRepositoryBase<C2CReturnReport, Guid>,
                 cancellationToken);
     }
 
+    public async Task<List<C2CReturnReport>> GetOpenByPostIdAsync(Guid postId, CancellationToken cancellationToken = default)
+    {
+        var openStatuses = new[] { C2CReturnReportStatus.Ongoing, C2CReturnReportStatus.Delivered };
+        return await _dbSet
+            .Where(h => (h.FinderPostId == postId || h.OwnerPostId == postId) && openStatuses.Contains(h.Status))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<C2CReturnReport?> GetOngoingByParticipantsAndPostsAsync(
         string finderId,
         string ownerId,

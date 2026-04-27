@@ -16,15 +16,18 @@ namespace Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostResult>
 {
     private readonly IPostRepository _postRepository;
+    private readonly IC2CReturnReportRepository _returnReportRepository;
     private readonly IBackgroundJobService _backgroundJobService;
     private readonly IHasher _hasher;
 
     public UpdatePostHandler(
         IPostRepository postRepository,
+        IC2CReturnReportRepository returnReportRepository,
         IBackgroundJobService backgroundJobService,
         IHasher hasher)
     {
         _postRepository = postRepository;
+        _returnReportRepository = returnReportRepository;
         _backgroundJobService = backgroundJobService;
         _hasher = hasher;
     }
@@ -36,6 +39,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
 
         if (post.OrganizationId.HasValue) throw new ForbiddenException(PostErrors.Forbidden);
         if (post.AuthorId != command.UserId) throw new ForbiddenException(PostErrors.Forbidden);
+        if (post.Status != PostStatus.Active) throw new ConflictException(PostErrors.NotActive);
 
         bool needsReEmbedding = false;
 
@@ -46,13 +50,13 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         var detailChanged = post.Category switch
         {
             ItemCategory.PersonalBelongings when command.PersonalBelongingDetail is { } pb
-                => Apply(() => { UpdatePersonalBelongingDetail(post, pb); post.PostTitle = post.PersonalBelongingDetail?.ItemName ?? post.PostTitle; }),
+                => Apply(() => { UpdatePersonalBelongingDetail(post, pb); }),
             ItemCategory.Cards when command.CardDetail is { } cd
-                => Apply(() => { UpdateCardDetail(post, cd, _hasher); post.PostTitle = post.CardDetail?.ItemName ?? post.PostTitle; }),
+                => Apply(() => { UpdateCardDetail(post, cd, _hasher); }),
             ItemCategory.Electronics when command.ElectronicDetail is { } ed
-                => Apply(() => { UpdateElectronicDetail(post, ed); post.PostTitle = post.ElectronicDetail?.ItemName ?? post.PostTitle; }),
+                => Apply(() => { UpdateElectronicDetail(post, ed); }),
             ItemCategory.Others when command.OtherDetail is { } od
-                => Apply(() => { UpdateOtherDetail(post, od); post.PostTitle = post.OtherDetail?.ItemName ?? post.PostTitle; }),
+                => Apply(() => { UpdateOtherDetail(post, od); }),
             _ => false,
         };
         if (detailChanged) needsReEmbedding = true;
@@ -97,6 +101,14 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             post.PostMatchingStatus = PostMatchingStatus.Pending;
         }
         await _postRepository.SaveChangesAsync();
+
+        var openReports = await _returnReportRepository.GetOpenByPostIdAsync(post.Id, cancellationToken);
+        if (openReports.Count > 0)
+        {
+            foreach (var report in openReports)
+                report.Status = C2CReturnReportStatus.Closed;
+            await _returnReportRepository.SaveChangesAsync();
+        }
 
         if (needsReEmbedding)
             _backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(

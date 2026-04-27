@@ -41,5 +41,9 @@ namespace Backtrack.Core.Application.Exceptions.Errors
         public static readonly Error ImageDoesNotMatchSubcategory = new(
             Code: "ImageDoesNotMatchSubcategory",
             Message: "The item in the image does not match the specified subcategory.");
+
+        public static readonly Error NotActive = new(
+            Code: "PostNotActive",
+            Message: "Only active posts can be updated.");
     }
 }
