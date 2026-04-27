@@ -21,7 +21,7 @@ public sealed class GetOrgStaffPerformanceHandler(
             throw new ForbiddenException(MembershipErrors.InsufficientRole);
 
         var (members, _) = await membershipRepository.GetPagedByOrgAsync(query.OrgId, 0, int.MaxValue, cancellationToken);
-        var staffList    = members.Where(m => m.Status == MembershipStatus.Active).ToList();
+        var staffList    = members.Where(m => m.Status == MembershipStatus.Active && m.Role == MembershipRole.OrgStaff).ToList();
 
         var authorIds = staffList.Select(m => m.UserId).ToList();
         var postStats = await postRepository.GetStatsByAuthorIdsAsync(query.OrgId, authorIds, cancellationToken);

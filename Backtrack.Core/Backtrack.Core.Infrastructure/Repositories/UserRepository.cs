@@ -75,6 +75,15 @@ public class UserRepository : CrudRepositoryBase<User, string>, IUserRepository
     public async Task<int> CountAnonymousAsync(CancellationToken cancellationToken = default)
         => await _dbSet.CountAsync(u => u.Email == null || u.Email == string.Empty, cancellationToken);
 
+    public async Task<Dictionary<string, string?>> GetDisplayNamesByIdsAsync(
+        IEnumerable<string> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.ToList();
+        return await _dbSet.AsNoTracking()
+            .Where(u => idList.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.DisplayName, cancellationToken);
+    }
+
     public async Task<(List<User> Items, int Total)> GetPagedAsync(
         int page,
         int pageSize,
