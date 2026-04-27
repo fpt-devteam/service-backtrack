@@ -3,8 +3,10 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.AI;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Utils;
+using Backtrack.Core.Application.Usecases.Notifications.SendPushNotification;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
+using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -14,6 +16,7 @@ public sealed class FindAndSavePostMatchesHandler(
     IPostRepository postRepository,
     IPostMatchRepository postMatchRepository,
     IPostMatchAssessor assessor,
+    IMediator mediator,
     ILogger<FindAndSavePostMatchesHandler> logger) : IRequestHandler<FindAndSavePostMatchesCommand>
 {
     public async Task<Unit> Handle(FindAndSavePostMatchesCommand request, CancellationToken cancellationToken)
@@ -34,31 +37,32 @@ public sealed class FindAndSavePostMatchesHandler(
             await postMatchRepository.DeleteByPostIdAsync(sourcePost.Id, cancellationToken);
             await postMatchRepository.SaveChangesAsync();
 
-            var allMatches = new List<PostMatch>();
+            var allMatchPairs = new List<(PostMatch Match, Post Candidate)>();
 
             // Step 1: Card matching — instant, no AI.
             // Only runs for Cards category. Finds opposite-type posts in the same subcategory within the distance and time window.
             if (sourcePost.Category == ItemCategory.Cards)
             {
-                var cardMatches = await RunCardMatchingAsync(sourcePost, cancellationToken);
-                allMatches.AddRange(cardMatches);
-                logger.LogInformation("Card matching: {Count} match(es) for Post {PostId}.", cardMatches.Count, sourcePost.Id);
+                var cardMatchPairs = await RunCardMatchingAsync(sourcePost, cancellationToken);
+                allMatchPairs.AddRange(cardMatchPairs);
+                logger.LogInformation("Card matching: {Count} match(es) for Post {PostId}.", cardMatchPairs.Count, sourcePost.Id);
             }
 
             // Step 2: AI similarity — only runs when embeddings are ready.
             // Skips candidates already matched in step 1.
             if (sourcePost.EmbeddingStatus == EmbeddingStatus.Ready && sourcePost.Embedding is not null)
             {
-                var alreadyMatchedIds = GetCandidateIds(sourcePost.Id, allMatches);
-                var aiMatches = await RunAiMatchingAsync(sourcePost, alreadyMatchedIds, cancellationToken);
-                allMatches.AddRange(aiMatches);
-                logger.LogInformation("AI matching: {Count} match(es) for Post {PostId}.", aiMatches.Count, sourcePost.Id);
+                var alreadyMatchedIds = GetCandidateIds(sourcePost.Id, allMatchPairs.Select(p => p.Match).ToList());
+                var aiMatchPairs = await RunAiMatchingAsync(sourcePost, alreadyMatchedIds, cancellationToken);
+                allMatchPairs.AddRange(aiMatchPairs);
+                logger.LogInformation("AI matching: {Count} match(es) for Post {PostId}.", aiMatchPairs.Count, sourcePost.Id);
             }
             else
             {
                 logger.LogWarning("Post {PostId} embeddings not ready — skipping AI matching.", sourcePost.Id);
             }
 
+            var allMatches = allMatchPairs.Select(p => p.Match).ToList();
             if (allMatches.Count > 0)
             {
                 await postMatchRepository.CreateRangeAsync(allMatches, cancellationToken);
@@ -66,6 +70,9 @@ public sealed class FindAndSavePostMatchesHandler(
             }
 
             await CompleteProcessingAsync(sourcePost, allMatches.Count);
+
+            var readyPairs = allMatchPairs.Where(p => p.Match.Status == MatchStatus.ReadyToShow).ToList();
+            await SendMatchNotificationsAsync(sourcePost, readyPairs, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -78,10 +85,10 @@ public sealed class FindAndSavePostMatchesHandler(
 
     // ── Card matching ─────────────────────────────────────────────────────────
 
-    private async Task<List<PostMatch>> RunCardMatchingAsync(Post sourcePost, CancellationToken ct)
+    private async Task<List<(PostMatch, Post)>> RunCardMatchingAsync(Post sourcePost, CancellationToken ct)
     {
         var candidates = await postRepository.GetCardMatchCandidatesAsync(sourcePost, ct);
-        return candidates.Select(candidate => BuildCardMatch(sourcePost, candidate)).ToList();
+        return candidates.Select(candidate => (BuildCardMatch(sourcePost, candidate), candidate)).ToList();
     }
 
     private static PostMatch BuildCardMatch(Post sourcePost, Post candidate)
@@ -143,16 +150,16 @@ public sealed class FindAndSavePostMatchesHandler(
 
     // ── AI matching ───────────────────────────────────────────────────────────
 
-    private async Task<List<PostMatch>> RunAiMatchingAsync(Post sourcePost, HashSet<Guid> excludedIds, CancellationToken ct)
+    private async Task<List<(PostMatch, Post)>> RunAiMatchingAsync(Post sourcePost, HashSet<Guid> excludedIds, CancellationToken ct)
     {
         var similarPosts = await postRepository.GetSimilarPostsAsync(sourcePost, ct);
 
-        var matches = new List<PostMatch>();
+        var matches = new List<(PostMatch, Post)>();
         foreach (var (candidate, similarity) in similarPosts.Where(s => !excludedIds.Contains(s.Post.Id)))
         {
             var match = await AssessAndBuildAiMatchAsync(sourcePost, candidate, similarity, ct);
             if (match is not null)
-                matches.Add(match);
+                matches.Add((match, candidate));
         }
         return matches;
     }
@@ -198,6 +205,41 @@ public sealed class FindAndSavePostMatchesHandler(
             Reasoning      = assessment.Reasoning,
             CreatedAt      = DateTimeOffset.UtcNow
         };
+    }
+
+    // ── Notifications ─────────────────────────────────────────────────────────
+
+    private async Task SendMatchNotificationsAsync(Post sourcePost, List<(PostMatch Match, Post Candidate)> readyPairs, CancellationToken ct)
+    {
+        foreach (var (match, candidate) in readyPairs)
+        {
+            var (lostPost, foundPost) = match.LostPostId == sourcePost.Id
+                ? (sourcePost, candidate)
+                : (candidate, sourcePost);
+
+            var data = new NotificationData { ScreenPath = $"/posts/{sourcePost.Id}/matches" };
+            var source = new NotificationSource { Name = "PostMatching", EventId = match.Id.ToString() };
+
+            await mediator.Send(new SendPushNotificationCommand
+            {
+                UserId = lostPost.AuthorId,
+                Title  = $"Match found: {foundPost.PostTitle}",
+                Body   = "Your lost item may have been found. Check the match now.",
+                Type   = NotificationEvent.AIMatchingEvent,
+                Data   = data with { ScreenPath = $"/posts/{lostPost.Id}/matches" },
+                Source = source with { EventId = $"{match.Id}:lost" }
+            }, ct);
+
+            await mediator.Send(new SendPushNotificationCommand
+            {
+                UserId = foundPost.AuthorId,
+                Title  = $"Match found: {lostPost.PostTitle}",
+                Body   = "The item you found may belong to someone. Check the match now.",
+                Type   = NotificationEvent.AIMatchingEvent,
+                Data   = data with { ScreenPath = $"/posts/{foundPost.Id}/matches" },
+                Source = source with { EventId = $"{match.Id}:found" }
+            }, ct);
+        }
     }
 
     // ── State transitions ─────────────────────────────────────────────────────
