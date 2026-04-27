@@ -94,7 +94,7 @@ public class AdminController(IMediator mediator) : ControllerBase
     // ── Users ────────────────────────────────────────────────────────────────
 
     [HttpGet("users")]
-    [ProducesResponseType(typeof(ApiResponse<PagedResult<AdminUserSummaryResult>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<GetUsersResult>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUsersAsync(
         [FromQuery] string? search,
         [FromQuery] UserStatus? status,

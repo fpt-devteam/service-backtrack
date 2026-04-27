@@ -3,7 +3,7 @@ using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.Admin.GetUsers;
 
-public sealed record GetUsersQuery : IRequest<PagedResult<AdminUserSummaryResult>>
+public sealed record GetUsersQuery : IRequest<GetUsersResult>
 {
     public required string AdminUserId { get; init; }
     public string? Search { get; init; }

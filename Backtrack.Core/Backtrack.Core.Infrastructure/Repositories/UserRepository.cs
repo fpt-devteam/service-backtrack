@@ -72,6 +72,9 @@ public class UserRepository : CrudRepositoryBase<User, string>, IUserRepository
         return result;
     }
 
+    public async Task<int> CountAnonymousAsync(CancellationToken cancellationToken = default)
+        => await _dbSet.CountAsync(u => u.Email == null || u.Email == string.Empty, cancellationToken);
+
     public async Task<(List<User> Items, int Total)> GetPagedAsync(
         int page,
         int pageSize,
@@ -79,7 +82,8 @@ public class UserRepository : CrudRepositoryBase<User, string>, IUserRepository
         UserStatus? status = null,
         CancellationToken cancellationToken = default)
     {
-        var query = _dbSet.AsNoTracking().AsQueryable();
+        // Only real (non-anonymous) users — anonymous users have no email
+        var query = _dbSet.AsNoTracking().Where(u => u.Email != null && u.Email != string.Empty);
 
         if (!string.IsNullOrWhiteSpace(search))
         {

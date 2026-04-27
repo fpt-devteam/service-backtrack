@@ -17,4 +17,5 @@ public interface IUserRepository : IGenericRepository<User, string>
     Task<(int Total, int Active, int NewThisMonth)> GetCountsAsync(CancellationToken cancellationToken = default);
 
     Task<List<(string Period, int Count)>> GetGrowthChartAsync(int months, CancellationToken cancellationToken = default);
+    Task<int> CountAnonymousAsync(CancellationToken cancellationToken = default);
 }

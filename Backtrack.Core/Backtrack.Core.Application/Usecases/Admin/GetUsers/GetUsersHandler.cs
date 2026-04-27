@@ -7,22 +7,19 @@ using MediatR;
 namespace Backtrack.Core.Application.Usecases.Admin.GetUsers;
 
 public sealed class GetUsersHandler(
-    IUserRepository userRepository) : IRequestHandler<GetUsersQuery, PagedResult<AdminUserSummaryResult>>
+    IUserRepository userRepository) : IRequestHandler<GetUsersQuery, GetUsersResult>
 {
-    public async Task<PagedResult<AdminUserSummaryResult>> Handle(GetUsersQuery query, CancellationToken cancellationToken)
+    public async Task<GetUsersResult> Handle(GetUsersQuery query, CancellationToken cancellationToken)
     {
         var caller = await userRepository.GetByIdAsync(query.AdminUserId);
         if (caller is null || caller.GlobalRole != UserGlobalRole.PlatformSuperAdmin)
             throw new ForbiddenException(AdminErrors.Forbidden);
 
-        var (users, total) = await userRepository.GetPagedAsync(
-            query.Page,
-            query.PageSize,
-            query.Search,
-            query.Status,
-            cancellationToken);
+        var (users, realTotal) = await userRepository.GetPagedAsync(query.Page, query.PageSize, query.Search, query.Status, cancellationToken);
+        var anonymousCount     = await userRepository.CountAnonymousAsync(cancellationToken);
+        var totalPages         = (int)Math.Ceiling(realTotal / (double)query.PageSize);
 
-        var results = users.Select(u => new AdminUserSummaryResult
+        var items = users.Select(u => new AdminUserSummaryResult
         {
             Id          = u.Id,
             Email       = u.Email,
@@ -33,6 +30,15 @@ public sealed class GetUsersHandler(
             CreatedAt   = u.CreatedAt
         }).ToList();
 
-        return new PagedResult<AdminUserSummaryResult>(total, results);
+        return new GetUsersResult
+        {
+            Items          = items,
+            TotalCount     = realTotal,
+            Page           = query.Page,
+            PageSize       = query.PageSize,
+            TotalPages     = totalPages,
+            RealUserCount  = realTotal,
+            AnonymousCount = anonymousCount,
+        };
     }
 }
