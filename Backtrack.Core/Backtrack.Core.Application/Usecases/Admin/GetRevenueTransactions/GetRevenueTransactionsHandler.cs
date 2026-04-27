@@ -18,9 +18,14 @@ public sealed class GetRevenueTransactionsHandler(
         if (caller is null || caller.GlobalRole != UserGlobalRole.PlatformSuperAdmin)
             throw new ForbiddenException(AdminErrors.Forbidden);
 
+        List<string>? matchingUserIds = null;
+        if (!string.IsNullOrWhiteSpace(query.Search))
+            matchingUserIds = await userRepository.GetIdsBySearchTermAsync(query.Search, cancellationToken);
+
         var (items, total) = await paymentHistoryRepository.GetPagedWithDetailsAsync(
             query.Page, query.PageSize,
             query.SubscriberType, query.Status, query.Search,
+            matchingUserIds,
             cancellationToken);
 
         var userIds      = items.Where(p => p.UserId != null).Select(p => p.UserId!).Distinct();

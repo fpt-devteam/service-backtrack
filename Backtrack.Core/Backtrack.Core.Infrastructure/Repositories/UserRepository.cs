@@ -84,6 +84,18 @@ public class UserRepository : CrudRepositoryBase<User, string>, IUserRepository
             .ToDictionaryAsync(u => u.Id, u => u.DisplayName, cancellationToken);
     }
 
+    public async Task<List<string>> GetIdsBySearchTermAsync(
+        string search, CancellationToken cancellationToken = default)
+    {
+        var term = search.ToLower();
+        return await _dbSet.AsNoTracking()
+            .Where(u =>
+                (u.DisplayName != null && u.DisplayName.ToLower().Contains(term)) ||
+                (u.Email       != null && u.Email.ToLower().Contains(term)))
+            .Select(u => u.Id)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<(List<User> Items, int Total)> GetPagedAsync(
         int page,
         int pageSize,
