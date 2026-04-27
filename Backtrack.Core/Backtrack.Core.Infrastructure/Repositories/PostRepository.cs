@@ -559,6 +559,48 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return result;
     }
 
+    public async Task<Dictionary<(PostType Type, string EffectiveStatus), int>> GetStatusBreakdownByOrgAsync(
+        Guid orgId,
+        string? authorId,
+        CancellationToken cancellationToken = default)
+    {
+        var authorFilter = authorId is not null ? "AND p.author_id = @authorId" : string.Empty;
+
+        var sql = $@"
+            SELECT
+                p.post_type,
+                CASE WHEN r.id IS NOT NULL THEN 'ReturnScheduled' ELSE p.status END AS effective_status,
+                COUNT(*)::int AS cnt
+            FROM posts p
+            LEFT JOIN org_return_reports r ON r.post_id = p.id AND r.deleted_at IS NULL
+            WHERE p.deleted_at IS NULL
+              AND p.organization_id = @orgId
+              {authorFilter}
+            GROUP BY p.post_type, effective_status";
+
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        var result = new Dictionary<(PostType, string), int>();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.Add(new NpgsqlParameter("@orgId", orgId));
+        if (authorId is not null)
+            cmd.Parameters.Add(new NpgsqlParameter("@authorId", authorId));
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var postType        = Enum.Parse<PostType>(reader.GetString(0));
+            var effectiveStatus = reader.GetString(1);
+            var count           = reader.GetInt32(2);
+            result[(postType, effectiveStatus)] = count;
+        }
+
+        return result;
+    }
+
     public async Task<IEnumerable<Post>> SearchByTitleAsync(
         string title,
         PostFilters? filters = null,

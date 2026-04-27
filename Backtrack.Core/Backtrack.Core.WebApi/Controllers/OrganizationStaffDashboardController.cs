@@ -1,6 +1,7 @@
 using Backtrack.Core.Application.Usecases.OrganizationDashboard.GetEngagementMetrics;
 using Backtrack.Core.Application.Usecases.OrganizationDashboard.GetMyReturnRate;
 using Backtrack.Core.Application.Usecases.OrganizationDashboard.GetOrgPostStats;
+using Backtrack.Core.Application.Usecases.OrganizationDashboard.GetPostStatusBreakdown;
 using Backtrack.Core.Application.Usecases.OrganizationDashboard.GetStaffDashboardStats;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Constants;
@@ -65,6 +66,20 @@ public class OrganizationStaffDashboardController(IMediator mediator) : Controll
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var result = await mediator.Send(
             new GetMyReturnRateQuery { OrgId = orgId, UserId = userId },
+            cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("post-status-breakdown")]
+    [ProducesResponseType(typeof(ApiResponse<PostStatusBreakdownResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetPostStatusBreakdownAsync(
+        [FromRoute] Guid orgId,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetPostStatusBreakdownQuery { OrgId = orgId, UserId = userId },
             cancellationToken);
         return this.ApiOk(result);
     }
