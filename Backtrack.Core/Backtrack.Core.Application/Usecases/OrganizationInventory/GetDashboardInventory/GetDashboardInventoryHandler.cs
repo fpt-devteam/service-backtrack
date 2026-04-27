@@ -27,7 +27,6 @@ public sealed class GetDashboardInventoryHandler(
         var filters = new PostFilters
         {
             OrganizationId = query.OrgId,
-            PostType       = PostType.Found,
             AuthorId       = authorId
         };
 

@@ -17,6 +17,7 @@ export const getStaffChatStats = async (staffId: string, orgId: string): Promise
             orgId,
             status: ConversationStatus.IN_QUEUE,
             staffAssignId: null,
+            lastMessageContent: { $ne: null },
             deletedAt: null,
         }),
     ]);
