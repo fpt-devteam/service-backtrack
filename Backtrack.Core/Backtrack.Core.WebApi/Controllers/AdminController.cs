@@ -9,6 +9,7 @@ using Backtrack.Core.Application.Usecases.Admin.GetOrganizationDetail;
 using Backtrack.Core.Application.Usecases.Admin.GetOrganizations;
 using Backtrack.Core.Application.Usecases.Admin.GetPostOverview;
 using Backtrack.Core.Application.Usecases.Admin.GetRevenueOverview;
+using Backtrack.Core.Application.Usecases.Admin.GetRevenueMonthly;
 using Backtrack.Core.Application.Usecases.Admin.GetUserDetail;
 using Backtrack.Core.Application.Usecases.Admin.GetOrgDashboardStats;
 using Backtrack.Core.Application.Usecases.Admin.GetOrgMonthlyActivity;
@@ -50,6 +51,19 @@ public class AdminController(IMediator mediator) : ControllerBase
     {
         var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var result = await mediator.Send(new GetRevenueOverviewQuery { AdminUserId = adminUserId, Months = months }, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("dashboard/revenue-monthly")]
+    [ProducesResponseType(typeof(ApiResponse<List<RevenueMonthlyItemResult>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRevenueMonthlyAsync(
+        [FromQuery] int months = 12,
+        CancellationToken cancellationToken = default)
+    {
+        var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetRevenueMonthlyQuery { AdminUserId = adminUserId, Months = months },
+            cancellationToken);
         return this.ApiOk(result);
     }
 

@@ -84,6 +84,36 @@ public class PaymentHistoryRepository : CrudRepositoryBase<PaymentHistory, Guid>
         return result;
     }
 
+    public async Task<List<(int Year, int Month, decimal Org, decimal User)>> GetRevenueMonthlyAsync(
+        int months, CancellationToken cancellationToken = default)
+    {
+        var cutoff = DateTimeOffset.UtcNow.AddMonths(-months);
+        const string sql = @"
+            SELECT EXTRACT(YEAR  FROM payment_date)::int AS year,
+                   EXTRACT(MONTH FROM payment_date)::int AS month,
+                   SUM(CASE WHEN subscriber_type = 'Organization' THEN amount ELSE 0 END) AS org_revenue,
+                   SUM(CASE WHEN subscriber_type = 'User'         THEN amount ELSE 0 END) AS user_revenue
+            FROM payment_histories
+            WHERE status = 'Succeeded'
+              AND payment_date >= @cutoff
+            GROUP BY year, month
+            ORDER BY year, month";
+
+        var conn = _context.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            await _context.Database.OpenConnectionAsync(cancellationToken);
+
+        var result = new List<(int, int, decimal, decimal)>();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.Add(new Npgsql.NpgsqlParameter("@cutoff", cutoff));
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            result.Add((reader.GetInt32(0), reader.GetInt32(1), reader.GetDecimal(2), reader.GetDecimal(3)));
+
+        return result;
+    }
+
     public async Task<(List<PaymentHistory> Items, int Total)> GetPagedByUserIdAsync(
         string userId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
