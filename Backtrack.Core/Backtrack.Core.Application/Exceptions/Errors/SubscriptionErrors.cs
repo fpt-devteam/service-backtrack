@@ -33,4 +33,8 @@ public static class SubscriptionErrors
     public static readonly Error WebhookSignatureInvalid = new(
         Code: "WebhookSignatureInvalid",
         Message: "Stripe webhook signature validation failed.");
+
+    public static readonly Error PlanHasActiveSubscriptions = new(
+        Code: "SubscriptionPlanHasActiveSubscriptions",
+        Message: "Cannot archive a plan that has active subscriptions.");
 }

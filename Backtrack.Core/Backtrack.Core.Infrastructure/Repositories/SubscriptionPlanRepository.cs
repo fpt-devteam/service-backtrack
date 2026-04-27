@@ -21,4 +21,10 @@ public class SubscriptionPlanRepository : CrudRepositoryBase<SubscriptionPlan, G
         string providerPriceId, CancellationToken cancellationToken = default)
         => await _dbSet.AsNoTracking()
             .FirstOrDefaultAsync(p => p.ProviderPriceId == providerPriceId, cancellationToken);
+
+    public async Task<List<SubscriptionPlan>> GetAllForAdminAsync(CancellationToken cancellationToken = default)
+        => await _dbSet.AsNoTracking()
+            .OrderBy(p => p.SubscriberType)
+            .ThenBy(p => p.Price)
+            .ToListAsync(cancellationToken);
 }

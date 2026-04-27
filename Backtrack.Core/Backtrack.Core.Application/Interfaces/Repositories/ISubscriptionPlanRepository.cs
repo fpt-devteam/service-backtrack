@@ -7,4 +7,5 @@ public interface ISubscriptionPlanRepository : IGenericRepository<SubscriptionPl
 {
     Task<List<SubscriptionPlan>> GetActiveBySubscriberTypeAsync(SubscriberType subscriberType, CancellationToken cancellationToken = default);
     Task<SubscriptionPlan?> GetByProviderPriceIdAsync(string providerPriceId, CancellationToken cancellationToken = default);
+    Task<List<SubscriptionPlan>> GetAllForAdminAsync(CancellationToken cancellationToken = default);
 }

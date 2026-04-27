@@ -54,6 +54,12 @@ public class SubscriptionRepository : CrudRepositoryBase<Subscription, Guid>, IS
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<bool> HasActiveByPlanIdAsync(Guid planId, CancellationToken cancellationToken = default)
+        => await _dbSet.AnyAsync(
+            s => s.PlanId == planId &&
+                 (s.Status == SubscriptionStatus.Active || s.Status == SubscriptionStatus.PastDue),
+            cancellationToken);
+
     public async Task<decimal> GetMrrAsync(CancellationToken cancellationToken = default)
     {
         var snapshots = await _dbSet
