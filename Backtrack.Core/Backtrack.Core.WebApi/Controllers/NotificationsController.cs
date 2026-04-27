@@ -24,8 +24,6 @@ public class NotificationsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> SendPushNotificationAsync([FromBody] SendPushNotificationCommand command, CancellationToken cancellationToken)
     {
-        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        command = command with { UserId = userId };
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiCreated(result);
     }

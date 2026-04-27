@@ -222,7 +222,7 @@ public sealed class FindAndSavePostMatchesHandler(
 
             await mediator.Send(new SendPushNotificationCommand
             {
-                UserId = lostPost.AuthorId,
+                Target = new NotificationTarget { UserId = lostPost.AuthorId },
                 Title  = $"Match found: {foundPost.PostTitle}",
                 Body   = "Your lost item may have been found. Check the match now.",
                 Type   = NotificationEvent.AIMatchingEvent,
@@ -232,7 +232,7 @@ public sealed class FindAndSavePostMatchesHandler(
 
             await mediator.Send(new SendPushNotificationCommand
             {
-                UserId = foundPost.AuthorId,
+                Target = new NotificationTarget { UserId = foundPost.AuthorId },
                 Title  = $"Match found: {lostPost.PostTitle}",
                 Body   = "The item you found may belong to someone. Check the match now.",
                 Type   = NotificationEvent.AIMatchingEvent,

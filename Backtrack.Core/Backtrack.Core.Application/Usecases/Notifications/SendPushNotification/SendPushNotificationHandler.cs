@@ -27,14 +27,14 @@ public sealed class SendPushNotificationHandler : IRequestHandler<SendPushNotifi
         var notification = new Notification
         {
             Id = Guid.NewGuid(),
-            UserId = request.UserId!,
+            UserId = request.Target.UserId,
             Title = request.Title,
             Body = request.Body,
             Type = request.Type,
             Category = request.Category,
             Data = request.Data,
             SourceName = request.Source.Name,
-            SourceEventId = string.IsNullOrEmpty(request.Source.EventId) ? Guid.NewGuid().ToString() : request.Source.EventId,
+            SourceEventId = request.Source.EventId,
             SentAt = DateTimeOffset.UtcNow,
         };
 
@@ -42,7 +42,7 @@ public sealed class SendPushNotificationHandler : IRequestHandler<SendPushNotifi
 
         if (!deduped && request.Category == NotificationCategory.Push)
         {
-            var devices = await _deviceRepository.GetActiveByUserIdAsync(request.UserId, cancellationToken);
+            var devices = await _deviceRepository.GetActiveByUserIdAsync(request.Target.UserId, cancellationToken);
             var tokens = devices.Select(d => d.Token).ToList();
             if (tokens.Count > 0)
                 await _pushNotificationService.SendAsync(tokens, request.Title, request.Body, request.Data, cancellationToken);

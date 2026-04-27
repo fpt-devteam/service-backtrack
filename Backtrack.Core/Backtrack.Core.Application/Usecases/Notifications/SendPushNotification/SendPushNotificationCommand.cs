@@ -11,10 +11,14 @@ public sealed record NotificationSource
     public required string EventId { get; init; }
 }
 
+public sealed record NotificationTarget
+{
+    public required string UserId { get; init; }
+}
+
 public sealed record SendPushNotificationCommand : IRequest<SendPushNotificationResult>
 {
-    [JsonIgnore]
-    public string? UserId { get; init; } = default!;
+    public required NotificationTarget Target { get; init; }
     public required string Title { get; init; }
     public required string Body { get; init; }
     public NotificationEvent Type { get; init; } = NotificationEvent.SystemAlertEvent;
