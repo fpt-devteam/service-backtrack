@@ -21,4 +21,7 @@ public interface IUserRepository : IGenericRepository<User, string>
 
     Task<Dictionary<string, string?>> GetDisplayNamesByIdsAsync(
         IEnumerable<string> ids, CancellationToken cancellationToken = default);
+
+    Task<List<string>> GetIdsBySearchTermAsync(
+        string search, CancellationToken cancellationToken = default);
 }

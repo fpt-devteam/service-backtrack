@@ -31,8 +31,9 @@ public interface IPaymentHistoryRepository : IGenericRepository<PaymentHistory, 
     Task<(List<PaymentHistory> Items, int Total)> GetPagedWithDetailsAsync(
         int            page,
         int            pageSize,
-        SubscriberType? subscriberType = null,
-        PaymentStatus?  status         = null,
-        string?         search         = null,
-        CancellationToken cancellationToken = default);
+        SubscriberType?      subscriberType  = null,
+        PaymentStatus?       status          = null,
+        string?              search          = null,
+        IEnumerable<string>? matchingUserIds = null,
+        CancellationToken    cancellationToken = default);
 }
