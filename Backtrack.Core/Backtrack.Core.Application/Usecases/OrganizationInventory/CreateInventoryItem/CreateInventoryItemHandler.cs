@@ -45,7 +45,7 @@ public sealed class CreateInventoryItemHandler(
             AuthorId           = command.StaffId,
             OrganizationId     = organization.Id,
             PostTitle          = command.PostTitle,
-            PostType           = PostType.Found,
+            PostType           = command.PostType,
             Status             = PostStatus.InStorage,
             Category           = category,
             SubcategoryId      = subcategory.Id,
