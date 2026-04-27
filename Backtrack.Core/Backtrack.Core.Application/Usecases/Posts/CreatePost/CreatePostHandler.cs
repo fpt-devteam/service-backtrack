@@ -9,6 +9,7 @@ using Backtrack.Core.Application.Utils;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Backtrack.Core.Application.Usecases.Posts.CreatePost;
 
@@ -16,7 +17,8 @@ public sealed class CreatePostHandler(
     IPostRepository postRepository,
     ISubcategoryRepository subcategoryRepository,
     IHasher hasher,
-    IBackgroundJobService backgroundJobService) : IRequestHandler<CreatePostCommand, PostResult>
+    IBackgroundJobService backgroundJobService,
+    ILogger<CreatePostHandler> logger) : IRequestHandler<CreatePostCommand, PostResult>
 {
     public async Task<PostResult> Handle(CreatePostCommand command, CancellationToken cancellationToken)
     {
@@ -72,7 +74,7 @@ public sealed class CreatePostHandler(
         else if (post.OtherDetail is not null) post.OtherDetail.ContentHash = hash;
     }
 
-    private static void AttachDetail(Post post, CreatePostCommand command, IHasher hasher)
+    private void AttachDetail(Post post, CreatePostCommand command, IHasher hasher)
     {
         if (command.PersonalBelongingDetail is { } pb)
             post.PersonalBelongingDetail = pb.ToEntity(post.Id);
@@ -82,6 +84,15 @@ public sealed class CreatePostHandler(
             post.ElectronicDetail = ed.ToEntity(post.Id);
         else if (command.OtherDetail is { } od)
             post.OtherDetail = od.ToEntity(post.Id);
+        else
+            logger.LogWarning(
+                "No detail attached for post {PostId}. " +
+                "PersonalBelonging={PB}, Card={Card}, Electronic={Electronic}, Other={Other}",
+                post.Id,
+                command.PersonalBelongingDetail is not null,
+                command.CardDetail is not null,
+                command.ElectronicDetail is not null,
+                command.OtherDetail is not null);
     }
 
 }
