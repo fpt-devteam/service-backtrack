@@ -68,27 +68,38 @@ public sealed class CreatePostHandler(
     {
         var hash = hasher.HashStrings(PostDocumentUtil.BuildDocument(post));
 
-        if (post.PersonalBelongingDetail is not null) post.PersonalBelongingDetail.ContentHash = hash;
-        else if (post.ElectronicDetail is not null) post.ElectronicDetail.ContentHash = hash;
-        else if (post.CardDetail is not null) post.CardDetail.ContentHash = hash;
-        else if (post.OtherDetail is not null) post.OtherDetail.ContentHash = hash;
+        _ = post.Category switch
+        {
+            ItemCategory.PersonalBelongings when post.PersonalBelongingDetail is { } d => d.ContentHash = hash,
+            ItemCategory.Cards              when post.CardDetail is { } d              => d.ContentHash = hash,
+            ItemCategory.Electronics        when post.ElectronicDetail is { } d        => d.ContentHash = hash,
+            ItemCategory.Others             when post.OtherDetail is { } d             => d.ContentHash = hash,
+            _ => null,
+        };
     }
 
     private void AttachDetail(Post post, CreatePostCommand command, IHasher hasher)
     {
-        if (command.PersonalBelongingDetail is { } pb)
-            post.PersonalBelongingDetail = pb.ToEntity(post.Id);
-        else if (command.CardDetail is { } cd)
-            post.CardDetail = cd.ToEntity(post.Id, hasher);
-        else if (command.ElectronicDetail is { } ed)
-            post.ElectronicDetail = ed.ToEntity(post.Id);
-        else if (command.OtherDetail is { } od)
-            post.OtherDetail = od.ToEntity(post.Id);
+        var attached = post.Category switch
+        {
+            ItemCategory.PersonalBelongings when command.PersonalBelongingDetail is { } pb
+                => (Action)(() => post.PersonalBelongingDetail = pb.ToEntity(post.Id)),
+            ItemCategory.Cards when command.CardDetail is { } cd
+                => () => post.CardDetail = cd.ToEntity(post.Id, hasher),
+            ItemCategory.Electronics when command.ElectronicDetail is { } ed
+                => () => post.ElectronicDetail = ed.ToEntity(post.Id),
+            ItemCategory.Others when command.OtherDetail is { } od
+                => () => post.OtherDetail = od.ToEntity(post.Id),
+            _ => null,
+        };
+
+        if (attached is not null)
+            attached();
         else
             logger.LogWarning(
-                "No detail attached for post {PostId}. " +
+                "No detail attached for post {PostId}. Category={Category}, " +
                 "PersonalBelonging={PB}, Card={Card}, Electronic={Electronic}, Other={Other}",
-                post.Id,
+                post.Id, post.Category,
                 command.PersonalBelongingDetail is not null,
                 command.CardDetail is not null,
                 command.ElectronicDetail is not null,

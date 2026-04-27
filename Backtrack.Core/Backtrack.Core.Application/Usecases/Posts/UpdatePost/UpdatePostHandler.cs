@@ -42,31 +42,20 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         if (command.PostType != null && !Enum.TryParse<PostType>(command.PostType, ignoreCase: true, out var postType))
             throw new ValidationException(PostErrors.InvalidPostType);
 
-        // Update category-specific detail if provided
-        if (command.PersonalBelongingDetail != null)
+        // Update only the detail that matches this post's category
+        var detailChanged = post.Category switch
         {
-            UpdatePersonalBelongingDetail(post, command.PersonalBelongingDetail);
-            post.PostTitle = post.PersonalBelongingDetail?.ItemName ?? post.PostTitle;
-            needsReEmbedding = true;
-        }
-        else if (command.CardDetail != null)
-        {
-            UpdateCardDetail(post, command.CardDetail, _hasher);
-            post.PostTitle = post.CardDetail?.ItemName ?? post.PostTitle;
-            needsReEmbedding = true;
-        }
-        else if (command.ElectronicDetail != null)
-        {
-            UpdateElectronicDetail(post, command.ElectronicDetail);
-            post.PostTitle = post.ElectronicDetail?.ItemName ?? post.PostTitle;
-            needsReEmbedding = true;
-        }
-        if (command.OtherDetail != null)
-        {
-            UpdateOtherDetail(post, command.OtherDetail);
-            post.PostTitle = post.OtherDetail?.ItemName ?? post.PostTitle;
-            needsReEmbedding = true;
-        }
+            ItemCategory.PersonalBelongings when command.PersonalBelongingDetail is { } pb
+                => Apply(() => { UpdatePersonalBelongingDetail(post, pb); post.PostTitle = post.PersonalBelongingDetail?.ItemName ?? post.PostTitle; }),
+            ItemCategory.Cards when command.CardDetail is { } cd
+                => Apply(() => { UpdateCardDetail(post, cd, _hasher); post.PostTitle = post.CardDetail?.ItemName ?? post.PostTitle; }),
+            ItemCategory.Electronics when command.ElectronicDetail is { } ed
+                => Apply(() => { UpdateElectronicDetail(post, ed); post.PostTitle = post.ElectronicDetail?.ItemName ?? post.PostTitle; }),
+            ItemCategory.Others when command.OtherDetail is { } od
+                => Apply(() => { UpdateOtherDetail(post, od); post.PostTitle = post.OtherDetail?.ItemName ?? post.PostTitle; }),
+            _ => false,
+        };
+        if (detailChanged) needsReEmbedding = true;
 
         if (command.PostTitle != null && post.PostTitle != command.PostTitle)
         {
@@ -147,4 +136,6 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         else
             post.OtherDetail = input.ToEntity(post.Id);
     }
+
+    private static bool Apply(Action update) { update(); return true; }
 }
