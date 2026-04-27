@@ -1,6 +1,7 @@
 using Backtrack.Core.Application.Usecases;
 using Backtrack.Core.Application.Usecases.Subscriptions;
 using Backtrack.Core.Application.Usecases.Subscriptions.CancelSubscription;
+using Backtrack.Core.Application.Usecases.Subscriptions.CreateCustomerPortalSession;
 using Backtrack.Core.Application.Usecases.Subscriptions.CreateSubscription;
 using Backtrack.Core.Application.Usecases.Subscriptions.GetPaymentHistories;
 using Backtrack.Core.Application.Usecases.Subscriptions.GetSubscription;
@@ -73,6 +74,19 @@ public class SubscriptionController(IMediator mediator) : ControllerBase
         return this.ApiOk(result);
     }
 
+    [HttpPost("customer-portal")]
+    [ProducesResponseType(typeof(ApiResponse<CreateCustomerPortalSessionResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CreateCustomerPortalSessionAsync(
+        [FromBody] CreateCustomerPortalSessionCommand command, CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        command = command with { CallerId = userId };
+        var result = await mediator.Send(command, cancellationToken);
+        return this.ApiOk(result);
+    }
+
     [HttpDelete("me")]
     [ProducesResponseType(typeof(ApiResponse<SubscriptionResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -99,7 +113,7 @@ public class SubscriptionController(IMediator mediator) : ControllerBase
     private SubscriberContext ResolveSubscriber(Guid? queryOrganizationId = null)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        
+
         // Prioritize query parameter over header
         var organizationId = queryOrganizationId;
         if (!organizationId.HasValue)

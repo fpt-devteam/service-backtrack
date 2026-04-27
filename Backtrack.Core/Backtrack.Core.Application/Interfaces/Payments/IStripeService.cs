@@ -47,4 +47,5 @@ public interface IStripeService
     Task<string?> GetClientSecretAsync(string providerSubscriptionId, CancellationToken cancellationToken = default);
     Task CancelSubscriptionAsync(string providerSubscriptionId, bool cancelAtPeriodEnd, CancellationToken cancellationToken = default);
     Task<StripeWebhookEvent> ParseWebhookEventAsync(string json, string signature);
+    Task<string> CreateBillingPortalSessionAsync(string customerId, string returnUrl, CancellationToken cancellationToken = default);
 }

@@ -13,6 +13,7 @@ public sealed class StripeService : IStripeService
     private readonly StripeSettings _settings;
     private readonly CustomerService _customerService;
     private readonly SubscriptionService _subscriptionService;
+    private readonly Stripe.BillingPortal.SessionService _billingPortalSessionService;
     private readonly ILogger<StripeService> _logger;
 
     public StripeService(IOptions<StripeSettings> options, ILogger<StripeService> logger)
@@ -22,6 +23,7 @@ public sealed class StripeService : IStripeService
         StripeConfiguration.ApiKey = _settings.SecretKey;
         _customerService = new CustomerService();
         _subscriptionService = new SubscriptionService();
+        _billingPortalSessionService = new Stripe.BillingPortal.SessionService();
     }
 
     public async Task<string> EnsureCustomerAsync(EnsureCustomerRequest request, CancellationToken cancellationToken = default)
@@ -284,6 +286,20 @@ public sealed class StripeService : IStripeService
     {
         if (!parent.TryGetProperty(field, out var el)) return null;
         return ResolveIdField(el);
+    }
+
+    public async Task<string> CreateBillingPortalSessionAsync(
+        string customerId, string returnUrl, CancellationToken cancellationToken = default)
+    {
+        var session = await _billingPortalSessionService.CreateAsync(
+            new Stripe.BillingPortal.SessionCreateOptions
+            {
+                Customer = customerId,
+                ReturnUrl = returnUrl,
+            },
+            cancellationToken: cancellationToken);
+
+        return session.Url;
     }
 
     private static SubscriptionStatus MapStripeStatus(string status) => status switch
