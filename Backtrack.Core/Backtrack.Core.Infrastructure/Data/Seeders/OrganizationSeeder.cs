@@ -424,10 +424,6 @@ public static class OrganizationSeeder
         {
             orgId = existing.Id;
             wasCreated = false;
-
-            // Ensure existing orgs have a free subscription (idempotent — skips if already present)
-            await subscriptionRepository.InitializeFreeForOrganizationAsync(orgId, ct);
-            await subscriptionRepository.SaveChangesAsync();
         }
         else
         {

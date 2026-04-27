@@ -72,7 +72,6 @@ public sealed class CreateOrganizationHandler : IRequestHandler<CreateOrganizati
         };
 
         await _membershipRepository.CreateAsync(membership);
-        await _subscriptionRepository.InitializeFreeForOrganizationAsync(organization.Id, cancellationToken);
         await _organizationRepository.SaveChangesAsync();
 
         await _eventPublisher.PublishOrgEnsureExistAsync(new OrgEnsureExistIntegrationEvent

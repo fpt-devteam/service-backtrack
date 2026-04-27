@@ -17,7 +17,6 @@ public static class SubscriptionPlanSeeder
         if (stripe is null ||
             stripe.UserMonthlyPriceId is null ||
             stripe.UserYearlyPriceId  is null ||
-            stripe.OrgFreePriceId     is null ||
             stripe.OrgProPriceId      is null ||
             stripe.OrgMaxPriceId      is null)
         {
@@ -81,18 +80,6 @@ public static class SubscriptionPlanSeeder
                 SubscriberType  = SubscriberType.User,
                 ProviderPriceId = stripe.UserYearlyPriceId!,
                 Features        = ["Activate your personal QR code", "Custom note for finders", "Personalized QR design", "2 months free vs monthly"],
-                CreatedAt       = now,
-            },
-            new SubscriptionPlan
-            {
-                Id              = Guid.NewGuid(),
-                Name            = "Org Free",
-                Price           = 0m,
-                Currency        = "usd",
-                BillingInterval = SubscriptionBillingInterval.Monthly,
-                SubscriberType  = SubscriberType.Organization,
-                ProviderPriceId = stripe.OrgFreePriceId!,
-                Features        = ["Up to 3 staff members", "Basic lost & found management", "Public organization profile"],
                 CreatedAt       = now,
             },
             new SubscriptionPlan

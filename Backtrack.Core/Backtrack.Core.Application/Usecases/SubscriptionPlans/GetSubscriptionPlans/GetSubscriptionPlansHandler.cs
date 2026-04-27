@@ -1,4 +1,5 @@
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Domain.Constants;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.SubscriptionPlans.GetSubscriptionPlans;
@@ -6,11 +7,22 @@ namespace Backtrack.Core.Application.Usecases.SubscriptionPlans.GetSubscriptionP
 public sealed class GetSubscriptionPlansHandler(ISubscriptionPlanRepository planRepository)
     : IRequestHandler<GetSubscriptionPlansQuery, List<SubscriptionPlanResult>>
 {
+    internal static readonly SubscriptionPlanResult OrgFreePlan = new()
+    {
+        Id = Guid.Empty,
+        Name = "Free",
+        Price = 0,
+        Currency = "USD",
+        BillingInterval = SubscriptionBillingInterval.Monthly,
+        SubscriberType = SubscriberType.Organization,
+        Features = ["Up to 3 staff members", "Basic lost & found management", "Public organization profile"],
+    };
+
     public async Task<List<SubscriptionPlanResult>> Handle(GetSubscriptionPlansQuery query, CancellationToken cancellationToken)
     {
         var plans = await planRepository.GetActiveBySubscriberTypeAsync(query.SubscriberType, cancellationToken);
 
-        return plans.Select(p => new SubscriptionPlanResult
+        var result = plans.Select(p => new SubscriptionPlanResult
         {
             Id = p.Id,
             Name = p.Name,
@@ -20,5 +32,10 @@ public sealed class GetSubscriptionPlansHandler(ISubscriptionPlanRepository plan
             SubscriberType = p.SubscriberType,
             Features = p.Features,
         }).ToList();
+
+        if (query.SubscriberType == SubscriberType.Organization)
+            result.Insert(0, OrgFreePlan);
+
+        return result;
     }
 }
