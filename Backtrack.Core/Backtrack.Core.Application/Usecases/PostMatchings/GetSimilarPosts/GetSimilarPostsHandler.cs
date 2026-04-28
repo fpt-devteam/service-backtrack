@@ -3,6 +3,7 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Utils;
+using Backtrack.Core.Domain.Constants;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -30,6 +31,7 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
             ?? throw new NotFoundException(PostErrors.NotFound);
 
         var matches = (await _postMatchRepository.GetMatchesByPostIdAsync(request.PostId, cancellationToken))
+            .Where(m => m.Status == Domain.Entities.MatchStatus.ReadyToShow)
             .Take(request.Limit)
             .ToList();
 
