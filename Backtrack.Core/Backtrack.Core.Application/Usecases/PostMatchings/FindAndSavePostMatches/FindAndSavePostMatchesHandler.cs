@@ -157,6 +157,14 @@ public sealed class FindAndSavePostMatchesHandler(
         var matches = new List<(PostMatch, Post)>();
         foreach (var (candidate, similarity) in similarPosts.Where(s => !excludedIds.Contains(s.Post.Id)))
         {
+            if (sourcePost.Category == ItemCategory.Cards && CardIdentifiersMismatch(sourcePost, candidate))
+            {
+                logger.LogDebug(
+                    "Skipping AI comparison for card posts {SourceId} vs {CandidateId} — identifiers differ.",
+                    sourcePost.Id, candidate.Id);
+                continue;
+            }
+
             var match = await AssessAndBuildAiMatchAsync(sourcePost, candidate, similarity, ct);
             if (match is not null)
                 matches.Add((match, candidate));
@@ -273,4 +281,23 @@ public sealed class FindAndSavePostMatchesHandler(
         => matches
             .Select(m => m.LostPostId == sourcePostId ? m.FoundPostId : m.LostPostId)
             .ToHashSet();
+
+    // Returns true when both posts have a card identifier that is present on both sides but doesn't match,
+    // making an AI comparison pointless — the cards are definitively different items.
+    private static bool CardIdentifiersMismatch(Post a, Post b)
+    {
+        var cardA = a.CardDetail;
+        var cardB = b.CardDetail;
+        if (cardA is null || cardB is null) return false;
+
+        if (cardA.CardNumberHash is not null && cardB.CardNumberHash is not null
+            && cardA.CardNumberHash != cardB.CardNumberHash)
+            return true;
+
+        if (cardA.HolderNameNormalized is not null && cardB.HolderNameNormalized is not null
+            && cardA.HolderNameNormalized != cardB.HolderNameNormalized)
+            return true;
+
+        return false;
+    }
 }
