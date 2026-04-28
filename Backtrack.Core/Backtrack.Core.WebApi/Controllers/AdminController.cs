@@ -9,6 +9,10 @@ using Backtrack.Core.Application.Usecases.Admin.GetOrganizationDetail;
 using Backtrack.Core.Application.Usecases.Admin.GetOrganizations;
 using Backtrack.Core.Application.Usecases.Admin.GetPostOverview;
 using Backtrack.Core.Application.Usecases.Admin.GetRevenueOverview;
+using Backtrack.Core.Application.Usecases.Admin.GetRevenueMonthly;
+using Backtrack.Core.Application.Usecases.Admin.GetRevenueSummary;
+using Backtrack.Core.Application.Usecases.Admin.GetRevenueMonthlyChart;
+using Backtrack.Core.Application.Usecases.Admin.GetRevenueTransactions;
 using Backtrack.Core.Application.Usecases.Admin.GetUserDetail;
 using Backtrack.Core.Application.Usecases.Admin.GetOrgDashboardStats;
 using Backtrack.Core.Application.Usecases.Admin.GetOrgMonthlyActivity;
@@ -50,6 +54,67 @@ public class AdminController(IMediator mediator) : ControllerBase
     {
         var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var result = await mediator.Send(new GetRevenueOverviewQuery { AdminUserId = adminUserId, Months = months }, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("dashboard/revenue-monthly")]
+    [ProducesResponseType(typeof(ApiResponse<List<RevenueMonthlyItemResult>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRevenueMonthlyAsync(
+        [FromQuery] int months = 12,
+        CancellationToken cancellationToken = default)
+    {
+        var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetRevenueMonthlyQuery { AdminUserId = adminUserId, Months = months },
+            cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("revenue/summary")]
+    [ProducesResponseType(typeof(ApiResponse<RevenueSummaryResult>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRevenueSummaryAsync(CancellationToken cancellationToken = default)
+    {
+        var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetRevenueSummaryQuery { AdminUserId = adminUserId },
+            cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("revenue/monthly")]
+    [ProducesResponseType(typeof(ApiResponse<List<MonthlyRevenueChartItem>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRevenueMonthlyChartAsync(
+        [FromQuery] int months = 12,
+        CancellationToken cancellationToken = default)
+    {
+        var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetRevenueMonthlyChartQuery { AdminUserId = adminUserId, Months = months },
+            cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpGet("revenue/transactions")]
+    [ProducesResponseType(typeof(ApiResponse<RevenueTransactionsPageResult>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRevenueTransactionsAsync(
+        [FromQuery] int     page           = 1,
+        [FromQuery] int     pageSize       = 10,
+        [FromQuery] SubscriberType? subscriberType = null,
+        [FromQuery] PaymentStatus? paymentStatus  = null,
+        [FromQuery] string? search         = null,
+        CancellationToken cancellationToken = default)
+    {
+        var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+
+        var result = await mediator.Send(new GetRevenueTransactionsQuery
+        {
+            AdminUserId    = adminUserId,
+            Page           = page,
+            PageSize       = pageSize,
+            SubscriberType = subscriberType,
+            Status         = paymentStatus,
+            Search         = string.IsNullOrWhiteSpace(search) ? null : search,
+        }, cancellationToken);
         return this.ApiOk(result);
     }
 
