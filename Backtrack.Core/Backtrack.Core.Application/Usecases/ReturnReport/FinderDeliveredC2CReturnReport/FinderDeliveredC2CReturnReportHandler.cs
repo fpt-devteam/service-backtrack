@@ -3,16 +3,19 @@ using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Application.Interfaces.Repositories;
+using Backtrack.Core.Application.Usecases.Notifications.SendPushNotification;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Users;
 using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.ReturnReport.FinderDeliveredC2CReturnReport;
 
 public sealed class FinderDeliveredC2CReturnReportHandler(
     IC2CReturnReportRepository returnReportRepository,
-    IEventPublisher eventPublisher) : IRequestHandler<FinderDeliveredC2CReturnReportCommand, C2CReturnReportResult>
+    IEventPublisher eventPublisher,
+    IMediator mediator) : IRequestHandler<FinderDeliveredC2CReturnReportCommand, C2CReturnReportResult>
 {
     public async Task<C2CReturnReportResult> Handle(FinderDeliveredC2CReturnReportCommand command, CancellationToken cancellationToken)
     {
@@ -34,6 +37,16 @@ public sealed class FinderDeliveredC2CReturnReportHandler(
         var activatedByRole = returnReport.ActivatedById == returnReport.FinderId ? "Finder"
                             : returnReport.ActivatedById == returnReport.OwnerId ? "Owner"
                             : null;
+
+        await mediator.Send(new SendPushNotificationCommand
+        {
+            Target = new NotificationTarget { UserId = owner.Id },
+            Title  = "Item has been delivered!",
+            Body   = $"{finder.DisplayName ?? "The finder"} has delivered your item. Please confirm receipt.",
+            Type   = NotificationEvent.SystemAlertEvent,
+            Data   = new NotificationData { ScreenPath = $"/handovers/{returnReport.Id}" },
+            Source = new NotificationSource { Name = "ReturnReport", EventId = $"{returnReport.Id}:delivered" }
+        }, cancellationToken);
 
         await eventPublisher.PublishReturnReportSyncAsync(new ReturnReportSyncIntegrationEvent
         {
