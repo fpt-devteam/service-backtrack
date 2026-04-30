@@ -21,7 +21,7 @@ namespace Backtrack.Core.Infrastructure.Migrations
                 table: "org_return_reports",
                 type: "jsonb",
                 nullable: false,
-                defaultValue: "{}",
+                defaultValueSql: "'{}'::jsonb",
                 oldClrType: typeof(string),
                 oldType: "jsonb",
                 oldNullable: true);
