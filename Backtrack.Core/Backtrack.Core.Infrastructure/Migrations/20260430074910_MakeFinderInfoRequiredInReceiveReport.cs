@@ -10,12 +10,16 @@ namespace Backtrack.Core.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql(
+                "UPDATE org_receive_reports SET finder_info = '{}' WHERE finder_info IS NULL;"
+    )       ;
+
             migrationBuilder.AlterColumn<string>(
                 name: "finder_info",
                 table: "org_receive_reports",
                 type: "jsonb",
                 nullable: false,
-                defaultValue: "",
+                defaultValueSql: "'{}'::jsonb",
                 oldClrType: typeof(string),
                 oldType: "jsonb",
                 oldNullable: true);
