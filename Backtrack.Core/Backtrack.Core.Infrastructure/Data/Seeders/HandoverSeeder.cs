@@ -35,9 +35,9 @@ public static class HandoverSeeder
         {
             await mediator.Send(new InitiateC2CReturnReportCommand
             {
-                InitiatorId  = finder.Id,
+                InitiatorId = finder.Id,
                 FinderPostId = finderPostId,
-                OwnerPostId  = ownerPostId,
+                OwnerPostId = ownerPostId,
             }, ct);
 
             logger.LogInformation(
@@ -83,9 +83,9 @@ public static class HandoverSeeder
             {
                 var result = await mediator.Send(new InitiateC2CReturnReportCommand
                 {
-                    InitiatorId  = finder.Id,
+                    InitiatorId = finder.Id,
                     FinderPostId = finderPostId,
-                    OwnerPostId  = ownerPostId,
+                    OwnerPostId = ownerPostId,
                 }, ct);
 
                 handoverId = result.Id;
@@ -115,8 +115,9 @@ public static class HandoverSeeder
         {
             await mediator.Send(new FinderDeliveredC2CReturnReportCommand
             {
-                UserId             = finder.Id,
-                C2CReturnReportId  = handoverId,
+                UserId = finder.Id,
+                C2CReturnReportId = handoverId,
+                EvidenceImageUrls = ["https://placehold.co/600x400.jpg", "https://placehold.co/600x400.jpg"],
             }, ct);
 
             logger.LogInformation(
@@ -161,9 +162,9 @@ public static class HandoverSeeder
                 // Owner (Thang) initiates
                 var result = await mediator.Send(new InitiateC2CReturnReportCommand
                 {
-                    InitiatorId  = owner.Id,
+                    InitiatorId = owner.Id,
                     FinderPostId = finderPostId,
-                    OwnerPostId  = ownerPostId,
+                    OwnerPostId = ownerPostId,
                 }, ct);
 
                 handoverId = result.Id;
@@ -190,8 +191,9 @@ public static class HandoverSeeder
             {
                 await mediator.Send(new FinderDeliveredC2CReturnReportCommand
                 {
-                    UserId            = finder.Id,
+                    UserId = finder.Id,
                     C2CReturnReportId = handoverId,
+                    EvidenceImageUrls = ["https://placehold.co/600x400.jpg", "https://placehold.co/600x400.jpg"],
                 }, ct);
 
                 logger.LogInformation("HandoverSeeder: handover {Id} marked as Delivered.", handoverId);
@@ -218,7 +220,7 @@ public static class HandoverSeeder
         {
             await mediator.Send(new OwnerConfirmC2CReturnReportCommand
             {
-                UserId            = owner.Id,
+                UserId = owner.Id,
                 C2CReturnReportId = handoverId,
             }, ct);
 

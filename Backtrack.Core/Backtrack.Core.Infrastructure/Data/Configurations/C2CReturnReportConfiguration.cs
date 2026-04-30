@@ -25,10 +25,6 @@ public class C2CReturnReportConfiguration : IEntityTypeConfiguration<C2CReturnRe
             .HasMaxLength(255)
             .IsRequired();
 
-        builder.Property(r => r.ActivatedById)
-            .HasColumnName("activated_by_id")
-            .HasMaxLength(255);
-
         builder.Property(r => r.Status)
             .HasColumnName("status")
             .HasConversion<string>()
@@ -39,13 +35,22 @@ public class C2CReturnReportConfiguration : IEntityTypeConfiguration<C2CReturnRe
             .IsRequired();
 
         builder.Property(r => r.FinderPostId)
-            .HasColumnName("finder_post_id");
+            .HasColumnName("finder_post_id")
+            .IsRequired();
 
         builder.Property(r => r.OwnerPostId)
-            .HasColumnName("owner_post_id");
+            .HasColumnName("owner_post_id")
+            .IsRequired();
+
+        builder.Property(r => r.DeliveredAt)
+            .HasColumnName("delivered_at");
 
         builder.Property(r => r.ConfirmedAt)
             .HasColumnName("confirmed_at");
+
+        builder.Property(r => r.EvidenceImageUrls)
+            .HasColumnName("evidence_image_urls")
+            .HasColumnType("text[]");
 
         builder.Property(r => r.CreatedAt)
             .HasColumnName("created_at");
@@ -60,25 +65,29 @@ public class C2CReturnReportConfiguration : IEntityTypeConfiguration<C2CReturnRe
             .WithMany()
             .HasForeignKey(r => r.FinderId)
             .HasConstraintName("fk_c2c_return_reports_finder_id")
+            .IsRequired()
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(r => r.Owner)
             .WithMany()
             .HasForeignKey(r => r.OwnerId)
             .HasConstraintName("fk_c2c_return_reports_owner_id")
+            .IsRequired()
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(r => r.FinderPost)
             .WithMany()
             .HasForeignKey(r => r.FinderPostId)
             .HasConstraintName("fk_c2c_return_reports_finder_post_id")
-            .OnDelete(DeleteBehavior.SetNull);
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(r => r.OwnerPost)
             .WithMany()
             .HasForeignKey(r => r.OwnerPostId)
             .HasConstraintName("fk_c2c_return_reports_owner_post_id")
-            .OnDelete(DeleteBehavior.SetNull);
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasQueryFilter(r => r.DeletedAt == null);
 

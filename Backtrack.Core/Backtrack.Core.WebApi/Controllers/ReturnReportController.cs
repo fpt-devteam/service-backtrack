@@ -161,10 +161,11 @@ public class ReturnReportController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> FinderDeliveredC2CReturnReportAsync(
         [FromRoute] Guid id,
+        [FromBody] FinderDeliveredC2CReturnReportCommand command,
         CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var command = new FinderDeliveredC2CReturnReportCommand { UserId = userId, C2CReturnReportId = id };
+        command = command with { UserId = userId, C2CReturnReportId = id };
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
     }
