@@ -28,7 +28,6 @@ public sealed record InventoryItemResult
     public required DateTimeOffset CreatedAt { get; init; }
     public required FinderInfo FinderInfo { get; init; }
     public OwnerInfo? OwnerInfo { get; init; }
-    public DateTimeOffset? ReturnReportExpiresAt { get; init; }
 }
 
 public static class InventoryItemResultMapper
@@ -61,7 +60,6 @@ public static class InventoryItemResultMapper
             CreatedAt               = post.CreatedAt,
             FinderInfo              = receiveReport?.FinderInfo ?? new FinderInfo(),
             OwnerInfo               = returnReport?.OwnerInfo,
-            ReturnReportExpiresAt   = returnReport?.ExpiresAt
         };
     }
 }

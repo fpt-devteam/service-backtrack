@@ -27,10 +27,6 @@ public class OrgReturnReportConfiguration : IEntityTypeConfiguration<OrgReturnRe
             .HasMaxLength(255)
             .IsRequired();
 
-        builder.Property(r => r.ExpiresAt)
-            .HasColumnName("expires_at")
-            .IsRequired();
-
         builder.Property(r => r.PostId)
             .HasColumnName("post_id")
             .IsRequired();
@@ -49,9 +45,9 @@ public class OrgReturnReportConfiguration : IEntityTypeConfiguration<OrgReturnRe
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        var ownerInfoConverter = new ValueConverter<OwnerInfo?, string?>(
-            toDb => toDb == null ? null : JsonSerializer.Serialize(toDb, jsonOptions),
-            fromDb => fromDb == null ? null : JsonSerializer.Deserialize<OwnerInfo>(fromDb, jsonOptions)
+        var ownerInfoConverter = new ValueConverter<OwnerInfo, string>(
+            toDb => JsonSerializer.Serialize(toDb, jsonOptions),
+            fromDb => JsonSerializer.Deserialize<OwnerInfo>(fromDb, jsonOptions)!
         );
 
         builder.Property(r => r.OwnerInfo)
@@ -63,18 +59,21 @@ public class OrgReturnReportConfiguration : IEntityTypeConfiguration<OrgReturnRe
             .WithMany()
             .HasForeignKey(r => r.OrgId)
             .HasConstraintName("fk_org_return_reports_org_id")
+            .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(r => r.Staff)
             .WithMany()
             .HasForeignKey(r => r.StaffId)
             .HasConstraintName("fk_org_return_reports_staff_id")
+            .IsRequired()
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(r => r.Post)
             .WithMany()
             .HasForeignKey(r => r.PostId)
             .HasConstraintName("fk_org_return_reports_post_id")
+            .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasQueryFilter(r => r.DeletedAt == null);

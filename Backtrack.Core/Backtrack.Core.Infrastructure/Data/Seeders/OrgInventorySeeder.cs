@@ -1,5 +1,5 @@
+using Backtrack.Core.Application.Usecases.OrganizationInventory.CreateInventoryItem;
 using Backtrack.Core.Application.Usecases.Posts;
-using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
@@ -14,6 +14,7 @@ public static class OrgInventorySeeder
     private sealed record InventorySeedData(
         string ItemName, string Category, string SubcategoryCode,
         string[] ImageUrls, DateTimeOffset? EventTime,
+        string InternalLocation = "Lost & Found Office",
         PersonalBelongingDetailDto? PersonalBelongingDetail = null,
         ElectronicDetailDto? ElectronicDetail = null,
         OtherDetailDto? OtherDetail = null);
@@ -179,63 +180,71 @@ public static class OrgInventorySeeder
             }),
     ];
 
+    private const string TargetOrgSlug = "fpt-qn";
+
     public static async Task SeedAsync(
         ApplicationDbContext db,
         ISender mediator,
         ILogger logger,
         CancellationToken ct = default)
     {
-        var organizations = await db.Set<Organization>()
+        var org = await db.Set<Organization>()
             .Include(o => o.Memberships.Where(m => m.Role == MembershipRole.OrgStaff))
-            .ToListAsync(ct);
+            .FirstOrDefaultAsync(o => o.Slug == TargetOrgSlug, ct);
 
-        foreach (var org in organizations)
+        if (org == null)
         {
-            var inventoryCount = await db.Set<Post>()
-                .Where(p => p.OrganizationId == org.Id)
-                .CountAsync(ct);
+            logger.LogWarning("OrgInventorySeeder: org '{Slug}' not found — skipping.", TargetOrgSlug);
+            return;
+        }
 
-            if (inventoryCount < 2)
+        var inventoryCount = await db.Set<Post>()
+            .Where(p => p.OrganizationId == org.Id)
+            .CountAsync(ct);
+
+        if (inventoryCount >= InventoryItems.Length)
+        {
+            logger.LogInformation("OrgInventorySeeder: org '{Slug}' already has inventory — skipping.", TargetOrgSlug);
+            return;
+        }
+
+        var staff = org.Memberships.FirstOrDefault();
+        if (staff == null)
+        {
+            logger.LogWarning("OrgInventorySeeder: no staff found for org '{Slug}' — skipping.", TargetOrgSlug);
+            return;
+        }
+
+        logger.LogInformation("OrgInventorySeeder: seeding inventory for org '{Slug}'.", TargetOrgSlug);
+
+        for (int i = inventoryCount; i < InventoryItems.Length; i++)
+        {
+            var data = InventoryItems[i];
+
+            try
             {
-                var staff = org.Memberships.FirstOrDefault();
-                if (staff == null)
+                var command = new CreateInventoryItemCommand
                 {
-                    logger.LogWarning("OrgInventorySeeder: no staff found for org {OrgName} — skipping.", org.Name);
-                    continue;
-                }
+                    StaffId = staff.UserId,
+                    OrgId = org.Id,
+                    PostTitle = data.ItemName,
+                    Category = data.Category,
+                    SubcategoryCode = data.SubcategoryCode,
+                    ImageUrls = data.ImageUrls,
+                    EventTime = data.EventTime ?? DateTimeOffset.UtcNow,
+                    InternalLocation = data.InternalLocation,
+                    PersonalBelongingDetail = data.PersonalBelongingDetail,
+                    ElectronicDetail = data.ElectronicDetail,
+                    OtherDetail = data.OtherDetail,
+                    FinderInfo = new FinderInfo { FinderName = "Anonymous Seeder", Phone = "0123456789", Email = "anonymous@seeder.com", NationalId = "1234567890" }
+                };
 
-                logger.LogInformation("OrgInventorySeeder: seeding inventory for org {OrgName}.", org.Name);
-
-                // Seed 2 items
-                for (int i = 0; i < 2; i++)
-                {
-                    var data = InventoryItems[(inventoryCount + i) % InventoryItems.Length];
-
-                    try
-                    {
-                        var command = new CreatePostCommand
-                        {
-                            AuthorId = staff.UserId,
-                            OrganizationId = org.Id,
-                            PostTitle = data.ItemName,
-                            Category = data.Category,
-                            SubcategoryCode = data.SubcategoryCode,
-                            ImageUrls = data.ImageUrls,
-                            EventTime = data.EventTime ?? DateTimeOffset.UtcNow,
-                            PersonalBelongingDetail = data.PersonalBelongingDetail,
-                            ElectronicDetail = data.ElectronicDetail,
-                            OtherDetail = data.OtherDetail,
-                            FinderInfo = new FinderInfo { FinderName = "Anonymous Seeder", Phone = "0123456789" }
-                        };
-
-                        await mediator.Send(command, ct);
-                        logger.LogInformation("OrgInventorySeeder: created inventory item '{ItemName}' for org {OrgName}.", data.ItemName, org.Name);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError(ex, "OrgInventorySeeder: failed to create inventory item for org {OrgName}.", org.Name);
-                    }
-                }
+                await mediator.Send(command, ct);
+                logger.LogInformation("OrgInventorySeeder: created '{ItemName}' for org '{Slug}'.", data.ItemName, TargetOrgSlug);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "OrgInventorySeeder: failed to create '{ItemName}' for org '{Slug}'.", data.ItemName, TargetOrgSlug);
             }
         }
     }

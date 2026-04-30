@@ -11,8 +11,9 @@ public sealed record CreateOrgReturnReportCommand : IRequest<OrgReturnReportResu
     public string UserId { get; init; } = string.Empty;
 
     [JsonIgnore]
-    public Guid OrgId { get; init; } 
+    public Guid OrgId { get; init; }
 
     public required Guid PostId { get; init; }
-    public OwnerInfo? OwnerInfo { get; init; }
+    public required List<string> EvidenceImageUrls { get; init; }
+    public required OwnerInfo OwnerInfo { get; init; }
 }

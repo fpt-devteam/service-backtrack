@@ -66,6 +66,10 @@ public static class ReturnReportErrors
         Code: "CannotReturnReportOwnPost",
         Message: "You cannot create a ReturnReport for your own post.");
 
+    public static readonly Error PostNotInOrg = new(
+        Code: "PostNotInOrg",
+        Message: "This post does not belong to your organization.");
+
     public static readonly Error PostTypeMismatch = new(
         Code: "PostTypeMismatch",
         Message: "Finder post must be FOUND type and owner post must be LOST type.");
