@@ -45,32 +45,36 @@ public class OrgReceiveReportConfiguration : IEntityTypeConfiguration<OrgReceive
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        var finderInfoConverter = new ValueConverter<FinderInfo?, string?>(
-            toDb => toDb == null ? null : JsonSerializer.Serialize(toDb, jsonOptions),
-            fromDb => fromDb == null ? null : JsonSerializer.Deserialize<FinderInfo>(fromDb, jsonOptions)
+        var finderInfoConverter = new ValueConverter<FinderInfo, string>(
+            toDb => JsonSerializer.Serialize(toDb, jsonOptions),
+            fromDb => JsonSerializer.Deserialize<FinderInfo>(fromDb, jsonOptions)!
         );
 
         builder.Property(r => r.FinderInfo)
             .HasColumnName("finder_info")
             .HasColumnType("jsonb")
+            .IsRequired()
             .HasConversion(finderInfoConverter);
 
         builder.HasOne(r => r.Organization)
             .WithMany()
             .HasForeignKey(r => r.OrgId)
             .HasConstraintName("fk_org_receive_reports_org_id")
+            .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(r => r.Staff)
             .WithMany()
             .HasForeignKey(r => r.StaffId)
             .HasConstraintName("fk_org_receive_reports_staff_id")
+            .IsRequired()
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(r => r.Post)
             .WithMany()
             .HasForeignKey(r => r.PostId)
             .HasConstraintName("fk_org_receive_reports_post_id")
+            .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasQueryFilter(r => r.DeletedAt == null);

@@ -34,7 +34,7 @@ public static class InventoryItemResultMapper
 {
     public static InventoryItemResult ToInventoryItemResult(
         this Post post,
-        OrgReceiveReport? receiveReport = null,
+        OrgReceiveReport receiveReport,
         OrgReturnReport? returnReport = null)
     {
         return new InventoryItemResult
@@ -58,7 +58,7 @@ public static class InventoryItemResultMapper
             DisplayAddress          = post.DisplayAddress,
             EventTime               = post.EventTime,
             CreatedAt               = post.CreatedAt,
-            FinderInfo              = receiveReport?.FinderInfo ?? new FinderInfo(),
+            FinderInfo              = receiveReport.FinderInfo,
             OwnerInfo               = returnReport?.OwnerInfo,
         };
     }
