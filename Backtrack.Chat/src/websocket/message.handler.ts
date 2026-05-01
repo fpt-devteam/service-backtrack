@@ -11,12 +11,14 @@ import { getIO } from '@/config/websocket';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+const serializeError = (err: unknown): string => {
+  if (err instanceof Error) return err.stack ?? err.message;
+  try { return JSON.stringify(err); } catch { return String(err); }
+};
+
 /**
  * Persist a message, broadcast it to room participants, and optionally
  * notify other sockets about a newly created conversation.
- *
- * Extracted so that both the direct and support handlers share
- * identical post-resolve behaviour without code duplication.
  */
 async function persistAndBroadcast(
   socket: Socket,
@@ -37,11 +39,9 @@ async function persistAndBroadcast(
       socket.join(roomName);
       logger.info(`Socket ${socket.id} auto-joined room ${roomName}`);
     }
-    // Pull all other participants' open sockets into the same room
     await autoJoinOtherParticipants(conversationId, authUserId);
   }
 
-  // Persist (also updates lastMessage + increments unreadCount for others)
   const { message, unreadUpdates } = await messageService.sendMessage({
     conversationId,
     senderId: authUserId,
@@ -50,11 +50,8 @@ async function persistAndBroadcast(
     attachments: payload.attachments,
   });
 
-  // Broadcast to everyone else in the room
   socket.to(`conversation:${conversationId}`).emit('message:new', message);
 
-  // Push unreadCount + lastMessage to each participant's user room
-  // This allows the conversation list to update without being in the conversation room
   const io = getIO();
   for (const { memberId, unreadCount, lastMessage: last } of unreadUpdates) {
     io.to(`user:${memberId}`).emit('conversation:updated', {
@@ -64,7 +61,6 @@ async function persistAndBroadcast(
     });
   }
 
-  // Also notify the sender so their own conversation list updates lastMessage
   socket.emit('conversation:updated', {
     conversationId,
     unreadCount: 0,
@@ -75,11 +71,8 @@ async function persistAndBroadcast(
     },
   });
 
-  // Acknowledge to the sender
   socket.emit(successEvent, { conversationId, message, isNewConversation: isNewRoom });
 
-  // If this is the very first message, tell other in-room participants
-  // about the new conversation (after message:new so client has both events in order)
   if (isNewRoom) {
     socket.to(`conversation:${conversationId}`).emit('conversation:new', {
       conversationId,
@@ -93,10 +86,12 @@ async function persistAndBroadcast(
 // ─── Handler Registration ─────────────────────────────────────────────────────
 
 export function registerMessageHandlers(socket: Socket): void {
-  const authUserId = socket.data.userId as string | undefined;
+  // Read userId fresh from socket.data each time — avoids stale closure on first connect
+  const getUserId = (): string | undefined => socket.data.userId as string | undefined;
 
   // ─── Join / leave org queue room (staff only) ────────────────────────────
   socket.on('join:org:queue', async (data: { orgId: string; limit?: number; cursor?: string }) => {
+    const authUserId = getUserId();
     if (!authUserId || !data?.orgId) return;
     const { orgId, limit, cursor } = data;
     try {
@@ -105,7 +100,7 @@ export function registerMessageHandlers(socket: Socket): void {
       socket.emit('org:queue:list', { orgId, ...result });
       logger.info(`Socket ${socket.id} joined org queue room org:${orgId}:queue`);
     } catch (err) {
-      logger.error('Error fetching org queue:', { error: String(err) });
+      logger.error('Error fetching org queue:', { error: serializeError(err) });
       socket.emit('org:queue:error', { orgId, message: 'Failed to fetch queue' });
     }
   });
@@ -118,6 +113,7 @@ export function registerMessageHandlers(socket: Socket): void {
 
   // ─── Join conversation room ──────────────────────────────────────────────
   socket.on('join:conversation', async (conversationId: string) => {
+    const authUserId = getUserId();
     try {
       if (!authUserId) {
         socket.emit('join:conversation:error', { code: 'UNAUTHORIZED', message: 'User not authenticated' });
@@ -140,7 +136,7 @@ export function registerMessageHandlers(socket: Socket): void {
       logger.info(`Socket ${socket.id} joined conversation ${conversationId}`);
       socket.emit('join:conversation:success', { conversationId });
     } catch (error) {
-      logger.error('Error joining conversation:', { error: String(error) });
+      logger.error('Error joining conversation:', { error: serializeError(error) });
       socket.emit('join:conversation:error', { message: 'Failed to join conversation' });
     }
   });
@@ -152,17 +148,13 @@ export function registerMessageHandlers(socket: Socket): void {
       logger.info(`Socket ${socket.id} left conversation ${conversationId}`);
       socket.emit('leave:conversation:success', { conversationId });
     } catch (error) {
-      logger.error('Error leaving conversation:', { error: String(error) });
+      logger.error('Error leaving conversation:', { error: serializeError(error) });
     }
   });
 
   // ─── Send direct / DM message ────────────────────────────────────────────
-  //
-  // Event: message:send
-  // Payload: { conversationId, content, type?, attachments? }
-  //
-  // Conversation must be created beforehand via REST POST /conversations/direct.
   socket.on('message:send', async (data: unknown) => {
+    const authUserId = getUserId();
     try {
       if (!authUserId) {
         socket.emit('message:send:error', { code: 'UNAUTHORIZED', message: 'User not authenticated' });
@@ -170,10 +162,9 @@ export function registerMessageHandlers(socket: Socket): void {
       }
 
       const validated = SendDirectMessageSchema.parse({ ...(data as object), senderId: authUserId });
-
       await persistAndBroadcast(socket, authUserId, validated.conversationId, validated, false, 'message:send:success');
     } catch (error) {
-      logger.error('Error sending direct message:', { error: String(error) });
+      logger.error('Error sending direct message:', { error: serializeError(error) });
       if (isAppError(error)) {
         socket.emit('message:send:error', { code: error.code, message: error.message });
       } else {
@@ -183,12 +174,8 @@ export function registerMessageHandlers(socket: Socket): void {
   });
 
   // ─── Send org / support message ──────────────────────────────────────────
-  //
-  // Event: message:send:support
-  // Payload: { conversationId, content, type?, attachments? }
-  //
-  // Conversation must be created beforehand via REST POST /conversations/org.
   socket.on('message:send:support', async (data: unknown) => {
+    const authUserId = getUserId();
     try {
       if (!authUserId) {
         socket.emit('message:send:support:error', { code: 'UNAUTHORIZED', message: 'User not authenticated' });
@@ -196,10 +183,9 @@ export function registerMessageHandlers(socket: Socket): void {
       }
 
       const validated = SendSupportMessageSchema.parse({ ...(data as object), senderId: authUserId });
-
       await persistAndBroadcast(socket, authUserId, validated.conversationId, validated, false, 'message:send:support:success');
     } catch (error) {
-      logger.error('Error sending support message:', { error: String(error) });
+      logger.error('Error sending support message:', { error: serializeError(error) });
       if (isAppError(error)) {
         socket.emit('message:send:support:error', { code: error.code, message: error.message });
       } else {
@@ -210,27 +196,26 @@ export function registerMessageHandlers(socket: Socket): void {
 
   // ─── Mark conversation as read ───────────────────────────────────────────
   socket.on('conversation:read', async (data: { conversationId: string }) => {
+    const authUserId = getUserId();
     try {
       if (!authUserId) return;
 
       await conversationParticipantService.resetUnreadCount(data.conversationId, authUserId);
       await messageService.markMessagesAsSeen(data.conversationId, authUserId);
 
-      // Notify other participants that this user has read the conversation
       socket.to(`conversation:${data.conversationId}`).emit('message:seen', {
         conversationId: data.conversationId,
         readBy: authUserId,
         readAt: new Date(),
       });
 
-      // Push unreadCount = 0 to the reader's own user room (sync other tabs/devices)
       const io = getIO();
       io.to(`user:${authUserId}`).emit('conversation:updated', {
         conversationId: data.conversationId,
         unreadCount: 0,
       });
     } catch (error) {
-      logger.error('Error marking conversation as read:', { error: String(error) });
+      logger.error('Error marking conversation as read:', { error: serializeError(error) });
     }
   });
 
@@ -238,7 +223,7 @@ export function registerMessageHandlers(socket: Socket): void {
   socket.on('typing:start', (data: { conversationId: string; displayName?: string }) => {
     socket.to(`conversation:${data.conversationId}`).emit('typing:user', {
       conversationId: data.conversationId,
-      userId: authUserId,
+      userId: getUserId(),
       displayName: data.displayName,
       isTyping: true,
     });
@@ -247,7 +232,7 @@ export function registerMessageHandlers(socket: Socket): void {
   socket.on('typing:stop', (data: { conversationId: string }) => {
     socket.to(`conversation:${data.conversationId}`).emit('typing:user', {
       conversationId: data.conversationId,
-      userId: authUserId,
+      userId: getUserId(),
       isTyping: false,
     });
   });
@@ -255,11 +240,6 @@ export function registerMessageHandlers(socket: Socket): void {
 
 // ─── Private utilities ────────────────────────────────────────────────────────
 
-/**
- * Find all connected sockets belonging to other ACTIVE participants of a
- * conversation and auto-join them into the room so they receive the very
- * first message in real-time without needing to call join:conversation.
- */
 async function autoJoinOtherParticipants(
   conversationId: string,
   excludeUserId: string,
@@ -288,7 +268,6 @@ async function autoJoinOtherParticipants(
       }
     }
   } catch (err) {
-    // Non-fatal: message is already persisted; recipient won't get real-time push this round.
-    logger.error('autoJoinOtherParticipants failed:', { conversationId, error: String(err) });
+    logger.error('autoJoinOtherParticipants failed:', { conversationId, error: serializeError(err) });
   }
 }
