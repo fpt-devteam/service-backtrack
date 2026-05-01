@@ -5,16 +5,12 @@ import app from './app';
 import { env } from '@/config/environment';
 import logger from '@/utils/logger';
 import { connectDatabase, disconnectDatabase } from '@/config/database';
-import { initializeFirebase } from '@/config/firebase';
 import { initializeWebSocket } from '@/config/websocket';
 import { startConsumers, stopConsumers } from '@/messaging/consumer-manager';
 
 const startServer = async (): Promise<void> => {
 	try {
 		await connectDatabase();
-
-		// Initialize Firebase Admin for WebSocket JWT self-verification
-		initializeFirebase();
 
 		// Start RabbitMQ consumers
 		startConsumers().catch((error: unknown) => {

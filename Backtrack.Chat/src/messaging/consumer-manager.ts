@@ -1,7 +1,6 @@
 import logger from '@/utils/logger';
 import { startUserSyncConsumer } from './user-sync.consumer';
 import { startOrgSyncConsumer } from './org-sync.consumer';
-import { startReturnReportSyncConsumer } from './return-report-sync.consumer';
 import { closeConnection, connectToRabbitMQ } from './rabbitmq-connection';
 
 
@@ -10,7 +9,6 @@ export async function startConsumers(): Promise<void> {
   await connectToRabbitMQ();
   await startUserSyncConsumer();
   await startOrgSyncConsumer();
-  await startReturnReportSyncConsumer();
 }
 
 export async function stopConsumers(): Promise<void> {
