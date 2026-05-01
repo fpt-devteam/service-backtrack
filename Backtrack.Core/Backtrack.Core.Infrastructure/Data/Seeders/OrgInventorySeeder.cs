@@ -15,7 +15,7 @@ public static class OrgInventorySeeder
         string ItemName, string Category, string SubcategoryCode,
         string[] ImageUrls, DateTimeOffset? EventTime,
         string OrganizationStorageLocation = "Lost & Found Office",
-        string? OrganizationFoundLocation = null,
+        string OrganizationFoundLocation = "Floor 3",
         PersonalBelongingDetailDto? PersonalBelongingDetail = null,
         ElectronicDetailDto? ElectronicDetail = null,
         OtherDetailDto? OtherDetail = null);
