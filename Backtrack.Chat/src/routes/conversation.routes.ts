@@ -9,13 +9,13 @@ router.post('/organization', asyncHandler(conversationController.createOrgConver
 router.get('/', asyncHandler(conversationController.listAllConversations));
 router.get('/direct', asyncHandler(conversationController.listDirectConversations));
 router.get('/partner', asyncHandler(conversationController.getConversationByPartnerId));
-router.get('/:id', asyncHandler(conversationController.getConversationById));
-router.delete('/:id', asyncHandler(conversationController.deleteConversation));
 router.get('/organization/queue', asyncHandler(conversationController.listConversationQueueByStaff));
 router.get('/organization/assigned', asyncHandler(conversationController.listConversationAssignedByStaff));
+router.get('/organization/resolved', asyncHandler(conversationController.listConversationResolvedByStaff));
+router.get('/:id', asyncHandler(conversationController.getConversationById));
+router.delete('/:id', asyncHandler(conversationController.deleteConversation));
 router.post('/:id/assign-staff', asyncHandler(conversationController.assignStaff));
 router.post('/:id/unassign-staff', asyncHandler(conversationController.unassignStaff));
 router.post('/:id/resolve', asyncHandler(conversationController.resolveConversation));
-router.get('/organization/resolved', asyncHandler(conversationController.listConversationResolvedByStaff));
 
 export default router;
