@@ -4,8 +4,8 @@ using Backtrack.Core.Application.Usecases.OrganizationInventory.GetDashboardInve
 using Backtrack.Core.Application.Usecases.OrganizationInventory.GetInventoryItemById;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.PublishInventoryItem;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory.DeleteInventoryItem;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.UpdateInventoryItem;
-using Backtrack.Core.Application.Usecases.Posts.DeletePost;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
@@ -133,7 +133,7 @@ public class OrganizationInventoryController(IMediator mediator) : ControllerBas
         CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var command = new DeletePostCommand { PostId = id, UserId = userId };
+        var command = new DeleteInventoryItemCommand { PostId = id, UserId = userId, OrgId = orgId };
         await mediator.Send(command, cancellationToken);
         return NoContent();
     }

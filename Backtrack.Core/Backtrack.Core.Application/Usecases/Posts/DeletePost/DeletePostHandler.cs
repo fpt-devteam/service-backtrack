@@ -3,7 +3,6 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using MediatR;
-using Microsoft.Extensions.Logging;
 
 namespace Backtrack.Core.Application.Usecases.Posts.DeletePost;
 
@@ -11,23 +10,24 @@ public sealed class DeletePostHandler(
     IPostRepository postRepository,
     IPostMatchRepository postMatchRepository,
     IMembershipRepository membershipRepository,
-    ILogger<DeletePostHandler> logger) : IRequestHandler<DeletePostCommand>
+    IC2CReturnReportRepository returnReportRepository) : IRequestHandler<DeletePostCommand>
 {
     public async Task<Unit> Handle(DeletePostCommand command, CancellationToken cancellationToken)
     {
         var post = await postRepository.GetByIdAsync(command.PostId, true)
             ?? throw new NotFoundException(PostErrors.NotFound);
-        logger.LogInformation("Attempting to delete post {PostId} by user {UserId}", post.Id, command.UserId);
-        if (post.OrganizationId.HasValue)
+
+        if (post.OrganizationId.HasValue || post.AuthorId != command.UserId) throw new ForbiddenException(PostErrors.Forbidden);
+
+        if (post.Status != PostStatus.Active)
+            throw new ConflictException(PostErrors.CannotDelete);
+
+        var openReports = await returnReportRepository.GetOpenByPostIdAsync(post.Id, cancellationToken);
+        if (openReports.Count > 0)
         {
-            var membership = await membershipRepository.GetByOrgAndUserAsync(post.OrganizationId.Value, command.UserId, cancellationToken);
-            if (membership is null) throw new ForbiddenException(PostErrors.Forbidden);
-        }
-        else
-        {
-            logger.LogWarning("Post {PostId} does not belong to any organization", post.Id);
-            logger.LogWarning("User {UserId} attempted to delete post {PostId} without organization membership", command.UserId, post.Id);
-            if (post.AuthorId != command.UserId) throw new ForbiddenException(PostErrors.Forbidden);
+            foreach (var report in openReports)
+                report.Status = C2CReturnReportStatus.Closed;
+            await returnReportRepository.SaveChangesAsync();
         }
 
         await postMatchRepository.DeleteByPostIdAsync(post.Id, cancellationToken);

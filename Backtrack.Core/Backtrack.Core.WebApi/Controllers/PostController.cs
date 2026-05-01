@@ -145,6 +145,7 @@ public class PostController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        _logger.LogInformation("CONTROLLER: Deleting post {PostId} by user {UserId}", postId, authorId);
         var command = new DeletePostCommand { PostId = postId, UserId = authorId };
         await _mediator.Send(command, cancellationToken);
         return NoContent();

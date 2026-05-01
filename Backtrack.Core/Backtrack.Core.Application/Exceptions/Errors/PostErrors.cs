@@ -45,5 +45,9 @@ namespace Backtrack.Core.Application.Exceptions.Errors
         public static readonly Error NotActive = new(
             Code: "PostNotActive",
             Message: "Only active posts can be updated.");
+
+        public static readonly Error CannotDelete = new(
+            Code: "PostCannotDelete",
+            Message: "Only active posts can be deleted.");
     }
 }
