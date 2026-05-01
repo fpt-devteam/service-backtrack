@@ -22,7 +22,6 @@ import { createOrgConvParticipants, createDirectConvParticipants, unassignConver
 import { ConversationParticipantRole, ConversationStatus, IDirectConversation, ISupportConversation } from '@/models';
 import { assignConversation, unassignConversation } from "./conversation-assignment.service";
 import { Types } from 'mongoose';
-import { Handover } from '@/models/interfaces/direct-conversation.interface';
 
 /** Shape of a single row from the aggregation pipeline in list queries */
 interface ConversationAggRow {
@@ -38,7 +37,6 @@ interface ConversationAggRow {
     lastMessageAt?: Date | null;
     lastMessageSenderId?: string | null;
     unreadCount?: number;
-    handover?: Handover | null;
     partner?: {
         id: Types.ObjectId | string;
         displayName: string | null;
@@ -304,7 +302,6 @@ export const getConversationById = async (
         partner,
         lastMessage,
         unreadCount,
-        handover: d.handover ?? null,
         createdAt:  d.createdAt,
         updatedAt:  d.updatedAt,
     } satisfies DirectConversationResponse;
@@ -335,7 +332,6 @@ const toDirectConversationResponse = (doc: ToLeanDoc<IDirectConversation>, partn
         ? { senderId: doc.senderId ?? null, content: doc.lastMessageContent, timestamp: doc.lastMessageAt ?? null }
         : null,
     unreadCount: 0,
-    handover: doc.handover ?? null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
 });
@@ -472,7 +468,6 @@ export const projectConversationStage = {
         lastMessageContent:  '$conversation.lastMessageContent',
         lastMessageAt:       '$conversation.lastMessageAt',
         lastMessageSenderId: '$conversation.senderId',
-        handover:            { $ifNull: ['$conversation.handover', null] },
         unreadCount: { $ifNull: ['$unreadCount', 0] },
         partner: {
             $cond: {
@@ -561,7 +556,6 @@ const formatDirectResult = (results: ConversationAggRow[], limit: number): Direc
                   }
                 : null,
             unreadCount: c.unreadCount ?? 0,
-            handover: c.handover ?? null,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
         })),
@@ -711,7 +705,6 @@ interface MixedConversationAggRow {
     lastMessageContent:  string | null;
     lastMessageSenderId: string | null;
     unreadCount:         number;
-    handover:            Handover | null;
     partner: {
         id:          Types.ObjectId | string;
         displayName: string | null;
@@ -853,7 +846,6 @@ export const listAllConversationsByUserId = async (
             orgLogoUrl:    { $literal: null },
             status:        { $literal: null },
             staffAssignId: { $literal: null },
-            handover:      { $ifNull: ['$conv.handover', null] },
         }),
         buildConvBranch('supportconversations', 'support', userId, cursorFilter, {
             orgId:         { $ifNull: ['$conv.orgId',         null] },
@@ -862,7 +854,6 @@ export const listAllConversationsByUserId = async (
             orgLogoUrl:    { $ifNull: ['$conv.orgLogoUrl',    null] },
             status:        { $ifNull: ['$conv.status',        null] },
             staffAssignId: { $ifNull: ['$conv.staffAssignId', null] },
-            handover:      { $literal: null },
         }, { status: { $ne: ConversationStatus.CLOSED } }),
     ]);
 
@@ -906,7 +897,6 @@ export const listAllConversationsByUserId = async (
                   }
                 : null,
             unreadCount: c.unreadCount ?? 0,
-            handover:    c.handover ?? null,
             createdAt:   c.createdAt,
             updatedAt:   c.updatedAt,
         })),
