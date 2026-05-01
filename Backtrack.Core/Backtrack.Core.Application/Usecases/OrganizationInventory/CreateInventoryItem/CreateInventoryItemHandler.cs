@@ -3,7 +3,7 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory;
 using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Utils;
@@ -50,7 +50,8 @@ public sealed class CreateInventoryItemHandler(
             Category           = category,
             SubcategoryId      = subcategory.Id,
             Location           = organization.Location,
-            InternalLocation   = command.InternalLocation,
+            OrganizationStorageLocation = command.OrganizationStorageLocation,
+            OrganizationFoundLocation   = command.OrganizationFoundLocation,
             ExternalPlaceId    = organization.ExternalPlaceId,
             DisplayAddress     = organization.DisplayAddress,
             Embedding          = null,

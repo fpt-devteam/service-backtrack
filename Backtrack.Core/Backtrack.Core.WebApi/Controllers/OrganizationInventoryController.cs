@@ -3,7 +3,7 @@ using Backtrack.Core.Application.Usecases.OrganizationInventory.CreateInventoryI
 using Backtrack.Core.Application.Usecases.OrganizationInventory.GetDashboardInventory;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.GetInventoryItemById;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.PublishInventoryItem;
-using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.DeleteInventoryItem;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.UpdateInventoryItem;
 using Backtrack.Core.WebApi.Common;

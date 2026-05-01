@@ -1,4 +1,4 @@
-using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory;
 using MediatR;
 using System.Text.Json.Serialization;
 

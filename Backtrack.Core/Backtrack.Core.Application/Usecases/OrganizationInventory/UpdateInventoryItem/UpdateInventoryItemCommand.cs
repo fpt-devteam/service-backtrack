@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory;
 using Backtrack.Core.Application.Usecases.Posts;
 using MediatR;
 
@@ -12,7 +12,8 @@ public sealed record UpdateInventoryItemCommand : IRequest<InventoryItemResult>
     [JsonIgnore] public Guid OrgId { get; init; }
     public string? PostTitle { get; init; }
     public string? Status { get; init; }
-    public string? InternalLocation { get; init; }
+    public string? OrganizationStorageLocation { get; init; }
+    public string? OrganizationFoundLocation { get; init; }
     public PersonalBelongingDetailDto? PersonalBelongingDetail { get; init; }
     public CardDetailDto? CardDetail { get; init; }
     public ElectronicDetailDto? ElectronicDetail { get; init; }

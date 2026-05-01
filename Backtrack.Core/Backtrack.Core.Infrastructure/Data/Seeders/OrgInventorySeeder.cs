@@ -14,7 +14,8 @@ public static class OrgInventorySeeder
     private sealed record InventorySeedData(
         string ItemName, string Category, string SubcategoryCode,
         string[] ImageUrls, DateTimeOffset? EventTime,
-        string InternalLocation = "Lost & Found Office",
+        string OrganizationStorageLocation = "Lost & Found Office",
+        string? OrganizationFoundLocation = null,
         PersonalBelongingDetailDto? PersonalBelongingDetail = null,
         ElectronicDetailDto? ElectronicDetail = null,
         OtherDetailDto? OtherDetail = null);
@@ -232,7 +233,8 @@ public static class OrgInventorySeeder
                     SubcategoryCode = data.SubcategoryCode,
                     ImageUrls = data.ImageUrls,
                     EventTime = data.EventTime ?? DateTimeOffset.UtcNow,
-                    InternalLocation = data.InternalLocation,
+                    OrganizationStorageLocation = data.OrganizationStorageLocation,
+                    OrganizationFoundLocation = data.OrganizationFoundLocation,
                     PersonalBelongingDetail = data.PersonalBelongingDetail,
                     ElectronicDetail = data.ElectronicDetail,
                     OtherDetail = data.OtherDetail,

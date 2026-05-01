@@ -14,7 +14,8 @@ public sealed class Post : Entity<Guid>
     public Subcategory Subcategory { get; set; } = default!;
 
     // Location
-    public string? InternalLocation { get; set; }
+    public string? OrganizationStorageLocation { get; set; }
+    public string? OrganizationFoundLocation { get; set; }
     public required GeoPoint Location { get; set; }
     public required string DisplayAddress { get; set; }
     public string? ExternalPlaceId { get; set; }

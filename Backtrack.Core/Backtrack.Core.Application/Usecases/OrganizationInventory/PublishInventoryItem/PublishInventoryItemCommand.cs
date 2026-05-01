@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory;
 using Backtrack.Core.Application.Usecases.Posts;
 using MediatR;
 

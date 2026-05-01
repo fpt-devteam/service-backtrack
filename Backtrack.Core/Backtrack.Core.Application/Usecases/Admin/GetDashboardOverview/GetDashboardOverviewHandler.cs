@@ -29,10 +29,6 @@ public sealed class GetDashboardOverviewHandler(
             await subscriptionRepository.GetMrrAsync(cancellationToken)
         );
 
-        // Post counts from breakdown
-        int GetCount(PostType type, PostStatus status) =>
-            breakdown.TryGetValue((type, status), out var c) ? c : 0;
-
         var startOfMonth = new DateTimeOffset(DateTimeOffset.UtcNow.Year, DateTimeOffset.UtcNow.Month, 1, 0, 0, 0, TimeSpan.Zero);
         var newPostsThisMonth = await postRepository.CountAsync(
             new PostFilters { Time = new TimeFilter(startOfMonth, null) }, cancellationToken);

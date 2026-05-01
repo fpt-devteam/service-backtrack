@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.ValueObjects;
@@ -19,7 +19,8 @@ public sealed record CreateInventoryItemCommand : IRequest<InventoryItemResult>
     public ElectronicDetailDto? ElectronicDetail { get; init; }
     public OtherDetailDto? OtherDetail { get; init; }
     public string[] ImageUrls { get; init; } = [];
-    public required string InternalLocation { get; init; }
+    public required string OrganizationStorageLocation { get; init; }
+    public required string OrganizationFoundLocation { get; init; }
     public required DateTimeOffset EventTime { get; init; }
     public required FinderInfo FinderInfo { get; init; }
 }

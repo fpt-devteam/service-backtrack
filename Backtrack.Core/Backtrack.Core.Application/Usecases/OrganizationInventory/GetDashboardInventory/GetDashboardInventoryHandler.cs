@@ -39,7 +39,7 @@ public sealed class GetDashboardInventoryHandler(
         var subcategories   = (await subcategoryRepository.GetAllActiveAsync(cancellationToken))
                                   .ToDictionary(s => s.Id, s => s.Name);
 
-        var items = postList.Select(p =>
+        var items = postList.ConvertAll(p =>
         {
             returnReports.TryGetValue(p.Id, out var returnReport);
             var status = returnReport is not null ? "ReturnScheduled" : p.Status.ToString();
@@ -52,11 +52,11 @@ public sealed class GetDashboardInventoryHandler(
                 Category         = p.Category.ToString(),
                 SubcategoryName  = subcategoryName ?? string.Empty,
                 Status           = status,
-                InternalLocation = p.InternalLocation ?? string.Empty,
+                OrganizationStorageLocation = p.OrganizationStorageLocation ?? string.Empty,
                 ImageUrl         = p.ImageUrls.FirstOrDefault(),
                 CreatedAt        = p.CreatedAt
             };
-        }).ToList();
+        });
 
         return new PagedResult<DashboardInventoryItem>(totalCount, items);
     }

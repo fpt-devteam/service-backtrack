@@ -3,7 +3,7 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory;
 using Backtrack.Core.Application.Usecases.PostMatchings;
 using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 using Backtrack.Core.Application.Usecases.Posts;
@@ -74,6 +74,12 @@ public sealed class UpdateInventoryItemHandler(
         if (command.Status is not null && Enum.TryParse<PostStatus>(command.Status, ignoreCase: true, out var parsedStatus))
             post.Status = parsedStatus;
 
+        if (command.OrganizationStorageLocation is not null)
+            post.OrganizationStorageLocation = command.OrganizationStorageLocation;
+
+        if (command.OrganizationFoundLocation is not null)
+            post.OrganizationFoundLocation = command.OrganizationFoundLocation;
+
         post.EventTime = command.EventTime ?? post.EventTime;
         post.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -87,7 +93,9 @@ public sealed class UpdateInventoryItemHandler(
 
         if (needsReEmbedding) backgroundJobService.EnqueueJob(new UpdatePostEmbeddingCommand(post.Id));
 
-        var receiveReport = await receiveReportRepository.GetByPostIdAsync(post.Id, cancellationToken);
+        var receiveReport = await receiveReportRepository.GetByPostIdAsync(post.Id, cancellationToken)
+            ?? throw new InvalidOperationException($"Receive report for post {post.Id} not found.");
+
         var returnReport  = await returnReportRepository.GetByPostIdAsync(post.Id, cancellationToken);
 
         return post.ToInventoryItemResult(receiveReport, returnReport);

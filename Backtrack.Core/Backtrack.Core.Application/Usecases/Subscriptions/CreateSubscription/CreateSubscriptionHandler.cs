@@ -14,7 +14,6 @@ public sealed class CreateSubscriptionHandler(
     ISubscriptionPlanRepository planRepository,
     IUserRepository userRepository,
     IMembershipRepository membershipRepository,
-    IOrganizationRepository organizationRepository,
     IStripeService stripeService)
     : IRequestHandler<CreateSubscriptionCommand, CreateSubscriptionResult>
 {

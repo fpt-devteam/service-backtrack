@@ -7,7 +7,7 @@ public sealed record DashboardInventoryItem
     public required string          Category         { get; init; }
     public required string          SubcategoryName  { get; init; }
     public required string          Status           { get; init; }
-    public required string          InternalLocation { get; init; }
+    public required string          OrganizationStorageLocation { get; init; }
     public          string?         ImageUrl         { get; init; }
     public required DateTimeOffset  CreatedAt        { get; init; }
 }

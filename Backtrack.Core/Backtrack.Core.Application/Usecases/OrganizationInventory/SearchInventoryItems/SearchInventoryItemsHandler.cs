@@ -9,7 +9,7 @@ using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+namespace Backtrack.Core.Application.Usecases.OrganizationInventory;
 
 public sealed class SearchInventoryItemsHandler(
     IPostRepository postRepository,
@@ -57,14 +57,16 @@ public sealed class SearchInventoryItemsHandler(
 
         var postIds        = posts.Select(p => p.Id).ToList();
         var receiveReports = await receiveReportRepository.GetByPostIdsAsync(postIds, cancellationToken);
+
         var returnReports  = await returnReportRepository.GetByPostIdsAsync(postIds, cancellationToken);
 
-        var results = posts.Select(p =>
+        var results = posts.ConvertAll(p =>
         {
             receiveReports.TryGetValue(p.Id, out var receiveReport);
             returnReports.TryGetValue(p.Id, out var returnReport);
+            if (receiveReport is null) throw new InvalidOperationException($"Receive report for post {p.Id} not found.");
             return p.ToInventoryItemResult(receiveReport, returnReport);
-        }).ToList();
+        });
 
         return new PagedResult<InventoryItemResult>(totalCount, results);
     }

@@ -9,7 +9,6 @@ namespace Backtrack.Core.Application.Usecases.Posts.DeletePost;
 public sealed class DeletePostHandler(
     IPostRepository postRepository,
     IPostMatchRepository postMatchRepository,
-    IMembershipRepository membershipRepository,
     IC2CReturnReportRepository returnReportRepository) : IRequestHandler<DeletePostCommand>
 {
     public async Task<Unit> Handle(DeletePostCommand command, CancellationToken cancellationToken)
