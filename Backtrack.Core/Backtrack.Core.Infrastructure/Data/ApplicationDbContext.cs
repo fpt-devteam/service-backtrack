@@ -22,7 +22,6 @@ namespace Backtrack.Core.Infrastructure.Data
         public DbSet<OrgReturnReport> OrgReturnReports { get; set; }
         public DbSet<OrgReceiveReport> OrgReceiveReports { get; set; }
         public DbSet<QrCode> QrCodes { get; set; }
-        public DbSet<QrDesign> QrDesigns { get; set; }
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<PaymentHistory> PaymentHistories { get; set; }
@@ -48,7 +47,6 @@ namespace Backtrack.Core.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new OrgReturnReportConfiguration());
             modelBuilder.ApplyConfiguration(new OrgReceiveReportConfiguration());
             modelBuilder.ApplyConfiguration(new QrCodeConfiguration());
-            modelBuilder.ApplyConfiguration(new QrDesignConfiguration());
             modelBuilder.ApplyConfiguration(new SubscriptionPlanConfiguration());
             modelBuilder.ApplyConfiguration(new SubscriptionConfiguration());
             modelBuilder.ApplyConfiguration(new PaymentHistoryConfiguration());

@@ -13,6 +13,7 @@ using Backtrack.Core.Infrastructure.Repositories;
 using Backtrack.Core.Infrastructure.Services.Notifications;
 using FluentValidation;
 using MediatR;
+using Backtrack.Core.Application.Interfaces.Payments;
 
 namespace Backtrack.Core.WebApi.DependencyInjections;
 
@@ -42,6 +43,10 @@ public static class ServiceDI
         services.AddScoped(typeof(IGenericRepository<,>), typeof(CrudRepositoryBase<,>));
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IDeviceRepository, DeviceRepository>();
+        services.AddScoped<IQrCodeRepository, QrCodeRepository>();
+        services.AddScoped<ISubscriptionPlanRepository, SubscriptionPlanRepository>();
+        services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+        services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
 
         // Messaging
         services.AddScoped<IEventPublisher, CapEventPublisher>();

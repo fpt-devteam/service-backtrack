@@ -14,11 +14,5 @@ public static class StripeDI
     {
         services.Configure<StripeSettings>(configuration.GetSection("StripeSettings"));
         services.AddSingleton<IStripeService, StripeService>();
-
-        services.AddScoped<IQrCodeRepository, QrCodeRepository>();
-        services.AddScoped<IQrDesignRepository, QrDesignRepository>();
-        services.AddScoped<ISubscriptionPlanRepository, SubscriptionPlanRepository>();
-        services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
-        services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
     }
 }
