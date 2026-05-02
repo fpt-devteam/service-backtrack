@@ -14,5 +14,7 @@ public sealed class User : Entity<string>
     public bool ShowEmail { get; set; } = false;
     public bool ShowPhone { get; set; } = false;
 
+    public int PostActionCount { get; set; } = 0;
+
     public ICollection<Membership> Memberships { get; set; } = new List<Membership>();
 }

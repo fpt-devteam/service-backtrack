@@ -16,12 +16,23 @@ namespace Backtrack.Core.Application.Usecases.Posts.CreatePost;
 public sealed class CreatePostHandler(
     IPostRepository postRepository,
     ISubcategoryRepository subcategoryRepository,
+    IUserRepository userRepository,
+    ISubscriptionRepository subscriptionRepository,
     IHasher hasher,
     IBackgroundJobService backgroundJobService,
     ILogger<CreatePostHandler> logger) : IRequestHandler<CreatePostCommand, PostResult>
 {
+    private const int FreeTierLimit = 3;
+
     public async Task<PostResult> Handle(CreatePostCommand command, CancellationToken cancellationToken)
     {
+        var author = await userRepository.GetByIdAsync(command.AuthorId, isTrack: true)
+            ?? throw new NotFoundException(UserErrors.NotFound);
+
+        var hasSubscription = await subscriptionRepository.GetActiveByUserIdAsync(command.AuthorId, cancellationToken) != null;
+        if (!hasSubscription && author.PostActionCount >= FreeTierLimit)
+            throw new ConflictException(PostErrors.PostLimitReached);
+
         if (!Enum.TryParse<ItemCategory>(command.Category, ignoreCase: true, out var category))
             throw new ValidationException(PostErrors.InvalidCategory);
 
@@ -56,6 +67,7 @@ public sealed class CreatePostHandler(
         SetDetailContentHash(post, hasher);
 
         await postRepository.CreateAsync(post);
+        author.PostActionCount++;
         await postRepository.SaveChangesAsync();
 
         backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(

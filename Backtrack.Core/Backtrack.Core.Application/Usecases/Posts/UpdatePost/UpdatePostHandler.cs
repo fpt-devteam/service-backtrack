@@ -4,12 +4,12 @@ using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Utils;
+using Backtrack.Core.Application.Usecases.PostMatchings;
 using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
-using Backtrack.Core.Application.Usecases.PostMatchings;
 
 namespace Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 
@@ -17,17 +17,25 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
 {
     private readonly IPostRepository _postRepository;
     private readonly IC2CReturnReportRepository _returnReportRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly ISubscriptionRepository _subscriptionRepository;
     private readonly IBackgroundJobService _backgroundJobService;
     private readonly IHasher _hasher;
+
+    private const int FreeTierLimit = 3;
 
     public UpdatePostHandler(
         IPostRepository postRepository,
         IC2CReturnReportRepository returnReportRepository,
+        IUserRepository userRepository,
+        ISubscriptionRepository subscriptionRepository,
         IBackgroundJobService backgroundJobService,
         IHasher hasher)
     {
         _postRepository = postRepository;
         _returnReportRepository = returnReportRepository;
+        _userRepository = userRepository;
+        _subscriptionRepository = subscriptionRepository;
         _backgroundJobService = backgroundJobService;
         _hasher = hasher;
     }
@@ -40,6 +48,14 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         if (post.OrganizationId.HasValue) throw new ForbiddenException(PostErrors.Forbidden);
         if (post.AuthorId != command.UserId) throw new ForbiddenException(PostErrors.Forbidden);
         if (post.Status != PostStatus.Active) throw new ConflictException(PostErrors.NotActive);
+
+        var author = await _userRepository.GetByIdAsync(command.UserId, isTrack: true)
+            ?? throw new NotFoundException(UserErrors.NotFound);
+
+        var hasSubscription = await _subscriptionRepository.GetActiveByUserIdAsync(command.UserId, cancellationToken) != null;
+        if (!hasSubscription && author.PostActionCount >= FreeTierLimit)
+            throw new ConflictException(PostErrors.EditLimitReached);
+
 
         bool needsReEmbedding = false;
 
@@ -93,6 +109,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         if (command.Status is not null && Enum.TryParse<PostStatus>(command.Status, ignoreCase: true, out var parsedStatus))
             post.Status = parsedStatus;
 
+        author.PostActionCount++;
         post.UpdatedAt = DateTimeOffset.UtcNow;
 
         if (needsReEmbedding)
