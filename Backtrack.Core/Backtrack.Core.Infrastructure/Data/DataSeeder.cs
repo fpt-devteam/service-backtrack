@@ -25,6 +25,7 @@ public static class DataSeeder
         await UserSubscriptionSeeder.SeedAsync(db, logger, ct);
         await OrganizationSeeder.SeedAsync(db, mediator, orgRepository, subscriptionRepository, logger, ct);
         await PostSeeder.SeedAsync(db, mediator, logger, ct);
+        await AvatarSeeder.SeedAsync(db, mediator, logger, ct);
         // await OrgInventorySeeder.SeedAsync(db, mediator, logger, ct);
     }
 }
