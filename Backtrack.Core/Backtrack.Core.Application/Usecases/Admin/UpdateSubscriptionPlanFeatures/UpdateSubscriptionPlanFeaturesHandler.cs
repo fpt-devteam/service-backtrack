@@ -21,6 +21,9 @@ public sealed class UpdateSubscriptionPlanFeaturesHandler(
         var plan = await planRepository.GetByIdAsync(command.PlanId, isTrack: true)
             ?? throw new NotFoundException(SubscriptionErrors.PlanNotFound);
 
+        if (command.Name is not null)
+            plan.Name = command.Name;
+
         plan.Features = command.Features;
         planRepository.Update(plan);
         await planRepository.SaveChangesAsync();
