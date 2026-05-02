@@ -8,6 +8,6 @@ public sealed class StripeSettings
     // Subscription plan price IDs (Stripe Price IDs)
     public string? UserMonthlyPriceId { get; init; }
     public string? UserYearlyPriceId { get; init; }
-    public string? OrgProPriceId { get; init; }
-    public string? OrgMaxPriceId { get; init; }
+    public string? OrgMonthlyPriceId { get; init; }
+    public string? OrgYearlyPriceId { get; init; }
 }

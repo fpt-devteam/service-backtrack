@@ -17,8 +17,8 @@ public static class SubscriptionPlanSeeder
         if (stripe is null ||
             stripe.UserMonthlyPriceId is null ||
             stripe.UserYearlyPriceId  is null ||
-            stripe.OrgProPriceId      is null ||
-            stripe.OrgMaxPriceId      is null)
+            stripe.OrgMonthlyPriceId      is null ||
+            stripe.OrgYearlyPriceId      is null)
         {
             logger.LogInformation("Stripe price IDs not fully configured — subscription plan seeding skipped.");
             return;
@@ -61,49 +61,49 @@ public static class SubscriptionPlanSeeder
             new SubscriptionPlan
             {
                 Id              = Guid.NewGuid(),
-                Name            = "QR Monthly",
+                Name            = "Backtrack App Premium Monthly",
                 Price           = 1.99m,
                 Currency        = "usd",
                 BillingInterval = SubscriptionBillingInterval.Monthly,
                 SubscriberType  = SubscriberType.User,
                 ProviderPriceId = stripe.UserMonthlyPriceId!,
-                Features        = ["Activate your personal QR code", "Custom note for finders", "Personalized QR design"],
+                Features        = ["Activate your personal QR code", "Custom note for finders", "Personalized QR design", "Unlimited post"],
                 CreatedAt       = now,
             },
             new SubscriptionPlan
             {
                 Id              = Guid.NewGuid(),
-                Name            = "QR Yearly",
+                Name            = "Backtrack App Premium Yearly",
                 Price           = 19.99m,
                 Currency        = "usd",
                 BillingInterval = SubscriptionBillingInterval.Yearly,
                 SubscriberType  = SubscriberType.User,
                 ProviderPriceId = stripe.UserYearlyPriceId!,
-                Features        = ["Activate your personal QR code", "Custom note for finders", "Personalized QR design", "2 months free vs monthly"],
+                Features        = ["Activate your personal QR code", "Custom note for finders", "Personalized QR design", "Unlimited post", "2 months free vs monthly"],
                 CreatedAt       = now,
             },
             new SubscriptionPlan
             {
                 Id              = Guid.NewGuid(),
-                Name            = "Org Pro",
+                Name            = "Backtrack Organization Premium Monthly",
                 Price           = 19.99m,
                 Currency        = "usd",
                 BillingInterval = SubscriptionBillingInterval.Monthly,
                 SubscriberType  = SubscriberType.Organization,
-                ProviderPriceId = stripe.OrgProPriceId!,
-                Features        = ["Up to 20 staff members", "Advanced lost & found management", "AI-powered item matching", "Custom intake forms", "Analytics dashboard"],
+                ProviderPriceId = stripe.OrgMonthlyPriceId!,
+                Features        = ["Unlimited staff members", "Advanced lost & found management", "Custom intake forms", "Analytics dashboard"],
                 CreatedAt       = now,
             },
             new SubscriptionPlan
             {
                 Id              = Guid.NewGuid(),
-                Name            = "Org Max",
-                Price           = 49.99m,
+                Name            = "Backtrack Organization Premium Monthly",
+                Price           = 199.99m,
                 Currency        = "usd",
-                BillingInterval = SubscriptionBillingInterval.Monthly,
+                BillingInterval = SubscriptionBillingInterval.Yearly,
                 SubscriberType  = SubscriberType.Organization,
-                ProviderPriceId = stripe.OrgMaxPriceId!,
-                Features        = ["Unlimited staff members", "Advanced lost & found management", "AI-powered item matching", "Custom intake forms", "Analytics dashboard", "Priority support", "Custom branding"],
+                ProviderPriceId = stripe.OrgYearlyPriceId!,
+                Features        = ["Unlimited staff members", "Advanced lost & found management", "Custom intake forms", "Analytics dashboard", "2 months free vs monthly"],
                 CreatedAt       = now,
             },
         ];
