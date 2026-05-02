@@ -37,6 +37,7 @@ interface ConversationAggRow {
     lastMessageAt?: Date | null;
     lastMessageSenderId?: string | null;
     unreadCount?: number;
+    postId?: string | null;
     partner?: {
         id: Types.ObjectId | string;
         displayName: string | null;
@@ -47,54 +48,6 @@ interface ConversationAggRow {
     updatedAt: Date;
 }
 
-// export const createDirectConversation = async (
-//   data: CreationDirectConversationRequest,
-//   userId: string
-// ): Promise<IDirectConversation> => {
-//   const duplicate = await ConversationParticipant.aggregate([
-//     { $match: { memberId: { $in: [data.memberId, userId] }, deletedAt: null } },
-//     { $group: { _id: '$conversationId', count: { $sum: 1 } } },
-//     { $match: { count: 2 } },
-//     { $limit: 1 },
-//   ]);
-
-//   if (duplicate.length > 0) {
-//     throw ConversationErrors.AlreadyExists;
-//   }
-
-//   const conversation = new Conversation();
-//   await conversation.save();
-//   const conversationId = toStringOrNull(conversation._id);
-//   if (!conversationId) {
-//     throw ConversationErrors.NotFound;
-//   }
-//   await createDirectConvParticipants(conversationId, data.memberId, userId);
-//   return conversation;
-// };
-
-// export const createOrgConversation = async (
-//   data: CreationSupportConversationRequest,
-//   userId: string
-// ): Promise<ISupportConversation> => {
-//   // Prevent duplicate: check if an ORGANIZATION conversation with this orgId
-//   // already has this user as a CUSTOMER participant
-//   const existingConv = await findExistingOrgConversation(userId, data.orgId);
-//   if (existingConv) {
-//     throw ConversationErrors.AlreadyExists;
-//   }
-
-//   const conversation = new Conversation({
-//     orgId: data.orgId,
-//   });
-//   await conversation.save();
-//   const conversationId = toStringOrNull(conversation._id);
-//   if (!conversationId) {
-//     throw ConversationErrors.NotFound;
-//   }
-//   await createConversationQueue(conversationId);
-//   await createOrgConvParticipants(conversationId, ConversationParticipantRole.CUSTOMER, userId);
-//   return conversation;
-// };
 
 /**
  * Modern flow: find existing Direct conversation between two users,
@@ -204,9 +157,15 @@ export const findDirectConversationByPartnerId = async (
 export const findOrCreateOrgConversation = async (
   userId: string,
   orgId: string,
+  postId?: string,
 ): Promise<SupportConversationResponse> => {
   const existingConv = await findExistingOrgConversation(userId, orgId);
-  if (existingConv) return toSupportConversationResponse(existingConv);
+  if (existingConv) {
+    if (postId && existingConv.postId !== postId) {
+		throw ConversationErrors.PostIdMismatch;
+    }
+    return toSupportConversationResponse(existingConv);
+  }
 
   const org = await Org.findById(orgId).lean().exec();
   if (!org) throw ConversationErrors.OrgNotFound;
@@ -216,6 +175,7 @@ export const findOrCreateOrgConversation = async (
     orgSlug: org.slug,
     orgLogoUrl: org.logoUrl,
     status: ConversationStatus.IN_QUEUE,
+    postId: postId ?? null,
   });
   await conversation.save();
   const conversationId = toStringOrNull(conversation._id);
@@ -290,6 +250,7 @@ export const getConversationById = async (
             partner,
             lastMessage,
             unreadCount,
+            postId:     s.postId ?? null,
             createdAt:  s.createdAt,
             updatedAt:  s.updatedAt,
         } satisfies SupportConversationResponse;
@@ -349,6 +310,7 @@ const toSupportConversationResponse = (doc: ToLeanDoc<ISupportConversation>): Su
         ? { senderId: doc.senderId ?? null, content: doc.lastMessageContent, timestamp: doc.lastMessageAt ?? null }
         : null,
     unreadCount: 0,
+    postId: doc.postId ?? null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
 });
@@ -394,6 +356,24 @@ export const backToQueue = async (id: string, staffId: string): Promise<boolean>
     await Conversation.findByIdAndUpdate(id, { staffAssignId: null, status: ConversationStatus.IN_QUEUE });
     return true;
 };
+export const updateConversationPostId = async (userId: string, conversationId: string, postId: string): Promise<void> => {
+    const [existingConv, participant] = await Promise.all([
+        Conversation.findById(conversationId).lean().exec(),
+        ConversationParticipant.findOne({
+            conversationId,
+            memberId: userId,
+            role: ConversationParticipantRole.CUSTOMER,
+            deletedAt: null,
+        }).lean().exec(),
+    ]);
+
+    if (!existingConv || existingConv.deletedAt) throw ConversationErrors.NotFound;
+    if (!existingConv.orgId) throw ConversationErrors.InvalidConversationType;
+    if (!participant) throw ConversationErrors.Unauthorized;
+
+    await Conversation.findByIdAndUpdate(conversationId, { postId }).exec();
+};
+
 export const deleteConversation = async (id: string, userId: string): Promise<void> => {
     // Check if user is a participant
     const participant = await ConversationParticipant.findOne({
@@ -481,6 +461,7 @@ export const projectConversationStage = {
                 else: null
             }
         },
+        postId:    { $ifNull: ['$conversation.postId', null] },
         createdAt: '$conversation.createdAt',
         updatedAt: '$conversation.updatedAt',
     }
@@ -556,8 +537,8 @@ const formatDirectResult = (results: ConversationAggRow[], limit: number): Direc
                   }
                 : null,
             unreadCount: c.unreadCount ?? 0,
-            createdAt: c.createdAt,
-            updatedAt: c.updatedAt,
+            createdAt:   c.createdAt,
+            updatedAt:   c.updatedAt,
         })),
         nextCursor,
         hasMore,
@@ -593,6 +574,7 @@ const formatSupportResult = (results: ConversationAggRow[], limit: number): Supp
                   }
                 : null,
             unreadCount: c.unreadCount ?? 0,
+            postId: c.postId ?? null,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
         })),
@@ -711,6 +693,7 @@ interface MixedConversationAggRow {
         email:       string | null;
         avatarUrl:   string | null;
     } | null;
+    postId:              string | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -854,6 +837,7 @@ export const listAllConversationsByUserId = async (
             orgLogoUrl:    { $ifNull: ['$conv.orgLogoUrl',    null] },
             status:        { $ifNull: ['$conv.status',        null] },
             staffAssignId: { $ifNull: ['$conv.staffAssignId', null] },
+            postId:        { $ifNull: ['$conv.postId',        null] },
         }, { status: { $ne: ConversationStatus.CLOSED } }),
     ]);
 
@@ -897,6 +881,7 @@ export const listAllConversationsByUserId = async (
                   }
                 : null,
             unreadCount: c.unreadCount ?? 0,
+            postId:      c.postId ?? null,
             createdAt:   c.createdAt,
             updatedAt:   c.updatedAt,
         })),
