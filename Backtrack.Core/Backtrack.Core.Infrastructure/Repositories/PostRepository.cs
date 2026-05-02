@@ -273,7 +273,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             command.Parameters.Add(new NpgsqlParameter("@embedding", embeddingVec));
             command.Parameters.Add(new NpgsqlParameter("@postType", post.PostType.ToString()));
             command.Parameters.Add(new NpgsqlParameter("@authorId", post.AuthorId));
-            command.Parameters.Add(new NpgsqlParameter("@minSimilarity", PostSimilarityThresholds.MediumSimilarityThreshold));
+            command.Parameters.Add(new NpgsqlParameter("@minSimilarity", PostSimilarityThresholds.VerySimilarityHighThreshold));
             command.Parameters.AddRange(filterParams.ToArray());
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -456,6 +456,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                 AND p.status = 'Active'
                 AND p.post_type != @postType
                 AND p.author_id != @authorId
+                AND p.subcategory_id = @subcategoryId
                 AND p.location IS NOT NULL
                 AND ST_DWithin(
                     p.location::geography,
@@ -480,6 +481,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             cmd.Parameters.Add(new NpgsqlParameter("@postId", post.Id));
             cmd.Parameters.Add(new NpgsqlParameter("@postType", post.PostType.ToString()));
             cmd.Parameters.Add(new NpgsqlParameter("@authorId", post.AuthorId));
+            cmd.Parameters.Add(new NpgsqlParameter("@subcategoryId", post.SubcategoryId));
             cmd.Parameters.Add(new NpgsqlParameter("@longitude", post.Location.Longitude));
             cmd.Parameters.Add(new NpgsqlParameter("@latitude", post.Location.Latitude));
             cmd.Parameters.Add(new NpgsqlParameter("@maxDistance", PostSimilarityThresholds.MaxDistanceMeters));
