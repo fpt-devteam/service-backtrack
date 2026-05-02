@@ -5,19 +5,25 @@ using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
 
+
 namespace Backtrack.Core.Application.Usecases.Organizations.JoinByInvitation;
 
 public sealed class JoinByInvitationHandler : IRequestHandler<JoinByInvitationCommand, JoinByInvitationResult>
 {
     private readonly IJoinInvitationRepository _invitationRepository;
     private readonly IMembershipRepository _membershipRepository;
+    private readonly ISubscriptionRepository _subscriptionRepository;
+
+    private const int FreeTierStaffLimit = 3;
 
     public JoinByInvitationHandler(
         IJoinInvitationRepository invitationRepository,
-        IMembershipRepository membershipRepository)
+        IMembershipRepository membershipRepository,
+        ISubscriptionRepository subscriptionRepository)
     {
         _invitationRepository = invitationRepository;
         _membershipRepository = membershipRepository;
+        _subscriptionRepository = subscriptionRepository;
     }
 
     public async Task<JoinByInvitationResult> Handle(JoinByInvitationCommand command, CancellationToken cancellationToken)
@@ -51,8 +57,15 @@ public sealed class JoinByInvitationHandler : IRequestHandler<JoinByInvitationCo
         var existingMembership = await _membershipRepository.GetByOrgAndUserAsync(
             invitation.OrganizationId, command.UserId, cancellationToken);
         if (existingMembership is not null)
-        {
             throw new ConflictException(MembershipErrors.AlreadyAMember);
+
+        // Enforce free-tier staff limit
+        var hasSubscription = await _subscriptionRepository.GetActiveByOrganizationIdAsync(invitation.OrganizationId, cancellationToken) != null;
+        if (!hasSubscription)
+        {
+            var memberCount = await _membershipRepository.CountActiveByOrgAsync(invitation.OrganizationId, cancellationToken);
+            if (memberCount >= FreeTierStaffLimit)
+                throw new ConflictException(MembershipErrors.StaffLimitReached);
         }
 
         // Create membership
