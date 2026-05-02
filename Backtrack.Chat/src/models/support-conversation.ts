@@ -7,7 +7,7 @@ const ConversationSchema = new Schema<ISupportConversation>(
 	{
 		lastMessageAt: { type: Date },
 		lastMessageContent: { type: String, default: null },
-		senderId: { type: String, default: null }, 
+		senderId: { type: String, default: null },
 		staffAssignId: { type: String, default: null, index: true },
 		orgId: {
 			type: String,
@@ -17,23 +17,24 @@ const ConversationSchema = new Schema<ISupportConversation>(
 		orgName: { type: String, default: null },
 		orgSlug: { type: String, default: null },
 		orgLogoUrl: { type: String, default: null },
-		status: { 
-			type: String, 
-			enum: Object.values(ConversationStatus), 
+		status: {
+			type: String,
+			enum: Object.values(ConversationStatus),
 			required: true,
-			index: true 
+			index: true
 		},
-		deletedAt: { type: Date, default: null }, 
+		postId: { type: String, default: null },
+		deletedAt: { type: Date, default: null },
 	},
-	{ 
+	{
 		timestamps: true,
 		minimize: false,
 	},
 );
 
-ConversationSchema.index({ orgId: 1, lastMessageAt: -1 }); 
-ConversationSchema.index({ senderId: 1, lastMessageAt: -1 }); 
-ConversationSchema.index({ deletedAt: 1 }); 
+ConversationSchema.index({ orgId: 1, lastMessageAt: -1 });
+ConversationSchema.index({ senderId: 1, lastMessageAt: -1 });
+ConversationSchema.index({ deletedAt: 1 });
 ConversationSchema.index({ staffAssignId: 1, lastMessageAt: -1 });
 
 const SupportConversation = model<ISupportConversation>('SupportConversation', ConversationSchema);

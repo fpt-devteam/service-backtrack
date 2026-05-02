@@ -8,6 +8,7 @@ export type CreationDirectConversationRequest = z.infer<typeof CreationDirectCon
 
 export const CreationOrganizationConversationSchema = z.object({
     orgId: z.string().min(1, 'orgId is required'),
+	postId: z.string().optional(),
     // status: z.enum([ConversationStatus.IN_QUEUE, ConversationStatus.IN_PROGRESS, ConversationStatus.CLOSED]),
 });
 

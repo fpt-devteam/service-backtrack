@@ -18,6 +18,7 @@ export interface ISupportConversation {
 	orgSlug: string | null;
 	orgLogoUrl: string | null;
 	status: ConversationStatus;
+	postId: string | null;
 	createdAt: Date;
 	updatedAt: Date;
 	deletedAt: Date | null;
