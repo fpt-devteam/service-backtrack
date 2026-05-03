@@ -88,31 +88,21 @@ public class PaymentHistoryRepository : CrudRepositoryBase<PaymentHistory, Guid>
         int months, CancellationToken cancellationToken = default)
     {
         var cutoff = DateTimeOffset.UtcNow.AddMonths(-months);
-        const string sql = @"
-            SELECT EXTRACT(YEAR  FROM payment_date)::int AS year,
-                   EXTRACT(MONTH FROM payment_date)::int AS month,
-                   SUM(CASE WHEN subscriber_type = 'Organization' THEN amount ELSE 0 END) AS org_revenue,
-                   SUM(CASE WHEN subscriber_type = 'User'         THEN amount ELSE 0 END) AS user_revenue
-            FROM payment_histories
-            WHERE status = 'Succeeded'
-              AND deleted_at IS NULL
-              AND payment_date >= @cutoff
-            GROUP BY 1, 2
-            ORDER BY 1, 2";
 
-        var conn = _context.Database.GetDbConnection();
-        if (conn.State != System.Data.ConnectionState.Open)
-            await _context.Database.OpenConnectionAsync(cancellationToken);
+        var rows = await _dbSet.AsNoTracking()
+            .Where(p => p.Status == PaymentStatus.Succeeded && p.PaymentDate >= cutoff)
+            .Select(p => new { p.PaymentDate, p.SubscriberType, p.Amount })
+            .ToListAsync(cancellationToken);
 
-        var result = new List<(int, int, decimal, decimal)>();
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        cmd.Parameters.Add(new Npgsql.NpgsqlParameter("@cutoff", cutoff));
-        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
-            result.Add((reader.GetInt32(0), reader.GetInt32(1), reader.GetDecimal(2), reader.GetDecimal(3)));
-
-        return result;
+        return [.. rows
+            .GroupBy(p => (p.PaymentDate.Year, p.PaymentDate.Month))
+            .Select(g => (
+                g.Key.Year,
+                g.Key.Month,
+                Org:  g.Where(p => p.SubscriberType == SubscriberType.Organization).Sum(p => p.Amount),
+                User: g.Where(p => p.SubscriberType == SubscriberType.User).Sum(p => p.Amount)
+            ))
+            .OrderBy(r => r.Year).ThenBy(r => r.Month)];
     }
 
     public async Task<(int Total, int OrgCount, int UserCount)> GetTransactionCountsAsync(
