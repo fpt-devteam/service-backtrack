@@ -113,4 +113,13 @@ public static class ReturnReportErrors
     public static readonly Error NotOwner = new(
         Code: "NotOwner",
         Message: "Only the owner can confirm the handover.");
+
+    public static readonly Error NotOwnPostInReport = new (
+        Code: "NotOwnPostInReport",
+        Message: "User don't own any post in report"
+    );
+
+    public static readonly Error CloseForOngoingOnly = new(
+        Code: "CloseForOngoingOnly",
+        Message: "Only an Ongoing return report can be marked as close.");
 }

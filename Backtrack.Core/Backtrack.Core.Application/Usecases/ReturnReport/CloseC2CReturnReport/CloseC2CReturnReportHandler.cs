@@ -1,3 +1,5 @@
+using Backtrack.Core.Application.Exceptions;
+using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Domain.Constants;
 using MediatR;
@@ -10,13 +12,10 @@ public sealed class CloseC2CReturnReportHandler(
     public async Task<Unit> Handle(CloseC2CReturnReportCommand command, CancellationToken cancellationToken)
     {
         var report = await returnReportRepository.GetByIdAsync(command.ReturnReportId);
-        if (report is null) return Unit.Value;
+        if (report is null) throw new ValidationException(ReturnReportErrors.NotFound);
+        if (command.UserId != report.FinderId && command.UserId != report.OwnerId) throw new ValidationException(ReturnReportErrors.NotOwnPostInReport);
 
-        if (report.Status is C2CReturnReportStatus.Confirmed
-            or C2CReturnReportStatus.Rejected
-            or C2CReturnReportStatus.Expired
-            or C2CReturnReportStatus.Closed)
-            return Unit.Value;
+        if (report.Status is not C2CReturnReportStatus.Ongoing) throw new ValidationException(ReturnReportErrors.CloseForOngoingOnly);
 
         report.Status = C2CReturnReportStatus.Closed;
         await returnReportRepository.SaveChangesAsync();
