@@ -5,7 +5,7 @@ using Backtrack.Core.WebApi.Utils;
 using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Application.Usecases.Posts.GetPostById;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetSimilarPosts;
-using Backtrack.Core.Application.Usecases.Posts.DeletePost;
+using Backtrack.Core.Application.Usecases.Posts.ArchivePost;
 using Backtrack.Core.Application.Usecases.PostExplorations.ListPostsByAuthorId;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
@@ -139,14 +139,13 @@ public class PostController : ControllerBase
         return this.ApiOk(result);
     }
 
-    [HttpDelete("{postId:guid}")]
-    public async Task<IActionResult> DeletePostAsync(
+    [HttpPatch("{postId:guid}/archive")]
+    public async Task<IActionResult> ArchivePostAsync(
         [FromRoute] Guid postId,
         CancellationToken cancellationToken = default)
     {
         var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        _logger.LogInformation("CONTROLLER: Deleting post {PostId} by user {UserId}", postId, authorId);
-        var command = new DeletePostCommand { PostId = postId, UserId = authorId };
+        var command = new ArchivePostCommand { PostId = postId, UserId = authorId };
         await _mediator.Send(command, cancellationToken);
         return NoContent();
     }

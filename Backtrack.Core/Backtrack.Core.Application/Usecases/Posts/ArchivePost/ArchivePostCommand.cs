@@ -1,0 +1,12 @@
+using System.Text.Json.Serialization;
+using MediatR;
+
+namespace Backtrack.Core.Application.Usecases.Posts.ArchivePost;
+
+public sealed record ArchivePostCommand : IRequest
+{
+    [JsonIgnore]
+    public Guid PostId { get; init; }
+    [JsonIgnore]
+    public string UserId { get; init; } = string.Empty;
+}
