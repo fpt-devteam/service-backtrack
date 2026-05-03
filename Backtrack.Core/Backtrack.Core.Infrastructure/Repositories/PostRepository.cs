@@ -273,7 +273,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             command.Parameters.Add(new NpgsqlParameter("@embedding", embeddingVec));
             command.Parameters.Add(new NpgsqlParameter("@postType", post.PostType.ToString()));
             command.Parameters.Add(new NpgsqlParameter("@authorId", post.AuthorId));
-            command.Parameters.Add(new NpgsqlParameter("@minSimilarity", PostSimilarityThresholds.VerySimilarityHighThreshold));
+            command.Parameters.Add(new NpgsqlParameter("@minSimilarity", PostSimilarityThresholds.HighSimilarityThreshold));
             command.Parameters.AddRange(filterParams.ToArray());
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
