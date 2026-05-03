@@ -6,6 +6,7 @@ using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.OrganizationInventory;
 using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 using Backtrack.Core.Application.Usecases.Posts;
+using Backtrack.Core.Application.Usecases.Posts.BlurImages;
 using Backtrack.Core.Application.Utils;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
@@ -79,6 +80,10 @@ public sealed class CreateInventoryItemHandler(
         await postRepository.SaveChangesAsync();
 
         backgroundJobService.EnqueueJob(new UpdatePostEmbeddingCommand(post.Id));
+
+        if (post.ImageUrls.Count > 0)
+            backgroundJobService.EnqueueJob<BlurImagesOrchestrator>(
+                o => o.RunAsync(post.Id));
 
         return post.ToInventoryItemResult(receiveReport);
     }

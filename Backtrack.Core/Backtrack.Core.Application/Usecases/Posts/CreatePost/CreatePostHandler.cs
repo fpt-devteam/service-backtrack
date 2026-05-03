@@ -4,6 +4,7 @@ using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.PostMatchings;
+using Backtrack.Core.Application.Usecases.Posts.BlurImages;
 using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 using Backtrack.Core.Application.Utils;
 using Backtrack.Core.Domain.Constants;
@@ -72,6 +73,10 @@ public sealed class CreatePostHandler(
 
         backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(
             orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
+
+        if (post.ImageUrls.Count > 0)
+            backgroundJobService.EnqueueJob<BlurImagesOrchestrator>(
+                o => o.RunAsync(post.Id));
 
         return post.ToPostResult();
     }

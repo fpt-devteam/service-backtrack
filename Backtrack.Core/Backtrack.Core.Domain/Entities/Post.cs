@@ -25,6 +25,7 @@ public sealed class Post : Entity<Guid>
 
     // Images
     public List<string> ImageUrls { get; set; } = new();
+    public List<string> BlurImageUrls { get; set; } = new();
 
     // Text embedding (single source of truth for matching)
     public float[]? Embedding { get; set; }

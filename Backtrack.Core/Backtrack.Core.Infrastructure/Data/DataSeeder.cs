@@ -1,3 +1,4 @@
+using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Infrastructure.Configurations;
 using Backtrack.Core.Infrastructure.Data.Seeders;
@@ -16,6 +17,7 @@ public static class DataSeeder
         ILogger logger,
         StripeSettings? stripeSettings = null,
         SuperAdminSettings? superAdminSettings = null,
+        IImageBlurService? imageBlurService = null,
         CancellationToken ct = default)
     {
         await SubcategorySeeder.SeedAsync(db, logger, ct);
@@ -27,6 +29,8 @@ public static class DataSeeder
         await PostSeeder.SeedAsync(db, mediator, logger, ct);
         await AvatarSeeder.SeedAsync(db, mediator, logger, ct);
         await QrLogoSeeder.SeedAsync(db, logger, ct);
+        if (imageBlurService is not null)
+            await BlurImageSeeder.SeedAsync(db, imageBlurService, logger, ct);
         // await OrgInventorySeeder.SeedAsync(db, mediator, logger, ct);
     }
 }

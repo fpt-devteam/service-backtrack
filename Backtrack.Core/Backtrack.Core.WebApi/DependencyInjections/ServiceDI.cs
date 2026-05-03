@@ -3,14 +3,17 @@ using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Interfaces.Email;
 using Backtrack.Core.Application.Interfaces.PushNotification;
+using Backtrack.Core.Application.Interfaces.Storage;
 using Backtrack.Core.Application.Usecases;
 using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Application.Usecases.Users.EnsureUserExist;
+using Backtrack.Core.Application.Usecases.Posts.BlurImages;
 using Backtrack.Core.Infrastructure.Helpers;
 using Backtrack.Core.Infrastructure.Messaging;
 using Backtrack.Core.Infrastructure.Messaging.Consumers;
 using Backtrack.Core.Infrastructure.Repositories;
 using Backtrack.Core.Infrastructure.Services.Notifications;
+using Backtrack.Core.Infrastructure.Services.Storage;
 using FluentValidation;
 using MediatR;
 using Backtrack.Core.Application.Interfaces.Payments;
@@ -69,6 +72,9 @@ public static class ServiceDI
 
         // Helpers
         services.AddSingleton<IHasher, SHA256Hasher>();
+        services.AddScoped<IImageBlurService, ImageBlurService>();
+        services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
+        services.AddScoped<BlurImagesOrchestrator>();
 
         // Request logging middleware
         services.AddTransient<RequestLoggingMiddleware>();

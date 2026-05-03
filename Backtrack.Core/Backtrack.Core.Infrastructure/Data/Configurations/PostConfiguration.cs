@@ -86,6 +86,11 @@ public class PostConfiguration : IEntityTypeConfiguration<Post>
             .HasColumnType("text[]")
             .IsRequired();
 
+        builder.Property(p => p.BlurImageUrls)
+            .HasColumnName("blur_image_urls")
+            .HasColumnType("text[]")
+            .IsRequired();
+
         // Location (geography)
         var geoPointToPointConverter = new ValueConverter<GeoPoint, Point>(
             toDb => new Point(toDb.Longitude, toDb.Latitude) { SRID = 4326 },

@@ -65,7 +65,8 @@
       "Bash(grep \"\\\\.cs$\")",
       "Bash(xargs ls *)",
       "Bash(git log *)",
-      "mcp__gitnexus__impact"
+      "mcp__gitnexus__impact",
+      "mcp__plugin_context-mode_context-mode__ctx_execute_file"
     ],
     "deny": [],
     "ask": []
