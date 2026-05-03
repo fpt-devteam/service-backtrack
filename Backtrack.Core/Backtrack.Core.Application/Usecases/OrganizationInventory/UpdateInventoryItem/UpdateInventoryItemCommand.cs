@@ -11,7 +11,6 @@ public sealed record UpdateInventoryItemCommand : IRequest<InventoryItemResult>
     [JsonIgnore] public string UserId { get; init; } = string.Empty;
     [JsonIgnore] public Guid OrgId { get; init; }
     public string? PostTitle { get; init; }
-    public string? Status { get; init; }
     public string? OrganizationStorageLocation { get; init; }
     public string? OrganizationFoundLocation { get; init; }
     public PersonalBelongingDetailDto? PersonalBelongingDetail { get; init; }

@@ -37,25 +37,21 @@ public sealed class UpdateInventoryItemHandler(
         if (command.PersonalBelongingDetail != null)
         {
             UpdateDetail(post, command.PersonalBelongingDetail);
-            post.PostTitle = post.PersonalBelongingDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
         else if (command.CardDetail != null)
         {
             UpdateDetail(post, command.CardDetail, hasher);
-            post.PostTitle = post.CardDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
         else if (command.ElectronicDetail != null)
         {
             UpdateDetail(post, command.ElectronicDetail);
-            post.PostTitle = post.ElectronicDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
         if (command.OtherDetail != null)
         {
             UpdateDetail(post, command.OtherDetail);
-            post.PostTitle = post.OtherDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
 
@@ -71,8 +67,11 @@ public sealed class UpdateInventoryItemHandler(
             needsReEmbedding = true;
         }
 
-        if (command.Status is not null && Enum.TryParse<PostStatus>(command.Status, ignoreCase: true, out var parsedStatus))
-            post.Status = parsedStatus;
+        if (command.EventTime.HasValue && post.EventTime != command.EventTime.Value)
+        {
+            post.EventTime = command.EventTime.Value;
+            needsReEmbedding = true;
+        }
 
         if (command.OrganizationStorageLocation is not null)
             post.OrganizationStorageLocation = command.OrganizationStorageLocation;
@@ -80,7 +79,6 @@ public sealed class UpdateInventoryItemHandler(
         if (command.OrganizationFoundLocation is not null)
             post.OrganizationFoundLocation = command.OrganizationFoundLocation;
 
-        post.EventTime = command.EventTime ?? post.EventTime;
         post.UpdatedAt = DateTimeOffset.UtcNow;
 
         if (needsReEmbedding)

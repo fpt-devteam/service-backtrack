@@ -59,9 +59,6 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
 
         bool needsReEmbedding = false;
 
-        if (command.PostType != null && !Enum.TryParse<PostType>(command.PostType, ignoreCase: true, out var postType))
-            throw new ValidationException(PostErrors.InvalidPostType);
-
         // Update only the detail that matches this post's category
         var detailChanged = post.Category switch
         {
@@ -104,10 +101,11 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             needsReEmbedding = true;
         }
 
-        post.EventTime = command.EventTime.HasValue ? command.EventTime.Value : post.EventTime;
-
-        if (command.Status is not null && Enum.TryParse<PostStatus>(command.Status, ignoreCase: true, out var parsedStatus))
-            post.Status = parsedStatus;
+        if (command.EventTime.HasValue && post.EventTime != command.EventTime.Value)
+        {
+            post.EventTime = command.EventTime.Value;
+            needsReEmbedding = true;
+        }
 
         author.PostActionCount++;
         post.UpdatedAt = DateTimeOffset.UtcNow;
