@@ -77,7 +77,7 @@ public class PostController : ControllerBase
     public async Task<IActionResult> GetMyPostsAsync(CancellationToken cancellationToken = default)
     {
         var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var query = new ListPostsByAuthorIdQuery(authorId);
+        var query = new ListPostsByAuthorIdQuery(authorId) { IsBlur = false };
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }
