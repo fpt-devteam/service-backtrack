@@ -67,7 +67,7 @@ public class PostController : ControllerBase
             organizationId = parsedOrgId;
         }
 
-        command = command with { PostId = postId, UserId = authorId, OrganizationId = organizationId };
+        command = command with { PostId = postId, UserId = authorId };
 
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
