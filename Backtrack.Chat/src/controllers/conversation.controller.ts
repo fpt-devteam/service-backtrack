@@ -29,13 +29,23 @@ export const createDirectConversation = async (req: Request, res: Response) => {
 export const createOrgConversation = async (req: Request, res: Response) => {
     const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
     const { orgId } = CreationOrganizationConversationSchema.parse(req.body);
+	const postId = req.body.postId as string | undefined;
 
-    const conversation = await conversationService.findOrCreateOrgConversation(userId, orgId);
+    const conversation = await conversationService.findOrCreateOrgConversation(userId, orgId, postId);
     return res.status(201).json(
         ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
     );
 };
 
+export const updatePostIdInConversation = async (req: Request, res: Response) => {
+	const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+	const conversationId = req.params.id as string;
+	const { postId } = req.body as { postId: string };
+	await conversationService.updateConversationPostId(userId,conversationId, postId);
+	return res.status(200).json(
+		ApiResponseBuilder.success({ message: 'Post ID updated successfully' }, getCorrelationId(req))
+	);
+};
 export const getConversationById = async (req: Request, res: Response) => {
     const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
     const id = req.params.id as string;

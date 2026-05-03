@@ -54,6 +54,7 @@ export interface SupportConversationResponse {
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
   unreadCount: number;
+  postId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,7 +78,7 @@ export interface ConversationResponse {
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
   unreadCount: number;
-  /** Only present on Direct conversations; null for Support conversations */
+  postId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
