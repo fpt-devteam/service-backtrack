@@ -95,9 +95,10 @@ public class PaymentHistoryRepository : CrudRepositoryBase<PaymentHistory, Guid>
                    SUM(CASE WHEN subscriber_type = 'User'         THEN amount ELSE 0 END) AS user_revenue
             FROM payment_histories
             WHERE status = 'Succeeded'
+              AND deleted_at IS NULL
               AND payment_date >= @cutoff
-            GROUP BY year, month
-            ORDER BY year, month";
+            GROUP BY 1, 2
+            ORDER BY 1, 2";
 
         var conn = _context.Database.GetDbConnection();
         if (conn.State != System.Data.ConnectionState.Open)
