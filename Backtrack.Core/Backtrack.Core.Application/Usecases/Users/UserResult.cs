@@ -13,6 +13,7 @@ public sealed record UserResult
     public bool ShowEmail { get; init; }
     public bool ShowPhone { get; init; }
     public int PostActionCount { get; init; }
+    public int? PostActionLimit { get; init; }
     public required UserGlobalRole GlobalRole { get; init; }
     public required UserStatus Status { get; init; }
 }

@@ -1,3 +1,4 @@
+using Backtrack.Core.Application.Configurations;
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
@@ -11,6 +12,7 @@ using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Backtrack.Core.Application.Usecases.Posts.CreatePost;
 
@@ -21,9 +23,10 @@ public sealed class CreatePostHandler(
     ISubscriptionRepository subscriptionRepository,
     IHasher hasher,
     IBackgroundJobService backgroundJobService,
-    ILogger<CreatePostHandler> logger) : IRequestHandler<CreatePostCommand, PostResult>
+    ILogger<CreatePostHandler> logger,
+    IOptions<PostSettings> postSettings) : IRequestHandler<CreatePostCommand, PostResult>
 {
-    private const int FreeTierLimit = 3;
+    private readonly int _freeTierLimit = postSettings.Value.FreeTierPostLimit;
 
     public async Task<PostResult> Handle(CreatePostCommand command, CancellationToken cancellationToken)
     {
@@ -31,7 +34,7 @@ public sealed class CreatePostHandler(
             ?? throw new NotFoundException(UserErrors.NotFound);
 
         var hasSubscription = await subscriptionRepository.GetActiveByUserIdAsync(command.AuthorId, cancellationToken) != null;
-        if (!hasSubscription && author.PostActionCount >= FreeTierLimit)
+        if (!hasSubscription && author.PostActionCount >= _freeTierLimit)
             throw new ConflictException(PostErrors.PostLimitReached);
 
         if (!Enum.TryParse<ItemCategory>(command.Category, ignoreCase: true, out var category))

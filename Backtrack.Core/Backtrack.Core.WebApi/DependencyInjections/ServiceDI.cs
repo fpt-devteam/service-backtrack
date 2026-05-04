@@ -1,3 +1,4 @@
+using Backtrack.Core.Application.Configurations;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Application.Interfaces.Repositories;
@@ -24,6 +25,8 @@ public static class ServiceDI
 {
     public static void AddServiceConfigurations(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<PostSettings>(configuration.GetSection("PostSettings"));
+
         // MediatR - Register handlers from Application layer
         services.AddMediatR(typeof(EnsureUserExistCommand).Assembly);
 

@@ -1,3 +1,4 @@
+using Backtrack.Core.Application.Configurations;
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
@@ -10,6 +11,7 @@ using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
+using Microsoft.Extensions.Options;
 
 namespace Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 
@@ -21,8 +23,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
     private readonly ISubscriptionRepository _subscriptionRepository;
     private readonly IBackgroundJobService _backgroundJobService;
     private readonly IHasher _hasher;
-
-    private const int FreeTierLimit = 3;
+    private readonly int _freeTierLimit;
 
     public UpdatePostHandler(
         IPostRepository postRepository,
@@ -30,7 +31,8 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         IUserRepository userRepository,
         ISubscriptionRepository subscriptionRepository,
         IBackgroundJobService backgroundJobService,
-        IHasher hasher)
+        IHasher hasher,
+        IOptions<PostSettings> postSettings)
     {
         _postRepository = postRepository;
         _returnReportRepository = returnReportRepository;
@@ -38,6 +40,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         _subscriptionRepository = subscriptionRepository;
         _backgroundJobService = backgroundJobService;
         _hasher = hasher;
+        _freeTierLimit = postSettings.Value.FreeTierPostLimit;
     }
 
     public async Task<PostResult> Handle(UpdatePostCommand command, CancellationToken cancellationToken)
@@ -53,7 +56,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             ?? throw new NotFoundException(UserErrors.NotFound);
 
         var hasSubscription = await _subscriptionRepository.GetActiveByUserIdAsync(command.UserId, cancellationToken) != null;
-        if (!hasSubscription && author.PostActionCount >= FreeTierLimit)
+        if (!hasSubscription && author.PostActionCount >= _freeTierLimit)
             throw new ConflictException(PostErrors.EditLimitReached);
 
 
