@@ -20,6 +20,7 @@ import { buildPaginatedResult, CursorPaginationParams } from '@/utils/pagination
 import { toStringOrNull, ToLeanDoc } from '@/utils/object-id';
 import { createOrgConvParticipants, createDirectConvParticipants, unassignConversationParticipant } from './conversation-paticipant.service';
 import { ConversationParticipantRole, ConversationStatus, IDirectConversation, ISupportConversation } from '@/models';
+import { SupportFormData } from '@/models/interfaces/support-conversation.interface';
 import { assignConversation, unassignConversation } from "./conversation-assignment.service";
 import { Types } from 'mongoose';
 
@@ -37,7 +38,7 @@ interface ConversationAggRow {
     lastMessageAt?: Date | null;
     lastMessageSenderId?: string | null;
     unreadCount?: number;
-    postId?: string | null;
+    supportFormData?: SupportFormData | null;
     partner?: {
         id: Types.ObjectId | string;
         displayName: string | null;
@@ -157,11 +158,11 @@ export const findDirectConversationByPartnerId = async (
 export const findOrCreateOrgConversation = async (
   userId: string,
   orgId: string,
-  postId?: string,
+  data: Partial<SupportFormData>
 ): Promise<SupportConversationResponse> => {
   const existingConv = await findExistingOrgConversation(userId, orgId);
   if (existingConv) {
-    if (postId && existingConv.postId !== postId) {
+    if (data.postId && existingConv.supportFormData?.postId !== data.postId) {
 		throw ConversationErrors.PostIdMismatch;
     }
     return toSupportConversationResponse(existingConv);
@@ -175,7 +176,17 @@ export const findOrCreateOrgConversation = async (
     orgSlug: org.slug,
     orgLogoUrl: org.logoUrl,
     status: ConversationStatus.IN_QUEUE,
-    postId: postId ?? null,
+    supportFormData: {
+      postId: data.postId ?? null,
+      category: data.category ?? '',
+      subCategoryId: data.subCategoryId ?? '',
+      itemName: data.itemName ?? '',
+      color: data.color ?? '',
+      additionalDetails: data.additionalDetails ?? null,
+      imageUrls: data.imageUrls ?? null,
+      lostLocation: data.lostLocation ?? null,
+      eventTime: data.eventTime ?? null,
+    },
   });
   await conversation.save();
   const conversationId = toStringOrNull(conversation._id);
@@ -250,7 +261,7 @@ export const getConversationById = async (
             partner,
             lastMessage,
             unreadCount,
-            postId:     s.postId ?? null,
+            supportFormData: s.supportFormData ?? null,
             createdAt:  s.createdAt,
             updatedAt:  s.updatedAt,
         } satisfies SupportConversationResponse;
@@ -310,7 +321,7 @@ const toSupportConversationResponse = (doc: ToLeanDoc<ISupportConversation>): Su
         ? { senderId: doc.senderId ?? null, content: doc.lastMessageContent, timestamp: doc.lastMessageAt ?? null }
         : null,
     unreadCount: 0,
-    postId: doc.postId ?? null,
+    supportFormData: doc.supportFormData ?? null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
 });
@@ -356,7 +367,11 @@ export const backToQueue = async (id: string, staffId: string): Promise<boolean>
     await Conversation.findByIdAndUpdate(id, { staffAssignId: null, status: ConversationStatus.IN_QUEUE });
     return true;
 };
-export const updateConversationPostId = async (userId: string, conversationId: string, postId: string): Promise<void> => {
+export const updateConversationSupportFormData = async (
+    userId: string,
+    conversationId: string,
+    data: Partial<Omit<SupportFormData, 'postId'>>
+): Promise<void> => {
     const [existingConv, participant] = await Promise.all([
         Conversation.findById(conversationId).lean().exec(),
         ConversationParticipant.findOne({
@@ -371,7 +386,10 @@ export const updateConversationPostId = async (userId: string, conversationId: s
     if (!existingConv.orgId) throw ConversationErrors.InvalidConversationType;
     if (!participant) throw ConversationErrors.Unauthorized;
 
-    await Conversation.findByIdAndUpdate(conversationId, { postId }).exec();
+    const update = Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [`supportFormData.${key}`, value])
+    );
+    await Conversation.findByIdAndUpdate(conversationId, { $set: update }).exec();
 };
 
 export const deleteConversation = async (id: string, userId: string): Promise<void> => {
@@ -461,7 +479,7 @@ export const projectConversationStage = {
                 else: null
             }
         },
-        postId:    { $ifNull: ['$conversation.postId', null] },
+        supportFormData: { $ifNull: ['$conversation.supportFormData', null] },
         createdAt: '$conversation.createdAt',
         updatedAt: '$conversation.updatedAt',
     }
@@ -574,7 +592,7 @@ const formatSupportResult = (results: ConversationAggRow[], limit: number): Supp
                   }
                 : null,
             unreadCount: c.unreadCount ?? 0,
-            postId: c.postId ?? null,
+            supportFormData: c.supportFormData ?? null,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
         })),
@@ -693,7 +711,7 @@ interface MixedConversationAggRow {
         email:       string | null;
         avatarUrl:   string | null;
     } | null;
-    postId:              string | null;
+    supportFormData:     SupportFormData | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -837,7 +855,7 @@ export const listAllConversationsByUserId = async (
             orgLogoUrl:    { $ifNull: ['$conv.orgLogoUrl',    null] },
             status:        { $ifNull: ['$conv.status',        null] },
             staffAssignId: { $ifNull: ['$conv.staffAssignId', null] },
-            postId:        { $ifNull: ['$conv.postId',        null] },
+            supportFormData: { $ifNull: ['$conv.supportFormData', null] },
         }, { status: { $ne: ConversationStatus.CLOSED } }),
     ]);
 
@@ -881,7 +899,7 @@ export const listAllConversationsByUserId = async (
                   }
                 : null,
             unreadCount: c.unreadCount ?? 0,
-            postId:      c.postId ?? null,
+            supportFormData: c.supportFormData ?? null,
             createdAt:   c.createdAt,
             updatedAt:   c.updatedAt,
         })),

@@ -3,6 +3,7 @@ import { CreationDirectConversationSchema, CreationOrganizationConversationSchem
 import * as conversationService from '@/services/conversation.service';
 import { ApiResponseBuilder } from '@/utils/api-response';
 import { Constants } from '@/config/constants';
+import { SupportFormData } from '@/models/interfaces/support-conversation.interface';
 
 
 const getCorrelationId = (req: Request) =>
@@ -28,22 +29,21 @@ export const createDirectConversation = async (req: Request, res: Response) => {
 
 export const createOrgConversation = async (req: Request, res: Response) => {
     const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
-    const { orgId } = CreationOrganizationConversationSchema.parse(req.body);
-	const postId = req.body.postId as string | undefined;
+    const { orgId, supportFormData } = CreationOrganizationConversationSchema.parse(req.body);
 
-    const conversation = await conversationService.findOrCreateOrgConversation(userId, orgId, postId);
+    const conversation = await conversationService.findOrCreateOrgConversation(userId, orgId, supportFormData ?? {});
     return res.status(201).json(
         ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
     );
 };
 
-export const updatePostIdInConversation = async (req: Request, res: Response) => {
+export const updateSupportFormDataInConversation = async (req: Request, res: Response) => {
 	const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
 	const conversationId = req.params.id as string;
-	const { postId } = req.body as { postId: string };
-	await conversationService.updateConversationPostId(userId,conversationId, postId);
+	const { postId: _ignored, ...supportFormData } = req.body;
+	await conversationService.updateConversationSupportFormData(userId, conversationId, supportFormData as Partial<SupportFormData>);
 	return res.status(200).json(
-		ApiResponseBuilder.success({ message: 'Post ID updated successfully' }, getCorrelationId(req))
+		ApiResponseBuilder.success({ message: 'Support form data updated successfully' }, getCorrelationId(req))
 	);
 };
 export const getConversationById = async (req: Request, res: Response) => {

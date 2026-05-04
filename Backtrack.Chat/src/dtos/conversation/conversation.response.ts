@@ -1,4 +1,5 @@
 import { ConversationStatus } from '@/models';
+import { SupportFormData } from '@/models/interfaces/support-conversation.interface';
 
 // ─── Shared sub-types ────────────────────────────────────────────────────────
 
@@ -54,7 +55,7 @@ export interface SupportConversationResponse {
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
   unreadCount: number;
-  postId: string | null;
+  supportFormData: SupportFormData | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,7 +79,7 @@ export interface ConversationResponse {
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
   unreadCount: number;
-  postId: string | null;
+  supportFormData: SupportFormData | null;
   createdAt: Date;
   updatedAt: Date;
 }

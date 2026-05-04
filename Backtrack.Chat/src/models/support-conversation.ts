@@ -23,7 +23,17 @@ const ConversationSchema = new Schema<ISupportConversation>(
 			required: true,
 			index: true
 		},
-		postId: { type: String, default: null },
+		supportFormData: {
+			postId: { type: String, default: null },
+			category: { type: String, required: true },
+			subCategoryId: { type: String, required: true },
+			itemName: { type: String, required: true },
+			color: { type: String, required: true },
+			additionalDetails: { type: String, default: null },
+			imageUrls: { type: [String], default: null },
+			lostLocation: { type: String, default: null },
+			eventTime: { type: Date, default: null },
+		},
 		deletedAt: { type: Date, default: null },
 	},
 	{
