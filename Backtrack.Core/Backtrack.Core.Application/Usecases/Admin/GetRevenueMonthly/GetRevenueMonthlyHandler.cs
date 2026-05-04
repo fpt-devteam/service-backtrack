@@ -37,8 +37,8 @@ public sealed class GetRevenueMonthlyHandler(
                 return new RevenueMonthlyItemResult(
                     Month: MonthAbbr[p.Month - 1],
                     Year:  p.Year,
-                    Org:   Math.Round(org  / 1000m, 1),
-                    User:  Math.Round(user / 1000m, 1));
+                    Org:   org,
+                    User:  user);
             })
             .ToList();
     }
