@@ -8,7 +8,17 @@ export type CreationDirectConversationRequest = z.infer<typeof CreationDirectCon
 
 export const CreationOrganizationConversationSchema = z.object({
     orgId: z.string().min(1, 'orgId is required'),
-	postId: z.string().optional(),
+	supportFormData: z.object({
+		postId: z.string(),
+		category: z.string(),
+		subCategoryId: z.string(),
+		itemName: z.string(),
+		color: z.string(),
+		additionalDetails: z.string().nullish(),
+		imageUrls: z.array(z.string()).nullish(),
+		lostLocation: z.string().nullish(),
+		eventTime: z.coerce.date().nullish(),
+	}).partial(),
     // status: z.enum([ConversationStatus.IN_QUEUE, ConversationStatus.IN_PROGRESS, ConversationStatus.CLOSED]),
 });
 

@@ -17,6 +17,6 @@ router.delete('/:id', asyncHandler(conversationController.deleteConversation));
 router.post('/:id/assign-staff', asyncHandler(conversationController.assignStaff));
 router.post('/:id/unassign-staff', asyncHandler(conversationController.unassignStaff));
 router.post('/:id/resolve', asyncHandler(conversationController.resolveConversation));
-router.post('/:id/update-post-id', asyncHandler(conversationController.updatePostIdInConversation));
+router.post('/:id/support-form-data', asyncHandler(conversationController.updateSupportFormDataInConversation));
 
 export default router;
