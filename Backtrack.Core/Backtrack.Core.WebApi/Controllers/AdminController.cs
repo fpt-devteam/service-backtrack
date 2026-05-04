@@ -69,18 +69,6 @@ public class AdminController(IMediator mediator) : ControllerBase
             cancellationToken);
         return this.ApiOk(result);
     }
-
-    [HttpGet("revenue/summary")]
-    [ProducesResponseType(typeof(ApiResponse<RevenueSummaryResult>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetRevenueSummaryAsync(CancellationToken cancellationToken = default)
-    {
-        var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var result = await mediator.Send(
-            new GetRevenueSummaryQuery { AdminUserId = adminUserId },
-            cancellationToken);
-        return this.ApiOk(result);
-    }
-
     [HttpGet("revenue/monthly")]
     [ProducesResponseType(typeof(ApiResponse<List<MonthlyRevenueChartItem>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRevenueMonthlyChartAsync(
@@ -93,6 +81,18 @@ public class AdminController(IMediator mediator) : ControllerBase
             cancellationToken);
         return this.ApiOk(result);
     }
+    [HttpGet("revenue/summary")]
+    [ProducesResponseType(typeof(ApiResponse<RevenueSummaryResult>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRevenueSummaryAsync(CancellationToken cancellationToken = default)
+    {
+        var adminUserId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var result = await mediator.Send(
+            new GetRevenueSummaryQuery { AdminUserId = adminUserId },
+            cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    
 
     [HttpGet("revenue/transactions")]
     [ProducesResponseType(typeof(ApiResponse<RevenueTransactionsPageResult>), StatusCodes.Status200OK)]
