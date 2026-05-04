@@ -12,6 +12,7 @@ public sealed record UserResult
     public string? Phone { get; init; }
     public bool ShowEmail { get; init; }
     public bool ShowPhone { get; init; }
+    public int PostActionCount { get; init; }
     public required UserGlobalRole GlobalRole { get; init; }
     public required UserStatus Status { get; init; }
 }
@@ -31,6 +32,7 @@ public static class UserResultMapper
             ShowPhone = user.ShowPhone,
             GlobalRole = user.GlobalRole,
             Status = user.Status,
+            PostActionCount = user.PostActionCount,
         };
     }
 }

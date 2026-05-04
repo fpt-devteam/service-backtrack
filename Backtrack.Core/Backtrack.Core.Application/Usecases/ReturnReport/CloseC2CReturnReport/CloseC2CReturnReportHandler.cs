@@ -11,7 +11,8 @@ public sealed class CloseC2CReturnReportHandler(
 {
     public async Task<Unit> Handle(CloseC2CReturnReportCommand command, CancellationToken cancellationToken)
     {
-        var report = await returnReportRepository.GetByIdAsync(command.ReturnReportId);
+        var report = await returnReportRepository.GetByIdAsync(command.ReturnReportId, isTrack: true)
+            ?? throw new ValidationException(ReturnReportErrors.NotFound);
         if (report is null) throw new ValidationException(ReturnReportErrors.NotFound);
         if (command.UserId != report.FinderId && command.UserId != report.OwnerId) throw new ValidationException(ReturnReportErrors.NotOwnPostInReport);
 
