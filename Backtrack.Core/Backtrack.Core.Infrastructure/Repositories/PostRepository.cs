@@ -561,7 +561,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return result;
     }
 
-    public async Task<Dictionary<(PostType Type, string EffectiveStatus), int>> GetStatusBreakdownByOrgAsync(
+    public async Task<Dictionary<(PostType Type, PostStatus Status), int>> GetStatusBreakdownByOrgAsync(
         Guid orgId,
         string? authorId,
         CancellationToken cancellationToken = default)
@@ -571,20 +571,19 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         var sql = $@"
             SELECT
                 p.post_type,
-                CASE WHEN r.id IS NOT NULL THEN 'ReturnScheduled' ELSE p.status END AS effective_status,
+                p.status,
                 COUNT(*)::int AS cnt
             FROM posts p
-            LEFT JOIN org_return_reports r ON r.post_id = p.id AND r.deleted_at IS NULL
             WHERE p.deleted_at IS NULL
               AND p.organization_id = @orgId
               {authorFilter}
-            GROUP BY p.post_type, effective_status";
+            GROUP BY p.post_type, p.status";
 
         var conn = _context.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
             await _context.Database.OpenConnectionAsync(cancellationToken);
 
-        var result = new Dictionary<(PostType, string), int>();
+        var result = new Dictionary<(PostType, PostStatus), int>();
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
         cmd.Parameters.Add(new NpgsqlParameter("@orgId", orgId));
@@ -595,9 +594,9 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         while (await reader.ReadAsync(cancellationToken))
         {
             var postType        = Enum.Parse<PostType>(reader.GetString(0));
-            var effectiveStatus = reader.GetString(1);
-            var count           = reader.GetInt32(2);
-            result[(postType, effectiveStatus)] = count;
+            var status = Enum.Parse<PostStatus>(reader.GetString(1));
+            var count  = reader.GetInt32(2);
+            result[(postType, status)] = count;
         }
 
         return result;

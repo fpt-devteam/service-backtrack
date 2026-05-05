@@ -8,10 +8,9 @@ using MediatR;
 namespace Backtrack.Core.Application.Usecases.OrganizationInventory.GetDashboardInventory;
 
 public sealed class GetDashboardInventoryHandler(
-    IMembershipRepository      membershipRepository,
-    IPostRepository            postRepository,
-    IOrgReturnReportRepository returnReportRepository,
-    ISubcategoryRepository     subcategoryRepository)
+    IMembershipRepository  membershipRepository,
+    IPostRepository        postRepository,
+    ISubcategoryRepository subcategoryRepository)
     : IRequestHandler<GetDashboardInventoryQuery, PagedResult<DashboardInventoryItem>>
 {
     public async Task<PagedResult<DashboardInventoryItem>> Handle(
@@ -33,16 +32,12 @@ public sealed class GetDashboardInventoryHandler(
         var (posts, totalCount) = await postRepository.GetPagedAsync(
             PagedQuery.FromPage(query.Page, query.PageSize), filters, cancellationToken);
 
-        var postList    = posts.ToList();
-        var postIds     = postList.Select(p => p.Id).ToList();
-        var returnReports   = await returnReportRepository.GetByPostIdsAsync(postIds, cancellationToken);
-        var subcategories   = (await subcategoryRepository.GetAllActiveAsync(cancellationToken))
-                                  .ToDictionary(s => s.Id, s => s.Name);
+        var postList      = posts.ToList();
+        var subcategories = (await subcategoryRepository.GetAllActiveAsync(cancellationToken))
+                                .ToDictionary(s => s.Id, s => s.Name);
 
         var items = postList.ConvertAll(p =>
         {
-            returnReports.TryGetValue(p.Id, out var returnReport);
-            var status = returnReport is not null ? "ReturnScheduled" : p.Status.ToString();
             subcategories.TryGetValue(p.SubcategoryId, out var subcategoryName);
 
             return new DashboardInventoryItem
@@ -51,7 +46,7 @@ public sealed class GetDashboardInventoryHandler(
                 PostTitle        = p.PostTitle,
                 Category         = p.Category.ToString(),
                 SubcategoryName  = subcategoryName ?? string.Empty,
-                Status           = status,
+                Status           = p.Status.ToString(),
                 OrganizationStorageLocation = p.OrganizationStorageLocation ?? string.Empty,
                 ImageUrl         = p.ImageUrls.FirstOrDefault(),
                 CreatedAt        = p.CreatedAt

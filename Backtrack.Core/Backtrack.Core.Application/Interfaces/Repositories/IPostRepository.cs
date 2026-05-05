@@ -59,7 +59,7 @@ namespace Backtrack.Core.Application.Interfaces.Repositories
             DateTimeOffset since,
             CancellationToken cancellationToken = default);
 
-        Task<Dictionary<(PostType Type, string EffectiveStatus), int>> GetStatusBreakdownByOrgAsync(
+        Task<Dictionary<(PostType Type, PostStatus Status), int>> GetStatusBreakdownByOrgAsync(
             Guid orgId,
             string? authorId,
             CancellationToken cancellationToken = default);
