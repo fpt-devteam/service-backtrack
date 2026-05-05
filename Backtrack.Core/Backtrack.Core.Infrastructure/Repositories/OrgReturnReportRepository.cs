@@ -71,15 +71,15 @@ public class OrgReturnReportRepository : CrudRepositoryBase<OrgReturnReport, Gui
             .FirstOrDefaultAsync(r => r.PostId == postId && r.DeletedAt == null, cancellationToken);
     }
 
-    public async Task<int> CountPendingByStaffAsync(Guid orgId, string staffId, CancellationToken cancellationToken = default)
-    {
-        return await _context.Set<OrgReturnReport>()
-            .CountAsync(r => r.OrgId == orgId && r.StaffId == staffId && r.DeletedAt == null, cancellationToken);
-    }
-
     public async Task<int> CountByOrgSinceAsync(Guid orgId, DateTimeOffset since, CancellationToken cancellationToken = default)
     {
         return await _context.Set<OrgReturnReport>()
             .CountAsync(r => r.OrgId == orgId && r.DeletedAt == null && r.CreatedAt >= since, cancellationToken);
+    }
+
+    public async Task<int> CountByTotalReturnsByStaffAsync(Guid orgId, string staffId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<OrgReturnReport>()
+            .CountAsync(r => r.OrgId == orgId && r.StaffId == staffId && r.DeletedAt == null, cancellationToken);
     }
 }

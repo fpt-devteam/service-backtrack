@@ -11,9 +11,9 @@ public sealed class GetPostStatusBreakdownHandler(
     IPostRepository       postRepository)
     : IRequestHandler<GetPostStatusBreakdownQuery, PostStatusBreakdownResult>
 {
-    private static readonly IReadOnlyList<string> DisplayedStatuses =
+    private static readonly IReadOnlyList<PostStatus> DisplayedStatuses =
     [
-        "InStorage", "ReturnScheduled", "Returned", "Archived", "Expired"
+        PostStatus.InStorage, PostStatus.Returned, PostStatus.Archived, PostStatus.Expired
     ];
 
     public async Task<PostStatusBreakdownResult> Handle(
@@ -33,34 +33,26 @@ public sealed class GetPostStatusBreakdownHandler(
     }
 
     private static StatusBreakdownGroup BuildGroup(
-        Dictionary<(PostType Type, string EffectiveStatus), int> breakdown)
-    {
-        return new StatusBreakdownGroup
-        {
-            Lost  = BuildPostTypeBreakdown(breakdown, PostType.Lost),
-            Found = BuildPostTypeBreakdown(breakdown, PostType.Found)
-        };
-    }
-
-    private static PostTypeBreakdown BuildPostTypeBreakdown(
-        Dictionary<(PostType Type, string EffectiveStatus), int> breakdown,
-        PostType postType)
+        Dictionary<(PostType Type, PostStatus Status), int> breakdown)
     {
         var total = breakdown
-            .Where(kv => kv.Key.Type == postType)
+            .Where(kv => kv.Key.Type == PostType.Found)
             .Sum(kv => kv.Value);
 
         var statuses = DisplayedStatuses.Select(status =>
         {
-            breakdown.TryGetValue((postType, status), out var count);
+            breakdown.TryGetValue((PostType.Found, status), out var count);
             return new StatusCount
             {
-                Status = status,
+                Status = status.ToString(),
                 Count  = count,
                 Pct    = total > 0 ? (int)Math.Round(count * 100.0 / total) : 0
             };
         }).ToList();
 
-        return new PostTypeBreakdown { Total = total, Statuses = statuses };
+        return new StatusBreakdownGroup
+        {
+            Found = new PostTypeBreakdown { Total = total, Statuses = statuses }
+        };
     }
 }

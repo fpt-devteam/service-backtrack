@@ -8,7 +8,6 @@ public sealed record PostStatusBreakdownResult
 
 public sealed record StatusBreakdownGroup
 {
-    public required PostTypeBreakdown Lost  { get; init; }
     public required PostTypeBreakdown Found { get; init; }
 }
 

@@ -15,30 +15,16 @@ public sealed class GetOrgPostStatsHandler(
     public async Task<OrgPostStatsResult> Handle(
         GetOrgPostStatsQuery query, CancellationToken cancellationToken)
     {
-        var membership = await membershipRepository.GetByOrgAndUserAsync(query.OrgId, query.UserId, cancellationToken)
+        _ = await membershipRepository.GetByOrgAndUserAsync(query.OrgId, query.UserId, cancellationToken)
             ?? throw new ForbiddenException(MembershipErrors.NotAMember);
 
         var startOfMonth = new DateTimeOffset(DateTimeOffset.UtcNow.Year, DateTimeOffset.UtcNow.Month, 1, 0, 0, 0, TimeSpan.Zero);
-
-        var lostPosts = await postRepository.CountAsync(new PostFilters
-        {
-            OrganizationId = query.OrgId,
-            PostType       = PostType.Lost
-        }, cancellationToken);
 
         var foundPosts = await postRepository.CountAsync(new PostFilters
         {
             OrganizationId = query.OrgId,
             PostType       = PostType.Found
         }, cancellationToken);
-
-        var lostThisMonth = await postRepository.CountAsync(new PostFilters
-        {
-            OrganizationId = query.OrgId,
-            PostType       = PostType.Lost,
-            Time           = new TimeFilter(startOfMonth, null)
-        }, cancellationToken);
-
         var foundThisMonth = await postRepository.CountAsync(new PostFilters
         {
             OrganizationId = query.OrgId,
@@ -48,10 +34,8 @@ public sealed class GetOrgPostStatsHandler(
 
         return new OrgPostStatsResult
         {
-            LostPosts  = lostPosts,
             FoundPosts = foundPosts,
-            Total      = lostPosts + foundPosts,
-            ThisMonth  = new ThisMonthStats { Lost = lostThisMonth, Found = foundThisMonth }
+            FoundThisMonth = foundThisMonth
         };
     }
 }
