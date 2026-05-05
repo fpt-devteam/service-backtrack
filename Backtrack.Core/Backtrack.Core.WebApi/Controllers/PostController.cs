@@ -99,9 +99,10 @@ public class PostController : ControllerBase
     [HttpGet("{postId:guid}")]
     public async Task<IActionResult> GetPostByIdAsync(
         [FromRoute] Guid postId,
+        [FromQuery] bool isBlurImages = true,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetPostByIdQuery { PostId = postId };
+        var query = new GetPostByIdQuery { PostId = postId, IsBlurImages = isBlurImages };
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }
