@@ -13,7 +13,7 @@ public sealed class GetPostStatusBreakdownHandler(
 {
     private static readonly IReadOnlyList<string> DisplayedStatuses =
     [
-        "InStorage", "ReturnScheduled", "Returned", "Archived", "Expired"
+        "InStorage", "Returned", "Archived", "Expired"
     ];
 
     public async Task<PostStatusBreakdownResult> Handle(

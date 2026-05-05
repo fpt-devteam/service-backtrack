@@ -571,14 +571,13 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         var sql = $@"
             SELECT
                 p.post_type,
-                CASE WHEN r.id IS NOT NULL THEN 'ReturnScheduled' ELSE p.status END AS effective_status,
+                p.status,
                 COUNT(*)::int AS cnt
             FROM posts p
-            LEFT JOIN org_return_reports r ON r.post_id = p.id AND r.deleted_at IS NULL
             WHERE p.deleted_at IS NULL
               AND p.organization_id = @orgId
               {authorFilter}
-            GROUP BY p.post_type, effective_status";
+            GROUP BY p.post_type, p.status";
 
         var conn = _context.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
