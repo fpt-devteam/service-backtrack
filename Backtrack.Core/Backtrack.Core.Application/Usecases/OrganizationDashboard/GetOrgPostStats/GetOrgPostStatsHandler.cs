@@ -35,7 +35,7 @@ public sealed class GetOrgPostStatsHandler(
         return new OrgPostStatsResult
         {
             FoundPosts = foundPosts,
-            ThisMonth  = new ThisMonthStats { Found = foundThisMonth }
+            FoundThisMonth = foundThisMonth
         };
     }
 }
