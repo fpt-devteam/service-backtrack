@@ -25,15 +25,20 @@ public sealed class GetPostStatusBreakdownHandler(
         var orgBreakdown  = await postRepository.GetStatusBreakdownByOrgAsync(query.OrgId, null,         cancellationToken);
         var mineBreakdown = await postRepository.GetStatusBreakdownByOrgAsync(query.OrgId, query.UserId, cancellationToken);
 
+        var orgTotal = orgBreakdown
+            .Where(kv => kv.Key.Type == PostType.Found)
+            .Sum(kv => kv.Value);
+
         return new PostStatusBreakdownResult
         {
-            Org  = BuildGroup(orgBreakdown),
-            Mine = BuildGroup(mineBreakdown)
+            Org  = BuildGroup(orgBreakdown,  orgTotal),
+            Mine = BuildGroup(mineBreakdown, orgTotal)
         };
     }
 
     private static StatusBreakdownGroup BuildGroup(
-        Dictionary<(PostType Type, PostStatus Status), int> breakdown)
+        Dictionary<(PostType Type, PostStatus Status), int> breakdown,
+        int denominator)
     {
         var total = breakdown
             .Where(kv => kv.Key.Type == PostType.Found)
@@ -46,7 +51,7 @@ public sealed class GetPostStatusBreakdownHandler(
             {
                 Status = status.ToString(),
                 Count  = count,
-                Pct    = total > 0 ? (int)Math.Round(count * 100.0 / total) : 0
+                Pct    = denominator > 0 ? (int)Math.Round(count * 100.0 / denominator) : 0
             };
         }).ToList();
 
