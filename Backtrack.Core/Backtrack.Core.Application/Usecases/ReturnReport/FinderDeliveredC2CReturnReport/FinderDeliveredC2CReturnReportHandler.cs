@@ -35,7 +35,7 @@ public sealed class FinderDeliveredC2CReturnReportHandler(
             Title  = "Item has been delivered!",
             Body   = $"{returnReport.Finder.DisplayName ?? "The finder"} has delivered your item. Please confirm receipt.",
             Type   = NotificationEvent.SystemAlertEvent,
-            Data   = new NotificationData { ScreenPath = $"/(tabs)/handover/{returnReport.Id}" },
+            Data   = new NotificationData { ScreenPath = $"/handover/{returnReport.Id}" },
             Source = new NotificationSource { Name = "ReturnReport", EventId = $"{returnReport.Id}:delivered" }
         }, cancellationToken);
 

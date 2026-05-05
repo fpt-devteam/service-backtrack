@@ -234,7 +234,7 @@ public sealed class FindAndSavePostMatchesHandler(
                 Title  = $"Match found: {foundPost.PostTitle}",
                 Body   = "Your lost item may have been found. Check the match now.",
                 Type   = NotificationEvent.AIMatchingEvent,
-                Data   = data with { ScreenPath = $"/(tabs)/profile/user-posts/{lostPost.Id}" },
+                Data   = data with { ScreenPath = $"/(profile)/user-posts/{lostPost.Id}" },
                 Source = source with { EventId = $"{match.Id}:lost" }
             }, ct);
 
@@ -244,7 +244,7 @@ public sealed class FindAndSavePostMatchesHandler(
                 Title  = $"Match found: {lostPost.PostTitle}",
                 Body   = "The item you found may belong to someone. Check the match now.",
                 Type   = NotificationEvent.AIMatchingEvent,
-                Data   = data with { ScreenPath = $"/(tabs)/profile/user-posts/{foundPost.Id}" },
+                Data   = data with { ScreenPath = $"/(profile)/user-posts/{foundPost.Id}" },
                 Source = source with { EventId = $"{match.Id}:found" }
             }, ct);
         }

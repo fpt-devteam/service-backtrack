@@ -41,7 +41,7 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
 
         await returnReportRepository.SaveChangesAsync();
 
-        var handoverData = new NotificationData { ScreenPath = $"/(tabs)/handover/{returnReport.Id}" };
+        var handoverData = new NotificationData { ScreenPath = $"/handover/{returnReport.Id}" };
         var handoverSource = new NotificationSource { Name = "ReturnReport", EventId = string.Empty };
 
         await mediator.Send(new SendPushNotificationCommand
