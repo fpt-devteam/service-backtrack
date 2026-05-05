@@ -132,7 +132,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             _backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(
                 orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
-        return post.ToPostResult();
+        return post.ToPostResult(isBlur: false);
     }
 
     private static void UpdatePersonalBelongingDetail(Post post, PersonalBelongingDetailDto input)
