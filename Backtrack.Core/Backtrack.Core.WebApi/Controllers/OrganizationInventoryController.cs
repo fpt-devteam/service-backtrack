@@ -126,7 +126,7 @@ public class OrganizationInventoryController(IMediator mediator) : ControllerBas
     }
 
     [HttpPatch("{id:guid}/archive")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ApiResponse<InventoryItemResult>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ArchiveInventoryItemAsync(
         [FromRoute] Guid orgId,
         [FromRoute] Guid id,
@@ -135,6 +135,6 @@ public class OrganizationInventoryController(IMediator mediator) : ControllerBas
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var command = new ArchiveInventoryItemCommand { PostId = id, UserId = userId, OrgId = orgId };
         await mediator.Send(command, cancellationToken);
-        return NoContent();
+        return this.ApiOk(true);
     }
 }
