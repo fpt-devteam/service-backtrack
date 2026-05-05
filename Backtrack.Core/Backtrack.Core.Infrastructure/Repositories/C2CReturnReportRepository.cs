@@ -15,6 +15,10 @@ public class ReturnReportRepository : CrudRepositoryBase<C2CReturnReport, Guid>,
         return await _context.Set<C2CReturnReport>()
             .Include(h => h.Finder)
             .Include(h => h.Owner)
+            .Include(h => h.FinderPost)
+                .ThenInclude(p => p!.Author)
+            .Include(h => h.OwnerPost)
+                .ThenInclude(p => p!.Author)
             .FirstOrDefaultAsync(h => h.Id == id, cancellationToken);
     }
 

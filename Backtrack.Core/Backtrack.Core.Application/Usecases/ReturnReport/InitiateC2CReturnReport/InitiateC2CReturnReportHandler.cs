@@ -80,7 +80,7 @@ public sealed class InitiateC2CReturnReportHandler(
         await returnReportRepository.CreateAsync(returnReport);
         await returnReportRepository.SaveChangesAsync();
 
-        returnReport = await returnReportRepository.GetByIdAsync(returnReport.Id)
+        returnReport = await returnReportRepository.GetByIdWithExtensionAsync(returnReport.Id)
             ?? throw new InvalidOperationException("Failed to retrieve the created return report.");
 
         return returnReport.ToC2CReturnReportResult();
