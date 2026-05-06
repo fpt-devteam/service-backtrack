@@ -16,19 +16,35 @@ public sealed class CreateCustomerPortalSessionHandler(
     public async Task<CreateCustomerPortalSessionResult> Handle(
         CreateCustomerPortalSessionCommand command, CancellationToken cancellationToken)
     {
-        var membership = await membershipRepository.GetByOrgAndUserAsync(
-            command.OrganizationId, command.CallerId!, cancellationToken)
-            ?? throw new ForbiddenException(SubscriptionErrors.NotAdmin);
+        var subscriber = command.Subscriber;
+        string providerCustomerId;
 
-        if (membership.Role != MembershipRole.OrgAdmin)
-            throw new ForbiddenException(SubscriptionErrors.NotAdmin);
+        if (subscriber.SubscriberType == SubscriberType.Organization)
+        {
+            var membership = await membershipRepository.GetByOrgAndUserAsync(
+                subscriber.OrganizationId!.Value, command.CallerId!, cancellationToken)
+                ?? throw new ForbiddenException(SubscriptionErrors.NotAdmin);
 
-        var subscription = await subscriptionRepository.GetActiveByOrganizationIdAsync(
-            command.OrganizationId, cancellationToken)
-            ?? throw new NotFoundException(SubscriptionErrors.NotFound);
+            if (membership.Role != MembershipRole.OrgAdmin)
+                throw new ForbiddenException(SubscriptionErrors.NotAdmin);
+
+            var subscription = await subscriptionRepository.GetActiveByOrganizationIdAsync(
+                subscriber.OrganizationId!.Value, cancellationToken)
+                ?? throw new NotFoundException(SubscriptionErrors.NotFound);
+
+            providerCustomerId = subscription.ProviderCustomerId;
+        }
+        else
+        {
+            var subscription = await subscriptionRepository.GetActiveByUserIdAsync(
+                command.CallerId!, cancellationToken)
+                ?? throw new NotFoundException(SubscriptionErrors.NotFound);
+
+            providerCustomerId = subscription.ProviderCustomerId;
+        }
 
         var url = await stripeService.CreateBillingPortalSessionAsync(
-            subscription.ProviderCustomerId, command.ReturnUrl, cancellationToken);
+            providerCustomerId, command.ReturnUrl, cancellationToken);
 
         return new CreateCustomerPortalSessionResult { Url = url };
     }
