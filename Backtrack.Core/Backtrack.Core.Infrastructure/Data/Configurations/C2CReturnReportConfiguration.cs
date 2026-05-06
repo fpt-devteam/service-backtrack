@@ -48,6 +48,12 @@ public class C2CReturnReportConfiguration : IEntityTypeConfiguration<C2CReturnRe
         builder.Property(r => r.ConfirmedAt)
             .HasColumnName("confirmed_at");
 
+        builder.Property(r => r.RejectedAt)
+            .HasColumnName("rejected_at");
+
+        builder.Property(r => r.ClosedAt)
+            .HasColumnName("closed_at");
+
         builder.Property(r => r.EvidenceImageUrls)
             .HasColumnName("evidence_image_urls")
             .HasColumnType("text[]");

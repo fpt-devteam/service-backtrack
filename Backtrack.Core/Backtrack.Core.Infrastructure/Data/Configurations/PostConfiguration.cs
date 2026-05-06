@@ -174,6 +174,21 @@ public class PostConfiguration : IEntityTypeConfiguration<Post>
             .HasColumnName("event_time")
             .IsRequired();
 
+        builder.Property(p => p.ExpiredAt)
+            .HasColumnName("expired_at");
+
+        builder.Property(p => p.DeliveredAt)
+            .HasColumnName("delivered_at");
+
+        builder.Property(p => p.RejectedAt)
+            .HasColumnName("rejected_at");
+
+        builder.Property(p => p.ReturnedAt)
+            .HasColumnName("returned_at");
+
+        builder.Property(p => p.ArchivedAt)
+            .HasColumnName("archived_at");
+
         builder.Property(p => p.CreatedAt)
             .HasColumnName("created_at")
             .IsRequired();
