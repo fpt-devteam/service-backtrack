@@ -27,6 +27,9 @@ public sealed class FinderDeliveredC2CReturnReportHandler(
         returnReport.DeliveredAt = DateTimeOffset.UtcNow;
         returnReport.EvidenceImageUrls = command.EvidenceImageUrls;
 
+        returnReport.FinderPost.Status = PostStatus.Delivered;
+        returnReport.OwnerPost.Status = PostStatus.Delivered;
+
         await returnReportRepository.SaveChangesAsync();
 
         await mediator.Send(new SendPushNotificationCommand

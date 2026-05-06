@@ -28,6 +28,10 @@ public sealed class RejectC2CReturnReportHandler(
             throw new ForbiddenException(ReturnReportErrors.NotParticipant);
 
         returnReport.Status = C2CReturnReportStatus.Rejected;
+        returnReport.RejectedAt = DateTimeOffset.UtcNow;
+
+        returnReport.FinderPost.Status = PostStatus.Active;
+        returnReport.OwnerPost.Status = PostStatus.Active;
 
         await returnReportRepository.SaveChangesAsync();
 

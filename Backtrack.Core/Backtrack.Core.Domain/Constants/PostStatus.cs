@@ -6,6 +6,7 @@ namespace Backtrack.Core.Domain.Constants
         InStorage, // Not yet active, only visible to author/org, waiting for pickup
         Returned,
         Archived,
-        Expired
+        Expired,
+        Delivered
     }
 }
