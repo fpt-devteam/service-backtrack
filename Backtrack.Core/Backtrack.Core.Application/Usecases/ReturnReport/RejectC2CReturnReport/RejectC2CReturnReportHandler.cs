@@ -31,7 +31,9 @@ public sealed class RejectC2CReturnReportHandler(
         returnReport.RejectedAt = DateTimeOffset.UtcNow;
 
         returnReport.FinderPost.Status = PostStatus.Active;
+        returnReport.FinderPost.RejectedAt = DateTimeOffset.UtcNow;
         returnReport.OwnerPost.Status = PostStatus.Active;
+        returnReport.OwnerPost.RejectedAt = DateTimeOffset.UtcNow;
 
         await returnReportRepository.SaveChangesAsync();
 

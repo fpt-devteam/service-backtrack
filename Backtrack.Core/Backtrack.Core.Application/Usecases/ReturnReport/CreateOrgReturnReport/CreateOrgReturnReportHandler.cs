@@ -48,6 +48,7 @@ public sealed class CreateOrgReturnReportHandler(
         };
 
         post.Status = PostStatus.Returned;
+        post.ReturnedAt = DateTimeOffset.UtcNow;
         postRepository.Update(post);
 
         await orgReturnReportRepository.CreateAsync(returnReport);

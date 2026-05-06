@@ -28,7 +28,9 @@ public sealed class FinderDeliveredC2CReturnReportHandler(
         returnReport.EvidenceImageUrls = command.EvidenceImageUrls;
 
         returnReport.FinderPost.Status = PostStatus.Delivered;
+        returnReport.FinderPost.DeliveredAt = DateTimeOffset.UtcNow;
         returnReport.OwnerPost.Status = PostStatus.Delivered;
+        returnReport.OwnerPost.DeliveredAt = DateTimeOffset.UtcNow;
 
         await returnReportRepository.SaveChangesAsync();
 

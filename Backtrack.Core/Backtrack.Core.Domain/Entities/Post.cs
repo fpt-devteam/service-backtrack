@@ -34,6 +34,13 @@ public sealed class Post : Entity<Guid>
 
     public PostStatus Status { get; set; } = PostStatus.Active;
 
+    // Status timestamps
+    public DateTimeOffset ExpiredAt { get; set; }
+    public DateTimeOffset? DeliveredAt { get; set; }
+    public DateTimeOffset? RejectedAt { get; set; }
+    public DateTimeOffset? ReturnedAt { get; set; }
+    public DateTimeOffset? ArchivedAt { get; set; }
+
     // Relationships
     public required string AuthorId { get; set; }
     public User Author { get; set; } = default!;

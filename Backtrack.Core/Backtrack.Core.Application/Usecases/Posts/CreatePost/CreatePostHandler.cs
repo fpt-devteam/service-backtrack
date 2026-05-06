@@ -64,7 +64,8 @@ public sealed class CreatePostHandler(
             EventTime          = command.EventTime ?? DateTimeOffset.UtcNow,
             ImageUrls          = command.ImageUrls.ToList(),
             PostTitle          = command.PostTitle,
-            CreatedAt          = DateTimeOffset.UtcNow
+            CreatedAt          = DateTimeOffset.UtcNow,
+            ExpiredAt          = DateTimeOffset.UtcNow.AddDays(90)
         };
 
         AttachDetail(post, command, hasher);

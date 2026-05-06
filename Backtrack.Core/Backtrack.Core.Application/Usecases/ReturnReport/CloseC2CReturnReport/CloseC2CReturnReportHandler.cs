@@ -19,6 +19,7 @@ public sealed class CloseC2CReturnReportHandler(
         if (report.Status is not C2CReturnReportStatus.Ongoing) throw new ValidationException(ReturnReportErrors.CloseForOngoingOnly);
 
         report.Status = C2CReturnReportStatus.Closed;
+        report.ClosedAt = DateTimeOffset.UtcNow;
         await returnReportRepository.SaveChangesAsync();
         return Unit.Value;
     }

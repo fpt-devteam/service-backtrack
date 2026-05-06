@@ -25,6 +25,7 @@ public sealed class ArchiveInventoryItemHandler(
             throw new ConflictException(PostErrors.NotInStorage);
 
         post.Status = PostStatus.Archived;
+        post.ArchivedAt = DateTimeOffset.UtcNow;
         postRepository.Update(post);
         await postRepository.SaveChangesAsync();
 

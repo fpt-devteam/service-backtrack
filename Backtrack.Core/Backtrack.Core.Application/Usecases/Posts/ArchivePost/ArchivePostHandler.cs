@@ -32,6 +32,7 @@ public sealed class ArchivePostHandler(
         await postMatchRepository.DeleteByPostIdAsync(post.Id, cancellationToken);
 
         post.Status = PostStatus.Archived;
+        post.ArchivedAt = DateTimeOffset.UtcNow;
         postRepository.Update(post);
         await postRepository.SaveChangesAsync();
 

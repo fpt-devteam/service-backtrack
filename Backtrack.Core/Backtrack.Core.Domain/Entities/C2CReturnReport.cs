@@ -12,6 +12,7 @@ public sealed class C2CReturnReport : Entity<Guid>
     public DateTimeOffset? DeliveredAt { get; set; }
     public DateTimeOffset? ConfirmedAt { get; set; }
     public DateTimeOffset? RejectedAt { get; set; }
+    public DateTimeOffset? ClosedAt { get; set; }
     public required DateTimeOffset ExpiresAt { get; set; }
     public List<string>? EvidenceImageUrls { get; set; }
 

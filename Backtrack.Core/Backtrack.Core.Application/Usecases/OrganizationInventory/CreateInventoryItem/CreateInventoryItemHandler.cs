@@ -60,6 +60,7 @@ public sealed class CreateInventoryItemHandler(
             PostMatchingStatus = PostMatchingStatus.Pending,
             EventTime          = command.EventTime,
             ImageUrls          = command.ImageUrls.ToList(),
+            ExpiredAt          = DateTimeOffset.UtcNow.AddDays(90)
         };
 
         AttachDetail(post, command, hasher);

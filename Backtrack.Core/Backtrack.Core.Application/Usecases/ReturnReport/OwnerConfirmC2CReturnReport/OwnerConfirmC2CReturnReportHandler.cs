@@ -34,9 +34,11 @@ public sealed class OwnerConfirmC2CReturnReportHandler(
         returnReport.ConfirmedAt = DateTimeOffset.UtcNow;
 
         returnReport.FinderPost.Status = PostStatus.Returned;
+        returnReport.FinderPost.ReturnedAt = DateTimeOffset.UtcNow;
         postRepository.Update(returnReport.FinderPost);
 
         returnReport.OwnerPost.Status = PostStatus.Returned;
+        returnReport.OwnerPost.ReturnedAt = DateTimeOffset.UtcNow;
         postRepository.Update(returnReport.OwnerPost);
 
         await returnReportRepository.SaveChangesAsync();

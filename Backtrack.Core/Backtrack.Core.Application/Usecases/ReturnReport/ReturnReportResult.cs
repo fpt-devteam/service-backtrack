@@ -19,6 +19,7 @@ public sealed record C2CReturnReportResult
     public DateTimeOffset? DeliveredAt { get; init; }
     public DateTimeOffset? ConfirmedAt { get; init; }
     public DateTimeOffset? RejectedAt { get; init; }
+    public DateTimeOffset? ClosedAt { get; init; }
     public required DateTimeOffset ExpiresAt { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
 }
@@ -47,6 +48,7 @@ public static class C2CReturnReportResultMapper
         DeliveredAt     = report.DeliveredAt,
         ConfirmedAt     = report.ConfirmedAt,
         RejectedAt      = report.RejectedAt,
+        ClosedAt        = report.ClosedAt,
         ExpiresAt       = report.ExpiresAt,
         CreatedAt       = report.CreatedAt,
     };
