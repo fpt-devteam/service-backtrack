@@ -125,6 +125,16 @@ export const listConversationResolvedByStaff = async (req: Request, res: Respons
     );
 };
 
+export const listConversationsByPostId = async (req: Request, res: Response) => {
+    const orgId = req.headers[Constants.HEADERS.ORG_ID] as string;
+    const postId = req.params.postId as string;
+
+    const result = await conversationService.listConversationsByPostId(orgId, postId, parsePaginationParams(req));
+    return res.status(200).json(
+        ApiResponseBuilder.success(result, getCorrelationId(req))
+    );
+};
+
 // Assignment
 
 export const assignStaff = async (req: Request, res: Response) => {
