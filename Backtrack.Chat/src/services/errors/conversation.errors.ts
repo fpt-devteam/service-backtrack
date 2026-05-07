@@ -46,4 +46,9 @@ export const ConversationErrors = {
 	code: "PostIdMismatch",
 	message: "A conversation for this organization already exists with a different postId.",
   } as Error,
+  PostAlreadyInProgress: {
+    kind: "Conflict",
+    code: "PostAlreadyInProgress",
+    message: "Another conversation for this post is already in progress.",
+  } as Error,
 } as const satisfies Record<string, Error>;

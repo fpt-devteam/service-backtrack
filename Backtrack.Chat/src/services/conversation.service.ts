@@ -330,13 +330,22 @@ export const assignStaff = async (id: string, staffId: string): Promise<SupportC
     const conversation = await SupportConversation.findById(id).lean().exec();
     if (!conversation || conversation.deletedAt) throw ConversationErrors.NotFound;
 
-    // Conversation must be waiting in queue to be picked up
     if (conversation.status !== ConversationStatus.IN_QUEUE) throw ConversationErrors.NotInQueue;
+
+    const postId = conversation.supportFormData?.postId;
+    if (postId) {
+        const conflicting = await Conversation.findOne({
+            _id: { $ne: conversation._id },
+            'supportFormData.postId': postId,
+            status: ConversationStatus.IN_PROGRESS,
+            deletedAt: null,
+        }).lean().exec();
+        if (conflicting) throw ConversationErrors.PostAlreadyInProgress;
+    }
 
     await assignConversation(id, staffId);
     await createOrgConvParticipants(id, ConversationParticipantRole.STAFF, staffId);
     await Conversation.findByIdAndUpdate(id, { staffAssignId: staffId, status: ConversationStatus.IN_PROGRESS });
-    // id is guaranteed to be a SupportConversation at this call site
     return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
 };
 
