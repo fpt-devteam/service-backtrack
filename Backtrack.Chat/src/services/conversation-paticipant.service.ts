@@ -26,15 +26,25 @@ export const createOrgConvParticipants = async(
 	role: ConversationParticipantRole,
 	userId: string,
 	data?: any
-) => {	
-	const participant =
-		{
-			conversationId,
-			memberId: userId,
-			role: role,
-			...data
-		};
-	await ConversationParticipant.insertOne(participant);
+) => {
+	const existing = await ConversationParticipant.findOne({ conversationId, memberId: userId });
+
+	if (existing) {
+		if (!existing.isActive) {
+			await ConversationParticipant.updateOne(
+				{ conversationId, memberId: userId },
+				{ $set: { isActive: true, ...data } }
+			);
+		}
+		return;
+	}
+
+	await ConversationParticipant.insertOne({
+		conversationId,
+		memberId: userId,
+		role,
+		...data,
+	});
 };
 
 export const unassignConversationParticipant = async (conversationId: string, role: ConversationParticipantRole) => {
