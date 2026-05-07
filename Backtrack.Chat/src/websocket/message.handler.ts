@@ -96,7 +96,7 @@ export function registerMessageHandlers(socket: Socket): void {
     const { orgId, limit, cursor } = data;
     try {
       socket.join(`org:${orgId}:queue`);
-      const result = await conversationService.listConversationsQueueByStaff(orgId, { limit, cursor });
+      const result = await conversationService.listConversationsQueueByStaff(authUserId, orgId, false, { limit, cursor });
       socket.emit('org:queue:list', { orgId, ...result });
       logger.info(`Socket ${socket.id} joined org queue room org:${orgId}:queue`);
     } catch (err) {
