@@ -689,6 +689,34 @@ export const listConversationsAssignedByStaff = async (
     return formatSupportResult(results, limit);
 };
 
+export const listConversationsByPostId = async (
+	orgId: string,
+	postId: string,
+	params: CursorPaginationParams = {}
+): Promise<SupportConversationsListResult> => {
+	const limit = Math.min(params.limit || Constants.PAGINATION.DEFAULT_LIMIT, Constants.PAGINATION.MAX_LIMIT);
+	const results = await Conversation.aggregate([
+		{
+			$match: {
+				'supportFormData.postId': postId,
+				orgId,
+				deletedAt: null,
+				...(params.cursor && {
+					lastMessageAt: { $lt: new Date(params.cursor) }
+				})
+			}
+		},
+		{ $sort: { lastMessageAt: -1 } },
+		{ $limit: limit + 1 },
+		{ $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
+		...lookupPartnerStages(orgId),
+		projectConversationStage,
+	]);
+
+	return formatSupportResult(results, limit);
+}
+
+
 // ─── Mixed list (Direct + Support) ───────────────────────────────────────────
 
 /** Internal row shape coming out of the mixed aggregate */
