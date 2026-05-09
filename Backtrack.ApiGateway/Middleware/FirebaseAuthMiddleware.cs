@@ -15,11 +15,7 @@ public class FirebaseAuthMiddleware
     private static readonly HashSet<string> _publicPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "/health",
-            "/swagger",
             "/auth/check-email",
-
-            "/api/core/swagger",
-            "/api/core/hangfire",
 
             "/api/core/orgs/public",
             "/api/core/invitations/check",
@@ -79,6 +75,13 @@ public class FirebaseAuthMiddleware
 
         // PATCH /api/core/handovers/{guid}/owner-confirm  — owner confirms (no auth for org handovers)
         (new Regex(@"^/api/core/handovers/[0-9a-f\-]{36}/owner-confirm$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["PATCH"]),
+    ];
+
+    private static readonly string[] _publicPathPrefixes =
+    [
+        "/swagger",
+        "/api/core/swagger",
+        "/api/core/hangfire",
     ];
 
     private const string AuthHeaderName = "Authorization";
@@ -243,6 +246,9 @@ public class FirebaseAuthMiddleware
         var method = context.Request.Method;
 
         if (_publicPaths.Contains(path))
+            return true;
+
+        if (_publicPathPrefixes.Any(prefix => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
             return true;
 
         if (_publicPathPatterns.Any(entry => entry.Pattern.IsMatch(path) && entry.Methods.Contains(method, StringComparer.OrdinalIgnoreCase)))

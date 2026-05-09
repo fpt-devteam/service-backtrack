@@ -65,6 +65,7 @@ public class Program
         app.UseSwaggerUI();
         app.UseCors("AppCorsPolicy");
         app.UseHangfireDashboardIfEnabled(builder.Configuration);
+        app.UseRecurringJobs();
         app.UseHttpsRedirection();
         app.MapControllers();
 
