@@ -131,6 +131,15 @@ export const listConversationResolvedByStaff = async (req: Request, res: Respons
     );
 };
 
+export const closeConversationsByPostId = async (req: Request, res: Response) => {
+    const postId = req.params.postId as string;
+
+    await conversationService.closeConversationsByPostId(postId);
+    return res.status(200).json(
+        ApiResponseBuilder.success({ message: 'Conversations closed successfully' }, getCorrelationId(req))
+    );
+};
+
 export const listConversationsByPostId = async (req: Request, res: Response) => {
     const orgId = req.headers[Constants.HEADERS.ORG_ID] as string;
     const postId = req.params.postId as string;

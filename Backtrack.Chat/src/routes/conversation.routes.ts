@@ -13,6 +13,7 @@ router.get('/organization/queue', asyncHandler(conversationController.listConver
 router.get('/organization/assigned', asyncHandler(conversationController.listConversationAssignedByStaff));
 router.get('/organization/resolved', asyncHandler(conversationController.listConversationResolvedByStaff));
 router.get('/organization/posts/:postId', asyncHandler(conversationController.listConversationsByPostId));
+router.post('/organization/posts/:postId/close', asyncHandler(conversationController.closeConversationsByPostId));
 router.get('/:id', asyncHandler(conversationController.getConversationById));
 router.delete('/:id', asyncHandler(conversationController.deleteConversation));
 router.post('/:id/assign-staff', asyncHandler(conversationController.assignStaff));
