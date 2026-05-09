@@ -21,6 +21,8 @@ namespace Backtrack.Core.WebApi.DependencyInjections
                     Description = "API for Backtrack application"
                 });
 
+                c.CustomSchemaIds(type => type.FullName);
+
                 // Configure file upload operation filter
                 c.OperationFilter<SwaggerFileOperationFilterDI>();
 
