@@ -742,7 +742,7 @@ const SYSTEM_CLOSE_MESSAGE = "Sorry, this item has already been returned to its 
 export const closeConversationsByPostId = async (postId: string): Promise<void> => {
 	const conversations = await Conversation.find({
 		'supportFormData.postId': postId,
-		status: ConversationStatus.IN_QUEUE,
+		status: { $in: [ConversationStatus.IN_QUEUE, ConversationStatus.IN_PROGRESS] },
 		deletedAt: null,
 	}).lean().exec();
 
