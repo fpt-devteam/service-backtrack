@@ -27,6 +27,10 @@ public sealed record InventoryItemResult
     public string? DisplayAddress { get; init; }
     public required DateTimeOffset EventTime { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
+    public DateTimeOffset? ReturnedAt { get; set; }
+    public DateTimeOffset? ArchivedAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; init; }
+    public DateTimeOffset ExpiredAt { get; set; }
     public required FinderInfo FinderInfo { get; init; }
     public OwnerInfo? OwnerInfo { get; init; }
 }
@@ -40,28 +44,31 @@ public static class InventoryItemResultMapper
     {
         return new InventoryItemResult
         {
-            Id                      = post.Id,
-            Author                  = post.Author?.ToPostAuthorResult(),
-            Organization            = post.Organization?.ToInventoryOrganizationResult(),
-            PostType                = post.PostType,
-            Status                  = post.Status,
-            PostTitle               = post.PostTitle,
-            Category                = post.Category,
-            SubcategoryId           = post.SubcategoryId,
+            Id = post.Id,
+            Author = post.Author?.ToPostAuthorResult(),
+            Organization = post.Organization?.ToInventoryOrganizationResult(),
+            PostType = post.PostType,
+            Status = post.Status,
+            PostTitle = post.PostTitle,
+            Category = post.Category,
+            SubcategoryId = post.SubcategoryId,
             PersonalBelongingDetail = post.PersonalBelongingDetail?.ToDto(),
-            CardDetail              = post.CardDetail?.ToDto(),
-            ElectronicDetail        = post.ElectronicDetail?.ToDto(),
-            OtherDetail             = post.OtherDetail?.ToDto(),
-            ImageUrls               = post.ImageUrls,
+            CardDetail = post.CardDetail?.ToDto(),
+            ElectronicDetail = post.ElectronicDetail?.ToDto(),
+            OtherDetail = post.OtherDetail?.ToDto(),
+            ImageUrls = post.ImageUrls,
             OrganizationStorageLocation = post.OrganizationStorageLocation,
-            OrganizationFoundLocation   = post.OrganizationFoundLocation,
-            Location                = post.Location!,
-            ExternalPlaceId         = post.ExternalPlaceId,
-            DisplayAddress          = post.DisplayAddress,
-            EventTime               = post.EventTime,
-            CreatedAt               = post.CreatedAt,
-            FinderInfo              = receiveReport.FinderInfo,
-            OwnerInfo               = returnReport?.OwnerInfo,
+            OrganizationFoundLocation = post.OrganizationFoundLocation,
+            Location = post.Location!,
+            ExternalPlaceId = post.ExternalPlaceId,
+            DisplayAddress = post.DisplayAddress,
+            EventTime = post.EventTime,
+            CreatedAt = post.CreatedAt,
+            ReturnedAt = post.ReturnedAt,
+            ArchivedAt = post.ArchivedAt,
+            ExpiredAt = post.ExpiredAt,
+            FinderInfo = receiveReport.FinderInfo,
+            OwnerInfo = returnReport?.OwnerInfo,
         };
     }
 }
