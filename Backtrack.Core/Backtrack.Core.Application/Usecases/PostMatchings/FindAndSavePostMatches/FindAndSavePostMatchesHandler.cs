@@ -71,7 +71,7 @@ public sealed class FindAndSavePostMatchesHandler(
 
             await CompleteProcessingAsync(sourcePost, allMatches.Count);
 
-            var readyPairs = allMatchPairs.Where(p => p.Match.Status == MatchStatus.ReadyToShow).ToList();
+            var readyPairs = allMatchPairs.ToList();
             await SendMatchNotificationsAsync(sourcePost, readyPairs, cancellationToken);
         }
         catch (Exception ex)
@@ -207,7 +207,7 @@ public sealed class FindAndSavePostMatchesHandler(
             FoundPostId    = foundPost.Id,
             Score          = similarity,
             Evidence       = assessment.Evidence,
-            Status         = assessment.IsMatch ? MatchStatus.ReadyToShow : MatchStatus.RejectedByAI,
+            Status         = MatchStatus.ReadyToShow,
             DistanceMeters = (float)GeoUtil.Haversine(sourcePost.Location, candidate.Location),
             TimeGapDays    = Math.Abs((sourcePost.EventTime - candidate.EventTime).TotalDays),
             Reasoning      = assessment.Reasoning,
