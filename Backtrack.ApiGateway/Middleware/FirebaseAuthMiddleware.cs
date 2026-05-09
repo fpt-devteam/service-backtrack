@@ -80,6 +80,7 @@ public class FirebaseAuthMiddleware
     private static readonly string[] _publicPathPrefixes =
     [
         "/swagger",
+        "/hangfire",
         "/api/core/swagger",
         "/api/core/hangfire",
     ];
