@@ -20,8 +20,11 @@ import { buildPaginatedResult, CursorPaginationParams } from '@/utils/pagination
 import { toStringOrNull, ToLeanDoc } from '@/utils/object-id';
 import { createOrgConvParticipants, createDirectConvParticipants, unassignConversationParticipant } from './conversation-paticipant.service';
 import { ConversationParticipantRole, ConversationStatus, IDirectConversation, ISupportConversation } from '@/models';
+import { MessageStatus, MessageType } from '@/models/interfaces/message.interface';
 import { SupportFormData } from '@/models/interfaces/support-conversation.interface';
 import { assignConversation, unassignConversation } from "./conversation-assignment.service";
+import Message from '@/models/message';
+import { getIO } from '@/config/websocket';
 import { Types } from 'mongoose';
 
 /** Shape of a single row from the aggregation pipeline in list queries */
@@ -733,6 +736,78 @@ export const listConversationsByPostId = async (
 
 	return formatSupportResult(results, limit);
 }
+
+const SYSTEM_CLOSE_MESSAGE = "Sorry, this item has already been returned to its owner.";
+
+export const closeConversationsByPostId = async (postId: string): Promise<void> => {
+	const conversations = await Conversation.find({
+		'supportFormData.postId': postId,
+		status: ConversationStatus.IN_QUEUE,
+		deletedAt: null,
+	}).lean().exec();
+
+	if (!conversations.length) return;
+
+	const io = getIO();
+	const now = new Date();
+
+	await Promise.all(conversations.map(async (conv) => {
+		const conversationId = conv._id.toString();
+
+		const participants = await ConversationParticipant.find(
+			{ conversationId, isAssigned: true, deletedAt: null },
+			{ memberId: 1, role: 1 }
+		).lean().exec();
+
+		const staffParticipant = participants.find(p => p.role === ConversationParticipantRole.STAFF);
+		const senderId = staffParticipant?.memberId ?? 'system';
+
+		await Conversation.findByIdAndUpdate(conv._id, {
+			status: ConversationStatus.CLOSED,
+			lastMessageContent: SYSTEM_CLOSE_MESSAGE,
+			lastMessageAt: now,
+			senderId,
+		});
+
+		const message = new Message({
+			conversationId,
+			senderId,
+			type: MessageType.TEXT,
+			content: SYSTEM_CLOSE_MESSAGE,
+			attachments: [],
+			status: MessageStatus.SENT,
+		});
+		await message.save();
+
+		const messageResponse = {
+			id: message._id.toString(),
+			conversationId,
+			senderId,
+			type: message.type,
+			content: SYSTEM_CLOSE_MESSAGE,
+			attachments: [],
+			status: message.status,
+			createdAt: message.createdAt,
+			updatedAt: message.updatedAt,
+		};
+
+		io.to(`conversation:${conversationId}`).emit('message:new', messageResponse);
+
+		for (const p of participants) {
+			if (p.memberId) {
+				io.to(`user:${p.memberId}`).emit('conversation:updated', {
+					conversationId,
+					unreadCount: null,
+					lastMessage: {
+						senderId,
+						content: SYSTEM_CLOSE_MESSAGE,
+						timestamp: now,
+					},
+				});
+			}
+		}
+	}));
+};
 
 
 // ─── Mixed list (Direct + Support) ───────────────────────────────────────────
