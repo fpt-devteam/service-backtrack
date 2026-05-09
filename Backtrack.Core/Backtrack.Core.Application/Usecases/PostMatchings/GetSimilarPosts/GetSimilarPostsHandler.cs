@@ -31,7 +31,6 @@ public sealed class GetSimilarPostsHandler : IRequestHandler<GetSimilarPostsQuer
             ?? throw new NotFoundException(PostErrors.NotFound);
 
         var matches = (await _postMatchRepository.GetMatchesByPostIdAsync(request.PostId, cancellationToken))
-            .Where(m => m.Status == Domain.Entities.MatchStatus.ReadyToShow)
             .Take(request.Limit)
             .ToList();
 
