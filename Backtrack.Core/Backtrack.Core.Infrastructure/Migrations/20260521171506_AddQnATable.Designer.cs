@@ -15,7 +15,7 @@ using Pgvector;
 namespace Backtrack.Core.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260522090605_AddQnATable")]
+    [Migration("20260521171506_AddQnATable")]
     partial class AddQnATable
     {
         /// <inheritdoc />
@@ -1202,10 +1202,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
 
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("post_id");
-
                     b.Property<string>("QuestionText")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -1226,9 +1222,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
 
                     b.HasIndex("CreatedAt")
                         .HasDatabaseName("ix_qna_created_at");
-
-                    b.HasIndex("PostId")
-                        .HasDatabaseName("ix_qna_post_id");
 
                     b.ToTable("qna", (string)null);
                 });
@@ -1875,18 +1868,9 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_qna_asker_id_users_id");
 
-                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "Post")
-                        .WithMany("QnAs")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_qna_post_id_posts_id");
-
                     b.Navigation("Answerer");
 
                     b.Navigation("Asker");
-
-                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.Subscription", b =>
@@ -1925,8 +1909,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Navigation("OtherDetail");
 
                     b.Navigation("PersonalBelongingDetail");
-
-                    b.Navigation("QnAs");
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.User", b =>

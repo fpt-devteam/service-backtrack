@@ -16,7 +16,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    post_id = table.Column<Guid>(type: "uuid", nullable: false),
                     asker_id = table.Column<string>(type: "text", nullable: false),
                     question_text = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
                     answerer_id = table.Column<string>(type: "text", nullable: true),
@@ -41,12 +40,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         principalTable: "users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_qna_post_id_posts_id",
-                        column: x => x.post_id,
-                        principalTable: "posts",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -63,11 +56,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                 name: "ix_qna_created_at",
                 table: "qna",
                 column: "created_at");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_qna_post_id",
-                table: "qna",
-                column: "post_id");
         }
 
         /// <inheritdoc />
