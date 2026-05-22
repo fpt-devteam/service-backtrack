@@ -52,4 +52,6 @@ public sealed class Post : Entity<Guid>
     public PostCardDetail? CardDetail { get; set; }
     public PostElectronicDetail? ElectronicDetail { get; set; }
     public PostOtherDetail? OtherDetail { get; set; }
+
+    public ICollection<QnA> QnAs { get; set; } = new List<QnA>();
 }

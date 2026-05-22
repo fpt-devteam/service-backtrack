@@ -74,11 +74,12 @@ public class QnAController : ControllerBase
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetQuestionsAsync(
+        [FromQuery] Guid postId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetQuestionsQuery { Page = page, PageSize = pageSize };
+        var query = new GetQuestionsQuery { PostId = postId, Page = page, PageSize = pageSize };
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }

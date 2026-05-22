@@ -11,13 +11,15 @@ namespace Backtrack.Core.Infrastructure.Repositories;
 public sealed class QnARepository(ApplicationDbContext context)
     : CrudRepositoryBase<QnA, Guid>(context), IQnARepository
 {
-    public async Task<(IReadOnlyList<QnA> Items, int Total)> GetPagedAsync(
+    public async Task<(IReadOnlyList<QnA> Items, int Total)> GetPagedByPostAsync(
+        Guid postId,
         int offset,
         int limit,
         CancellationToken cancellationToken = default)
     {
         var query = _dbSet
             .AsNoTracking()
+            .Where(q => q.PostId == postId)
             .OrderByDescending(q => q.CreatedAt);
 
         var total = await query.CountAsync(cancellationToken);

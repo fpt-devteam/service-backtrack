@@ -12,16 +12,21 @@ namespace Backtrack.Core.Application.Usecases.QnA.CreateQuestion;
 /// </summary>
 public sealed class CreateQuestionHandler(
     IQnARepository qnARepository,
-    IUserRepository userRepository) : IRequestHandler<CreateQuestionCommand, QnAResult>
+    IUserRepository userRepository,
+    IPostRepository postRepository) : IRequestHandler<CreateQuestionCommand, QnAResult>
 {
     public async Task<QnAResult> Handle(CreateQuestionCommand command, CancellationToken cancellationToken)
     {
+        _ = await postRepository.GetByIdAsync(command.PostId)
+            ?? throw new NotFoundException(PostErrors.NotFound);
+
         _ = await userRepository.GetByIdAsync(command.AskerId)
             ?? throw new NotFoundException(UserErrors.NotFound);
 
         var qna = new QnAEntity
         {
             Id           = Guid.NewGuid(),
+            PostId       = command.PostId,
             AskerId      = command.AskerId,
             QuestionText = command.QuestionText,
             CreatedAt    = DateTimeOffset.UtcNow,

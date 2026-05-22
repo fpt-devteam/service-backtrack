@@ -6,6 +6,9 @@ namespace Backtrack.Core.Domain.Entities;
 /// </summary>
 public sealed class QnA : Entity<Guid>
 {
+    public required Guid PostId { get; set; }
+    public Post Post { get; set; } = default!;
+
     /// <summary>The Firebase UID of the user who asked the question.</summary>
     public required string AskerId { get; set; }
 

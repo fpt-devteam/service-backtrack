@@ -15,7 +15,7 @@ public sealed class GetQuestionsHandler(IQnARepository qnARepository)
     {
         var offset = (query.Page - 1) * query.PageSize;
 
-        var (items, total) = await qnARepository.GetPagedAsync(offset, query.PageSize, cancellationToken);
+        var (items, total) = await qnARepository.GetPagedByPostAsync(query.PostId, offset, query.PageSize, cancellationToken);
 
         var results = items.Select(qna => qna.ToQnAResult()).ToList();
 

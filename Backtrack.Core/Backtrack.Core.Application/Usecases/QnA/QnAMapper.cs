@@ -10,6 +10,7 @@ public static class QnAMapper
         return new QnAResult
         {
             Id           = qna.Id,
+            PostId       = qna.PostId,
             AskerId      = qna.AskerId,
             QuestionText = qna.QuestionText,
             AnswererId   = qna.AnswererId,

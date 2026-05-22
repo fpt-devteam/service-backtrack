@@ -6,6 +6,7 @@ namespace Backtrack.Core.Application.Usecases.QnA;
 public sealed record QnAResult
 {
     public Guid Id { get; init; }
+    public Guid PostId { get; init; }
 
     public string AskerId { get; init; } = default!;
     public string QuestionText { get; init; } = default!;

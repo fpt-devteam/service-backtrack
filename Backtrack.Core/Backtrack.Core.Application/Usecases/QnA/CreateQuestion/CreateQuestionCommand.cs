@@ -11,5 +11,6 @@ public sealed record CreateQuestionCommand : IRequest<QnAResult>
     [JsonIgnore]
     public string AskerId { get; init; } = string.Empty;
 
+    public required Guid PostId { get; init; }
     public required string QuestionText { get; init; }
 }

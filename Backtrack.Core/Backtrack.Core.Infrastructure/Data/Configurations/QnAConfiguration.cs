@@ -16,6 +16,19 @@ public class QnAConfiguration : IEntityTypeConfiguration<QnA>
             .HasColumnName("id")
             .IsRequired();
 
+        builder.Property(q => q.PostId)
+            .HasColumnName("post_id")
+            .IsRequired();
+
+        builder.HasOne(q => q.Post)
+            .WithMany(p => p.QnAs)
+            .HasForeignKey(q => q.PostId)
+            .HasConstraintName("fk_qna_post_id_posts_id")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(q => q.PostId)
+            .HasDatabaseName("ix_qna_post_id");
+
         builder.Property(q => q.AskerId)
             .HasColumnName("asker_id")
             .HasColumnType("text")
