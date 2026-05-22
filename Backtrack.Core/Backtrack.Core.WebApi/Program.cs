@@ -1,3 +1,4 @@
+using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Infrastructure.Configurations;
 using Backtrack.Core.Infrastructure.Data;
@@ -64,6 +65,7 @@ public class Program
         app.UseSwaggerUI();
         app.UseCors("AppCorsPolicy");
         app.UseHangfireDashboardIfEnabled(builder.Configuration);
+        app.UseRecurringJobs();
         app.UseHttpsRedirection();
         app.MapControllers();
 
@@ -108,8 +110,9 @@ public class Program
             var logger           = services.GetRequiredService<ILogger<Program>>();
             var stripe           = services.GetRequiredService<IOptions<StripeSettings>>().Value;
             var superAdmin       = services.GetRequiredService<IOptions<SuperAdminSettings>>().Value;
+            var imageBlurService = services.GetRequiredService<IImageBlurService>();
 
-            await DataSeeder.SeedAsync(context, mediator, orgRepo, subscriptionRepo, logger, stripe, superAdmin);
+            await DataSeeder.SeedAsync(context, mediator, orgRepo, subscriptionRepo, logger, stripe, superAdmin, imageBlurService);
         }
         catch (Exception ex)
         {

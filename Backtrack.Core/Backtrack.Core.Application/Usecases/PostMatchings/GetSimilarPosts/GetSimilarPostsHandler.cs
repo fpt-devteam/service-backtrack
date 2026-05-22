@@ -3,6 +3,7 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Utils;
+using Backtrack.Core.Domain.Constants;
 using MediatR;
 using Microsoft.Extensions.Logging;
 

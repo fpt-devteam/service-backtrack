@@ -64,5 +64,16 @@ namespace Backtrack.Core.WebApi.DependencyInjections
 
             return app;
         }
+
+        public static IApplicationBuilder UseRecurringJobs(this IApplicationBuilder app)
+        {
+            RecurringJob.AddOrUpdate<ExpirePostsAndReportsJob>(
+                "expire-posts-and-reports",
+                job => job.ExecuteAsync(),
+                "59 23 * * *",
+                new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+            return app;
+        }
     }
 }

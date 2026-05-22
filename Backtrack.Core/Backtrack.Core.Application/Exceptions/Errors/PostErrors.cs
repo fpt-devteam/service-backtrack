@@ -45,5 +45,17 @@ namespace Backtrack.Core.Application.Exceptions.Errors
         public static readonly Error NotActive = new(
             Code: "PostNotActive",
             Message: "Only active posts can be updated.");
+
+        public static readonly Error CannotDelete = new(
+            Code: "PostCannotDelete",
+            Message: "Only active posts can be deleted.");
+
+        public static readonly Error PostLimitReached = new(
+            Code: "PostLimitReached",
+            Message: "Free tier users can create at most 3 posts. Upgrade your subscription to create more.");
+
+        public static readonly Error EditLimitReached = new(
+            Code: "EditLimitReached",
+            Message: "Free tier users can edit a post at most 3 times. Upgrade your subscription to continue editing.");
     }
 }

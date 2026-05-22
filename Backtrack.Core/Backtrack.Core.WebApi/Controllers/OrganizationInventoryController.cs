@@ -3,9 +3,9 @@ using Backtrack.Core.Application.Usecases.OrganizationInventory.CreateInventoryI
 using Backtrack.Core.Application.Usecases.OrganizationInventory.GetDashboardInventory;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.GetInventoryItemById;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.PublishInventoryItem;
-using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory;
+using Backtrack.Core.Application.Usecases.OrganizationInventory.ArchiveInventoryItem;
 using Backtrack.Core.Application.Usecases.OrganizationInventory.UpdateInventoryItem;
-using Backtrack.Core.Application.Usecases.Posts.DeletePost;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
@@ -125,16 +125,16 @@ public class OrganizationInventoryController(IMediator mediator) : ControllerBas
         return this.ApiOk(result);
     }
 
-    [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> DeleteInventoryItemAsync(
+    [HttpPatch("{id:guid}/archive")]
+    [ProducesResponseType(typeof(ApiResponse<InventoryItemResult>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ArchiveInventoryItemAsync(
         [FromRoute] Guid orgId,
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var command = new DeletePostCommand { PostId = id, UserId = userId };
+        var command = new ArchiveInventoryItemCommand { PostId = id, UserId = userId, OrgId = orgId };
         await mediator.Send(command, cancellationToken);
-        return NoContent();
+        return this.ApiOk(true);
     }
 }

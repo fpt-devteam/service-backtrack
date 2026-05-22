@@ -33,10 +33,9 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("ActivatedById")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("activated_by_id");
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
 
                     b.Property<DateTimeOffset?>("ConfirmedAt")
                         .HasColumnType("timestamp with time zone")
@@ -50,6 +49,14 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
 
+                    b.Property<DateTimeOffset?>("DeliveredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("delivered_at");
+
+                    b.Property<List<string>>("EvidenceImageUrls")
+                        .HasColumnType("text[]")
+                        .HasColumnName("evidence_image_urls");
+
                     b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at");
@@ -60,7 +67,7 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("finder_id");
 
-                    b.Property<Guid?>("FinderPostId")
+                    b.Property<Guid>("FinderPostId")
                         .HasColumnType("uuid")
                         .HasColumnName("finder_post_id");
 
@@ -70,9 +77,13 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("owner_id");
 
-                    b.Property<Guid?>("OwnerPostId")
+                    b.Property<Guid>("OwnerPostId")
                         .HasColumnType("uuid")
                         .HasColumnName("owner_post_id");
+
+                    b.Property<DateTimeOffset?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rejected_at");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -384,6 +395,7 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnName("deleted_at");
 
                     b.Property<string>("FinderInfo")
+                        .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("finder_info");
 
@@ -435,15 +447,16 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
 
-                    b.Property<DateTimeOffset>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expires_at");
+                    b.Property<List<string>>("EvidenceImageUrls")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid")
                         .HasColumnName("org_id");
 
                     b.Property<string>("OwnerInfo")
+                        .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("owner_info");
 
@@ -675,10 +688,19 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTimeOffset?>("ArchivedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("archived_at");
+
                     b.Property<string>("AuthorId")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("author_id");
+
+                    b.Property<List<string>>("BlurImageUrls")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("blur_image_urls");
 
                     b.Property<string>("Category")
                         .IsRequired()
@@ -693,6 +715,10 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
+
+                    b.Property<DateTimeOffset?>("DeliveredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("delivered_at");
 
                     b.Property<string>("DisplayAddress")
                         .IsRequired()
@@ -714,6 +740,10 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("event_time");
 
+                    b.Property<DateTimeOffset>("ExpiredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expired_at");
+
                     b.Property<string>("ExternalPlaceId")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -724,19 +754,24 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("image_urls");
 
-                    b.Property<string>("InternalLocation")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("internal_location");
-
                     b.Property<Point>("Location")
                         .IsRequired()
                         .HasColumnType("geography(point, 4326)")
                         .HasColumnName("location");
 
+                    b.Property<string>("OrganizationFoundLocation")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("organization_found_location");
+
                     b.Property<Guid?>("OrganizationId")
                         .HasColumnType("uuid")
                         .HasColumnName("organization_id");
+
+                    b.Property<string>("OrganizationStorageLocation")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("organization_storage_location");
 
                     b.Property<string>("PostMatchingStatus")
                         .IsRequired()
@@ -755,6 +790,14 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("post_type");
+
+                    b.Property<DateTimeOffset?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rejected_at");
+
+                    b.Property<DateTimeOffset?>("ReturnedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("returned_at");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1123,6 +1166,70 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.ToTable("post_personal_belonging_details", (string)null);
                 });
 
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.QnA", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AnswerText")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("answer_text");
+
+                    b.Property<DateTimeOffset?>("AnsweredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("answered_at");
+
+                    b.Property<string>("AnswererId")
+                        .HasColumnType("text")
+                        .HasColumnName("answerer_id");
+
+                    b.Property<string>("AskerId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("asker_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<string>("QuestionText")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("question_text");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnswererId")
+                        .HasDatabaseName("ix_qna_answerer_id");
+
+                    b.HasIndex("AskerId")
+                        .HasDatabaseName("ix_qna_asker_id");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_qna_created_at");
+
+                    b.HasIndex("PostId")
+                        .HasDatabaseName("ix_qna_post_id");
+
+                    b.ToTable("qna", (string)null);
+                });
+
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.QrCode", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1137,6 +1244,11 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
+
+                    b.Property<string>("LogoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("logo_url");
 
                     b.Property<string>("Note")
                         .IsRequired()
@@ -1170,96 +1282,6 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasDatabaseName("ix_qr_codes_user_id");
 
                     b.ToTable("qr_codes", (string)null);
-                });
-
-            modelBuilder.Entity("Backtrack.Core.Domain.Entities.QrDesign", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("BackgroundColor")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("background_color");
-
-                    b.Property<string>("CornerDotColor")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("corner_dot_color");
-
-                    b.Property<string>("CornerDotStyle")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasColumnName("corner_dot_style");
-
-                    b.Property<string>("CornerSquareColor")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("corner_square_color");
-
-                    b.Property<string>("CornerSquareStyle")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasColumnName("corner_square_style");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<string>("DotStyle")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasColumnName("dot_style");
-
-                    b.Property<string>("ErrorCorrectionLevel")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("error_correction_level");
-
-                    b.Property<string>("ForegroundColor")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("foreground_color");
-
-                    b.Property<string>("Gradient")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("gradient");
-
-                    b.Property<string>("Logo")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("logo");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("ux_qr_designs_user_id")
-                        .HasFilter("deleted_at IS NULL");
-
-                    b.ToTable("qr_designs", (string)null);
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.Subcategory", b =>
@@ -1525,6 +1547,12 @@ namespace Backtrack.Core.Infrastructure.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("phone");
 
+                    b.Property<int>("PostActionCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("post_action_count");
+
                     b.Property<bool>("ShowEmail")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -1566,7 +1594,8 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.HasOne("Backtrack.Core.Domain.Entities.Post", "FinderPost")
                         .WithMany()
                         .HasForeignKey("FinderPostId")
-                        .OnDelete(DeleteBehavior.SetNull)
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
                         .HasConstraintName("fk_c2c_return_reports_finder_post_id");
 
                     b.HasOne("Backtrack.Core.Domain.Entities.User", "Owner")
@@ -1579,7 +1608,8 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.HasOne("Backtrack.Core.Domain.Entities.Post", "OwnerPost")
                         .WithMany()
                         .HasForeignKey("OwnerPostId")
-                        .OnDelete(DeleteBehavior.SetNull)
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
                         .HasConstraintName("fk_c2c_return_reports_owner_post_id");
 
                     b.Navigation("Finder");
@@ -1827,6 +1857,35 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Navigation("Post");
                 });
 
+            modelBuilder.Entity("Backtrack.Core.Domain.Entities.QnA", b =>
+                {
+                    b.HasOne("Backtrack.Core.Domain.Entities.User", "Answerer")
+                        .WithMany()
+                        .HasForeignKey("AnswererId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_qna_answerer_id_users_id");
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.User", "Asker")
+                        .WithMany()
+                        .HasForeignKey("AskerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_qna_asker_id_users_id");
+
+                    b.HasOne("Backtrack.Core.Domain.Entities.Post", "Post")
+                        .WithMany("QnAs")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_qna_post_id_posts_id");
+
+                    b.Navigation("Answerer");
+
+                    b.Navigation("Asker");
+
+                    b.Navigation("Post");
+                });
+
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.Subscription", b =>
                 {
                     b.HasOne("Backtrack.Core.Domain.Entities.Organization", "Organization")
@@ -1863,6 +1922,8 @@ namespace Backtrack.Core.Infrastructure.Migrations
                     b.Navigation("OtherDetail");
 
                     b.Navigation("PersonalBelongingDetail");
+
+                    b.Navigation("QnAs");
                 });
 
             modelBuilder.Entity("Backtrack.Core.Domain.Entities.User", b =>

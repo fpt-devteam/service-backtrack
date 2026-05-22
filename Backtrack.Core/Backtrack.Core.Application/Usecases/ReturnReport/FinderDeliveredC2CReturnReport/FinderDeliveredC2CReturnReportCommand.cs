@@ -10,4 +10,6 @@ public sealed record FinderDeliveredC2CReturnReportCommand : IRequest<C2CReturnR
 
     [JsonIgnore]
     public Guid C2CReturnReportId { get; init; }
+
+    public required List<string> EvidenceImageUrls { get; init; }
 }

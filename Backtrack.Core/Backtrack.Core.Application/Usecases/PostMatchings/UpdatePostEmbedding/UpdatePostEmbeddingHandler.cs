@@ -13,7 +13,6 @@ namespace Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 
 public sealed class UpdatePostEmbeddingHandler(
     IPostRepository postRepository,
-    IHasher hasher,
     IEmbeddingService embeddingService,
     ILogger<UpdatePostEmbeddingHandler> logger) : IRequestHandler<UpdatePostEmbeddingCommand>
 {

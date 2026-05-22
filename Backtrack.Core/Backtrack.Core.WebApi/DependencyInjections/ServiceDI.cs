@@ -1,18 +1,23 @@
+using Backtrack.Core.Application.Configurations;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Messaging;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Interfaces.Email;
 using Backtrack.Core.Application.Interfaces.PushNotification;
+using Backtrack.Core.Application.Interfaces.Storage;
 using Backtrack.Core.Application.Usecases;
 using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Application.Usecases.Users.EnsureUserExist;
+using Backtrack.Core.Application.Usecases.Posts.BlurImages;
 using Backtrack.Core.Infrastructure.Helpers;
 using Backtrack.Core.Infrastructure.Messaging;
 using Backtrack.Core.Infrastructure.Messaging.Consumers;
 using Backtrack.Core.Infrastructure.Repositories;
 using Backtrack.Core.Infrastructure.Services.Notifications;
+using Backtrack.Core.Infrastructure.Services.Storage;
 using FluentValidation;
 using MediatR;
+using Backtrack.Core.Application.Interfaces.Payments;
 
 namespace Backtrack.Core.WebApi.DependencyInjections;
 
@@ -20,6 +25,8 @@ public static class ServiceDI
 {
     public static void AddServiceConfigurations(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<PostSettings>(configuration.GetSection("PostSettings"));
+
         // MediatR - Register handlers from Application layer
         services.AddMediatR(typeof(EnsureUserExistCommand).Assembly);
 
@@ -42,6 +49,11 @@ public static class ServiceDI
         services.AddScoped(typeof(IGenericRepository<,>), typeof(CrudRepositoryBase<,>));
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IDeviceRepository, DeviceRepository>();
+        services.AddScoped<IQrCodeRepository, QrCodeRepository>();
+        services.AddScoped<ISubscriptionPlanRepository, SubscriptionPlanRepository>();
+        services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+        services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
+        services.AddScoped<IQnARepository, QnARepository>();
 
         // Messaging
         services.AddScoped<IEventPublisher, CapEventPublisher>();
@@ -64,6 +76,9 @@ public static class ServiceDI
 
         // Helpers
         services.AddSingleton<IHasher, SHA256Hasher>();
+        services.AddScoped<IImageBlurService, ImageBlurService>();
+        services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
+        services.AddScoped<BlurImagesOrchestrator>();
 
         // Request logging middleware
         services.AddTransient<RequestLoggingMiddleware>();

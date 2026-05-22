@@ -15,11 +15,7 @@ public class FirebaseAuthMiddleware
     private static readonly HashSet<string> _publicPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "/health",
-            "/swagger",
             "/auth/check-email",
-
-            "/api/core/swagger",
-            "/api/core/hangfire",
 
             "/api/core/orgs/public",
             "/api/core/invitations/check",
@@ -35,49 +31,58 @@ public class FirebaseAuthMiddleware
 
     /// <summary>
     /// Regex patterns for public paths with dynamic segments (e.g. /users/{userId}).
+    /// Each entry pairs a path pattern with the HTTP methods it applies to.
     /// Used when simple prefix matching is not safe — e.g. to avoid making /users/me public.
     /// </summary>
-    private static readonly Regex[] _publicPathPatterns =
+    private static readonly (Regex Pattern, string[] Methods)[] _publicPathPatterns =
     [
         // GET /api/core/users/{userId}        — public user profile
-        new Regex(@"^/api/core/users/(?!me$)[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/users/(?!me$)[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
         // GET /api/core/users/{userId}/posts  — user's public posts
-        new Regex(@"^/api/core/users/(?!me(/|$))[^/]+/posts$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/users/(?!me(/|$))[^/]+/posts$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
 
         // GET /api/core/qr/public/{publicCode}  — scan QR code (no auth needed)
-        new Regex(@"^/api/core/qr/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/qr/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
 
         // GET /api/core/orgs/public/{slug}              — public org profile by slug, no auth required
-        new Regex(@"^/api/core/orgs/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/orgs/public/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
 
         // GET /api/core/orgs/public/{slug}/inventory   — public org inventory list, no auth required
-        new Regex(@"^/api/core/orgs/public/[^/]+/inventory$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/orgs/public/[^/]+/inventory$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
 
         // GET /api/core/orgs/public/{orgId}/settings   — public org settings, no auth required
-        new Regex(@"^/api/core/orgs/public/[0-9a-f\-]{36}/settings$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/orgs/public/[0-9a-f\-]{36}/settings$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
 
         // GET /api/core/orgs/public/slug/{slug}/exists — check slug availability, no auth required
-        new Regex(@"^/api/core/orgs/public/slug/[^/]+/exists$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/orgs/public/slug/[^/]+/exists$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
 
         // GET /api/core/posts/{guid}                  — post detail, no auth required
-        new Regex(@"^/api/core/posts/[0-9a-f\-]{36}$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/posts/[0-9a-f\-]{36}$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
 
         // GET /api/core/posts/{guid}/similar          — similar posts, no auth required
-        new Regex(@"^/api/core/posts/[0-9a-f\-]{36}/similar$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/posts/[0-9a-f\-]{36}/similar$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
         // GET /api/core/posts/{guid}/matching-status  — post matching status, no auth required
-        new Regex(@"^/api/core/posts/[0-9a-f\-]{36}/matching-status$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/posts/[0-9a-f\-]{36}/matching-status$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
 
         // GET /api/core/posts/users/{userId}      — posts by user (public)
-        new Regex(@"^/api/core/posts/users/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/posts/users/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
 
         // GET /api/core/posts/orgs/{orgId}        — posts by org (public)
-        new Regex(@"^/api/core/posts/orgs/[0-9a-f\-]{36}$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/posts/orgs/[0-9a-f\-]{36}$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
 
         // GET /api/core/handovers/token/{token}  — handover by token (owner opens link, no auth required)
-        new Regex(@"^/api/core/handovers/token/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/handovers/token/[^/]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["GET"]),
 
         // PATCH /api/core/handovers/{guid}/owner-confirm  — owner confirms (no auth for org handovers)
-        new Regex(@"^/api/core/handovers/[0-9a-f\-]{36}/owner-confirm$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        (new Regex(@"^/api/core/handovers/[0-9a-f\-]{36}/owner-confirm$", RegexOptions.IgnoreCase | RegexOptions.Compiled), ["PATCH"]),
+    ];
+
+    private static readonly string[] _publicPathPrefixes =
+    [
+        "/swagger",
+        "/hangfire",
+        "/api/core/swagger",
+        "/api/core/hangfire",
     ];
 
     private const string AuthHeaderName = "Authorization";
@@ -239,7 +244,15 @@ public class FirebaseAuthMiddleware
     private static bool IsPublicPath(HttpContext context)
     {
         var path = context.Request.Path.Value ?? string.Empty;
-        if (_publicPaths.Contains(path) || _publicPathPatterns.Any(pattern => pattern.IsMatch(path)))
+        var method = context.Request.Method;
+
+        if (_publicPaths.Contains(path))
+            return true;
+
+        if (_publicPathPrefixes.Any(prefix => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        if (_publicPathPatterns.Any(entry => entry.Pattern.IsMatch(path) && entry.Methods.Contains(method, StringComparer.OrdinalIgnoreCase)))
             return true;
 
         return false;

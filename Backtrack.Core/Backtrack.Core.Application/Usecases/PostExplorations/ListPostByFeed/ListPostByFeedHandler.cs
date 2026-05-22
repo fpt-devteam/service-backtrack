@@ -22,7 +22,8 @@ public sealed class ListPostByFeedHandler(IPostRepository postRepository)
             .Select(p => p.ToSearchPostResult(
                 distanceInMeters: p.Location != null
                     ? GeoUtil.Haversine(query.Location, p.Location)
-                    : null))
+                    : null,
+                isBlur: query.ViewerUserId == null || p.AuthorId != query.ViewerUserId))
             .GroupBy(p => p.Category)
             .ToDictionary(g => g.Key, g => g.ToList());
 

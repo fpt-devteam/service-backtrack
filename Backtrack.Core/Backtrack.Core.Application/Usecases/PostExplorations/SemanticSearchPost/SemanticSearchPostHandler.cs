@@ -21,7 +21,7 @@ public sealed class SemanticSearchPostHandler(
             var filter = command.Filters ?? new PostFilters { Status = PostStatus.Active };
 
             var result = await postRepository.GetPagedAsync(PagedQuery.Default, filter, cancellationToken);
-            return result.Items.Select(p => p.ToSearchPostResult(score: 0));
+            return result.Items.Select(p => p.ToSearchPostResult(score: 0, isBlur: command.IsBlur));
         }
 
         var embedding  = await embeddingService.GenerateQueryEmbeddingAsync(command.Query, cancellationToken);
@@ -34,7 +34,8 @@ public sealed class SemanticSearchPostHandler(
                 score: x.SimilarityScore,
                 distanceInMeters: searchLocation != null && x.Post.Location != null
                     ? GeoUtil.Haversine(searchLocation, x.Post.Location)
-                    : null))
+                    : null,
+                isBlur: command.IsBlur))
             .OrderByDescending(x => x.Score)
             .ThenBy(x => x.DistanceInMeters ?? double.MaxValue)
             .ToList();

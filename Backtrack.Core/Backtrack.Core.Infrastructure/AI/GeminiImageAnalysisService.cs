@@ -61,8 +61,8 @@ public sealed class GeminiImageAnalysisService(ILlmService llmService) : IImageA
         """;
 
     private const int MaxRetries = 3;
-    private const int MaxOutputTokensForAnalysis = 2048;
-    private const int MaxOutputTokensForConsistency = 256;
+    private const int MaxOutputTokensForAnalysis = 8192;
+    private const int MaxOutputTokensForConsistency = 2048;
 
     public async Task<PersonalBelongingDetailDto> AnalyzePersonalBelongingAsync(
         string imageBase64, string mimeType, CancellationToken cancellationToken = default)

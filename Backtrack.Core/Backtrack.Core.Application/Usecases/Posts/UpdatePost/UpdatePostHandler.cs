@@ -1,15 +1,17 @@
+using Backtrack.Core.Application.Configurations;
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Utils;
+using Backtrack.Core.Application.Usecases.PostMatchings;
 using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Backtrack.Core.Domain.ValueObjects;
 using MediatR;
-using Backtrack.Core.Application.Usecases.PostMatchings;
+using Microsoft.Extensions.Options;
 
 namespace Backtrack.Core.Application.Usecases.Posts.UpdatePost;
 
@@ -17,19 +19,28 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
 {
     private readonly IPostRepository _postRepository;
     private readonly IC2CReturnReportRepository _returnReportRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly ISubscriptionRepository _subscriptionRepository;
     private readonly IBackgroundJobService _backgroundJobService;
     private readonly IHasher _hasher;
+    private readonly int _freeTierLimit;
 
     public UpdatePostHandler(
         IPostRepository postRepository,
         IC2CReturnReportRepository returnReportRepository,
+        IUserRepository userRepository,
+        ISubscriptionRepository subscriptionRepository,
         IBackgroundJobService backgroundJobService,
-        IHasher hasher)
+        IHasher hasher,
+        IOptions<PostSettings> postSettings)
     {
         _postRepository = postRepository;
         _returnReportRepository = returnReportRepository;
+        _userRepository = userRepository;
+        _subscriptionRepository = subscriptionRepository;
         _backgroundJobService = backgroundJobService;
         _hasher = hasher;
+        _freeTierLimit = postSettings.Value.FreeTierPostLimit;
     }
 
     public async Task<PostResult> Handle(UpdatePostCommand command, CancellationToken cancellationToken)
@@ -41,10 +52,15 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
         if (post.AuthorId != command.UserId) throw new ForbiddenException(PostErrors.Forbidden);
         if (post.Status != PostStatus.Active) throw new ConflictException(PostErrors.NotActive);
 
-        bool needsReEmbedding = false;
+        var author = await _userRepository.GetByIdAsync(command.UserId, isTrack: true)
+            ?? throw new NotFoundException(UserErrors.NotFound);
 
-        if (command.PostType != null && !Enum.TryParse<PostType>(command.PostType, ignoreCase: true, out var postType))
-            throw new ValidationException(PostErrors.InvalidPostType);
+        var hasSubscription = await _subscriptionRepository.GetActiveByUserIdAsync(command.UserId, cancellationToken) != null;
+        if (!hasSubscription && author.PostActionCount >= _freeTierLimit)
+            throw new ConflictException(PostErrors.EditLimitReached);
+
+
+        bool needsReEmbedding = false;
 
         // Update only the detail that matches this post's category
         var detailChanged = post.Category switch
@@ -88,11 +104,13 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             needsReEmbedding = true;
         }
 
-        post.EventTime = command.EventTime.HasValue ? command.EventTime.Value : post.EventTime;
+        if (command.EventTime.HasValue && post.EventTime != command.EventTime.Value)
+        {
+            post.EventTime = command.EventTime.Value;
+            needsReEmbedding = true;
+        }
 
-        if (command.Status is not null && Enum.TryParse<PostStatus>(command.Status, ignoreCase: true, out var parsedStatus))
-            post.Status = parsedStatus;
-
+        author.PostActionCount++;
         post.UpdatedAt = DateTimeOffset.UtcNow;
 
         if (needsReEmbedding)
@@ -114,7 +132,7 @@ public sealed class UpdatePostHandler : IRequestHandler<UpdatePostCommand, PostR
             _backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(
                 orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
 
-        return post.ToPostResult();
+        return post.ToPostResult(isBlur: false);
     }
 
     private static void UpdatePersonalBelongingDetail(Post post, PersonalBelongingDetailDto input)

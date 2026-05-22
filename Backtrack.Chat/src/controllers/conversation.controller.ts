@@ -3,6 +3,7 @@ import { CreationDirectConversationSchema, CreationOrganizationConversationSchem
 import * as conversationService from '@/services/conversation.service';
 import { ApiResponseBuilder } from '@/utils/api-response';
 import { Constants } from '@/config/constants';
+import { SupportFormData } from '@/models/interfaces/support-conversation.interface';
 
 
 const getCorrelationId = (req: Request) =>
@@ -28,14 +29,23 @@ export const createDirectConversation = async (req: Request, res: Response) => {
 
 export const createOrgConversation = async (req: Request, res: Response) => {
     const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
-    const { orgId } = CreationOrganizationConversationSchema.parse(req.body);
+    const { orgId, supportFormData } = CreationOrganizationConversationSchema.parse(req.body);
 
-    const conversation = await conversationService.findOrCreateOrgConversation(userId, orgId);
+    const conversation = await conversationService.findOrCreateOrgConversation(userId, orgId, supportFormData ?? {});
     return res.status(201).json(
         ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
     );
 };
 
+export const updateSupportFormDataInConversation = async (req: Request, res: Response) => {
+	const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+	const conversationId = req.params.id as string;
+	const { postId: _ignored, ...supportFormData } = req.body;
+	await conversationService.updateConversationSupportFormData(userId, conversationId, supportFormData as Partial<SupportFormData>);
+	return res.status(200).json(
+		ApiResponseBuilder.success({ message: 'Support form data updated successfully' }, getCorrelationId(req))
+	);
+};
 export const getConversationById = async (req: Request, res: Response) => {
     const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
     const id = req.params.id as string;
@@ -89,27 +99,52 @@ export const listAllConversations = async (req: Request, res: Response) => {
 };
 
 export const listConversationQueueByStaff = async (req: Request, res: Response) => {
-    const orgId = req.headers[Constants.HEADERS.ORG_ID] as string;
+    const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+    const orgId  = req.headers[Constants.HEADERS.ORG_ID] as string;
+    const isMe   = req.query.isMe === 'true';
 
-    const result = await conversationService.listConversationsQueueByStaff(orgId, parsePaginationParams(req));
+    const result = await conversationService.listConversationsQueueByStaff(userId, orgId, isMe, parsePaginationParams(req));
     return res.status(200).json(
         ApiResponseBuilder.success(result, getCorrelationId(req))
     );
 };
 
 export const listConversationAssignedByStaff = async (req: Request, res: Response) => {
-    const staffId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+    const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+    const orgId  = req.headers[Constants.HEADERS.ORG_ID] as string;
+    const isMe   = req.query.isMe === 'true';
 
-    const result = await conversationService.listConversationsAssignedByStaff(staffId, parsePaginationParams(req));
+    const result = await conversationService.listConversationsAssignedByStaff(userId, orgId, isMe, parsePaginationParams(req));
     return res.status(200).json(
         ApiResponseBuilder.success(result, getCorrelationId(req))
     );
 };
 
 export const listConversationResolvedByStaff = async (req: Request, res: Response) => {
-    const orgId = req.headers[Constants.HEADERS.ORG_ID] as string;
+    const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+    const orgId  = req.headers[Constants.HEADERS.ORG_ID] as string;
+    const isMe   = req.query.isMe === 'true';
 
-    const result = await conversationService.listConversationsResolvedByStaff(orgId, parsePaginationParams(req));
+    const result = await conversationService.listConversationsResolvedByStaff(userId, orgId, isMe, parsePaginationParams(req));
+    return res.status(200).json(
+        ApiResponseBuilder.success(result, getCorrelationId(req))
+    );
+};
+
+export const closeConversationsByPostId = async (req: Request, res: Response) => {
+    const postId = req.params.postId as string;
+
+    await conversationService.closeConversationsByPostId(postId);
+    return res.status(200).json(
+        ApiResponseBuilder.success({ message: 'Conversations closed successfully' }, getCorrelationId(req))
+    );
+};
+
+export const listConversationsByPostId = async (req: Request, res: Response) => {
+    const orgId = req.headers[Constants.HEADERS.ORG_ID] as string;
+    const postId = req.params.postId as string;
+
+    const result = await conversationService.listConversationsByPostId(orgId, postId, parsePaginationParams(req));
     return res.status(200).json(
         ApiResponseBuilder.success(result, getCorrelationId(req))
     );

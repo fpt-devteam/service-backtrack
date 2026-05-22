@@ -5,7 +5,7 @@ using Backtrack.Core.WebApi.Utils;
 using Backtrack.Core.Application.Usecases.Posts.CreatePost;
 using Backtrack.Core.Application.Usecases.Posts.GetPostById;
 using Backtrack.Core.Application.Usecases.PostMatchings.GetSimilarPosts;
-using Backtrack.Core.Application.Usecases.Posts.DeletePost;
+using Backtrack.Core.Application.Usecases.Posts.ArchivePost;
 using Backtrack.Core.Application.Usecases.PostExplorations.ListPostsByAuthorId;
 using Backtrack.Core.Application.Usecases.Posts;
 using Backtrack.Core.Application.Usecases.Posts.UpdatePost;
@@ -67,7 +67,7 @@ public class PostController : ControllerBase
             organizationId = parsedOrgId;
         }
 
-        command = command with { PostId = postId, UserId = authorId, OrganizationId = organizationId };
+        command = command with { PostId = postId, UserId = authorId };
 
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
@@ -77,7 +77,7 @@ public class PostController : ControllerBase
     public async Task<IActionResult> GetMyPostsAsync(CancellationToken cancellationToken = default)
     {
         var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var query = new ListPostsByAuthorIdQuery(authorId);
+        var query = new ListPostsByAuthorIdQuery(authorId) { IsBlur = false };
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }
@@ -99,9 +99,10 @@ public class PostController : ControllerBase
     [HttpGet("{postId:guid}")]
     public async Task<IActionResult> GetPostByIdAsync(
         [FromRoute] Guid postId,
+        [FromQuery] bool isBlurImages = true,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetPostByIdQuery { PostId = postId };
+        var query = new GetPostByIdQuery { PostId = postId, IsBlurImages = isBlurImages };
         var result = await _mediator.Send(query, cancellationToken);
         return this.ApiOk(result);
     }
@@ -139,13 +140,13 @@ public class PostController : ControllerBase
         return this.ApiOk(result);
     }
 
-    [HttpDelete("{postId:guid}")]
-    public async Task<IActionResult> DeletePostAsync(
+    [HttpPatch("{postId:guid}/archive")]
+    public async Task<IActionResult> ArchivePostAsync(
         [FromRoute] Guid postId,
         CancellationToken cancellationToken = default)
     {
         var authorId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var command = new DeletePostCommand { PostId = postId, UserId = authorId };
+        var command = new ArchivePostCommand { PostId = postId, UserId = authorId };
         await _mediator.Send(command, cancellationToken);
         return NoContent();
     }

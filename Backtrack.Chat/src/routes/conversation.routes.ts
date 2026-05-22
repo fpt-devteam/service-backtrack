@@ -9,13 +9,16 @@ router.post('/organization', asyncHandler(conversationController.createOrgConver
 router.get('/', asyncHandler(conversationController.listAllConversations));
 router.get('/direct', asyncHandler(conversationController.listDirectConversations));
 router.get('/partner', asyncHandler(conversationController.getConversationByPartnerId));
-router.get('/:id', asyncHandler(conversationController.getConversationById));
-router.delete('/:id', asyncHandler(conversationController.deleteConversation));
 router.get('/organization/queue', asyncHandler(conversationController.listConversationQueueByStaff));
 router.get('/organization/assigned', asyncHandler(conversationController.listConversationAssignedByStaff));
+router.get('/organization/resolved', asyncHandler(conversationController.listConversationResolvedByStaff));
+router.get('/organization/posts/:postId', asyncHandler(conversationController.listConversationsByPostId));
+router.post('/organization/posts/:postId/close', asyncHandler(conversationController.closeConversationsByPostId));
+router.get('/:id', asyncHandler(conversationController.getConversationById));
+router.delete('/:id', asyncHandler(conversationController.deleteConversation));
 router.post('/:id/assign-staff', asyncHandler(conversationController.assignStaff));
 router.post('/:id/unassign-staff', asyncHandler(conversationController.unassignStaff));
 router.post('/:id/resolve', asyncHandler(conversationController.resolveConversation));
-router.get('/organization/resolved', asyncHandler(conversationController.listConversationResolvedByStaff));
+router.post('/:id/support-form-data', asyncHandler(conversationController.updateSupportFormDataInConversation));
 
 export default router;

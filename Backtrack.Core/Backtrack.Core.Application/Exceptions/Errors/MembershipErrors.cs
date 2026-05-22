@@ -29,4 +29,8 @@ public static class MembershipErrors
     public static readonly Error InvalidMembershipRole = new(
         Code: "InvalidMembershipRole",
         Message: "MembershipRole must be either 'OrgAdmin' or 'OrgStaff'.");
+
+    public static readonly Error StaffLimitReached = new(
+        Code: "StaffLimitReached",
+        Message: "Free tier organizations can have at most 3 staff members. Upgrade your subscription to add more.");
 }

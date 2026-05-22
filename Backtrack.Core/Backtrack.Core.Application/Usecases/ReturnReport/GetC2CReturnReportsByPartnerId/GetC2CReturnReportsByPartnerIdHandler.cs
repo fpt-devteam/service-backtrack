@@ -15,21 +15,7 @@ public sealed class GetC2CReturnReportsByPartnerIdHandler(
         var items = await returnReportRepository.GetByPartnerAsync(
             query.UserId, query.PartnerId, cancellationToken);
 
-        var results = items.Select(r => new C2CReturnReportResult
-        {
-            Id = r.Id,
-            Finder = r.Finder!.ToUserResult(),
-            Owner = r.Owner?.ToUserResult(),
-            FinderPost = r.FinderPost?.ToPostResult(),
-            OwnerPost = r.OwnerPost?.ToPostResult(),
-            Status = r.Status.ToString(),
-            ActivatedByRole = r.ActivatedById == r.FinderId ? "Finder"
-                            : r.ActivatedById == r.OwnerId ? "Owner"
-                            : null,
-            ConfirmedAt = r.ConfirmedAt,
-            ExpiresAt = r.ExpiresAt,
-            CreatedAt = r.CreatedAt
-        }).ToList();
+        var results = items.ConvertAll(r => r.ToC2CReturnReportResult());
 
         return new PagedResult<C2CReturnReportResult>(results.Count, results);
     }

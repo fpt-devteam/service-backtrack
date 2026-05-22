@@ -3,9 +3,10 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory;
 using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 using Backtrack.Core.Application.Usecases.Posts;
+using Backtrack.Core.Application.Usecases.Posts.BlurImages;
 using Backtrack.Core.Application.Utils;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
@@ -45,12 +46,13 @@ public sealed class CreateInventoryItemHandler(
             AuthorId           = command.StaffId,
             OrganizationId     = organization.Id,
             PostTitle          = command.PostTitle,
-            PostType           = command.PostType,
+            PostType           = PostType.Found,
             Status             = PostStatus.InStorage,
             Category           = category,
             SubcategoryId      = subcategory.Id,
             Location           = organization.Location,
-            InternalLocation   = command.InternalLocation,
+            OrganizationStorageLocation = command.OrganizationStorageLocation,
+            OrganizationFoundLocation   = command.OrganizationFoundLocation,
             ExternalPlaceId    = organization.ExternalPlaceId,
             DisplayAddress     = organization.DisplayAddress,
             Embedding          = null,
@@ -58,6 +60,7 @@ public sealed class CreateInventoryItemHandler(
             PostMatchingStatus = PostMatchingStatus.Pending,
             EventTime          = command.EventTime,
             ImageUrls          = command.ImageUrls.ToList(),
+            ExpiredAt          = DateTimeOffset.UtcNow.AddDays(90)
         };
 
         AttachDetail(post, command, hasher);
@@ -78,6 +81,10 @@ public sealed class CreateInventoryItemHandler(
         await postRepository.SaveChangesAsync();
 
         backgroundJobService.EnqueueJob(new UpdatePostEmbeddingCommand(post.Id));
+
+        if (post.ImageUrls.Count > 0)
+            backgroundJobService.EnqueueJob<BlurImagesOrchestrator>(
+                o => o.RunAsync(post.Id));
 
         return post.ToInventoryItemResult(receiveReport);
     }

@@ -17,6 +17,7 @@ using Backtrack.Core.Application.Usecases.ReturnReport.GetOrgReturnReports;
 using Backtrack.Core.Application.Usecases.ReturnReport.GetOrgReturnReportById;
 using Backtrack.Core.Application.Usecases;
 using Backtrack.Core.Domain.Constants;
+using Backtrack.Core.Application.Usecases.ReturnReport.CloseC2CReturnReport;
 
 namespace Backtrack.Core.WebApi.Controllers;
 
@@ -161,10 +162,11 @@ public class ReturnReportController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> FinderDeliveredC2CReturnReportAsync(
         [FromRoute] Guid id,
+        [FromBody] FinderDeliveredC2CReturnReportCommand command,
         CancellationToken cancellationToken)
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        var command = new FinderDeliveredC2CReturnReportCommand { UserId = userId, C2CReturnReportId = id };
+        command = command with { UserId = userId, C2CReturnReportId = id };
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
     }
@@ -197,6 +199,21 @@ public class ReturnReportController : ControllerBase
     {
         var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
         var command = new OwnerConfirmC2CReturnReportCommand { UserId = userId, C2CReturnReportId = id };
+        var result = await _mediator.Send(command, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    [HttpPatch("c2c/{id:guid}/close")]
+    [ProducesResponseType(typeof(ApiResponse<C2CReturnReportResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CloseC2CReturnReportAsync(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        var command = new CloseC2CReturnReportCommand { UserId = userId, ReturnReportId = id };
         var result = await _mediator.Send(command, cancellationToken);
         return this.ApiOk(result);
     }

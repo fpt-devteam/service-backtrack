@@ -1,27 +1,42 @@
+using Backtrack.Core.Application.Configurations;
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Usecases.PostMatchings;
+using Backtrack.Core.Application.Usecases.Posts.BlurImages;
 using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 using Backtrack.Core.Application.Utils;
 using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Backtrack.Core.Application.Usecases.Posts.CreatePost;
 
 public sealed class CreatePostHandler(
     IPostRepository postRepository,
     ISubcategoryRepository subcategoryRepository,
+    IUserRepository userRepository,
+    ISubscriptionRepository subscriptionRepository,
     IHasher hasher,
     IBackgroundJobService backgroundJobService,
-    ILogger<CreatePostHandler> logger) : IRequestHandler<CreatePostCommand, PostResult>
+    ILogger<CreatePostHandler> logger,
+    IOptions<PostSettings> postSettings) : IRequestHandler<CreatePostCommand, PostResult>
 {
+    private readonly int _freeTierLimit = postSettings.Value.FreeTierPostLimit;
+
     public async Task<PostResult> Handle(CreatePostCommand command, CancellationToken cancellationToken)
     {
+        var author = await userRepository.GetByIdAsync(command.AuthorId, isTrack: true)
+            ?? throw new NotFoundException(UserErrors.NotFound);
+
+        var hasSubscription = await subscriptionRepository.GetActiveByUserIdAsync(command.AuthorId, cancellationToken) != null;
+        if (!hasSubscription && author.PostActionCount >= _freeTierLimit)
+            throw new ConflictException(PostErrors.PostLimitReached);
+
         if (!Enum.TryParse<ItemCategory>(command.Category, ignoreCase: true, out var category))
             throw new ValidationException(PostErrors.InvalidCategory);
 
@@ -49,17 +64,23 @@ public sealed class CreatePostHandler(
             EventTime          = command.EventTime ?? DateTimeOffset.UtcNow,
             ImageUrls          = command.ImageUrls.ToList(),
             PostTitle          = command.PostTitle,
-            CreatedAt          = DateTimeOffset.UtcNow
+            CreatedAt          = DateTimeOffset.UtcNow,
+            ExpiredAt          = DateTimeOffset.UtcNow.AddDays(90)
         };
 
         AttachDetail(post, command, hasher);
         SetDetailContentHash(post, hasher);
 
         await postRepository.CreateAsync(post);
+        author.PostActionCount++;
         await postRepository.SaveChangesAsync();
 
         backgroundJobService.EnqueueJob<PostEmbeddingOrchestrator>(
             orchestrator => orchestrator.GenerateEmbeddingAndFindMatchesAsync(post.Id));
+
+        if (post.ImageUrls.Count > 0)
+            backgroundJobService.EnqueueJob<BlurImagesOrchestrator>(
+                o => o.RunAsync(post.Id));
 
         return post.ToPostResult();
     }

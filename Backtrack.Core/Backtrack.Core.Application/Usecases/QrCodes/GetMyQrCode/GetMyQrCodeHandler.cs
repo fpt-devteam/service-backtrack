@@ -1,5 +1,3 @@
-using Backtrack.Core.Application.Exceptions;
-using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
 using Backtrack.Core.Application.Utils;
 using Backtrack.Core.Domain.Entities;
@@ -7,7 +5,7 @@ using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.QrCodes.GetMyQrCode;
 
-public sealed class GetMyQrCodeHandler(IQrCodeRepository qrCodeRepository)
+public sealed class GetMyQrCodeHandler(IQrCodeRepository qrCodeRepository, IUserRepository userRepository)
     : IRequestHandler<GetMyQrCodeQuery, QrCodeResult>
 {
     public async Task<QrCodeResult> Handle(GetMyQrCodeQuery query, CancellationToken cancellationToken)
@@ -16,7 +14,6 @@ public sealed class GetMyQrCodeHandler(IQrCodeRepository qrCodeRepository)
 
         if (qrCode is null)
         {
-            // Auto-provision a QR code on first access
             string publicCode;
             do { publicCode = QrCodeUtil.GeneratePublicCode(); }
             while (await qrCodeRepository.PublicCodeExistsAsync(publicCode, cancellationToken));
@@ -31,16 +28,7 @@ public sealed class GetMyQrCodeHandler(IQrCodeRepository qrCodeRepository)
             await qrCodeRepository.SaveChangesAsync();
         }
 
-        return MapToResult(qrCode);
+        var user = await userRepository.GetByIdAsync(query.UserId);
+        return qrCode.ToQrCodeResult(user?.ShowEmail, user?.ShowPhone);
     }
-
-    private static QrCodeResult MapToResult(QrCode qrCode) => new()
-    {
-        Id = qrCode.Id,
-        UserId = qrCode.UserId,
-        PublicCode = qrCode.PublicCode,
-        Note = qrCode.Note,
-        CreatedAt = qrCode.CreatedAt,
-        UpdatedAt = qrCode.UpdatedAt,
-    };
 }

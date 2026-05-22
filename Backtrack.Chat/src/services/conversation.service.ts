@@ -20,9 +20,12 @@ import { buildPaginatedResult, CursorPaginationParams } from '@/utils/pagination
 import { toStringOrNull, ToLeanDoc } from '@/utils/object-id';
 import { createOrgConvParticipants, createDirectConvParticipants, unassignConversationParticipant } from './conversation-paticipant.service';
 import { ConversationParticipantRole, ConversationStatus, IDirectConversation, ISupportConversation } from '@/models';
+import { MessageStatus, MessageType } from '@/models/interfaces/message.interface';
+import { SupportFormData } from '@/models/interfaces/support-conversation.interface';
 import { assignConversation, unassignConversation } from "./conversation-assignment.service";
+import Message from '@/models/message';
+import { getIO } from '@/config/websocket';
 import { Types } from 'mongoose';
-import { Handover } from '@/models/interfaces/direct-conversation.interface';
 
 /** Shape of a single row from the aggregation pipeline in list queries */
 interface ConversationAggRow {
@@ -38,7 +41,7 @@ interface ConversationAggRow {
     lastMessageAt?: Date | null;
     lastMessageSenderId?: string | null;
     unreadCount?: number;
-    handover?: Handover | null;
+    supportFormData?: SupportFormData | null;
     partner?: {
         id: Types.ObjectId | string;
         displayName: string | null;
@@ -49,54 +52,6 @@ interface ConversationAggRow {
     updatedAt: Date;
 }
 
-// export const createDirectConversation = async (
-//   data: CreationDirectConversationRequest,
-//   userId: string
-// ): Promise<IDirectConversation> => {
-//   const duplicate = await ConversationParticipant.aggregate([
-//     { $match: { memberId: { $in: [data.memberId, userId] }, deletedAt: null } },
-//     { $group: { _id: '$conversationId', count: { $sum: 1 } } },
-//     { $match: { count: 2 } },
-//     { $limit: 1 },
-//   ]);
-
-//   if (duplicate.length > 0) {
-//     throw ConversationErrors.AlreadyExists;
-//   }
-
-//   const conversation = new Conversation();
-//   await conversation.save();
-//   const conversationId = toStringOrNull(conversation._id);
-//   if (!conversationId) {
-//     throw ConversationErrors.NotFound;
-//   }
-//   await createDirectConvParticipants(conversationId, data.memberId, userId);
-//   return conversation;
-// };
-
-// export const createOrgConversation = async (
-//   data: CreationSupportConversationRequest,
-//   userId: string
-// ): Promise<ISupportConversation> => {
-//   // Prevent duplicate: check if an ORGANIZATION conversation with this orgId
-//   // already has this user as a CUSTOMER participant
-//   const existingConv = await findExistingOrgConversation(userId, data.orgId);
-//   if (existingConv) {
-//     throw ConversationErrors.AlreadyExists;
-//   }
-
-//   const conversation = new Conversation({
-//     orgId: data.orgId,
-//   });
-//   await conversation.save();
-//   const conversationId = toStringOrNull(conversation._id);
-//   if (!conversationId) {
-//     throw ConversationErrors.NotFound;
-//   }
-//   await createConversationQueue(conversationId);
-//   await createOrgConvParticipants(conversationId, ConversationParticipantRole.CUSTOMER, userId);
-//   return conversation;
-// };
 
 /**
  * Modern flow: find existing Direct conversation between two users,
@@ -206,9 +161,15 @@ export const findDirectConversationByPartnerId = async (
 export const findOrCreateOrgConversation = async (
   userId: string,
   orgId: string,
+  data: Partial<SupportFormData>
 ): Promise<SupportConversationResponse> => {
   const existingConv = await findExistingOrgConversation(userId, orgId);
-  if (existingConv) return toSupportConversationResponse(existingConv);
+  if (existingConv) {
+    if (data.postId && existingConv.supportFormData?.postId !== data.postId) {
+		throw ConversationErrors.PostIdMismatch;
+    }
+    return toSupportConversationResponse(existingConv);
+  }
 
   const org = await Org.findById(orgId).lean().exec();
   if (!org) throw ConversationErrors.OrgNotFound;
@@ -218,6 +179,17 @@ export const findOrCreateOrgConversation = async (
     orgSlug: org.slug,
     orgLogoUrl: org.logoUrl,
     status: ConversationStatus.IN_QUEUE,
+    supportFormData: {
+      postId: data.postId ?? null,
+      category: data.category ?? '',
+      subCategoryId: data.subCategoryId ?? '',
+      itemName: data.itemName ?? '',
+      color: data.color ?? '',
+      additionalDetails: data.additionalDetails ?? null,
+      imageUrls: data.imageUrls ?? null,
+      lostLocation: data.lostLocation ?? null,
+      eventTime: data.eventTime ?? null,
+    },
   });
   await conversation.save();
   const conversationId = toStringOrNull(conversation._id);
@@ -292,6 +264,7 @@ export const getConversationById = async (
             partner,
             lastMessage,
             unreadCount,
+            supportFormData: s.supportFormData ?? null,
             createdAt:  s.createdAt,
             updatedAt:  s.updatedAt,
         } satisfies SupportConversationResponse;
@@ -304,7 +277,6 @@ export const getConversationById = async (
         partner,
         lastMessage,
         unreadCount,
-        handover: d.handover ?? null,
         createdAt:  d.createdAt,
         updatedAt:  d.updatedAt,
     } satisfies DirectConversationResponse;
@@ -335,7 +307,6 @@ const toDirectConversationResponse = (doc: ToLeanDoc<IDirectConversation>, partn
         ? { senderId: doc.senderId ?? null, content: doc.lastMessageContent, timestamp: doc.lastMessageAt ?? null }
         : null,
     unreadCount: 0,
-    handover: doc.handover ?? null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
 });
@@ -353,6 +324,7 @@ const toSupportConversationResponse = (doc: ToLeanDoc<ISupportConversation>): Su
         ? { senderId: doc.senderId ?? null, content: doc.lastMessageContent, timestamp: doc.lastMessageAt ?? null }
         : null,
     unreadCount: 0,
+    supportFormData: doc.supportFormData ?? null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
 });
@@ -361,13 +333,22 @@ export const assignStaff = async (id: string, staffId: string): Promise<SupportC
     const conversation = await SupportConversation.findById(id).lean().exec();
     if (!conversation || conversation.deletedAt) throw ConversationErrors.NotFound;
 
-    // Conversation must be waiting in queue to be picked up
     if (conversation.status !== ConversationStatus.IN_QUEUE) throw ConversationErrors.NotInQueue;
+
+    const postId = conversation.supportFormData?.postId;
+    if (postId) {
+        const conflicting = await Conversation.findOne({
+            _id: { $ne: conversation._id },
+            'supportFormData.postId': postId,
+            status: ConversationStatus.IN_PROGRESS,
+            deletedAt: null,
+        }).lean().exec();
+        if (conflicting) throw ConversationErrors.PostAlreadyInProgress;
+    }
 
     await assignConversation(id, staffId);
     await createOrgConvParticipants(id, ConversationParticipantRole.STAFF, staffId);
     await Conversation.findByIdAndUpdate(id, { staffAssignId: staffId, status: ConversationStatus.IN_PROGRESS });
-    // id is guaranteed to be a SupportConversation at this call site
     return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
 };
 
@@ -398,6 +379,31 @@ export const backToQueue = async (id: string, staffId: string): Promise<boolean>
     await Conversation.findByIdAndUpdate(id, { staffAssignId: null, status: ConversationStatus.IN_QUEUE });
     return true;
 };
+export const updateConversationSupportFormData = async (
+    userId: string,
+    conversationId: string,
+    data: Partial<Omit<SupportFormData, 'postId'>>
+): Promise<void> => {
+    const [existingConv, participant] = await Promise.all([
+        Conversation.findById(conversationId).lean().exec(),
+        ConversationParticipant.findOne({
+            conversationId,
+            memberId: userId,
+            role: ConversationParticipantRole.CUSTOMER,
+            deletedAt: null,
+        }).lean().exec(),
+    ]);
+
+    if (!existingConv || existingConv.deletedAt) throw ConversationErrors.NotFound;
+    if (!existingConv.orgId) throw ConversationErrors.InvalidConversationType;
+    if (!participant) throw ConversationErrors.Unauthorized;
+
+    const update = Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [`supportFormData.${key}`, value])
+    );
+    await Conversation.findByIdAndUpdate(conversationId, { $set: update }).exec();
+};
+
 export const deleteConversation = async (id: string, userId: string): Promise<void> => {
     // Check if user is a participant
     const participant = await ConversationParticipant.findOne({
@@ -472,7 +478,6 @@ export const projectConversationStage = {
         lastMessageContent:  '$conversation.lastMessageContent',
         lastMessageAt:       '$conversation.lastMessageAt',
         lastMessageSenderId: '$conversation.senderId',
-        handover:            { $ifNull: ['$conversation.handover', null] },
         unreadCount: { $ifNull: ['$unreadCount', 0] },
         partner: {
             $cond: {
@@ -486,6 +491,7 @@ export const projectConversationStage = {
                 else: null
             }
         },
+        supportFormData: { $ifNull: ['$conversation.supportFormData', null] },
         createdAt: '$conversation.createdAt',
         updatedAt: '$conversation.updatedAt',
     }
@@ -561,9 +567,8 @@ const formatDirectResult = (results: ConversationAggRow[], limit: number): Direc
                   }
                 : null,
             unreadCount: c.unreadCount ?? 0,
-            handover: c.handover ?? null,
-            createdAt: c.createdAt,
-            updatedAt: c.updatedAt,
+            createdAt:   c.createdAt,
+            updatedAt:   c.updatedAt,
         })),
         nextCursor,
         hasMore,
@@ -599,6 +604,7 @@ const formatSupportResult = (results: ConversationAggRow[], limit: number): Supp
                   }
                 : null,
             unreadCount: c.unreadCount ?? 0,
+            supportFormData: c.supportFormData ?? null,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
         })),
@@ -612,7 +618,9 @@ const formatSupportResult = (results: ConversationAggRow[], limit: number): Supp
  * Sorted by lastMessageAt descending.
  */
 export const listConversationsQueueByStaff = async (
+    userId: string,
     orgId: string,
+    isMe: boolean,
     params: CursorPaginationParams = {}
 ): Promise<SupportConversationsListResult> => {
     const limit = Math.min(params.limit || Constants.PAGINATION.DEFAULT_LIMIT, Constants.PAGINATION.MAX_LIMIT);
@@ -623,8 +631,9 @@ export const listConversationsQueueByStaff = async (
                 orgId,
                 status: ConversationStatus.IN_QUEUE,
                 staffAssignId: null,
-				lastMessageContent: { $ne: null },
+                lastMessageContent: { $ne: null },
                 deletedAt: null,
+                ...(isMe && { staffAssignId: userId }),
                 ...(params.cursor && {
                     lastMessageAt: { $lt: new Date(params.cursor) }
                 })
@@ -633,7 +642,7 @@ export const listConversationsQueueByStaff = async (
         { $sort: { lastMessageAt: -1 } },
         { $limit: limit + 1 },
         { $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
-        ...lookupPartnerStages(orgId),
+        ...lookupPartnerStages(isMe ? userId : orgId),
         projectConversationStage,
     ]);
 
@@ -641,7 +650,9 @@ export const listConversationsQueueByStaff = async (
 };
 
 export const listConversationsResolvedByStaff = async (
+    userId: string,
     orgId: string,
+    isMe: boolean,
     params: CursorPaginationParams = {}
 ): Promise<SupportConversationsListResult> => {
     const limit = Math.min(params.limit || Constants.PAGINATION.DEFAULT_LIMIT, Constants.PAGINATION.MAX_LIMIT);
@@ -652,6 +663,7 @@ export const listConversationsResolvedByStaff = async (
                 orgId,
                 status: ConversationStatus.CLOSED,
                 deletedAt: null,
+                ...(isMe && { staffAssignId: userId }),
                 ...(params.cursor && {
                     lastMessageAt: { $lt: new Date(params.cursor) }
                 })
@@ -660,7 +672,7 @@ export const listConversationsResolvedByStaff = async (
         { $sort: { lastMessageAt: -1 } },
         { $limit: limit + 1 },
         { $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
-        ...lookupPartnerStages(orgId),
+        ...lookupPartnerStages(isMe ? userId : orgId),
         projectConversationStage,
     ]);
 
@@ -669,7 +681,9 @@ export const listConversationsResolvedByStaff = async (
 
 
 export const listConversationsAssignedByStaff = async (
-    staffId: string,
+    userId: string,
+    orgId: string,
+    isMe: boolean,
     params: CursorPaginationParams = {}
 ): Promise<SupportConversationsListResult> => {
     const limit = Math.min(params.limit || Constants.PAGINATION.DEFAULT_LIMIT, Constants.PAGINATION.MAX_LIMIT);
@@ -677,9 +691,10 @@ export const listConversationsAssignedByStaff = async (
     const results = await Conversation.aggregate([
         {
             $match: {
-                staffAssignId: staffId,
+                orgId,
                 status: ConversationStatus.IN_PROGRESS,
                 deletedAt: null,
+                ...(isMe && { staffAssignId: userId }),
                 ...(params.cursor && {
                     lastMessageAt: { $lt: new Date(params.cursor) }
                 })
@@ -688,12 +703,112 @@ export const listConversationsAssignedByStaff = async (
         { $sort: { lastMessageAt: -1 } },
         { $limit: limit + 1 },
         { $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
-        ...lookupPartnerStages(staffId),
+        ...lookupPartnerStages(isMe ? userId : orgId),
         projectConversationStage,
     ]);
 
     return formatSupportResult(results, limit);
 };
+
+export const listConversationsByPostId = async (
+	orgId: string,
+	postId: string,
+	params: CursorPaginationParams = {}
+): Promise<SupportConversationsListResult> => {
+	const limit = Math.min(params.limit || Constants.PAGINATION.DEFAULT_LIMIT, Constants.PAGINATION.MAX_LIMIT);
+	const results = await Conversation.aggregate([
+		{
+			$match: {
+				'supportFormData.postId': postId,
+				orgId,
+				deletedAt: null,
+				...(params.cursor && {
+					lastMessageAt: { $lt: new Date(params.cursor) }
+				})
+			}
+		},
+		{ $sort: { lastMessageAt: -1 } },
+		{ $limit: limit + 1 },
+		{ $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
+		...lookupPartnerStages(orgId),
+		projectConversationStage,
+	]);
+
+	return formatSupportResult(results, limit);
+}
+
+const SYSTEM_CLOSE_MESSAGE = "Sorry, this item has already been returned to its owner.";
+
+export const closeConversationsByPostId = async (postId: string): Promise<void> => {
+	const conversations = await Conversation.find({
+		'supportFormData.postId': postId,
+		status: { $in: [ConversationStatus.IN_QUEUE, ConversationStatus.IN_PROGRESS] },
+		deletedAt: null,
+	}).lean().exec();
+
+	if (!conversations.length) return;
+
+	const io = getIO();
+	const now = new Date();
+
+	await Promise.all(conversations.map(async (conv) => {
+		const conversationId = conv._id.toString();
+
+		const participants = await ConversationParticipant.find(
+			{ conversationId, isAssigned: true, deletedAt: null },
+			{ memberId: 1, role: 1 }
+		).lean().exec();
+
+		const staffParticipant = participants.find(p => p.role === ConversationParticipantRole.STAFF);
+		const senderId = staffParticipant?.memberId ?? 'system';
+
+		await Conversation.findByIdAndUpdate(conv._id, {
+			status: ConversationStatus.CLOSED,
+			lastMessageContent: SYSTEM_CLOSE_MESSAGE,
+			lastMessageAt: now,
+			senderId,
+		});
+
+		const message = new Message({
+			conversationId,
+			senderId,
+			type: MessageType.TEXT,
+			content: SYSTEM_CLOSE_MESSAGE,
+			attachments: [],
+			status: MessageStatus.SENT,
+		});
+		await message.save();
+
+		const messageResponse = {
+			id: message._id.toString(),
+			conversationId,
+			senderId,
+			type: message.type,
+			content: SYSTEM_CLOSE_MESSAGE,
+			attachments: [],
+			status: message.status,
+			createdAt: message.createdAt,
+			updatedAt: message.updatedAt,
+		};
+
+		io.to(`conversation:${conversationId}`).emit('message:new', messageResponse);
+
+		for (const p of participants) {
+			if (p.memberId) {
+				io.to(`user:${p.memberId}`).emit('conversation:updated', {
+					conversationId,
+					unreadCount: null,
+					lastMessage: {
+						senderId,
+						content: SYSTEM_CLOSE_MESSAGE,
+						timestamp: now,
+					},
+				});
+			}
+		}
+	}));
+};
+
 
 // ─── Mixed list (Direct + Support) ───────────────────────────────────────────
 
@@ -711,13 +826,13 @@ interface MixedConversationAggRow {
     lastMessageContent:  string | null;
     lastMessageSenderId: string | null;
     unreadCount:         number;
-    handover:            Handover | null;
     partner: {
         id:          Types.ObjectId | string;
         displayName: string | null;
         email:       string | null;
         avatarUrl:   string | null;
     } | null;
+    supportFormData:     SupportFormData | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -853,7 +968,6 @@ export const listAllConversationsByUserId = async (
             orgLogoUrl:    { $literal: null },
             status:        { $literal: null },
             staffAssignId: { $literal: null },
-            handover:      { $ifNull: ['$conv.handover', null] },
         }),
         buildConvBranch('supportconversations', 'support', userId, cursorFilter, {
             orgId:         { $ifNull: ['$conv.orgId',         null] },
@@ -862,7 +976,7 @@ export const listAllConversationsByUserId = async (
             orgLogoUrl:    { $ifNull: ['$conv.orgLogoUrl',    null] },
             status:        { $ifNull: ['$conv.status',        null] },
             staffAssignId: { $ifNull: ['$conv.staffAssignId', null] },
-            handover:      { $literal: null },
+            supportFormData: { $ifNull: ['$conv.supportFormData', null] },
         }, { status: { $ne: ConversationStatus.CLOSED } }),
     ]);
 
@@ -906,7 +1020,7 @@ export const listAllConversationsByUserId = async (
                   }
                 : null,
             unreadCount: c.unreadCount ?? 0,
-            handover:    c.handover ?? null,
+            supportFormData: c.supportFormData ?? null,
             createdAt:   c.createdAt,
             updatedAt:   c.updatedAt,
         })),

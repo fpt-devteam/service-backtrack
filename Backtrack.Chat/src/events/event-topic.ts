@@ -5,7 +5,4 @@ export const EventTopics = {
   Org: {
     EnsureExist: 'org.ensure-exist',
   },
-  ReturnReport: {
-    Synced: 'return-report.synced',
-  },
 } as const;

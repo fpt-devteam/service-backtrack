@@ -6,4 +6,5 @@ public sealed record SearchPostByTitleQuery : IRequest<IEnumerable<SearchPostRes
 {
     public required string Query { get; init; }
     public PostFilters? Filters { get; init; }
+    public bool IsBlur { get; init; } = true;
 }

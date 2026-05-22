@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 using Backtrack.Core.Application.Usecases;
 using MediatR;
 
-namespace Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+namespace Backtrack.Core.Application.Usecases.OrganizationInventory;
 
 public sealed record SearchInventoryItemsCommand : IRequest<PagedResult<InventoryItemResult>>
 {

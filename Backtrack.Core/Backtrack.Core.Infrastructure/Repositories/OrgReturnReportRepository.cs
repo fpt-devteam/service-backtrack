@@ -15,7 +15,7 @@ public class OrgReturnReportRepository : CrudRepositoryBase<OrgReturnReport, Gui
             .Include(r => r.Organization)
             .Include(r => r.Staff)
             .Include(r => r.Post)
-                .ThenInclude(p => p!.Author)
+                .ThenInclude(p => p.Author)
             .FirstOrDefaultAsync(r => r.Id == id && r.DeletedAt == null, cancellationToken);
     }
 
@@ -29,9 +29,10 @@ public class OrgReturnReportRepository : CrudRepositoryBase<OrgReturnReport, Gui
         Guid orgId, string? staffId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var query = _context.Set<OrgReturnReport>()
+            .Include(r => r.Organization)
             .Include(r => r.Staff)
             .Include(r => r.Post)
-                .ThenInclude(p => p!.Author)
+                .ThenInclude(p => p.Author)
             .Where(r => r.OrgId == orgId && r.DeletedAt == null);
 
         if (staffId != null)
@@ -52,6 +53,10 @@ public class OrgReturnReportRepository : CrudRepositoryBase<OrgReturnReport, Gui
         IEnumerable<Guid> postIds, CancellationToken cancellationToken = default)
     {
         return await _context.Set<OrgReturnReport>()
+            .Include(r => r.Organization)
+            .Include(r => r.Staff)
+            .Include(r => r.Post)
+                .ThenInclude(p => p.Author)
             .Where(r => postIds.Contains(r.PostId) && r.DeletedAt == null)
             .ToDictionaryAsync(r => r.PostId, cancellationToken);
     }
@@ -59,18 +64,22 @@ public class OrgReturnReportRepository : CrudRepositoryBase<OrgReturnReport, Gui
     public async Task<OrgReturnReport?> GetByPostIdAsync(Guid postId, CancellationToken cancellationToken = default)
     {
         return await _context.Set<OrgReturnReport>()
+            .Include(r => r.Organization)
+            .Include(r => r.Staff)
+            .Include(r => r.Post)
+                .ThenInclude(p => p.Author)
             .FirstOrDefaultAsync(r => r.PostId == postId && r.DeletedAt == null, cancellationToken);
-    }
-
-    public async Task<int> CountPendingByStaffAsync(Guid orgId, string staffId, CancellationToken cancellationToken = default)
-    {
-        return await _context.Set<OrgReturnReport>()
-            .CountAsync(r => r.OrgId == orgId && r.StaffId == staffId && r.DeletedAt == null, cancellationToken);
     }
 
     public async Task<int> CountByOrgSinceAsync(Guid orgId, DateTimeOffset since, CancellationToken cancellationToken = default)
     {
         return await _context.Set<OrgReturnReport>()
             .CountAsync(r => r.OrgId == orgId && r.DeletedAt == null && r.CreatedAt >= since, cancellationToken);
+    }
+
+    public async Task<int> CountByTotalReturnsByStaffAsync(Guid orgId, string staffId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<OrgReturnReport>()
+            .CountAsync(r => r.OrgId == orgId && r.StaffId == staffId && r.DeletedAt == null, cancellationToken);
     }
 }

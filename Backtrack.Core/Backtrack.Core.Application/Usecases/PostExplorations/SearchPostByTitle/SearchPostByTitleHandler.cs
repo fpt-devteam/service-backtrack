@@ -13,6 +13,6 @@ public sealed class SearchPostByTitleHandler(IPostRepository postRepository)
     {
         var posts = await postRepository.SearchByTitleAsync(query.Query, query.Filters, cancellationToken);
 
-        return posts.Select(p => p.ToSearchPostResult());
+        return posts.Select(p => p.ToSearchPostResult(isBlur: query.IsBlur));
     }
 }

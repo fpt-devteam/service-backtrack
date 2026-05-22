@@ -17,23 +17,9 @@ public sealed class GetC2CReturnReportByPostsHandler(
 
         if (returnReport.FinderId != query.UserId && returnReport.OwnerId != query.UserId)
         {
-            throw new ForbiddenException(new Error("NotAuthorized", "You are not authorized to view this return report."));
+            throw new ForbiddenException(ReturnReportErrors.NotAuthorized);
         }
 
-        return new C2CReturnReportResult
-        {
-            Id = returnReport.Id,
-            Finder = returnReport.Finder!.ToUserResult(),
-            Owner = returnReport.Owner?.ToUserResult(),
-            FinderPost = returnReport.FinderPost?.ToPostResult(),
-            OwnerPost = returnReport.OwnerPost?.ToPostResult(),
-            Status = returnReport.Status.ToString(),
-            ActivatedByRole = returnReport.ActivatedById == returnReport.FinderId ? "Finder"
-                            : returnReport.ActivatedById == returnReport.OwnerId ? "Owner"
-                            : null,
-            ConfirmedAt = returnReport.ConfirmedAt,
-            ExpiresAt = returnReport.ExpiresAt,
-            CreatedAt = returnReport.CreatedAt
-        };
+        return returnReport.ToC2CReturnReportResult();
     }
 }

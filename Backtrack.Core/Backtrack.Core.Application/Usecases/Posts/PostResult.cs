@@ -27,7 +27,7 @@ public sealed record PostResult
 
 public static class PostResultMapper
 {
-    public static PostResult ToPostResult(this Post post)
+    public static PostResult ToPostResult(this Post post, bool isBlur = true)
     {
         return new PostResult
         {
@@ -42,7 +42,7 @@ public static class PostResultMapper
             CardDetail              = post.CardDetail?.ToDto(),
             ElectronicDetail        = post.ElectronicDetail?.ToDto(),
             OtherDetail             = post.OtherDetail?.ToDto(),
-            ImageUrls = post.ImageUrls,
+            ImageUrls = isBlur ? post.BlurImageUrls : post.ImageUrls,
             Location = post.Location,
             ExternalPlaceId = post.ExternalPlaceId,
             DisplayAddress = post.DisplayAddress,

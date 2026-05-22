@@ -66,6 +66,10 @@ public static class ReturnReportErrors
         Code: "CannotReturnReportOwnPost",
         Message: "You cannot create a ReturnReport for your own post.");
 
+    public static readonly Error PostNotInOrg = new(
+        Code: "PostNotInOrg",
+        Message: "This post does not belong to your organization.");
+
     public static readonly Error PostTypeMismatch = new(
         Code: "PostTypeMismatch",
         Message: "Finder post must be FOUND type and owner post must be LOST type.");
@@ -89,4 +93,33 @@ public static class ReturnReportErrors
     public static readonly Error NotParticipant = new(
         Code: "NotParticipant",
         Message: "You must be the finder or owner of one of the provided posts to create a return report.");
+
+    public static readonly Error NotAuthorized = new(
+        Code: "NotAuthorized",
+        Message: "You are not authorized to view this return report.");
+
+    public static readonly Error NotOngoing = new(
+        Code: "NotOngoing",
+        Message: "Only an Ongoing return report can be marked as delivered.");
+
+    public static readonly Error NotFinder = new(
+        Code: "NotFinder",
+        Message: "Only the finder can mark the item as delivered.");
+
+    public static readonly Error NotDelivered = new(
+        Code: "NotDelivered",
+        Message: "Only a Delivered return report can be confirmed.");
+
+    public static readonly Error NotOwner = new(
+        Code: "NotOwner",
+        Message: "Only the owner can confirm the handover.");
+
+    public static readonly Error NotOwnPostInReport = new (
+        Code: "NotOwnPostInReport",
+        Message: "User don't own any post in report"
+    );
+
+    public static readonly Error CloseForOngoingOnly = new(
+        Code: "CloseForOngoingOnly",
+        Message: "Only an Ongoing return report can be marked as close.");
 }

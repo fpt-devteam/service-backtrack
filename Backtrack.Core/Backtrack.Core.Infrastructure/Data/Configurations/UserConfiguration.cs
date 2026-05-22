@@ -48,6 +48,11 @@ namespace Backtrack.Core.Infrastructure.Data.Configurations
                 .IsRequired()
                 .HasDefaultValue(false);
 
+            builder.Property(u => u.PostActionCount)
+                .HasColumnName("post_action_count")
+                .IsRequired()
+                .HasDefaultValue(0);
+
             builder.Property(u => u.Status)
                 .HasColumnName("status")
                 .HasConversion<string>()

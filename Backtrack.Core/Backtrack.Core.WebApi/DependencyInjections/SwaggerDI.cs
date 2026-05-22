@@ -11,7 +11,8 @@ namespace Backtrack.Core.WebApi.DependencyInjections
             {
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                c.IncludeXmlComments(xmlPath);
+                if (File.Exists(xmlPath))
+                    c.IncludeXmlComments(xmlPath);
 
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
@@ -19,6 +20,8 @@ namespace Backtrack.Core.WebApi.DependencyInjections
                     Version = "v1",
                     Description = "API for Backtrack application"
                 });
+
+                c.CustomSchemaIds(type => type.FullName);
 
                 // Configure file upload operation filter
                 c.OperationFilter<SwaggerFileOperationFilterDI>();

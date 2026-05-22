@@ -9,6 +9,7 @@ public sealed record ListPostByFeedQuery : IRequest<ListPostByFeedResult>
 {
     public required GeoPoint Location { get; init; }
     public PostType? PostType { get; init; }
+    public string? ViewerUserId { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
 }

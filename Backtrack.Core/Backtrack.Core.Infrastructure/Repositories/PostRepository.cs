@@ -273,7 +273,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             command.Parameters.Add(new NpgsqlParameter("@embedding", embeddingVec));
             command.Parameters.Add(new NpgsqlParameter("@postType", post.PostType.ToString()));
             command.Parameters.Add(new NpgsqlParameter("@authorId", post.AuthorId));
-            command.Parameters.Add(new NpgsqlParameter("@minSimilarity", PostSimilarityThresholds.MediumSimilarityThreshold));
+            command.Parameters.Add(new NpgsqlParameter("@minSimilarity", PostSimilarityThresholds.VerySimilarityHighThreshold));
             command.Parameters.AddRange(filterParams.ToArray());
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -456,6 +456,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
                 AND p.status = 'Active'
                 AND p.post_type != @postType
                 AND p.author_id != @authorId
+                AND p.subcategory_id = @subcategoryId
                 AND p.location IS NOT NULL
                 AND ST_DWithin(
                     p.location::geography,
@@ -480,6 +481,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
             cmd.Parameters.Add(new NpgsqlParameter("@postId", post.Id));
             cmd.Parameters.Add(new NpgsqlParameter("@postType", post.PostType.ToString()));
             cmd.Parameters.Add(new NpgsqlParameter("@authorId", post.AuthorId));
+            cmd.Parameters.Add(new NpgsqlParameter("@subcategoryId", post.SubcategoryId));
             cmd.Parameters.Add(new NpgsqlParameter("@longitude", post.Location.Longitude));
             cmd.Parameters.Add(new NpgsqlParameter("@latitude", post.Location.Latitude));
             cmd.Parameters.Add(new NpgsqlParameter("@maxDistance", PostSimilarityThresholds.MaxDistanceMeters));
@@ -559,7 +561,7 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         return result;
     }
 
-    public async Task<Dictionary<(PostType Type, string EffectiveStatus), int>> GetStatusBreakdownByOrgAsync(
+    public async Task<Dictionary<(PostType Type, PostStatus Status), int>> GetStatusBreakdownByOrgAsync(
         Guid orgId,
         string? authorId,
         CancellationToken cancellationToken = default)
@@ -569,20 +571,19 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         var sql = $@"
             SELECT
                 p.post_type,
-                CASE WHEN r.id IS NOT NULL THEN 'ReturnScheduled' ELSE p.status END AS effective_status,
+                p.status,
                 COUNT(*)::int AS cnt
             FROM posts p
-            LEFT JOIN org_return_reports r ON r.post_id = p.id AND r.deleted_at IS NULL
             WHERE p.deleted_at IS NULL
               AND p.organization_id = @orgId
               {authorFilter}
-            GROUP BY p.post_type, effective_status";
+            GROUP BY p.post_type, p.status";
 
         var conn = _context.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
             await _context.Database.OpenConnectionAsync(cancellationToken);
 
-        var result = new Dictionary<(PostType, string), int>();
+        var result = new Dictionary<(PostType, PostStatus), int>();
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
         cmd.Parameters.Add(new NpgsqlParameter("@orgId", orgId));
@@ -593,9 +594,9 @@ public class PostRepository(ApplicationDbContext context) : CrudRepositoryBase<P
         while (await reader.ReadAsync(cancellationToken))
         {
             var postType        = Enum.Parse<PostType>(reader.GetString(0));
-            var effectiveStatus = reader.GetString(1);
-            var count           = reader.GetInt32(2);
-            result[(postType, effectiveStatus)] = count;
+            var status = Enum.Parse<PostStatus>(reader.GetString(1));
+            var count  = reader.GetInt32(2);
+            result[(postType, status)] = count;
         }
 
         return result;

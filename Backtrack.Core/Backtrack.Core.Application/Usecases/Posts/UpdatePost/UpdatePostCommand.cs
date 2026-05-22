@@ -10,10 +10,7 @@ public sealed record UpdatePostCommand : IRequest<PostResult>
     public Guid PostId { get; init; }
     [System.Text.Json.Serialization.JsonIgnore]
     public string UserId { get; init; } = string.Empty;
-    public Guid? OrganizationId { get; init; }
     public string? PostTitle { get; init; }
-    public string? PostType { get; init; }
-    public string? Status { get; init; }
     public PersonalBelongingDetailDto? PersonalBelongingDetail { get; init; }
     public CardDetailDto? CardDetail { get; init; }
     public ElectronicDetailDto? ElectronicDetail { get; init; }

@@ -5,4 +5,5 @@ public sealed class QrCode : Entity<Guid>
     public required string UserId { get; set; }
     public required string PublicCode { get; set; } // BTK-XXXXXXXX
     public required string Note { get; set; }
+    public string? LogoUrl { get; set; }
 }

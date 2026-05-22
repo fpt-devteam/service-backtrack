@@ -8,7 +8,8 @@ public static class SearchPostResultMapper
     public static SearchPostResult ToSearchPostResult(
         this Post post,
         double? score = null,
-        double? distanceInMeters = null) => new()
+        double? distanceInMeters = null,
+        bool isBlur = true) => new()
     {
         Id                      = post.Id,
         Author                  = post.Author?.ToPostAuthorResult(),
@@ -21,7 +22,7 @@ public static class SearchPostResultMapper
         CardDetail              = post.CardDetail?.ToDto(),
         ElectronicDetail        = post.ElectronicDetail?.ToDto(),
         OtherDetail             = post.OtherDetail?.ToDto(),
-        ImageUrls               = post.ImageUrls,
+        ImageUrls               = isBlur ? post.BlurImageUrls : post.ImageUrls,
         Location                = post.Location,
         ExternalPlaceId         = post.ExternalPlaceId,
         DisplayAddress          = post.DisplayAddress,

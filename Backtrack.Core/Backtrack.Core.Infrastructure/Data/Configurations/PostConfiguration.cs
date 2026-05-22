@@ -86,6 +86,11 @@ public class PostConfiguration : IEntityTypeConfiguration<Post>
             .HasColumnType("text[]")
             .IsRequired();
 
+        builder.Property(p => p.BlurImageUrls)
+            .HasColumnName("blur_image_urls")
+            .HasColumnType("text[]")
+            .IsRequired();
+
         // Location (geography)
         var geoPointToPointConverter = new ValueConverter<GeoPoint, Point>(
             toDb => new Point(toDb.Longitude, toDb.Latitude) { SRID = 4326 },
@@ -108,8 +113,12 @@ public class PostConfiguration : IEntityTypeConfiguration<Post>
             .HasDatabaseName("ix_posts_location")
             .HasMethod("gist");
 
-        builder.Property(p => p.InternalLocation)
-            .HasColumnName("internal_location")
+        builder.Property(p => p.OrganizationStorageLocation)
+            .HasColumnName("organization_storage_location")
+            .HasMaxLength(500);
+
+        builder.Property(p => p.OrganizationFoundLocation)
+            .HasColumnName("organization_found_location")
             .HasMaxLength(500);
 
         builder.Property(p => p.ExternalPlaceId)
@@ -164,6 +173,21 @@ public class PostConfiguration : IEntityTypeConfiguration<Post>
         builder.Property(p => p.EventTime)
             .HasColumnName("event_time")
             .IsRequired();
+
+        builder.Property(p => p.ExpiredAt)
+            .HasColumnName("expired_at");
+
+        builder.Property(p => p.DeliveredAt)
+            .HasColumnName("delivered_at");
+
+        builder.Property(p => p.RejectedAt)
+            .HasColumnName("rejected_at");
+
+        builder.Property(p => p.ReturnedAt)
+            .HasColumnName("returned_at");
+
+        builder.Property(p => p.ArchivedAt)
+            .HasColumnName("archived_at");
 
         builder.Property(p => p.CreatedAt)
             .HasColumnName("created_at")

@@ -1,7 +1,7 @@
 using Backtrack.Core.Application.Exceptions;
 using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory;
 using Backtrack.Core.Application.Usecases.Posts;
 using MediatR;
 
@@ -24,8 +24,10 @@ public sealed class GetInventoryItemByIdHandler(
         if (post.OrganizationId != query.OrgId)
             throw new ForbiddenException(PostErrors.Forbidden);
 
-        var receiveReport = await receiveReportRepository.GetByPostIdAsync(post.Id, cancellationToken);
-        var returnReport  = await returnReportRepository.GetByPostIdAsync(post.Id, cancellationToken);
+        var receiveReport = await receiveReportRepository.GetByPostIdAsync(post.Id, cancellationToken)
+            ?? throw new InvalidOperationException($"Receive report for post {post.Id} not found.");
+
+        var returnReport = await returnReportRepository.GetByPostIdAsync(post.Id, cancellationToken);
 
         return post.ToInventoryItemResult(receiveReport, returnReport);
     }

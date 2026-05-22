@@ -1,5 +1,5 @@
 import { ConversationStatus } from '@/models';
-import { Handover } from '@/models/interfaces/direct-conversation.interface';
+import { SupportFormData } from '@/models/interfaces/support-conversation.interface';
 
 // ─── Shared sub-types ────────────────────────────────────────────────────────
 
@@ -29,7 +29,6 @@ export interface DirectConversationResponse {
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
   unreadCount: number;
-  handover: Handover | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,6 +55,7 @@ export interface SupportConversationResponse {
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
   unreadCount: number;
+  supportFormData: SupportFormData | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -79,8 +79,7 @@ export interface ConversationResponse {
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
   unreadCount: number;
-  /** Only present on Direct conversations; null for Support conversations */
-  handover: Handover | null;
+  supportFormData: SupportFormData | null;
   createdAt: Date;
   updatedAt: Date;
 }

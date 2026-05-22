@@ -3,7 +3,7 @@ using Backtrack.Core.Application.Exceptions.Errors;
 using Backtrack.Core.Application.Interfaces.BackgroundJobs;
 using Backtrack.Core.Application.Interfaces.Helpers;
 using Backtrack.Core.Application.Interfaces.Repositories;
-using Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+using Backtrack.Core.Application.Usecases.OrganizationInventory;
 using Backtrack.Core.Application.Usecases.PostMatchings;
 using Backtrack.Core.Application.Usecases.PostMatchings.UpdatePostEmbedding;
 using Backtrack.Core.Application.Usecases.Posts;
@@ -37,25 +37,21 @@ public sealed class UpdateInventoryItemHandler(
         if (command.PersonalBelongingDetail != null)
         {
             UpdateDetail(post, command.PersonalBelongingDetail);
-            post.PostTitle = post.PersonalBelongingDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
         else if (command.CardDetail != null)
         {
             UpdateDetail(post, command.CardDetail, hasher);
-            post.PostTitle = post.CardDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
         else if (command.ElectronicDetail != null)
         {
             UpdateDetail(post, command.ElectronicDetail);
-            post.PostTitle = post.ElectronicDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
         if (command.OtherDetail != null)
         {
             UpdateDetail(post, command.OtherDetail);
-            post.PostTitle = post.OtherDetail?.ItemName ?? post.PostTitle;
             needsReEmbedding = true;
         }
 
@@ -71,10 +67,18 @@ public sealed class UpdateInventoryItemHandler(
             needsReEmbedding = true;
         }
 
-        if (command.Status is not null && Enum.TryParse<PostStatus>(command.Status, ignoreCase: true, out var parsedStatus))
-            post.Status = parsedStatus;
+        if (command.EventTime.HasValue && post.EventTime != command.EventTime.Value)
+        {
+            post.EventTime = command.EventTime.Value;
+            needsReEmbedding = true;
+        }
 
-        post.EventTime = command.EventTime ?? post.EventTime;
+        if (command.OrganizationStorageLocation is not null)
+            post.OrganizationStorageLocation = command.OrganizationStorageLocation;
+
+        if (command.OrganizationFoundLocation is not null)
+            post.OrganizationFoundLocation = command.OrganizationFoundLocation;
+
         post.UpdatedAt = DateTimeOffset.UtcNow;
 
         if (needsReEmbedding)
@@ -87,7 +91,9 @@ public sealed class UpdateInventoryItemHandler(
 
         if (needsReEmbedding) backgroundJobService.EnqueueJob(new UpdatePostEmbeddingCommand(post.Id));
 
-        var receiveReport = await receiveReportRepository.GetByPostIdAsync(post.Id, cancellationToken);
+        var receiveReport = await receiveReportRepository.GetByPostIdAsync(post.Id, cancellationToken)
+            ?? throw new InvalidOperationException($"Receive report for post {post.Id} not found.");
+
         var returnReport  = await returnReportRepository.GetByPostIdAsync(post.Id, cancellationToken);
 
         return post.ToInventoryItemResult(receiveReport, returnReport);

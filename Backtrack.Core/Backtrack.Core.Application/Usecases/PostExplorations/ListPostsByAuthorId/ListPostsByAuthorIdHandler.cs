@@ -13,7 +13,7 @@ public sealed class ListPostsByAuthorIdHandler(IPostRepository postRepository)
         var filters = new PostFilters { AuthorId = query.AuthorId };
         var (items, totalCount) = await postRepository.GetPagedAsync(pagedQuery, filters, cancellationToken);
 
-        var results = items.Select(post => post.ToPostResult()).ToList();
+        var results = items.Select(post => post.ToPostResult(isBlur: query.IsBlur)).ToList();
 
         return new PagedResult<PostResult>(totalCount, results);
     }

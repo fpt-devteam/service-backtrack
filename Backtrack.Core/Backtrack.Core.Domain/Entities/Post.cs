@@ -14,7 +14,8 @@ public sealed class Post : Entity<Guid>
     public Subcategory Subcategory { get; set; } = default!;
 
     // Location
-    public string? InternalLocation { get; set; }
+    public string? OrganizationStorageLocation { get; set; }
+    public string? OrganizationFoundLocation { get; set; }
     public required GeoPoint Location { get; set; }
     public required string DisplayAddress { get; set; }
     public string? ExternalPlaceId { get; set; }
@@ -24,6 +25,7 @@ public sealed class Post : Entity<Guid>
 
     // Images
     public List<string> ImageUrls { get; set; } = new();
+    public List<string> BlurImageUrls { get; set; } = new();
 
     // Text embedding (single source of truth for matching)
     public float[]? Embedding { get; set; }
@@ -31,6 +33,13 @@ public sealed class Post : Entity<Guid>
     public required PostMatchingStatus PostMatchingStatus { get; set; }
 
     public PostStatus Status { get; set; } = PostStatus.Active;
+
+    // Status timestamps
+    public DateTimeOffset ExpiredAt { get; set; }
+    public DateTimeOffset? DeliveredAt { get; set; }
+    public DateTimeOffset? RejectedAt { get; set; }
+    public DateTimeOffset? ReturnedAt { get; set; }
+    public DateTimeOffset? ArchivedAt { get; set; }
 
     // Relationships
     public required string AuthorId { get; set; }
@@ -43,4 +52,6 @@ public sealed class Post : Entity<Guid>
     public PostCardDetail? CardDetail { get; set; }
     public PostElectronicDetail? ElectronicDetail { get; set; }
     public PostOtherDetail? OtherDetail { get; set; }
+
+    public ICollection<QnA> QnAs { get; set; } = new List<QnA>();
 }

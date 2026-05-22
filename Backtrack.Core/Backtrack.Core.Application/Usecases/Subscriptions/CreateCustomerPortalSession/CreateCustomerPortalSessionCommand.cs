@@ -5,9 +5,8 @@ namespace Backtrack.Core.Application.Usecases.Subscriptions.CreateCustomerPortal
 
 public sealed record CreateCustomerPortalSessionCommand : IRequest<CreateCustomerPortalSessionResult>
 {
-    public required Guid OrganizationId { get; init; }
+    public required SubscriberContext Subscriber { get; init; }
     public required string ReturnUrl { get; init; }
-
     [JsonIgnore]
     public string? CallerId { get; init; }
 }

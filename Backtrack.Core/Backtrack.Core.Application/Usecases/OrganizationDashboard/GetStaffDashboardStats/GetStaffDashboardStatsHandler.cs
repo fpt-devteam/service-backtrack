@@ -19,7 +19,9 @@ public sealed class GetStaffDashboardStatsHandler(
         var membership = await membershipRepository.GetByOrgAndUserAsync(query.OrgId, query.UserId, cancellationToken)
             ?? throw new ForbiddenException(MembershipErrors.NotAMember);
 
-        var startOfWeek = DateTimeOffset.UtcNow.AddDays(-7);
+        var now = DateTimeOffset.UtcNow;
+        var daysFromMonday = ((int)now.DayOfWeek + 6) % 7;
+        var startOfWeek = new DateTimeOffset(now.Date.AddDays(-daysFromMonday), TimeSpan.Zero);
 
         var myItemsInStorage = await postRepository.CountAsync(new PostFilters
         {
@@ -34,9 +36,7 @@ public sealed class GetStaffDashboardStatsHandler(
             OrganizationId = query.OrgId
         }, cancellationToken);
 
-        var pendingReturns = await orgReturnReportRepository.CountPendingByStaffAsync(
-            query.OrgId, query.UserId, cancellationToken);
-
+        var totalReturn = await orgReturnReportRepository.CountByTotalReturnsByStaffAsync(query.OrgId, query.UserId, cancellationToken);
         var returnedThisWeek = await orgReturnReportRepository.CountByOrgSinceAsync(
             query.OrgId, startOfWeek, cancellationToken);
 
@@ -44,7 +44,7 @@ public sealed class GetStaffDashboardStatsHandler(
         {
             MyItemsInStorage = myItemsInStorage,
             MyItemsTotal     = myItemsTotal,
-            PendingReturns   = pendingReturns,
+            TotalReturns     = totalReturn,
             ReturnedThisWeek = returnedThisWeek
         };
     }

@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace Backtrack.Core.Application.Usecases.OrganizationInventory.SearchInventoryItems;
+namespace Backtrack.Core.Application.Usecases.OrganizationInventory;
 
 public sealed class SearchInventoryItemsCommandValidator : AbstractValidator<SearchInventoryItemsCommand>
 {

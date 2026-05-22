@@ -7,6 +7,7 @@ public sealed record UpdateSubscriptionPlanFeaturesCommand : IRequest<UpdateSubs
 {
     [JsonIgnore]
     public Guid PlanId { get; init; }
+    public string? Name { get; init; }
     public required string[] Features { get; init; }
 
     [JsonIgnore]

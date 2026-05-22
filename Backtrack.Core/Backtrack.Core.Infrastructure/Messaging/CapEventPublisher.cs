@@ -25,16 +25,6 @@ public sealed class CapEventPublisher : IEventPublisher
     }
 
 
-    public async Task PublishReturnReportConfirmedAsync(ReturnReportConfirmedIntegrationEvent @event)
-    {
-        await _capPublisher.PublishAsync(EventTopics.ReturnReportConfirmed, @event);
-    }
-
-    public async Task PublishReturnReportSyncAsync(ReturnReportSyncIntegrationEvent @event)
-    {
-        await _capPublisher.PublishAsync(EventTopics.ReturnReportSynced, @event);
-    }
-
     public async Task PublishOrgEnsureExistAsync(OrgEnsureExistIntegrationEvent @event)
     {
         await _capPublisher.PublishAsync(EventTopics.Org.EnsureExist, @event);

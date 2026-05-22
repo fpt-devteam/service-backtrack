@@ -41,4 +41,14 @@ export const ConversationErrors = {
     code: "OrgNotFound",
     message: "The organization was not found. It may not have been synced yet.",
   } as Error,
+  PostIdMismatch: {
+	kind: "Conflict",
+	code: "PostIdMismatch",
+	message: "A conversation for this organization already exists with a different postId.",
+  } as Error,
+  PostAlreadyInProgress: {
+    kind: "Conflict",
+    code: "PostAlreadyInProgress",
+    message: "Another conversation for this post is already in progress.",
+  } as Error,
 } as const satisfies Record<string, Error>;

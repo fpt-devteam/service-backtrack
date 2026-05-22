@@ -88,30 +88,21 @@ public class PaymentHistoryRepository : CrudRepositoryBase<PaymentHistory, Guid>
         int months, CancellationToken cancellationToken = default)
     {
         var cutoff = DateTimeOffset.UtcNow.AddMonths(-months);
-        const string sql = @"
-            SELECT EXTRACT(YEAR  FROM payment_date)::int AS year,
-                   EXTRACT(MONTH FROM payment_date)::int AS month,
-                   SUM(CASE WHEN subscriber_type = 'Organization' THEN amount ELSE 0 END) AS org_revenue,
-                   SUM(CASE WHEN subscriber_type = 'User'         THEN amount ELSE 0 END) AS user_revenue
-            FROM payment_histories
-            WHERE status = 'Succeeded'
-              AND payment_date >= @cutoff
-            GROUP BY year, month
-            ORDER BY year, month";
 
-        var conn = _context.Database.GetDbConnection();
-        if (conn.State != System.Data.ConnectionState.Open)
-            await _context.Database.OpenConnectionAsync(cancellationToken);
+        var rows = await _dbSet.AsNoTracking()
+            .Where(p => p.Status == PaymentStatus.Succeeded && p.PaymentDate >= cutoff)
+            .Select(p => new { p.PaymentDate, p.SubscriberType, p.Amount })
+            .ToListAsync(cancellationToken);
 
-        var result = new List<(int, int, decimal, decimal)>();
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        cmd.Parameters.Add(new Npgsql.NpgsqlParameter("@cutoff", cutoff));
-        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
-            result.Add((reader.GetInt32(0), reader.GetInt32(1), reader.GetDecimal(2), reader.GetDecimal(3)));
-
-        return result;
+        return [.. rows
+            .GroupBy(p => (p.PaymentDate.Year, p.PaymentDate.Month))
+            .Select(g => (
+                g.Key.Year,
+                g.Key.Month,
+                Org:  g.Where(p => p.SubscriberType == SubscriberType.Organization).Sum(p => p.Amount),
+                User: g.Where(p => p.SubscriberType == SubscriberType.User).Sum(p => p.Amount)
+            ))
+            .OrderBy(r => r.Year).ThenBy(r => r.Month)];
     }
 
     public async Task<(int Total, int OrgCount, int UserCount)> GetTransactionCountsAsync(
@@ -129,12 +120,13 @@ public class PaymentHistoryRepository : CrudRepositoryBase<PaymentHistory, Guid>
     }
 
     public async Task<(List<PaymentHistory> Items, int Total)> GetPagedWithDetailsAsync(
-        int             page,
-        int             pageSize,
-        SubscriberType? subscriberType    = null,
-        PaymentStatus?  status            = null,
-        string?         search            = null,
-        CancellationToken cancellationToken = default)
+        int                  page,
+        int                  pageSize,
+        SubscriberType?      subscriberType    = null,
+        PaymentStatus?       status            = null,
+        string?              search            = null,
+        IEnumerable<string>? matchingUserIds   = null,
+        CancellationToken    cancellationToken = default)
     {
         IQueryable<PaymentHistory> q = _dbSet.AsNoTracking()
             .Include(p => p.Subscription)
@@ -148,11 +140,13 @@ public class PaymentHistoryRepository : CrudRepositoryBase<PaymentHistory, Guid>
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = search.ToLower();
+            var term    = search.ToLower();
+            var userIds = matchingUserIds?.ToList() ?? [];
             q = q.Where(p =>
                 p.ProviderInvoiceId.ToLower().Contains(term) ||
                 (p.Subscription.Organization != null &&
-                 p.Subscription.Organization.Name.ToLower().Contains(term)));
+                 p.Subscription.Organization.Name.ToLower().Contains(term)) ||
+                (p.UserId != null && userIds.Contains(p.UserId)));
         }
 
         var query = q.OrderByDescending(p => p.PaymentDate);

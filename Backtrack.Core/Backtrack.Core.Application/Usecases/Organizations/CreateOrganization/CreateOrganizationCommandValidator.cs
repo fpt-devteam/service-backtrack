@@ -93,4 +93,5 @@
                 .IsInEnum().WithMessage("Each entry in RequiredOwnerContractFields must be a valid OrgContractField")
                 .When(x => x.RequiredOwnerContractFields != null);
         }
+
     }
