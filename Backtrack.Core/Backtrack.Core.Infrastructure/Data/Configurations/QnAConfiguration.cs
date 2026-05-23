@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backtrack.Core.Infrastructure.Data.Configurations;
 
-public class QnAConfiguration : IEntityTypeConfiguration<QnA>
+public class QnAConfiguration : IEntityTypeConfiguration<Question>
 {
-    public void Configure(EntityTypeBuilder<QnA> builder)
+    public void Configure(EntityTypeBuilder<Question> builder)
     {
-        builder.ToTable("qna");
+        builder.ToTable("questions");
 
         builder.HasKey(q => q.Id);
 
@@ -21,13 +21,13 @@ public class QnAConfiguration : IEntityTypeConfiguration<QnA>
             .IsRequired();
 
         builder.HasOne(q => q.Post)
-            .WithMany(p => p.QnAs)
+            .WithMany(p => p.Questions)
             .HasForeignKey(q => q.PostId)
-            .HasConstraintName("fk_qna_post_id_posts_id")
+            .HasConstraintName("fk_questions_post_id_posts_id")
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(q => q.PostId)
-            .HasDatabaseName("ix_qna_post_id");
+            .HasDatabaseName("ix_questions_post_id");
 
         builder.Property(q => q.AskerId)
             .HasColumnName("asker_id")
@@ -37,37 +37,16 @@ public class QnAConfiguration : IEntityTypeConfiguration<QnA>
         builder.HasOne(q => q.Asker)
             .WithMany()
             .HasForeignKey(q => q.AskerId)
-            .HasConstraintName("fk_qna_asker_id_users_id")
+            .HasConstraintName("fk_questions_asker_id_users_id")
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(q => q.AskerId)
-            .HasDatabaseName("ix_qna_asker_id");
+            .HasDatabaseName("ix_questions_asker_id");
 
         builder.Property(q => q.QuestionText)
             .HasColumnName("question_text")
             .HasMaxLength(1000)
             .IsRequired();
-
-        builder.Property(q => q.AnswererId)
-            .HasColumnName("answerer_id")
-            .HasColumnType("text");
-
-        builder.HasOne(q => q.Answerer)
-            .WithMany()
-            .HasForeignKey(q => q.AnswererId)
-            .HasConstraintName("fk_qna_answerer_id_users_id")
-            .OnDelete(DeleteBehavior.Restrict)
-            .IsRequired(false);
-
-        builder.HasIndex(q => q.AnswererId)
-            .HasDatabaseName("ix_qna_answerer_id");
-
-        builder.Property(q => q.AnswerText)
-            .HasColumnName("answer_text")
-            .HasMaxLength(2000);
-
-        builder.Property(q => q.AnsweredAt)
-            .HasColumnName("answered_at");
 
         builder.Property(q => q.CreatedAt)
             .HasColumnName("created_at")
@@ -80,7 +59,7 @@ public class QnAConfiguration : IEntityTypeConfiguration<QnA>
             .HasColumnName("deleted_at");
 
         builder.HasIndex(q => q.CreatedAt)
-            .HasDatabaseName("ix_qna_created_at");
+            .HasDatabaseName("ix_questions_created_at");
 
         builder.HasQueryFilter(q => q.DeletedAt == null);
     }

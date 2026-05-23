@@ -27,7 +27,8 @@ namespace Backtrack.Core.Infrastructure.Data
         public DbSet<PaymentHistory> PaymentHistories { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Device> Devices { get; set; }
-        public DbSet<QnA> QnAs { get; set; }
+        public DbSet<Question> Questions { get; set; }
+        public DbSet<Answer> Answers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,6 +55,7 @@ namespace Backtrack.Core.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new NotificationConfiguration());
             modelBuilder.ApplyConfiguration(new DeviceConfiguration());
             modelBuilder.ApplyConfiguration(new QnAConfiguration());
+            modelBuilder.ApplyConfiguration(new AnswerConfiguration());
         }
     }
 }

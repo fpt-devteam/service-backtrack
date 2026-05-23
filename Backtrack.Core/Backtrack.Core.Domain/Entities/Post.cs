@@ -53,5 +53,5 @@ public sealed class Post : Entity<Guid>
     public PostElectronicDetail? ElectronicDetail { get; set; }
     public PostOtherDetail? OtherDetail { get; set; }
 
-    public ICollection<QnA> QnAs { get; set; } = new List<QnA>();
+    public ICollection<Question> Questions { get; set; } = [];
 }

@@ -54,6 +54,7 @@ public static class ServiceDI
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
         services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
         services.AddScoped<IQnARepository, QnARepository>();
+        services.AddScoped<IAnswerRepository, AnswerRepository>();
 
         // Messaging
         services.AddScoped<IEventPublisher, CapEventPublisher>();

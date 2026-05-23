@@ -4,12 +4,12 @@ using MediatR;
 namespace Backtrack.Core.Application.Usecases.QnA.GetQuestions;
 
 /// <summary>
-/// Handler for retrieving a paginated list of questions.
+/// Handler for retrieving a paginated list of questions for a post.
 /// </summary>
 public sealed class GetQuestionsHandler(IQnARepository qnARepository)
-    : IRequestHandler<GetQuestionsQuery, PagedResult<QnAResult>>
+    : IRequestHandler<GetQuestionsQuery, PagedResult<QuestionResult>>
 {
-    public async Task<PagedResult<QnAResult>> Handle(
+    public async Task<PagedResult<QuestionResult>> Handle(
         GetQuestionsQuery query,
         CancellationToken cancellationToken)
     {
@@ -17,8 +17,8 @@ public sealed class GetQuestionsHandler(IQnARepository qnARepository)
 
         var (items, total) = await qnARepository.GetPagedByPostAsync(query.PostId, offset, query.PageSize, cancellationToken);
 
-        var results = items.Select(qna => qna.ToQnAResult()).ToList();
+        var results = items.Select(q => q.ToQuestionResult()).ToList();
 
-        return new PagedResult<QnAResult>(total, results);
+        return new PagedResult<QuestionResult>(total, results);
     }
 }

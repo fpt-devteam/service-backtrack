@@ -6,7 +6,7 @@ namespace Backtrack.Core.Application.Usecases.QnA.CreateQuestion;
 /// <summary>
 /// Command to create a new question. AskerId is injected from the auth header by the controller.
 /// </summary>
-public sealed record CreateQuestionCommand : IRequest<QnAResult>
+public sealed record CreateQuestionCommand : IRequest<QuestionResult>
 {
     [JsonIgnore]
     public string AskerId { get; init; } = string.Empty;
