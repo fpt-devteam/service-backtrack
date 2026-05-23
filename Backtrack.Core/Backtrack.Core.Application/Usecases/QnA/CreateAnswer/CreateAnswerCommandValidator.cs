@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace Backtrack.Core.Application.Usecases.QnA.AnswerQuestion;
+namespace Backtrack.Core.Application.Usecases.QnA.CreateAnswer;
 
-public sealed class AnswerQuestionCommandValidator : AbstractValidator<AnswerQuestionCommand>
+public sealed class CreateAnswerCommandValidator : AbstractValidator<CreateAnswerCommand>
 {
-    public AnswerQuestionCommandValidator()
+    public CreateAnswerCommandValidator()
     {
         RuleFor(x => x.AnswerText)
             .NotEmpty().WithMessage("AnswerText is required.")

@@ -1,7 +1,9 @@
-using Backtrack.Core.Application.Usecases.QnA.AnswerQuestion;
+using Backtrack.Core.Application.Usecases.QnA.CreateAnswer;
 using Backtrack.Core.Application.Usecases.QnA.CreateQuestion;
+using Backtrack.Core.Application.Usecases.QnA.CreateQuestions;
 using Backtrack.Core.Application.Usecases.QnA.GetQuestion;
 using Backtrack.Core.Application.Usecases.QnA.GetQuestions;
+using Backtrack.Core.Application.Usecases.QnA.GetQuestionsWithAnswers;
 using Backtrack.Core.WebApi.Common;
 using Backtrack.Core.WebApi.Constants;
 using Backtrack.Core.WebApi.Utils;
@@ -25,7 +27,8 @@ public class QnAController : ControllerBase
     }
 
     /// <summary>
-    /// Creates a new question. The authenticated user becomes the asker.
+    /// Creates a new question on a found-item post. The authenticated user becomes the asker.
+    /// Only posts of type Found allow questions.
     /// </summary>
     [HttpPost]
     public async Task<IActionResult> CreateQuestionAsync(
@@ -40,24 +43,39 @@ public class QnAController : ControllerBase
     }
 
     /// <summary>
-    /// Adds or updates the answer on an existing question.
-    /// The authenticated user becomes the answerer.
+    /// Creates multiple questions at once on a found-item post (used during post setup).
     /// </summary>
-    [HttpPut("{id:guid}/answer")]
-    public async Task<IActionResult> AnswerQuestionAsync(
-        [FromRoute] Guid id,
-        [FromBody] AnswerQuestionCommand command,
+    [HttpPost("batch")]
+    public async Task<IActionResult> CreateQuestionsAsync(
+        [FromBody] CreateQuestionsCommand command,
         CancellationToken cancellationToken)
     {
-        var answererId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
-        command = command with { QnAId = id, AnswererId = answererId };
+        var askerId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        command = command with { AskerId = askerId };
 
         var result = await _mediator.Send(command, cancellationToken);
-        return this.ApiOk(result);
+        return this.ApiCreated(result);
     }
 
     /// <summary>
-    /// Retrieves a single question by its ID.
+    /// Adds an answer to an existing question. The authenticated user becomes the answerer.
+    /// Multiple users can answer the same question.
+    /// </summary>
+    [HttpPost("{id:guid}/answers")]
+    public async Task<IActionResult> CreateAnswerAsync(
+        [FromRoute] Guid id,
+        [FromBody] CreateAnswerCommand command,
+        CancellationToken cancellationToken)
+    {
+        var answererId = HttpContextUtil.GetHeaderValue(HttpContext, HeaderNames.AuthId);
+        command = command with { QuestionId = id, AnswererId = answererId };
+
+        var result = await _mediator.Send(command, cancellationToken);
+        return this.ApiCreated(result);
+    }
+
+    /// <summary>
+    /// Retrieves a single question by its ID, including all answers.
     /// </summary>
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetQuestionAsync(
@@ -70,7 +88,21 @@ public class QnAController : ControllerBase
     }
 
     /// <summary>
-    /// Returns a paginated list of all questions ordered by creation date descending.
+    /// Returns all questions for a post together with their answers.
+    /// </summary>
+    [HttpGet("with-answers")]
+    public async Task<IActionResult> GetQuestionsWithAnswersAsync(
+        [FromQuery] Guid postId,
+        [FromQuery] string? answererId,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetQuestionsWithAnswersQuery { PostId = postId, AnswererId = answererId };
+        var result = await _mediator.Send(query, cancellationToken);
+        return this.ApiOk(result);
+    }
+
+    /// <summary>
+    /// Returns a paginated list of questions for a post, ordered by creation date descending.
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetQuestionsAsync(

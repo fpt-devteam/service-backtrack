@@ -6,15 +6,15 @@ using MediatR;
 namespace Backtrack.Core.Application.Usecases.QnA.GetQuestion;
 
 /// <summary>
-/// Handler for retrieving a single question by ID.
+/// Handler for retrieving a single question by ID, including all its answers.
 /// </summary>
-public sealed class GetQuestionHandler(IQnARepository qnARepository) : IRequestHandler<GetQuestionQuery, QnAResult>
+public sealed class GetQuestionHandler(IQnARepository qnARepository) : IRequestHandler<GetQuestionQuery, QuestionResult>
 {
-    public async Task<QnAResult> Handle(GetQuestionQuery query, CancellationToken cancellationToken)
+    public async Task<QuestionResult> Handle(GetQuestionQuery query, CancellationToken cancellationToken)
     {
-        var qna = await qnARepository.GetByIdAsync(query.QnAId)
+        var question = await qnARepository.GetByIdAsync(query.QnAId)
             ?? throw new NotFoundException(QnAErrors.NotFound);
 
-        return qna.ToQnAResult();
+        return question.ToQuestionResult();
     }
 }
