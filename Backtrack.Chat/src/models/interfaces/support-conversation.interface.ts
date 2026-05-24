@@ -17,6 +17,9 @@ export interface SupportFormData {
 	imageUrls: string[] | null;
 	lostLocation: string | null;
 	eventTime: Date | null;
+	contactName: string | null;
+	contactPhone: string | null;
+	contactEmail: string | null;
 }
 export interface ISupportConversation {
     id: string;

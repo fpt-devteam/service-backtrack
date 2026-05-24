@@ -37,6 +37,13 @@ interface ConversationAggRow {
     orgLogoUrl?: string | null;
     status?: ConversationStatus | null;
     staffAssignId?: string | null;
+    staffUser?: {
+        id: Types.ObjectId | string;
+        displayName: string | null;
+        email: string | null;
+        avatarUrl: string | null;
+    } | null;
+    assignedStaff?: ConversationPartner | null;
     lastMessageContent?: string | null;
     lastMessageAt?: Date | null;
     lastMessageSenderId?: string | null;
@@ -165,10 +172,12 @@ export const findOrCreateOrgConversation = async (
 ): Promise<SupportConversationResponse> => {
   const existingConv = await findExistingOrgConversation(userId, orgId);
   if (existingConv) {
-    if (data.postId && existingConv.supportFormData?.postId !== data.postId) {
-		throw ConversationErrors.PostIdMismatch;
+    const existingPostId = existingConv.supportFormData?.postId ?? null;
+    const newPostId = data.postId ?? null;
+    if (existingPostId !== null && newPostId !== null && existingPostId === newPostId) {
+      return toSupportConversationResponse(existingConv);
     }
-    return toSupportConversationResponse(existingConv);
+    // Both null, or different values — fall through to create a new conversation
   }
 
   const org = await Org.findById(orgId).lean().exec();
@@ -189,6 +198,9 @@ export const findOrCreateOrgConversation = async (
       imageUrls: data.imageUrls ?? null,
       lostLocation: data.lostLocation ?? null,
       eventTime: data.eventTime ?? null,
+      contactName: data.contactName ?? null,
+      contactPhone: data.contactPhone ?? null,
+      contactEmail: data.contactEmail ?? null,
     },
   });
   await conversation.save();
@@ -253,6 +265,9 @@ export const getConversationById = async (
     // ── 4. Discriminate response shape ───────────────────────────────────────
     if (supportConv) {
         const s = supportConv as ToLeanDoc<ISupportConversation>;
+        const assignedStaff = s.staffAssignId
+            ? await fetchPartnerUser(s.staffAssignId)
+            : null;
         return {
             conversationId:  s._id.toString(),
             orgId:           s.orgId ?? null,
@@ -260,7 +275,7 @@ export const getConversationById = async (
             orgSlug:         s.orgSlug ?? null,
             orgLogoUrl:      s.orgLogoUrl ?? null,
             status:          s.status ?? ConversationStatus.IN_QUEUE,
-            assignedStaffId: s.staffAssignId ?? null,
+            assignedStaff,
             partner,
             lastMessage,
             unreadCount,
@@ -311,14 +326,17 @@ const toDirectConversationResponse = (doc: ToLeanDoc<IDirectConversation>, partn
     updatedAt: doc.updatedAt,
 });
 
-const toSupportConversationResponse = (doc: ToLeanDoc<ISupportConversation>): SupportConversationResponse => ({
+const toSupportConversationResponse = (
+    doc: ToLeanDoc<ISupportConversation>,
+    staff: ConversationPartner | null = null,
+): SupportConversationResponse => ({
     conversationId: doc._id.toString(),
     orgId: doc.orgId,
     orgName: doc.orgName ?? null,
     orgSlug: doc.orgSlug ?? null,
     orgLogoUrl: doc.orgLogoUrl ?? null,
     status: doc.status ?? ConversationStatus.IN_QUEUE,
-    assignedStaffId: doc.staffAssignId ?? null,
+    assignedStaff: staff,
     partner: null,     // populated downstream (controller/list query)
     lastMessage: doc.lastMessageContent
         ? { senderId: doc.senderId ?? null, content: doc.lastMessageContent, timestamp: doc.lastMessageAt ?? null }
@@ -466,6 +484,30 @@ export const lookupPartnerStages = (userId: string) => [
     },
 ];
 
+/** Lookup stages to resolve the assigned staff user from $conversation.staffAssignId */
+export const lookupStaffStages = [
+    {
+        $lookup: {
+            from: 'users',
+            let: { staffId: '$conversation.staffAssignId' },
+            pipeline: [
+                {
+                    $match: {
+                        $expr: {
+                            $and: [
+                                { $ne: ['$$staffId', null] },
+                                { $eq: ['$_id', '$$staffId'] }
+                            ]
+                        }
+                    }
+                }
+            ],
+            as: 'staffUser'
+        }
+    },
+    { $addFields: { staffUser: { $first: '$staffUser' } } },
+];
+
 export const projectConversationStage = {
     $project: {
         conversationId: '$conversation._id',
@@ -474,7 +516,6 @@ export const projectConversationStage = {
         orgSlug:       { $ifNull: ['$conversation.orgSlug',       null] },
         orgLogoUrl:    { $ifNull: ['$conversation.orgLogoUrl',    null] },
         status:        { $ifNull: ['$conversation.status',        null] },
-        staffAssignId: { $ifNull: ['$conversation.staffAssignId', null] },
         lastMessageContent:  '$conversation.lastMessageContent',
         lastMessageAt:       '$conversation.lastMessageAt',
         lastMessageSenderId: '$conversation.senderId',
@@ -487,6 +528,18 @@ export const projectConversationStage = {
                     displayName: { $ifNull: ['$partnerUser.displayName', null] },
                     email:       { $ifNull: ['$partnerUser.email', null] },
                     avatarUrl:   { $ifNull: ['$partnerUser.avatarUrl', null] },
+                },
+                else: null
+            }
+        },
+        assignedStaff: {
+            $cond: {
+                if: '$staffUser',
+                then: {
+                    id:          '$staffUser._id',
+                    displayName: { $ifNull: ['$staffUser.displayName', null] },
+                    email:       { $ifNull: ['$staffUser.email', null] },
+                    avatarUrl:   { $ifNull: ['$staffUser.avatarUrl', null] },
                 },
                 else: null
             }
@@ -587,7 +640,14 @@ const formatSupportResult = (results: ConversationAggRow[], limit: number): Supp
             orgSlug: c.orgSlug ?? null,
             orgLogoUrl: c.orgLogoUrl ?? null,
             status: c.status!,
-            assignedStaffId: c.staffAssignId ?? null,
+            assignedStaff: c.assignedStaff
+                ? {
+                    id:          c.assignedStaff.id.toString(),
+                    displayName: c.assignedStaff.displayName,
+                    email:       c.assignedStaff.email,
+                    avatarUrl:   c.assignedStaff.avatarUrl,
+                  }
+                : null,
             partner: c.partner
                 ? {
                     id: c.partner.id.toString(),
@@ -643,6 +703,7 @@ export const listConversationsQueueByStaff = async (
         { $limit: limit + 1 },
         { $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
         ...lookupPartnerStages(isMe ? userId : orgId),
+        ...lookupStaffStages,
         projectConversationStage,
     ]);
 
@@ -673,6 +734,7 @@ export const listConversationsResolvedByStaff = async (
         { $limit: limit + 1 },
         { $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
         ...lookupPartnerStages(isMe ? userId : orgId),
+        ...lookupStaffStages,
         projectConversationStage,
     ]);
 
@@ -704,6 +766,7 @@ export const listConversationsAssignedByStaff = async (
         { $limit: limit + 1 },
         { $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
         ...lookupPartnerStages(isMe ? userId : orgId),
+        ...lookupStaffStages,
         projectConversationStage,
     ]);
 
@@ -731,6 +794,7 @@ export const listConversationsByPostId = async (
 		{ $limit: limit + 1 },
 		{ $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
 		...lookupPartnerStages(orgId),
+		...lookupStaffStages,
 		projectConversationStage,
 	]);
 
@@ -821,7 +885,7 @@ interface MixedConversationAggRow {
     orgSlug:             string | null;
     orgLogoUrl:          string | null;
     status:              ConversationStatus | null;
-    staffAssignId:       string | null;
+    assignedStaff:       ConversationPartner | null;
     lastMessageAt:       Date | null;
     lastMessageContent:  string | null;
     lastMessageSenderId: string | null;
@@ -925,6 +989,26 @@ const buildConvBranch = (
         ...(Object.keys(cursorFilter).length ? [{ $match: cursorFilter }] : []),
         ...lookupPartnerInBranch(userId),
         {
+            $lookup: {
+                from: 'users',
+                let: { staffId: '$conv.staffAssignId' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $ne: ['$$staffId', null] },
+                                    { $eq: ['$_id', '$$staffId'] }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                as: 'staffUser'
+            }
+        },
+        { $addFields: { staffUser: { $first: '$staffUser' } } },
+        {
             $project: {
                 _id:                 0,
                 conversationId:      { $toString: '$conv._id' },
@@ -934,6 +1018,7 @@ const buildConvBranch = (
                 lastMessageSenderId: '$conv.senderId',
                 unreadCount:         { $ifNull: ['$unreadCount', 0] },
                 partner:             partnerExpr('partnerUser'),
+                assignedStaff:       partnerExpr('staffUser'),
                 createdAt:           '$conv.createdAt',
                 updatedAt:           '$conv.updatedAt',
                 ...extraProject,
@@ -962,20 +1047,19 @@ export const listAllConversationsByUserId = async (
 
     const [directBranch, supportBranch] = await Promise.all([
         buildConvBranch('directconversations', 'direct', userId, cursorFilter, {
-            orgId:         { $literal: null },
-            orgName:       { $literal: null },
-            orgSlug:       { $literal: null },
-            orgLogoUrl:    { $literal: null },
-            status:        { $literal: null },
-            staffAssignId: { $literal: null },
+            orgId:        { $literal: null },
+            orgName:      { $literal: null },
+            orgSlug:      { $literal: null },
+            orgLogoUrl:   { $literal: null },
+            status:       { $literal: null },
+            supportFormData: { $literal: null },
         }),
         buildConvBranch('supportconversations', 'support', userId, cursorFilter, {
-            orgId:         { $ifNull: ['$conv.orgId',         null] },
-            orgName:       { $ifNull: ['$conv.orgName',       null] },
-            orgSlug:       { $ifNull: ['$conv.orgSlug',       null] },
-            orgLogoUrl:    { $ifNull: ['$conv.orgLogoUrl',    null] },
-            status:        { $ifNull: ['$conv.status',        null] },
-            staffAssignId: { $ifNull: ['$conv.staffAssignId', null] },
+            orgId:        { $ifNull: ['$conv.orgId',         null] },
+            orgName:      { $ifNull: ['$conv.orgName',       null] },
+            orgSlug:      { $ifNull: ['$conv.orgSlug',       null] },
+            orgLogoUrl:   { $ifNull: ['$conv.orgLogoUrl',    null] },
+            status:       { $ifNull: ['$conv.status',        null] },
             supportFormData: { $ifNull: ['$conv.supportFormData', null] },
         }, { status: { $ne: ConversationStatus.CLOSED } }),
     ]);
@@ -1003,7 +1087,14 @@ export const listAllConversationsByUserId = async (
             orgSlug:         c.orgSlug ?? null,
             orgLogoUrl:      c.orgLogoUrl ?? null,
             status:          c.status,
-            assignedStaffId: c.staffAssignId,
+            assignedStaff: c.assignedStaff
+                ? {
+                    id:          c.assignedStaff.id.toString(),
+                    displayName: c.assignedStaff.displayName,
+                    email:       c.assignedStaff.email,
+                    avatarUrl:   c.assignedStaff.avatarUrl,
+                  }
+                : null,
             partner: c.partner
                 ? {
                     id:          c.partner.id.toString(),

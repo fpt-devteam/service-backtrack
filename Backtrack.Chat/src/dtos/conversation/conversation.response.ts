@@ -50,7 +50,7 @@ export interface SupportConversationResponse {
   /** Current lifecycle status */
   status: ConversationStatus;
   /** Staff member currently handling this conversation, null if in queue */
-  assignedStaffId: string | null;
+  assignedStaff: ConversationPartner | null;
   /** The customer who opened the conversation */
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
@@ -75,7 +75,7 @@ export interface ConversationResponse {
   orgSlug: string | null;
   orgLogoUrl: string | null;
   status: ConversationStatus | null;
-  assignedStaffId: string | null;
+  assignedStaff: ConversationPartner | null;
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
   unreadCount: number;

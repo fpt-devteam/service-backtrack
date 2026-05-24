@@ -134,7 +134,7 @@ export const sendMessage = async (data: SendMessagePayload): Promise<SendMessage
           orgSlug: supportDoc.orgSlug ?? null,
           orgLogoUrl: supportDoc.orgLogoUrl ?? null,
           status: supportDoc.status,
-          assignedStaffId: null,
+          assignedStaff: null,
           partner: senderUser
             ? {
                 id: senderUser._id.toString(),
