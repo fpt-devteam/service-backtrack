@@ -13,7 +13,7 @@ public sealed record CreateAnswerCommand : IRequest<AnswerResult>
     public Guid QuestionId { get; init; }
 
     [JsonIgnore]
-    public required string AnswererId { get; init; }
+    public string AnswererId { get; init; } = string.Empty;
 
     public required string AnswerText { get; init; }
 }
