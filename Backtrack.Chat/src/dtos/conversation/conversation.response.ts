@@ -53,6 +53,8 @@ export interface SupportConversationResponse {
   assignedStaff: ConversationPartner | null;
   /** Timestamp when the conversation was first assigned to a staff member */
   firstAssignedAt: Date | null;
+  /** Timestamp when the conversation was resolved/closed, null if still open */
+  resolvedAt: Date | null;
   /** The customer who opened the conversation */
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
@@ -79,6 +81,7 @@ export interface ConversationResponse {
   status: ConversationStatus | null;
   assignedStaff: ConversationPartner | null;
   firstAssignedAt: Date | null;
+  resolvedAt: Date | null;
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
   unreadCount: number;

@@ -45,6 +45,7 @@ interface ConversationAggRow {
     } | null;
     assignedStaff?: ConversationPartner | null;
     firstAssignedAt?: Date | null;
+    resolvedAt?: Date | null;
     lastMessageContent?: string | null;
     lastMessageAt?: Date | null;
     lastMessageSenderId?: string | null;
@@ -281,6 +282,7 @@ export const getConversationById = async (
             lastMessage,
             unreadCount,
             firstAssignedAt: null,
+            resolvedAt: s.resolvedAt ?? null,
             supportFormData: s.supportFormData ?? null,
             createdAt:  s.createdAt,
             updatedAt:  s.updatedAt,
@@ -340,6 +342,7 @@ const toSupportConversationResponse = (
     status: doc.status ?? ConversationStatus.IN_QUEUE,
     assignedStaff: staff,
     firstAssignedAt: null,
+    resolvedAt: doc.resolvedAt ?? null,
     partner: null,     // populated downstream (controller/list query)
     lastMessage: doc.lastMessageContent
         ? { senderId: doc.senderId ?? null, content: doc.lastMessageContent, timestamp: doc.lastMessageAt ?? null }
@@ -380,7 +383,7 @@ export const markResolved = async (id: string, staffId: string): Promise<Support
     // Conversation must be waiting in queue to be picked up
     if (conversation.status !== ConversationStatus.IN_PROGRESS) throw ConversationErrors.NotAssigned;
 
-    await Conversation.findByIdAndUpdate(id, {status: ConversationStatus.CLOSED });
+    await Conversation.findByIdAndUpdate(id, {status: ConversationStatus.CLOSED, resolvedAt: new Date() }).exec();
     // id is guaranteed to be a SupportConversation at this call site
     return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
 };
@@ -570,6 +573,7 @@ export const projectConversationStage = {
             }
         },
         firstAssignedAt: { $ifNull: ['$firstAssignment.createdAt', null] },
+        resolvedAt:      { $ifNull: ['$conversation.resolvedAt',   null] },
         supportFormData: { $ifNull: ['$conversation.supportFormData', null] },
         createdAt: '$conversation.createdAt',
         updatedAt: '$conversation.updatedAt',
@@ -691,6 +695,7 @@ const formatSupportResult = (results: ConversationAggRow[], limit: number): Supp
                 : null,
             unreadCount: c.unreadCount ?? 0,
             firstAssignedAt: c.firstAssignedAt ?? null,
+            resolvedAt: c.resolvedAt ?? null,
             supportFormData: c.supportFormData ?? null,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
@@ -829,7 +834,7 @@ export const listConversationsByPostId = async (
 	return formatSupportResult(results, limit);
 }
 
-const SYSTEM_CLOSE_MESSAGE = "Sorry, this item has already been returned to its owner.";
+const SYSTEM_CLOSE_MESSAGE = "Sorry, this item has already been resolved.";
 
 export const closeConversationsByPostId = async (postId: string): Promise<void> => {
 	const conversations = await Conversation.find({
@@ -915,6 +920,7 @@ interface MixedConversationAggRow {
     status:              ConversationStatus | null;
     assignedStaff:       ConversationPartner | null;
     firstAssignedAt:     Date | null;
+    resolvedAt:          Date | null;
     lastMessageAt:       Date | null;
     lastMessageContent:  string | null;
     lastMessageSenderId: string | null;
@@ -1067,6 +1073,7 @@ const buildConvBranch = (
                 partner:             partnerExpr('partnerUser'),
                 assignedStaff:       partnerExpr('staffUser'),
                 firstAssignedAt:     { $ifNull: ['$firstAssignment.createdAt', null] },
+                resolvedAt:          { $ifNull: ['$conv.resolvedAt', null] },
                 createdAt:           '$conv.createdAt',
                 updatedAt:           '$conv.updatedAt',
                 ...extraProject,
@@ -1160,6 +1167,7 @@ export const listAllConversationsByUserId = async (
                 : null,
             unreadCount: c.unreadCount ?? 0,
             firstAssignedAt: c.firstAssignedAt ?? null,
+            resolvedAt: c.resolvedAt ?? null,
             supportFormData: c.supportFormData ?? null,
             createdAt:   c.createdAt,
             updatedAt:   c.updatedAt,
