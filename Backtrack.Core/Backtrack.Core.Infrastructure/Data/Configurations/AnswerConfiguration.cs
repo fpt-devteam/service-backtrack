@@ -1,3 +1,4 @@
+using Backtrack.Core.Domain.Constants;
 using Backtrack.Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -43,10 +44,20 @@ public class AnswerConfiguration : IEntityTypeConfiguration<Answer>
         builder.HasIndex(a => a.AnswererId)
             .HasDatabaseName("ix_answers_answerer_id");
 
+        builder.Property(a => a.Type)
+            .HasColumnName("type")
+            .HasConversion<string>()
+            .HasMaxLength(50)
+            .HasDefaultValue(AnswerType.Text)
+            .IsRequired();
+
         builder.Property(a => a.AnswerText)
             .HasColumnName("answer_text")
-            .HasMaxLength(2000)
-            .IsRequired();
+            .HasMaxLength(2000);
+
+        builder.Property(a => a.ImageUrls)
+            .HasColumnName("image_urls")
+            .HasColumnType("text[]");
 
         builder.Property(a => a.CreatedAt)
             .HasColumnName("created_at")

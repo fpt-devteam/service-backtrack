@@ -1,3 +1,5 @@
+using Backtrack.Core.Domain.Constants;
+
 namespace Backtrack.Core.Application.Usecases.QnA;
 
 /// <summary>
@@ -8,7 +10,9 @@ public sealed record AnswerResult
     public Guid Id { get; init; }
     public Guid QuestionId { get; init; }
     public string AnswererId { get; init; } = default!;
-    public string AnswerText { get; init; } = default!;
+    public AnswerType Type { get; init; }
+    public string? AnswerText { get; init; }
+    public IReadOnlyList<string>? ImageUrls { get; init; }
     public DateTimeOffset CreatedAt { get; init; }
     public DateTimeOffset? UpdatedAt { get; init; }
 }

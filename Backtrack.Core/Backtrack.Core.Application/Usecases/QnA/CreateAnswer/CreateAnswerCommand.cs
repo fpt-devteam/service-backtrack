@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Backtrack.Core.Domain.Constants;
 using MediatR;
 
 namespace Backtrack.Core.Application.Usecases.QnA.CreateAnswer;
@@ -15,5 +16,11 @@ public sealed record CreateAnswerCommand : IRequest<AnswerResult>
     [JsonIgnore]
     public string AnswererId { get; init; } = string.Empty;
 
-    public required string AnswerText { get; init; }
+    public AnswerType Type { get; init; } = AnswerType.Text;
+
+    /// <summary>Required when Type is Text.</summary>
+    public string? AnswerText { get; init; }
+
+    /// <summary>Required when Type is Image.</summary>
+    public IReadOnlyList<string>? ImageUrls { get; init; }
 }

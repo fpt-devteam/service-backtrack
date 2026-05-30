@@ -29,7 +29,9 @@ public sealed class CreateAnswerHandler(
             Id         = Guid.NewGuid(),
             QuestionId = command.QuestionId,
             AnswererId = command.AnswererId,
+            Type       = command.Type,
             AnswerText = command.AnswerText,
+            ImageUrls  = command.ImageUrls?.ToList(),
         };
 
         await answerRepository.CreateAsync(answer);

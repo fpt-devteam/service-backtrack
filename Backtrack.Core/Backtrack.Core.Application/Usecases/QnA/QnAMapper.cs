@@ -14,7 +14,9 @@ public static class QnAMapper
             Id         = answer.Id,
             QuestionId = answer.QuestionId,
             AnswererId = answer.AnswererId,
+            Type       = answer.Type,
             AnswerText = answer.AnswerText,
+            ImageUrls  = answer.ImageUrls,
             CreatedAt  = answer.CreatedAt,
             UpdatedAt  = answer.UpdatedAt,
         };

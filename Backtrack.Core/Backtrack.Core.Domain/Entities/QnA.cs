@@ -1,3 +1,5 @@
+using Backtrack.Core.Domain.Constants;
+
 namespace Backtrack.Core.Domain.Entities;
 
 /// <summary>
@@ -36,6 +38,11 @@ public sealed class Answer : Entity<Guid>
     /// <summary>Navigation property for the answerer.</summary>
     public User Answerer { get; set; } = default!;
 
-    /// <summary>The text of the answer.</summary>
-    public required string AnswerText { get; set; }
+    public AnswerType Type { get; set; } = AnswerType.Text;
+
+    /// <summary>Text content — populated when Type is Text.</summary>
+    public string? AnswerText { get; set; }
+
+    /// <summary>Image URLs — populated when Type is Image.</summary>
+    public List<string>? ImageUrls { get; set; }
 }
