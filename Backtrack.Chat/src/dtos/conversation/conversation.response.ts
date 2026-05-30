@@ -51,6 +51,8 @@ export interface SupportConversationResponse {
   status: ConversationStatus;
   /** Staff member currently handling this conversation, null if in queue */
   assignedStaff: ConversationPartner | null;
+  /** Timestamp when the conversation was first assigned to a staff member */
+  firstAssignedAt: Date | null;
   /** The customer who opened the conversation */
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
@@ -76,6 +78,7 @@ export interface ConversationResponse {
   orgLogoUrl: string | null;
   status: ConversationStatus | null;
   assignedStaff: ConversationPartner | null;
+  firstAssignedAt: Date | null;
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
   unreadCount: number;

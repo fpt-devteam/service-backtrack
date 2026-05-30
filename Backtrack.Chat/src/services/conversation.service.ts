@@ -44,6 +44,7 @@ interface ConversationAggRow {
         avatarUrl: string | null;
     } | null;
     assignedStaff?: ConversationPartner | null;
+    firstAssignedAt?: Date | null;
     lastMessageContent?: string | null;
     lastMessageAt?: Date | null;
     lastMessageSenderId?: string | null;
@@ -279,6 +280,7 @@ export const getConversationById = async (
             partner,
             lastMessage,
             unreadCount,
+            firstAssignedAt: null,
             supportFormData: s.supportFormData ?? null,
             createdAt:  s.createdAt,
             updatedAt:  s.updatedAt,
@@ -337,6 +339,7 @@ const toSupportConversationResponse = (
     orgLogoUrl: doc.orgLogoUrl ?? null,
     status: doc.status ?? ConversationStatus.IN_QUEUE,
     assignedStaff: staff,
+    firstAssignedAt: null,
     partner: null,     // populated downstream (controller/list query)
     lastMessage: doc.lastMessageContent
         ? { senderId: doc.senderId ?? null, content: doc.lastMessageContent, timestamp: doc.lastMessageAt ?? null }
@@ -508,6 +511,28 @@ export const lookupStaffStages = [
     { $addFields: { staffUser: { $first: '$staffUser' } } },
 ];
 
+/** Lookup stages to get the createdAt of the oldest assignment for the conversation */
+export const lookupFirstAssignmentStages = [
+    {
+        $lookup: {
+            from: 'conversationassignments',
+            let: { convId: { $toString: '$conversation._id' } },
+            pipeline: [
+                {
+                    $match: {
+                        $expr: { $eq: ['$conversationId', '$$convId'] },
+                        deletedAt: null,
+                    }
+                },
+                { $sort: { createdAt: 1 } },
+                { $limit: 1 },
+            ] as never[],
+            as: 'firstAssignment'
+        }
+    },
+    { $addFields: { firstAssignment: { $first: '$firstAssignment' } } },
+];
+
 export const projectConversationStage = {
     $project: {
         conversationId: '$conversation._id',
@@ -544,6 +569,7 @@ export const projectConversationStage = {
                 else: null
             }
         },
+        firstAssignedAt: { $ifNull: ['$firstAssignment.createdAt', null] },
         supportFormData: { $ifNull: ['$conversation.supportFormData', null] },
         createdAt: '$conversation.createdAt',
         updatedAt: '$conversation.updatedAt',
@@ -664,6 +690,7 @@ const formatSupportResult = (results: ConversationAggRow[], limit: number): Supp
                   }
                 : null,
             unreadCount: c.unreadCount ?? 0,
+            firstAssignedAt: c.firstAssignedAt ?? null,
             supportFormData: c.supportFormData ?? null,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
@@ -735,6 +762,7 @@ export const listConversationsResolvedByStaff = async (
         { $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
         ...lookupPartnerStages(isMe ? userId : orgId),
         ...lookupStaffStages,
+        ...lookupFirstAssignmentStages,
         projectConversationStage,
     ]);
 
@@ -886,6 +914,7 @@ interface MixedConversationAggRow {
     orgLogoUrl:          string | null;
     status:              ConversationStatus | null;
     assignedStaff:       ConversationPartner | null;
+    firstAssignedAt:     Date | null;
     lastMessageAt:       Date | null;
     lastMessageContent:  string | null;
     lastMessageSenderId: string | null;
@@ -1009,6 +1038,24 @@ const buildConvBranch = (
         },
         { $addFields: { staffUser: { $first: '$staffUser' } } },
         {
+            $lookup: {
+                from: 'conversationassignments',
+                let: { convId: { $toString: '$conv._id' } },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: { $eq: ['$conversationId', '$$convId'] },
+                            deletedAt: null,
+                        }
+                    },
+                    { $sort: { createdAt: 1 } },
+                    { $limit: 1 },
+                ] as never[],
+                as: 'firstAssignment'
+            }
+        },
+        { $addFields: { firstAssignment: { $first: '$firstAssignment' } } },
+        {
             $project: {
                 _id:                 0,
                 conversationId:      { $toString: '$conv._id' },
@@ -1019,6 +1066,7 @@ const buildConvBranch = (
                 unreadCount:         { $ifNull: ['$unreadCount', 0] },
                 partner:             partnerExpr('partnerUser'),
                 assignedStaff:       partnerExpr('staffUser'),
+                firstAssignedAt:     { $ifNull: ['$firstAssignment.createdAt', null] },
                 createdAt:           '$conv.createdAt',
                 updatedAt:           '$conv.updatedAt',
                 ...extraProject,
@@ -1111,6 +1159,7 @@ export const listAllConversationsByUserId = async (
                   }
                 : null,
             unreadCount: c.unreadCount ?? 0,
+            firstAssignedAt: c.firstAssignedAt ?? null,
             supportFormData: c.supportFormData ?? null,
             createdAt:   c.createdAt,
             updatedAt:   c.updatedAt,

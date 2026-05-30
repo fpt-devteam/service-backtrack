@@ -31,6 +31,7 @@ public sealed record OrgReturnReportResult
     public required UserResult Staff { get; init; }
     public required OwnerInfo OwnerInfo { get; init; }
     public required PostResult Post { get; init; }
+    public string? ClaimRequestId { get; init; }
     public required List<string> EvidenceImageUrls { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
 }
@@ -63,6 +64,7 @@ public static class OrgReturnReportResultMapper
         Staff = report.Staff.ToUserResult(),
         OwnerInfo = report.OwnerInfo,
         Post = report.Post.ToPostResult(),
+        ClaimRequestId = report.ClaimRequestId,
         EvidenceImageUrls = report.EvidenceImageUrls,
         CreatedAt = report.CreatedAt,
     };

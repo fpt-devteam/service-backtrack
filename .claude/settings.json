@@ -3,7 +3,9 @@
     "allow": [
       "Bash(docker stop *)",
       "Bash(docker compose *)",
-      "Bash(sudo ss -tlnp)"
+      "Bash(sudo ss -tlnp)",
+      "Bash(bash 01_add_migration.sh AddClaimRequestIdToOrgReturnReport)",
+      "Bash(bash 02_apply_migrations.sh)"
     ]
   },
   "enabledPlugins": {
