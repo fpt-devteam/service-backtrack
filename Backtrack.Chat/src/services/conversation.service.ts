@@ -267,9 +267,14 @@ export const getConversationById = async (
     // ── 4. Discriminate response shape ───────────────────────────────────────
     if (supportConv) {
         const s = supportConv as ToLeanDoc<ISupportConversation>;
-        const assignedStaff = s.staffAssignId
-            ? await fetchPartnerUser(s.staffAssignId)
-            : null;
+        const [assignedStaff, firstAssignment] = await Promise.all([
+            s.staffAssignId ? fetchPartnerUser(s.staffAssignId) : Promise.resolve(null),
+            ConversationAssignment.findOne({ conversationId: id, deletedAt: null })
+                .sort({ createdAt: 1 })
+                .select('createdAt')
+                .lean()
+                .exec(),
+        ]);
         return {
             conversationId:  s._id.toString(),
             orgId:           s.orgId ?? null,
@@ -281,8 +286,8 @@ export const getConversationById = async (
             partner,
             lastMessage,
             unreadCount,
-            firstAssignedAt: null,
-            resolvedAt: s.resolvedAt ?? null,
+            firstAssignedAt: firstAssignment?.createdAt ?? null,
+            resolvedAt:      (s.status === ConversationStatus.CLOSED) ? (s.resolvedAt ?? s.updatedAt) : null,
             supportFormData: s.supportFormData ?? null,
             createdAt:  s.createdAt,
             updatedAt:  s.updatedAt,
@@ -695,7 +700,7 @@ const formatSupportResult = (results: ConversationAggRow[], limit: number): Supp
                 : null,
             unreadCount: c.unreadCount ?? 0,
             firstAssignedAt: c.firstAssignedAt ?? null,
-            resolvedAt: c.resolvedAt ?? null,
+            resolvedAt: (c.status === ConversationStatus.CLOSED) ? (c.resolvedAt ?? c.updatedAt) : null,
             supportFormData: c.supportFormData ?? null,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
@@ -1167,7 +1172,7 @@ export const listAllConversationsByUserId = async (
                 : null,
             unreadCount: c.unreadCount ?? 0,
             firstAssignedAt: c.firstAssignedAt ?? null,
-            resolvedAt: c.resolvedAt ?? null,
+            resolvedAt: (c.status === ConversationStatus.CLOSED) ? c.resolvedAt ?? c.updatedAt : null,
             supportFormData: c.supportFormData ?? null,
             createdAt:   c.createdAt,
             updatedAt:   c.updatedAt,
