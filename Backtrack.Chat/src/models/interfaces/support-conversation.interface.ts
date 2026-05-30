@@ -33,6 +33,7 @@ export interface ISupportConversation {
 	orgLogoUrl: string | null;
 	status: ConversationStatus;
 	supportFormData: SupportFormData | null;
+	resolvedAt: Date | null;
 	createdAt: Date;
 	updatedAt: Date;
 	deletedAt: Date | null;
