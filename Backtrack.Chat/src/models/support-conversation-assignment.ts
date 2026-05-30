@@ -19,6 +19,7 @@ const ConversationAssignmentSchema = new Schema<ISupportConversationAssignment>(
 
 ConversationAssignmentSchema.index({ conversationId: 1, assignedAt: -1 });
 ConversationAssignmentSchema.index({ conversationId: 1, unassignedAt: 1 });
+ConversationAssignmentSchema.index({ conversationId: 1, createdAt: 1 });
 ConversationAssignmentSchema.index({ agentId: 1, unassignedAt: 1 });
 
 const ConversationAssignment = model<ISupportConversationAssignment>(

@@ -30,6 +30,11 @@ public class OrgReturnReportConfiguration : IEntityTypeConfiguration<OrgReturnRe
         builder.Property(r => r.PostId)
             .HasColumnName("post_id")
             .IsRequired();
+        
+
+        builder.Property(r => r.ClaimRequestId)
+            .HasColumnName("claim_request_id")
+            .HasMaxLength(255);
 
         builder.Property(r => r.CreatedAt)
             .HasColumnName("created_at");

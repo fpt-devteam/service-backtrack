@@ -8,6 +8,7 @@ public sealed class OrgReturnReport : Entity<Guid>
     public required Guid PostId { get; set; }
     public required List<string> EvidenceImageUrls { get; set; }
     public required OwnerInfo OwnerInfo { get; set; }
+    public string? ClaimRequestId { get; set; }
 
     public Organization Organization { get; set; } = default!;
     public User Staff { get; set; } = default!;

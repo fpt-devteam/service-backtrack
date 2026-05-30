@@ -43,6 +43,7 @@ public sealed class CreateOrgReturnReportHandler(
             OrgId = command.OrgId,
             StaffId = command.UserId,
             PostId = command.PostId,
+            ClaimRequestId = command.ClaimRequestId,
             EvidenceImageUrls = command.EvidenceImageUrls,
             OwnerInfo = command.OwnerInfo,
         };

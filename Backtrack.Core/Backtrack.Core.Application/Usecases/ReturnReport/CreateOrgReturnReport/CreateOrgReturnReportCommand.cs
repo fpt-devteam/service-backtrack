@@ -13,6 +13,8 @@ public sealed record CreateOrgReturnReportCommand : IRequest<OrgReturnReportResu
     [JsonIgnore]
     public Guid OrgId { get; init; }
 
+    public string? ClaimRequestId { get; init; }
+
     public required Guid PostId { get; init; }
     public required List<string> EvidenceImageUrls { get; init; }
     public required OwnerInfo OwnerInfo { get; init; }
