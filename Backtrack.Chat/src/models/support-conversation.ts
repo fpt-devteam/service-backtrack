@@ -38,6 +38,7 @@ const ConversationSchema = new Schema<ISupportConversation>(
 			contactEmail: { type: String, default: null },
 		},
 		resolvedAt: { type: Date, default: null },
+		verifiedAt: { type: Date, default: null },
 		deletedAt: { type: Date, default: null },
 	},
 	{

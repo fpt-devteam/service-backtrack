@@ -35,6 +35,7 @@ export interface ISupportConversation {
 	status: ConversationStatus;
 	supportFormData: SupportFormData | null;
 	resolvedAt: Date | null;
+	verifiedAt: Date | null;
 	createdAt: Date;
 	updatedAt: Date;
 	deletedAt: Date | null;

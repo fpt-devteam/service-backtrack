@@ -46,6 +46,7 @@ interface ConversationAggRow {
     assignedStaff?: ConversationPartner | null;
     firstAssignedAt?: Date | null;
     resolvedAt?: Date | null;
+    verifiedAt?: Date | null;
     lastMessageContent?: string | null;
     lastMessageAt?: Date | null;
     lastMessageSenderId?: string | null;
@@ -288,6 +289,7 @@ export const getConversationById = async (
             unreadCount,
             firstAssignedAt: firstAssignment?.createdAt ?? null,
             resolvedAt:      (s.status === ConversationStatus.CLOSED) ? (s.resolvedAt ?? s.updatedAt) : null,
+            verifiedAt:      s.verifiedAt ?? null,
             supportFormData: s.supportFormData ?? null,
             createdAt:  s.createdAt,
             updatedAt:  s.updatedAt,
@@ -348,6 +350,7 @@ const toSupportConversationResponse = (
     assignedStaff: staff,
     firstAssignedAt: null,
     resolvedAt: doc.resolvedAt ?? null,
+    verifiedAt: doc.verifiedAt ?? null,
     partner: null,     // populated downstream (controller/list query)
     lastMessage: doc.lastMessageContent
         ? { senderId: doc.senderId ?? null, content: doc.lastMessageContent, timestamp: doc.lastMessageAt ?? null }
@@ -387,7 +390,7 @@ export const markVerified = async (id: string, staffId: string): Promise<Support
 
     if (conversation.status !== ConversationStatus.IN_PROGRESS) throw ConversationErrors.NotAssigned;
 
-    await Conversation.findByIdAndUpdate(id, { status: ConversationStatus.IN_VERIFIED }).exec();
+    await Conversation.findByIdAndUpdate(id, { status: ConversationStatus.IN_VERIFIED, verifiedAt: new Date() }).exec();
     return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
 };
 
@@ -587,6 +590,7 @@ export const projectConversationStage = {
         },
         firstAssignedAt: { $ifNull: ['$firstAssignment.createdAt', null] },
         resolvedAt:      { $ifNull: ['$conversation.resolvedAt',   null] },
+        verifiedAt:      { $ifNull: ['$conversation.verifiedAt',   null] },
         supportFormData: { $ifNull: ['$conversation.supportFormData', null] },
         createdAt: '$conversation.createdAt',
         updatedAt: '$conversation.updatedAt',
@@ -709,6 +713,7 @@ const formatSupportResult = (results: ConversationAggRow[], limit: number): Supp
             unreadCount: c.unreadCount ?? 0,
             firstAssignedAt: c.firstAssignedAt ?? null,
             resolvedAt: (c.status === ConversationStatus.CLOSED) ? (c.resolvedAt ?? c.updatedAt) : null,
+            verifiedAt: c.verifiedAt ?? null,
             supportFormData: c.supportFormData ?? null,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
@@ -966,6 +971,7 @@ interface MixedConversationAggRow {
     assignedStaff:       ConversationPartner | null;
     firstAssignedAt:     Date | null;
     resolvedAt:          Date | null;
+    verifiedAt:          Date | null;
     lastMessageAt:       Date | null;
     lastMessageContent:  string | null;
     lastMessageSenderId: string | null;
@@ -1119,6 +1125,7 @@ const buildConvBranch = (
                 assignedStaff:       partnerExpr('staffUser'),
                 firstAssignedAt:     { $ifNull: ['$firstAssignment.createdAt', null] },
                 resolvedAt:          { $ifNull: ['$conv.resolvedAt', null] },
+                verifiedAt:          { $ifNull: ['$conv.verifiedAt', null] },
                 createdAt:           '$conv.createdAt',
                 updatedAt:           '$conv.updatedAt',
                 ...extraProject,
@@ -1213,6 +1220,7 @@ export const listAllConversationsByUserId = async (
             unreadCount: c.unreadCount ?? 0,
             firstAssignedAt: c.firstAssignedAt ?? null,
             resolvedAt: (c.status === ConversationStatus.CLOSED) ? c.resolvedAt ?? c.updatedAt : null,
+            verifiedAt: c.verifiedAt ?? null,
             supportFormData: c.supportFormData ?? null,
             createdAt:   c.createdAt,
             updatedAt:   c.updatedAt,
