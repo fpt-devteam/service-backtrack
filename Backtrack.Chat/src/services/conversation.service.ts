@@ -399,7 +399,6 @@ export const markResolved = async (id: string, staffId: string): Promise<Support
     const conversation = await SupportConversation.findById(id).lean().exec();
     if (!conversation || conversation.deletedAt) throw ConversationErrors.NotFound;
 
-    if (conversation.status !== ConversationStatus.IN_VERIFIED) throw ConversationErrors.NotVerified;
 
     await Conversation.findByIdAndUpdate(id, {status: ConversationStatus.CLOSED, resolvedAt: new Date() }).exec();
     return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
