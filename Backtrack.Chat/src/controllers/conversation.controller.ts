@@ -131,6 +131,17 @@ export const listConversationResolvedByStaff = async (req: Request, res: Respons
     );
 };
 
+export const listConversationVerifiedByStaff = async (req: Request, res: Response) => {
+    const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+    const orgId  = req.headers[Constants.HEADERS.ORG_ID] as string;
+    const isMe   = req.query.isMe === 'true';
+
+    const result = await conversationService.listConversationsVerifiedByStaff(userId, orgId, isMe, parsePaginationParams(req));
+    return res.status(200).json(
+        ApiResponseBuilder.success(result, getCorrelationId(req))
+    );
+};
+
 export const closeConversationsByPostId = async (req: Request, res: Response) => {
     const postId = req.params.postId as string;
 
@@ -172,14 +183,22 @@ export const unassignStaff = async (req: Request, res: Response) => {
     );
 };
 
-// Resolved
+export const verifyConversation = async (req: Request, res: Response) => {
+    const staffId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+    const id = req.params.id as string;
+
+    const conversation = await conversationService.markVerified(id, staffId);
+    return res.status(200).json(
+        ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
+    );
+};
 
 export const resolveConversation = async (req: Request, res: Response) => {
-	const staffId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
-	const id = req.params.id as string;
+    const staffId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+    const id = req.params.id as string;
 
-	const conversation = await conversationService.markResolved(id, staffId);
-	return res.status(200).json(
-		ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
-	);
-}
+    const conversation = await conversationService.markResolved(id, staffId);
+    return res.status(200).json(
+        ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
+    );
+};

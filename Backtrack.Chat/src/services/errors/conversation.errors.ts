@@ -51,4 +51,9 @@ export const ConversationErrors = {
     code: "PostAlreadyInProgress",
     message: "Another conversation for this post is already in progress.",
   } as Error,
+  NotVerified: {
+	kind: "Conflict",
+	code: "ConversationNotVerified",
+	message: "This conversation must be marked as verified before it can be resolved.",
+  },
 } as const satisfies Record<string, Error>;

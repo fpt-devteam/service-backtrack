@@ -381,15 +381,23 @@ export const assignStaff = async (id: string, staffId: string): Promise<SupportC
     return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
 };
 
+export const markVerified = async (id: string, staffId: string): Promise<SupportConversationResponse | null> => {
+    const conversation = await SupportConversation.findById(id).lean().exec();
+    if (!conversation || conversation.deletedAt) throw ConversationErrors.NotFound;
+
+    if (conversation.status !== ConversationStatus.IN_PROGRESS) throw ConversationErrors.NotAssigned;
+
+    await Conversation.findByIdAndUpdate(id, { status: ConversationStatus.IN_VERIFIED }).exec();
+    return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
+};
+
 export const markResolved = async (id: string, staffId: string): Promise<SupportConversationResponse | null> => {
     const conversation = await SupportConversation.findById(id).lean().exec();
     if (!conversation || conversation.deletedAt) throw ConversationErrors.NotFound;
 
-    // Conversation must be waiting in queue to be picked up
-    if (conversation.status !== ConversationStatus.IN_PROGRESS) throw ConversationErrors.NotAssigned;
+    if (conversation.status !== ConversationStatus.IN_VERIFIED) throw ConversationErrors.NotVerified;
 
     await Conversation.findByIdAndUpdate(id, {status: ConversationStatus.CLOSED, resolvedAt: new Date() }).exec();
-    // id is guaranteed to be a SupportConversation at this call site
     return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
 };
 
@@ -779,6 +787,38 @@ export const listConversationsResolvedByStaff = async (
     return formatSupportResult(results, limit);
 };
 
+
+export const listConversationsVerifiedByStaff = async (
+    userId: string,
+    orgId: string,
+    isMe: boolean,
+    params: CursorPaginationParams = {}
+): Promise<SupportConversationsListResult> => {
+    const limit = Math.min(params.limit || Constants.PAGINATION.DEFAULT_LIMIT, Constants.PAGINATION.MAX_LIMIT);
+
+    const results = await Conversation.aggregate([
+        {
+            $match: {
+                orgId,
+                status: ConversationStatus.IN_VERIFIED,
+                deletedAt: null,
+                ...(isMe && { staffAssignId: userId }),
+                ...(params.cursor && {
+                    lastMessageAt: { $lt: new Date(params.cursor) }
+                })
+            }
+        },
+        { $sort: { lastMessageAt: -1 } },
+        { $limit: limit + 1 },
+        { $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
+        ...lookupPartnerStages(isMe ? userId : orgId),
+        ...lookupStaffStages,
+        ...lookupFirstAssignmentStages,
+        projectConversationStage,
+    ]);
+
+    return formatSupportResult(results, limit);
+};
 
 export const listConversationsAssignedByStaff = async (
     userId: string,
