@@ -384,13 +384,14 @@ export const assignStaff = async (id: string, staffId: string): Promise<SupportC
     return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
 };
 
-export const markVerified = async (id: string, staffId: string): Promise<SupportConversationResponse | null> => {
+export const markVerified = async (id: string, staffId: string, postId: string | null): Promise<SupportConversationResponse | null> => {
     const conversation = await SupportConversation.findById(id).lean().exec();
     if (!conversation || conversation.deletedAt) throw ConversationErrors.NotFound;
 
     if (conversation.status !== ConversationStatus.IN_PROGRESS) throw ConversationErrors.NotAssigned;
 
-    await Conversation.findByIdAndUpdate(id, { status: ConversationStatus.IN_VERIFIED, verifiedAt: new Date() }).exec();
+
+    await Conversation.findByIdAndUpdate(id, { status: ConversationStatus.IN_VERIFIED, verifiedAt: new Date(), 'supportFormData.postId': postId }).exec();
     return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
 };
 

@@ -186,8 +186,9 @@ export const unassignStaff = async (req: Request, res: Response) => {
 export const verifyConversation = async (req: Request, res: Response) => {
     const staffId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
     const id = req.params.id as string;
+	const postId = (req.body.postId ?? null) as string | null;
 
-    const conversation = await conversationService.markVerified(id, staffId);
+    const conversation = await conversationService.markVerified(id, staffId, postId);
     return res.status(200).json(
         ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
     );
