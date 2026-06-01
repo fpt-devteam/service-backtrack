@@ -217,6 +217,7 @@ export const findOrCreateOrgConversation = async (
 export const getConversationById = async (
     id: string,
     userId: string,
+    orgId?: string | null,
 ): Promise<DirectConversationResponse | SupportConversationResponse | null> => {
     // ── 1. Resolve conversation type + authorize in parallel ─────────────────
     const [supportConv, directConv, participants] = await Promise.all([
@@ -234,7 +235,10 @@ export const getConversationById = async (
 
     // ── 2. Authorization ─────────────────────────────────────────────────────
     const myParticipant = participants.find(p => p.memberId === userId);
-    if (!myParticipant) throw ConversationErrors.Unauthorized;
+    if (!myParticipant) {
+        const isSameOrgStaff = supportConv && orgId && supportConv.orgId === orgId;
+        if (!isSameOrgStaff) throw ConversationErrors.Unauthorized;
+    }
 
     // ── 3. Resolve partner user ──────────────────────────────────────────────
     const otherParticipant = participants.find(p => p.memberId !== userId);
@@ -263,7 +267,7 @@ export const getConversationById = async (
           }
         : null;
 
-    const unreadCount = myParticipant.unreadCount ?? 0;
+    const unreadCount = myParticipant?.unreadCount ?? 0;
 
     // ── 4. Discriminate response shape ───────────────────────────────────────
     if (supportConv) {

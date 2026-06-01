@@ -48,9 +48,10 @@ export const updateSupportFormDataInConversation = async (req: Request, res: Res
 };
 export const getConversationById = async (req: Request, res: Response) => {
     const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+    const orgId = req.headers[Constants.HEADERS.ORG_ID] as string | undefined;
     const id = req.params.id as string;
 
-    const conversation = await conversationService.getConversationById(id, userId);
+    const conversation = await conversationService.getConversationById(id, userId, orgId);
     return res.status(200).json(
         ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
     );
