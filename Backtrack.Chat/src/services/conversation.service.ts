@@ -849,6 +849,39 @@ export const listConversationsVerifiedByStaff = async (
     return formatSupportResult(results, limit);
 };
 
+
+export const listConversationsRejectedByStaff = async (
+    userId: string,
+    orgId: string,
+    isMe: boolean,
+    params: CursorPaginationParams = {}
+): Promise<SupportConversationsListResult> => {
+    const limit = Math.min(params.limit || Constants.PAGINATION.DEFAULT_LIMIT, Constants.PAGINATION.MAX_LIMIT);
+
+    const results = await Conversation.aggregate([
+        {
+            $match: {
+                orgId,
+                status: ConversationStatus.REJECTED,
+                deletedAt: null,
+                ...(isMe && { staffAssignId: userId }),
+                ...(params.cursor && {
+                    lastMessageAt: { $lt: new Date(params.cursor) }
+                })
+            }
+        },
+        { $sort: { lastMessageAt: -1 } },
+        { $limit: limit + 1 },
+        { $addFields: { conversationId: { $toString: '$_id' }, conversation: '$$ROOT' } },
+        ...lookupPartnerStages(isMe ? userId : orgId),
+        ...lookupStaffStages,
+        ...lookupFirstAssignmentStages,
+        projectConversationStage,
+    ]);
+
+    return formatSupportResult(results, limit);
+};
+
 export const listConversationsAssignedByStaff = async (
     userId: string,
     orgId: string,

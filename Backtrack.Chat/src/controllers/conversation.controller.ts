@@ -143,6 +143,17 @@ export const listConversationVerifiedByStaff = async (req: Request, res: Respons
     );
 };
 
+export const listConversationRejectedByStaff = async (req: Request, res: Response) => {
+    const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+    const orgId  = req.headers[Constants.HEADERS.ORG_ID] as string;
+    const isMe   = req.query.isMe === 'true';
+
+    const result = await conversationService.listConversationsRejectedByStaff(userId, orgId, isMe, parsePaginationParams(req));
+    return res.status(200).json(
+        ApiResponseBuilder.success(result, getCorrelationId(req))
+    );
+};
+
 export const closeConversationsByPostId = async (req: Request, res: Response) => {
     const postId = req.params.postId as string;
     const exceptId = (req.body?.exceptId ?? null) as string | null;
