@@ -1211,7 +1211,7 @@ export const listAllConversationsByUserId = async (
             orgLogoUrl:   { $ifNull: ['$conv.orgLogoUrl',    null] },
             status:       { $ifNull: ['$conv.status',        null] },
             supportFormData: { $ifNull: ['$conv.supportFormData', null] },
-        }, { status: { $nin: [ConversationStatus.CLOSED, ConversationStatus.REJECTED] } }),
+        }),
     ]);
 
     // ── Merge → sort → paginate in-process ─────────────────────────────────
