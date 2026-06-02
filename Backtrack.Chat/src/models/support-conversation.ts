@@ -39,6 +39,7 @@ const ConversationSchema = new Schema<ISupportConversation>(
 		},
 		resolvedAt: { type: Date, default: null },
 		verifiedAt: { type: Date, default: null },
+		rejectedAt: { type: Date, default: null },
 		deletedAt: { type: Date, default: null },
 	},
 	{

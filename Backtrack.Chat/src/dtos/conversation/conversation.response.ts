@@ -57,6 +57,8 @@ export interface SupportConversationResponse {
   resolvedAt: Date | null;
   /** Timestamp when the conversation was verified, null if not yet verified */
   verifiedAt: Date | null;
+  /** Timestamp when the conversation was rejected, null if not rejected */
+  rejectedAt: Date | null;
   /** The customer who opened the conversation */
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
@@ -85,6 +87,7 @@ export interface ConversationResponse {
   firstAssignedAt: Date | null;
   resolvedAt: Date | null;
   verifiedAt: Date | null;
+  rejectedAt: Date | null;
   partner: ConversationPartner | null;
   lastMessage: ConversationLastMessage | null;
   unreadCount: number;

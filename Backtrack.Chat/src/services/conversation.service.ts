@@ -47,6 +47,7 @@ interface ConversationAggRow {
     firstAssignedAt?: Date | null;
     resolvedAt?: Date | null;
     verifiedAt?: Date | null;
+    rejectedAt?: Date | null;
     lastMessageContent?: string | null;
     lastMessageAt?: Date | null;
     lastMessageSenderId?: string | null;
@@ -294,6 +295,7 @@ export const getConversationById = async (
             firstAssignedAt: firstAssignment?.createdAt ?? null,
             resolvedAt:      (s.status === ConversationStatus.CLOSED) ? (s.resolvedAt ?? s.updatedAt) : null,
             verifiedAt:      s.verifiedAt ?? null,
+            rejectedAt:      (s.status === ConversationStatus.REJECTED) ? (s.rejectedAt ?? s.updatedAt) : null,
             supportFormData: s.supportFormData ?? null,
             createdAt:  s.createdAt,
             updatedAt:  s.updatedAt,
@@ -355,6 +357,7 @@ const toSupportConversationResponse = (
     firstAssignedAt: null,
     resolvedAt: doc.resolvedAt ?? null,
     verifiedAt: doc.verifiedAt ?? null,
+    rejectedAt: doc.rejectedAt ?? null,
     partner: null,     // populated downstream (controller/list query)
     lastMessage: doc.lastMessageContent
         ? { senderId: doc.senderId ?? null, content: doc.lastMessageContent, timestamp: doc.lastMessageAt ?? null }
@@ -419,7 +422,7 @@ export const markRejected = async (id: string, staffId: string): Promise<Support
         throw ConversationErrors.NotRejectable;
     }
 
-    await Conversation.findByIdAndUpdate(id, { status: ConversationStatus.REJECTED }).exec();
+    await Conversation.findByIdAndUpdate(id, { status: ConversationStatus.REJECTED, rejectedAt: new Date() }).exec();
     return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
 };
 
@@ -610,6 +613,7 @@ export const projectConversationStage = {
         firstAssignedAt: { $ifNull: ['$firstAssignment.createdAt', null] },
         resolvedAt:      { $ifNull: ['$conversation.resolvedAt',   null] },
         verifiedAt:      { $ifNull: ['$conversation.verifiedAt',   null] },
+        rejectedAt:      { $ifNull: ['$conversation.rejectedAt',   null] },
         supportFormData: { $ifNull: ['$conversation.supportFormData', null] },
         createdAt: '$conversation.createdAt',
         updatedAt: '$conversation.updatedAt',
@@ -733,6 +737,7 @@ const formatSupportResult = (results: ConversationAggRow[], limit: number): Supp
             firstAssignedAt: c.firstAssignedAt ?? null,
             resolvedAt: (c.status === ConversationStatus.CLOSED) ? (c.resolvedAt ?? c.updatedAt) : null,
             verifiedAt: c.verifiedAt ?? null,
+            rejectedAt: (c.status === ConversationStatus.REJECTED) ? (c.rejectedAt ?? c.updatedAt) : null,
             supportFormData: c.supportFormData ?? null,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
@@ -991,6 +996,7 @@ interface MixedConversationAggRow {
     firstAssignedAt:     Date | null;
     resolvedAt:          Date | null;
     verifiedAt:          Date | null;
+    rejectedAt:          Date | null;
     lastMessageAt:       Date | null;
     lastMessageContent:  string | null;
     lastMessageSenderId: string | null;
@@ -1145,6 +1151,7 @@ const buildConvBranch = (
                 firstAssignedAt:     { $ifNull: ['$firstAssignment.createdAt', null] },
                 resolvedAt:          { $ifNull: ['$conv.resolvedAt', null] },
                 verifiedAt:          { $ifNull: ['$conv.verifiedAt', null] },
+                rejectedAt:          { $ifNull: ['$conv.rejectedAt', null] },
                 createdAt:           '$conv.createdAt',
                 updatedAt:           '$conv.updatedAt',
                 ...extraProject,
@@ -1240,6 +1247,7 @@ export const listAllConversationsByUserId = async (
             firstAssignedAt: c.firstAssignedAt ?? null,
             resolvedAt: (c.status === ConversationStatus.CLOSED) ? c.resolvedAt ?? c.updatedAt : null,
             verifiedAt: c.verifiedAt ?? null,
+            rejectedAt: (c.status === ConversationStatus.REJECTED) ? c.rejectedAt ?? c.updatedAt : null,
             supportFormData: c.supportFormData ?? null,
             createdAt:   c.createdAt,
             updatedAt:   c.updatedAt,

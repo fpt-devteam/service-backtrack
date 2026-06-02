@@ -37,6 +37,7 @@ export interface ISupportConversation {
 	supportFormData: SupportFormData | null;
 	resolvedAt: Date | null;
 	verifiedAt: Date | null;
+	rejectedAt: Date | null;
 	createdAt: Date;
 	updatedAt: Date;
 	deletedAt: Date | null;
