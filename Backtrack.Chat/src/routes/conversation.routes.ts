@@ -21,6 +21,7 @@ router.post('/:id/assign-staff', asyncHandler(conversationController.assignStaff
 router.post('/:id/unassign-staff', asyncHandler(conversationController.unassignStaff));
 router.post('/:id/verify', asyncHandler(conversationController.verifyConversation));
 router.post('/:id/resolve', asyncHandler(conversationController.resolveConversation));
+router.post('/:id/reject', asyncHandler(conversationController.rejectConversation));
 router.post('/:id/support-form-data', asyncHandler(conversationController.updateSupportFormDataInConversation));
 
 export default router;

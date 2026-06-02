@@ -56,4 +56,9 @@ export const ConversationErrors = {
 	code: "ConversationNotVerified",
 	message: "This conversation must be marked as verified before it can be resolved.",
   },
+  NotRejectable: {
+	kind: "Conflict",
+	code: "ConversationNotRejectable",
+	message: "Only conversations that are in progress or verified can be rejected.",
+  } as Error,
 } as const satisfies Record<string, Error>;

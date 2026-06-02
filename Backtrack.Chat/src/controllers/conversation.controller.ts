@@ -204,3 +204,13 @@ export const resolveConversation = async (req: Request, res: Response) => {
         ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
     );
 };
+
+export const rejectConversation = async (req: Request, res: Response) => {
+    const staffId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
+    const id = req.params.id as string;
+
+    const conversation = await conversationService.markRejected(id, staffId);
+    return res.status(200).json(
+        ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
+    );
+};

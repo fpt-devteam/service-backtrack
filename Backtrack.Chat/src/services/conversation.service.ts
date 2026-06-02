@@ -106,7 +106,7 @@ const findExistingOrgConversation = async (
 ): Promise<ToLeanDoc<ISupportConversation> | null> => {
   const orgConversations = (await Conversation.find({
     orgId,
-    status: { $ne: ConversationStatus.CLOSED },
+    status: { $nin: [ConversationStatus.CLOSED, ConversationStatus.REJECTED] },
     deletedAt: null,
   }).lean().exec()) as ToLeanDoc<ISupportConversation>[];
 
@@ -405,6 +405,21 @@ export const markResolved = async (id: string, staffId: string): Promise<Support
 
 
     await Conversation.findByIdAndUpdate(id, {status: ConversationStatus.CLOSED, resolvedAt: new Date() }).exec();
+    return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
+};
+
+export const markRejected = async (id: string, staffId: string): Promise<SupportConversationResponse | null> => {
+    const conversation = await SupportConversation.findById(id).lean().exec();
+    if (!conversation || conversation.deletedAt) throw ConversationErrors.NotFound;
+
+    if (
+        conversation.status !== ConversationStatus.IN_PROGRESS &&
+        conversation.status !== ConversationStatus.IN_VERIFIED
+    ) {
+        throw ConversationErrors.NotRejectable;
+    }
+
+    await Conversation.findByIdAndUpdate(id, { status: ConversationStatus.REJECTED }).exec();
     return getConversationById(id, staffId) as Promise<SupportConversationResponse | null>;
 };
 
@@ -1172,7 +1187,7 @@ export const listAllConversationsByUserId = async (
             orgLogoUrl:   { $ifNull: ['$conv.orgLogoUrl',    null] },
             status:       { $ifNull: ['$conv.status',        null] },
             supportFormData: { $ifNull: ['$conv.supportFormData', null] },
-        }, { status: { $ne: ConversationStatus.CLOSED } }),
+        }, { status: { $nin: [ConversationStatus.CLOSED, ConversationStatus.REJECTED] } }),
     ]);
 
     // ── Merge → sort → paginate in-process ─────────────────────────────────

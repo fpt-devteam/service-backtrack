@@ -6,6 +6,7 @@ export enum ConversationStatus {
 	IN_QUEUE = 'queue',
 	IN_PROGRESS = 'in_progress',
 	IN_VERIFIED = 'in_verified',
+	REJECTED = 'rejected',
 	CLOSED = 'closed',
 }
 export interface SupportFormData {
