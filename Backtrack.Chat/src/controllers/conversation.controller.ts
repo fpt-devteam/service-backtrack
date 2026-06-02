@@ -145,8 +145,9 @@ export const listConversationVerifiedByStaff = async (req: Request, res: Respons
 
 export const closeConversationsByPostId = async (req: Request, res: Response) => {
     const postId = req.params.postId as string;
+    const exceptId = (req.body?.exceptId ?? null) as string | null;
 
-    await conversationService.closeConversationsByPostId(postId);
+    await conversationService.closeConversationsByPostId(postId, exceptId);
     return res.status(200).json(
         ApiResponseBuilder.success({ message: 'Conversations closed successfully' }, getCorrelationId(req))
     );

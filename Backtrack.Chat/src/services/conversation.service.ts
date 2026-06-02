@@ -908,22 +908,38 @@ export const listConversationsByPostId = async (
 	return formatSupportResult(results, limit);
 }
 
-const SYSTEM_CLOSE_MESSAGE = "Sorry, this item has already been resolved.";
+const SYSTEM_RESOLVE_MESSAGE = "Your claim has been verified and this case is now resolved. Thank you!";
+const SYSTEM_REJECT_MESSAGE = "Sorry, this item has already been resolved.";
 
-export const closeConversationsByPostId = async (postId: string): Promise<void> => {
+/**
+ * Bulk-closes all active claims for a post once the post is resolved.
+ *
+ * If `exceptId` is provided, that conversation is treated as the verified winner:
+ *   - the `exceptId` conversation  → CLOSED  + resolvedAt (resolve message)
+ *   - every other claim            → REJECTED + rejectedAt (reject message)
+ *
+ * If `exceptId` is omitted, all matched claims are CLOSED (legacy behaviour).
+ */
+export const closeConversationsByPostId = async (postId: string, exceptId?: string | null): Promise<void> => {
 	const conversations = await Conversation.find({
 		'supportFormData.postId': postId,
-		status: { $in: [ConversationStatus.IN_QUEUE, ConversationStatus.IN_PROGRESS] },
+		status: { $in: [ConversationStatus.IN_QUEUE, ConversationStatus.IN_PROGRESS, ConversationStatus.IN_VERIFIED] },
 		deletedAt: null,
 	}).lean().exec();
 
 	if (!conversations.length) return;
 
+	const hasWinner = exceptId != null && exceptId !== '';
 	const io = getIO();
 	const now = new Date();
 
 	await Promise.all(conversations.map(async (conv) => {
 		const conversationId = conv._id.toString();
+
+		const isResolved = hasWinner && conversationId === exceptId;
+		const status = isResolved || !hasWinner ? ConversationStatus.CLOSED : ConversationStatus.REJECTED;
+		const content = isResolved ? SYSTEM_RESOLVE_MESSAGE : SYSTEM_REJECT_MESSAGE;
+		const timestampField = status === ConversationStatus.CLOSED ? { resolvedAt: now } : { rejectedAt: now };
 
 		const participants = await ConversationParticipant.find(
 			{ conversationId, isAssigned: true, deletedAt: null },
@@ -934,8 +950,9 @@ export const closeConversationsByPostId = async (postId: string): Promise<void> 
 		const senderId = staffParticipant?.memberId ?? 'system';
 
 		await Conversation.findByIdAndUpdate(conv._id, {
-			status: ConversationStatus.CLOSED,
-			lastMessageContent: SYSTEM_CLOSE_MESSAGE,
+			status,
+			...timestampField,
+			lastMessageContent: content,
 			lastMessageAt: now,
 			senderId,
 		});
@@ -944,7 +961,7 @@ export const closeConversationsByPostId = async (postId: string): Promise<void> 
 			conversationId,
 			senderId,
 			type: MessageType.TEXT,
-			content: SYSTEM_CLOSE_MESSAGE,
+			content,
 			attachments: [],
 			status: MessageStatus.SENT,
 		});
@@ -955,7 +972,7 @@ export const closeConversationsByPostId = async (postId: string): Promise<void> 
 			conversationId,
 			senderId,
 			type: message.type,
-			content: SYSTEM_CLOSE_MESSAGE,
+			content,
 			attachments: [],
 			status: message.status,
 			createdAt: message.createdAt,
@@ -971,7 +988,7 @@ export const closeConversationsByPostId = async (postId: string): Promise<void> 
 					unreadCount: null,
 					lastMessage: {
 						senderId,
-						content: SYSTEM_CLOSE_MESSAGE,
+						content,
 						timestamp: now,
 					},
 				});
