@@ -44,7 +44,7 @@ public sealed class QnARepository(ApplicationDbContext context)
             .Include(q => q.Answers.Where(a =>
                 a.DeletedAt == null &&
                 (answererId == null || a.AnswererId == answererId)))
-            .OrderBy(q => q.CreatedAt)
+            .OrderByDescending(q => q.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 
