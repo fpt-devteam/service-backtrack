@@ -24,5 +24,6 @@ router.post('/:id/verify', asyncHandler(conversationController.verifyConversatio
 router.post('/:id/resolve', asyncHandler(conversationController.resolveConversation));
 router.post('/:id/reject', asyncHandler(conversationController.rejectConversation));
 router.post('/:id/support-form-data', asyncHandler(conversationController.updateSupportFormDataInConversation));
+router.post('/:id/not-match-inventory', asyncHandler(conversationController.addNotMatchInventory));
 
 export default router;

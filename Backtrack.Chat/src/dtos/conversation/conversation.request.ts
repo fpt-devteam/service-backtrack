@@ -21,11 +21,18 @@ export const CreationOrganizationConversationSchema = z.object({
 		contactName: z.string(),
 		contactPhone: z.string(),
 		contactEmail: z.string().email(),
+		notMatchInventoryIds: z.array(z.string()).optional(),
 	}).partial(),
     // status: z.enum([ConversationStatus.IN_QUEUE, ConversationStatus.IN_PROGRESS, ConversationStatus.CLOSED]),
 });
 
 export type CreationSupportConversationRequest = z.infer<typeof CreationOrganizationConversationSchema>;
+
+export const AddNotMatchInventorySchema = z.object({
+    inventoryId: z.string().min(1, 'inventoryId is required'),
+});
+
+export type AddNotMatchInventoryRequest = z.infer<typeof AddNotMatchInventorySchema>;
 
 export type CreateConversationRequest =
     | CreationDirectConversationRequest

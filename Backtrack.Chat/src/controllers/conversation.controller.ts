@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CreationDirectConversationSchema, CreationOrganizationConversationSchema } from '@/dtos/conversation/conversation.request';
+import { AddNotMatchInventorySchema, CreationDirectConversationSchema, CreationOrganizationConversationSchema } from '@/dtos/conversation/conversation.request';
 import * as conversationService from '@/services/conversation.service';
 import { ApiResponseBuilder } from '@/utils/api-response';
 import { Constants } from '@/config/constants';
@@ -46,6 +46,15 @@ export const updateSupportFormDataInConversation = async (req: Request, res: Res
 		ApiResponseBuilder.success({ message: 'Support form data updated successfully' }, getCorrelationId(req))
 	);
 };
+export const addNotMatchInventory = async (req: Request, res: Response) => {
+	const conversationId = req.params.id as string;
+	const { inventoryId } = AddNotMatchInventorySchema.parse(req.body);
+	const conversation = await conversationService.addNotMatchInventoryId(conversationId, inventoryId);
+	return res.status(200).json(
+		ApiResponseBuilder.success({ conversation }, getCorrelationId(req))
+	);
+};
+
 export const getConversationById = async (req: Request, res: Response) => {
     const userId = req.headers[Constants.HEADERS.AUTH_USER_ID] as string;
     const orgId = req.headers[Constants.HEADERS.ORG_ID] as string | undefined;

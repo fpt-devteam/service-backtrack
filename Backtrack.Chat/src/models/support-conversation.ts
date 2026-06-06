@@ -36,6 +36,7 @@ const ConversationSchema = new Schema<ISupportConversation>(
 			contactName: { type: String, default: null },
 			contactPhone: { type: String, default: null },
 			contactEmail: { type: String, default: null },
+			notMatchInventoryIds: { type: [String], default: [] },
 		},
 		resolvedAt: { type: Date, default: null },
 		verifiedAt: { type: Date, default: null },

@@ -22,6 +22,7 @@ export interface SupportFormData {
 	contactName: string | null;
 	contactPhone: string | null;
 	contactEmail: string | null;
+	notMatchInventoryIds: string[];
 }
 export interface ISupportConversation {
     id: string;

@@ -205,6 +205,7 @@ export const findOrCreateOrgConversation = async (
       contactName: data.contactName ?? null,
       contactPhone: data.contactPhone ?? null,
       contactEmail: data.contactEmail ?? null,
+      notMatchInventoryIds: data.notMatchInventoryIds ?? [],
     },
   });
   await conversation.save();
@@ -464,6 +465,25 @@ export const updateConversationSupportFormData = async (
         Object.entries(data).map(([key, value]) => [`supportFormData.${key}`, value])
     );
     await Conversation.findByIdAndUpdate(conversationId, { $set: update }).exec();
+};
+
+/**
+ * Append an inventory id to a support conversation's notMatchInventoryIds array.
+ * Uses $addToSet so the same id is never stored twice.
+ */
+export const addNotMatchInventoryId = async (
+    conversationId: string,
+    inventoryId: string,
+): Promise<SupportConversationResponse> => {
+    const updated = await Conversation.findOneAndUpdate(
+        { _id: conversationId, deletedAt: null },
+        { $addToSet: { 'supportFormData.notMatchInventoryIds': inventoryId } },
+        { new: true },
+    ).lean().exec();
+
+    if (!updated) throw ConversationErrors.NotFound;
+
+    return toSupportConversationResponse(updated as ToLeanDoc<ISupportConversation>);
 };
 
 export const deleteConversation = async (id: string, userId: string): Promise<void> => {
